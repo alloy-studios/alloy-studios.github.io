@@ -42,8 +42,16 @@ foreach ($game in @($data.games)) {
   Write-Host "  + /$($game.id)/"
 }
 
+# A staging route that no repo can shadow. While an old project page is still
+# switched on it owns /<id>/, so the real wrapper there is invisible - but
+# /preview/?g=<id> is served by this repo and renders the same shell, which is
+# how you confirm a game works before retiring its old Pages site.
+$previewDir = Join-Path $Root 'preview'
+if (-not (Test-Path $previewDir)) { New-Item -ItemType Directory -Path $previewDir | Out-Null }
+Write-Utf8 (Join-Path $previewDir 'index.html') $wrapper
+
 # Wrapper folders left behind by games that are no longer in the manifest.
-$reserved = @('assets', 'data', 'games', 'tools')
+$reserved = @('assets', 'data', 'games', 'tools', 'preview')
 $stale = Get-ChildItem -Path $Root -Directory |
   Where-Object { $reserved -notcontains $_.Name -and $_.Name -notlike '.*' } |
   Where-Object { -not $ids.Contains($_.Name) } |
@@ -68,7 +76,7 @@ $($urls -join "`n")
 </urlset>
 "@
 Write-Utf8 (Join-Path $Root 'sitemap.xml') $sitemap
-Write-Utf8 (Join-Path $Root 'robots.txt') "User-agent: *`nAllow: /`nSitemap: $origin/sitemap.xml`n"
+Write-Utf8 (Join-Path $Root 'robots.txt') "User-agent: *`nAllow: /`nDisallow: /preview/`nSitemap: $origin/sitemap.xml`n"
 
 $msg = "`nBuilt $(@($data.games).Count) game page(s)"
 if ($warnings) { $msg += ", $warnings warning(s)" }
