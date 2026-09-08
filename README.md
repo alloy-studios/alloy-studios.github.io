@@ -1,13 +1,13 @@
 # Alloy Studios — one site, every game
 
-This folder is the whole website. Push it to the repo **`142436/142436.github.io`**
+This folder is the whole website. Push it to the repo **`alloy-studios/alloy-studios.github.io`**
 and you get:
 
 | URL | What it is |
 | --- | --- |
-| `142436.github.io/` | Homepage: featured game, tag filters, grid of everything |
-| `142436.github.io/snake/` | Snake, inside the shared shell (logo, search, fullscreen) |
-| `142436.github.io/tetris/` | Tetris, inside the **same** shell |
+| `alloy-studios.github.io/` | Homepage: featured game, tag filters, grid of everything |
+| `alloy-studios.github.io/snake/` | Snake, inside the shared shell (logo, search, fullscreen) |
+| `alloy-studios.github.io/tetris/` | Tetris, inside the **same** shell |
 | anything else | `404.html`, which suggests the closest game |
 
 Every game page is the same shell around a different `<iframe>`. Change the shell
@@ -18,7 +18,7 @@ once and all games change together.
 ## How it works
 
 ```
-142436.github.io/
+alloy-studios.github.io/
 ├── index.html            homepage
 ├── 404.html              not-found + suggestions
 ├── .nojekyll             stops GitHub eating folders that start with "_"
@@ -52,13 +52,13 @@ This is the same structure CrazyGames and Itch use, for the same reason.
 
 ### The one thing that will bite you
 
-GitHub Pages serves a repo named `snake` at `142436.github.io/snake` — and a
+GitHub Pages serves a repo named `snake` at `alloy-studios.github.io/snake` — and a
 **project page wins over a folder of the same name in your user site**. So while
-the old `142436/snake` repo still has Pages enabled, your new `/snake/` folder
+the old `alloy-studios/snake` repo still has Pages enabled, your new `/snake/` folder
 is invisible.
 
 The fix is also the good news: **turn Pages off on the old repo** (Settings →
-Pages → Source → None). The URL `142436.github.io/snake` then falls through to
+Pages → Source → None). The URL `alloy-studios.github.io/snake` then falls through to
 the new unified site — *the exact same address*, now with the shell around it.
 Every link you have ever shared keeps working. You do not have to delete or
 rename any repo; just switch Pages off.
@@ -151,7 +151,7 @@ First time, from this folder:
 git init -b main
 git add -A
 git commit -m "One site for every game"
-git remote add origin https://github.com/142436/142436.github.io.git
+git remote add origin https://github.com/alloy-studios/alloy-studios.github.io.git
 git push -u origin main
 ```
 
@@ -165,7 +165,7 @@ about a minute.
 ## The Weebly site
 
 Once a few games are live, `alloy-studios.weebly.com` has nothing left to do —
-`142436.github.io` *is* the index now. Point the Weebly homepage at it (a single
+`alloy-studios.github.io` *is* the index now. Point the Weebly homepage at it (a single
 link, or a redirect) rather than maintaining two lists that drift apart.
 
 ---

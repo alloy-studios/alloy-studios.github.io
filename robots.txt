@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /preview/
-Sitemap: https://142436.github.io/sitemap.xml
+Sitemap: https://alloy-studios.github.io/sitemap.xml

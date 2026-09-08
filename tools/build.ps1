@@ -18,7 +18,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 
 $data    = Get-Content (Join-Path $Root 'data\games.json') -Raw -Encoding utf8 | ConvertFrom-Json
 $wrapper = Get-Content (Join-Path $Root 'tools\wrapper.html') -Raw -Encoding utf8
-$origin  = if ($data.site.origin) { $data.site.origin } else { 'https://142436.github.io' }
+$origin  = if ($data.site.origin) { $data.site.origin } else { 'https://alloy-studios.github.io' }
 
 $ids = New-Object System.Collections.Generic.HashSet[string]
 $warnings = 0
