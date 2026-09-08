@@ -1,0 +1,2734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anime Survivors - Visually Remastered</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Roboto+Mono:wght@700&display=swap');
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #030303; overflow: hidden;
+            font-family: 'Roboto Mono', monospace; touch-action: none;
+        }
+        canvas { display: block; }
+        
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column;
+            justify-content: space-between; z-index: 10;
+        }
+
+        #top-bar { padding: 10px; pointer-events: auto; }
+        .bar-container {
+            width: 100%; max-width: 400px; height: 20px; background: #111;
+            border: 2px solid #444; border-radius: 10px; margin-bottom: 5px;
+            position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+        }
+        #exp-bar {
+            height: 100%; width: 0%; background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+            transition: width 0.2s ease-out; box-shadow: 0 0 10px #00d2ff;
+        }
+        #hp-bar {
+            height: 100%; width: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.2s ease-out; box-shadow: 0 0 10px #10b981;
+        }
+        .bar-text {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px black;
+        }
+        #level-text {
+            color: #ffd700; font-family: 'Bangers', cursive; font-size: 32px;
+            letter-spacing: 2px; text-shadow: 2px 2px 0px #000, 0 0 15px #ffd700; margin-bottom: 5px;
+        }
+        #timer {
+            position: absolute; top: 20px; right: 20px; color: white;
+            font-size: 26px; font-weight: bold; text-shadow: 2px 2px 0px black;
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; pointer-events: auto;
+            z-index: 20; backdrop-filter: blur(8px);
+        }
+        .hidden { display: none !important; }
+
+        h1 { font-family: 'Bangers', cursive; color: #ffcc00; font-size: 4rem; text-shadow: 4px 4px 0px #ff0000; margin-bottom: 20px; text-align: center; }
+        p { color: white; font-size: 1.2rem; text-align: center; max-width: 600px; margin-bottom: 30px; line-height: 1.5; }
+
+        .btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b); border: 3px solid #fff;
+            color: white; padding: 15px 40px; font-size: 1.5rem; font-family: 'Bangers', cursive;
+            border-radius: 30px; cursor: pointer; box-shadow: 0 6px 0 #cc0000; transition: all 0.1s; margin: 10px;
+        }
+        .btn:active { transform: translateY(6px); box-shadow: 0 0px 0 #cc0000; }
+
+        #upgrade-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 1000px; padding: 20px; }
+        .upgrade-card {
+            background: linear-gradient(135deg, #1e293b, #334155); border: 3px solid #f1c40f;
+            border-radius: 15px; padding: 20px; width: 260px; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column;
+            align-items: center; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .upgrade-card:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(241, 196, 15, 0.6); background: linear-gradient(135deg, #2c3e50, #475569); }
+        .upgrade-icon { font-size: 4rem; margin-bottom: 10px; filter: drop-shadow(2px 4px 6px black); }
+        .upgrade-title { color: #f1c40f; font-family: 'Bangers', cursive; font-size: 1.7rem; margin: 0 0 10px 0; text-shadow: 2px 2px 0px #000; }
+        .upgrade-level { color: #ff4b2b; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; }
+        .upgrade-level.awaken { color: #ff00ff; text-shadow: 0 0 8px #ff00ff; }
+        .upgrade-level.ultimate { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; font-size: 1.5rem; animation: pulse 0.5s infinite alternate; }
+        .upgrade-desc { color: #e2e8f0; font-size: 0.9rem; margin: 0; }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+        
+        .modal-box { background: #1a1a1a; padding: 30px; border: 2px solid #00d2ff; border-radius: 10px; text-align: center; box-shadow: 0 10px 40px rgba(0, 210, 255, 0.2); max-width: 400px; width: 90%; }
+        .modal-box input { padding: 10px; font-family: monospace; width: 80%; margin-bottom: 15px; border-radius: 5px; border: 1px solid #555; background: #000; color: white; font-size: 1.2rem; text-align: center; }
+        
+        #boss-warning {
+            position: absolute; top: 20%; left: 0; width: 100%; text-align: center;
+            color: #ff0000; font-family: 'Bangers', cursive; font-size: 5rem; letter-spacing: 5px;
+            text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000; opacity: 0; pointer-events: none; z-index: 15;
+            transition: opacity 0.2s;
+        }
+
+        #vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 4;
+            box-shadow: inset 0 0 60px 10px rgba(0,0,0,0.55), inset 0 0 160px 40px rgba(0,0,0,0.35);
+        }
+        #screen-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 16; opacity: 0; background: #fff;
+            transition: opacity 0.06s linear;
+        }
+        #low-hp-vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 6; opacity: 0;
+            box-shadow: inset 0 0 100px 20px rgba(255,0,0,0.55), inset 0 0 220px 60px rgba(255,0,0,0.35);
+            transition: opacity 0.4s ease; animation: lowhp-pulse 1s infinite;
+        }
+        @keyframes lowhp-pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+
+        #boss-hp-wrap {
+            position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+            width: 60%; max-width: 520px; pointer-events: none; text-align: center;
+            opacity: 0; transition: opacity 0.4s ease;
+        }
+        #boss-hp-wrap.show { opacity: 1; }
+        #boss-name {
+            font-family: 'Bangers', cursive; letter-spacing: 3px; font-size: 1.4rem;
+            color: #ff5566; text-shadow: 2px 2px 0 #000, 0 0 12px rgba(255,0,60,0.8); margin-bottom: 3px;
+        }
+        #boss-hp-container {
+            width: 100%; height: 16px; background: #100004; border: 2px solid #550015;
+            border-radius: 8px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.8), 0 0 20px rgba(255,0,60,0.3);
+            position: relative;
+        }
+        #boss-hp-bar {
+            height: 100%; width: 100%; background: linear-gradient(90deg, #ff0044 0%, #ff5566 60%, #ffaa00 100%);
+            box-shadow: 0 0 12px #ff0044; transition: width 0.15s ease-out;
+        }
+        #boss-hp-flash { position:absolute; top:0; left:0; height:100%; width:100%; background:#fff; opacity:0; transition: width 0.3s ease-out, opacity 0.3s ease-out 0.1s; }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="vignette"></div>
+    <div id="low-hp-vignette"></div>
+    <div id="screen-flash"></div>
+
+    <div id="ui-layer">
+        <div id="top-bar" class="hidden">
+            <div id="level-text">LVL 1</div>
+            <div class="bar-container">
+                <div id="exp-bar"></div>
+                <div class="bar-text" id="exp-text">EXP 0 / 10</div>
+            </div>
+            <div class="bar-container">
+                <div id="hp-bar"></div>
+                <div class="bar-text" id="hp-text">HP 100 / 100</div>
+            </div>
+        </div>
+        
+        <div id="timer" class="hidden">00:00</div>
+        <div id="boss-warning">ANOMALY DETECTED</div>
+
+        <div id="boss-hp-wrap">
+            <div id="boss-name">BOSS</div>
+            <div id="boss-hp-container">
+                <div id="boss-hp-bar"></div>
+                <div id="boss-hp-flash"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="start-menu" class="overlay">
+        <h1>Anime Survivors</h1>
+        <p>Reach <strong>LEVEL 5</strong> to Awaken your weapons.<br>Reach <strong>LEVEL 10</strong> to unleash their true <strong>ULTIMATE</strong> forms.</p>
+        <p style="color: #ccc; font-size: 1rem;">Desktop: WASD/Arrows to move.<br>Mobile: Touch and drag to move.</p>
+        <button class="btn" id="start-btn">FIGHT!</button>
+    </div>
+
+    <div id="level-up-menu" class="overlay hidden">
+        <h1 style="color: #00d2ff; text-shadow: 4px 4px 0px #005f99;">CHOOSE POWER</h1>
+        <div id="upgrade-container"></div>
+    </div>
+
+    <div id="game-over-menu" class="overlay hidden">
+        <h1 style="color: #ff3333; text-shadow: 4px 4px 0px #660000; font-size: 6rem;">DEFEATED</h1>
+        <p id="survival-time" style="font-size: 1.5rem;">You survived for: 00:00</p>
+        <button class="btn" id="restart-btn">TRY AGAIN</button>
+    </div>
+
+<script>
+/**
+ * ANIME SURVIVORS - Visually Remastered & Rebalanced
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const uiTopBar = document.getElementById('top-bar');
+const expBar = document.getElementById('exp-bar');
+const expText = document.getElementById('exp-text');
+const hpBar = document.getElementById('hp-bar');
+const hpText = document.getElementById('hp-text');
+const levelText = document.getElementById('level-text');
+const timerText = document.getElementById('timer');
+const bossWarning = document.getElementById('boss-warning');
+const screenFlashEl = document.getElementById('screen-flash');
+const lowHpVignette = document.getElementById('low-hp-vignette');
+const bossHpWrap = document.getElementById('boss-hp-wrap');
+const bossNameEl = document.getElementById('boss-name');
+const bossHpBar = document.getElementById('boss-hp-bar');
+const bossHpFlash = document.getElementById('boss-hp-flash');
+
+const startMenu = document.getElementById('start-menu');
+const levelUpMenu = document.getElementById('level-up-menu');
+const gameOverMenu = document.getElementById('game-over-menu');
+const upgradeContainer = document.getElementById('upgrade-container');
+
+let GAME_STATE = 'START'; 
+let PREV_STATE = 'START';
+let lastTime = 0;
+let gameTime = 0; 
+let spawnTimer = 0;
+let screenShake = 0;
+
+let globalTimeScale = 1.0; 
+let bossMinuteCounter = 0;
+
+let player;
+let enemies = [];
+let bosses = [];
+let projectiles = [];
+let dangerZones = []; 
+let gems = [];
+let particles = [];
+let floatingTexts = [];
+let cosmicDebris = []; 
+
+let camera = { x: 0, y: 0 };
+const keys = {};
+let joystick = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, dx: 0, dy: 0 };
+
+const SoundEngine = {
+    ctx: null,
+    lastPickupTime: 0,
+    lastHitTime: 0,
+    lastShootTime: 0,
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    playOsc(type, fStart, fEnd, dur, vStart=0.1) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(fStart, this.ctx.currentTime);
+        if (fEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1, fEnd), this.ctx.currentTime + dur);
+        gain.gain.setValueAtTime(vStart, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + dur);
+    },
+    playNoise(dur, vStart=0.1) {
+        if (!this.ctx) return;
+        const bufSize = this.ctx.sampleRate * dur;
+        const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource(); noise.buffer = buf;
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1000;
+        gain.gain.setValueAtTime(vStart, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+        noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+        noise.start();
+    },
+    pickup() {
+        const now = Date.now(); if (now - this.lastPickupTime < 40) return;
+        this.lastPickupTime = now; this.playOsc('sine', 800, 1200, 0.1, 0.02);
+    },
+    shoot() {
+        const now = Date.now(); if (now - this.lastShootTime < 50) return;
+        this.lastShootTime = now; this.playOsc('square', 400, 200, 0.1, 0.01);
+    },
+    heavyShoot() { this.playOsc('sawtooth', 300, 100, 0.2, 0.03); },
+    ultimate() { this.playOsc('sawtooth', 150, 40, 1.5, 0.1); this.playNoise(1.5, 0.1); },
+    hit() {
+        const now = Date.now(); if (now - this.lastHitTime < 50) return;
+        this.lastHitTime = now; this.playNoise(0.15, 0.03);
+    },
+    hurt() { this.playOsc('sawtooth', 200, 50, 0.4, 0.1); },
+    levelUp() {
+        setTimeout(() => this.playOsc('square', 440, 440, 0.1, 0.05), 0);
+        setTimeout(() => this.playOsc('square', 554, 554, 0.1, 0.05), 100);
+        setTimeout(() => this.playOsc('square', 659, 659, 0.1, 0.05), 200);
+        setTimeout(() => this.playOsc('square', 880, 880, 0.4, 0.05), 300);
+    },
+    bossSpawn() {
+        this.playOsc('square', 300, 600, 0.5, 0.05);
+        setTimeout(() => this.playOsc('square', 600, 300, 0.5, 0.05), 500);
+        setTimeout(() => this.playOsc('square', 300, 600, 0.5, 0.05), 1000);
+    },
+    timeStop() { this.playOsc('sine', 800, 20, 2.0, 0.1); this.playNoise(2.0, 0.05); }
+};
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+function getDistSq(x1, y1, x2, y2) { return (x2 - x1)**2 + (y2 - y1)**2; }
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+function triggerShake(intensity) { screenShake = Math.max(screenShake, intensity); }
+
+let impactFrameTimer = 0;
+// Brief freeze-frame on big impacts, like an anime "impact frame" -- hard capped so a
+// bug anywhere else in the code can never accidentally cause a long or runaway freeze.
+function triggerImpactFrame(duration) { impactFrameTimer = Math.min(0.09, Math.max(impactFrameTimer, duration)); }
+
+let flashTimeout = null;
+function triggerFlash(color = '255,255,255', peakAlpha = 0.5) {
+    screenFlashEl.style.background = `rgb(${color})`;
+    screenFlashEl.style.transition = 'none';
+    screenFlashEl.style.opacity = peakAlpha;
+    requestAnimationFrame(() => {
+        screenFlashEl.style.transition = 'opacity 0.35s ease-out';
+        screenFlashEl.style.opacity = 0;
+    });
+}
+
+// Inputs
+window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+});
+window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+canvas.addEventListener('touchstart', (e) => {
+    if(GAME_STATE !== 'PLAYING') return; joystick.active = true;
+    joystick.startX = e.touches[0].clientX; joystick.startY = e.touches[0].clientY;
+    joystick.currentX = e.touches[0].clientX; joystick.currentY = e.touches[0].clientY; updateJoystickDelta();
+});
+canvas.addEventListener('touchmove', (e) => {
+    if(!joystick.active || GAME_STATE !== 'PLAYING') return;
+    joystick.currentX = e.touches[0].clientX; joystick.currentY = e.touches[0].clientY; updateJoystickDelta();
+});
+canvas.addEventListener('touchend', (e) => { joystick.active = false; joystick.dx = 0; joystick.dy = 0; });
+
+function updateJoystickDelta() {
+    const dx = joystick.currentX - joystick.startX; const dy = joystick.currentY - joystick.startY;
+    const distance = Math.hypot(dx, dy); const maxDist = 50;
+    if (distance > 0) { joystick.dx = (dx / distance) * Math.min(distance / maxDist, 1); joystick.dy = (dy / distance) * Math.min(distance / maxDist, 1); } 
+    else { joystick.dx = 0; joystick.dy = 0; }
+}
+
+function findNearestEnemy(x, y) {
+    let nearest = null; let minDistSq = Infinity;
+    for(let i=0; i<bosses.length; i++) {
+        let b = bosses[i];
+        let dSq = getDistSq(x, y, b.x, b.y);
+        if(dSq < minDistSq) { minDistSq = dSq; nearest = b; }
+    }
+    for(let i=0; i<enemies.length; i++) {
+        let e = enemies[i];
+        if (Math.abs(e.x - x) > 1200 || Math.abs(e.y - y) > 1200) continue;
+        let dSq = getDistSq(x, y, e.x, e.y);
+        if(dSq < minDistSq) { minDistSq = dSq; nearest = e; }
+    }
+    return nearest;
+}
+
+/**
+ * WEAPONS DATA - 10 LEVELS (Awaken at 5, Ultimate at 10)
+ */
+const WEAPON_TYPES = {
+    SPIRIT_BLAST: {
+        id: 'SPIRIT_BLAST', name: 'Spirit Blast', icon: '☄️',
+        desc: 'Auto-targeting blasts.<br><b>LVL 5:</b> Barrage.<br><b>LVL 10:</b> Final Flash beam.',
+        baseCooldown: 1.2, baseDamage: 25, color: '#00d2ff',
+        onFire: (wep, p) => {
+            const target = findNearestEnemy(p.x, p.y);
+            const baseAngle = target ? Math.atan2(target.y - p.y, target.x - p.x) : p.facingAngle;
+            
+            if (wep.level >= 10) {
+                triggerShake(15); triggerImpactFrame(0.08); triggerFlash('255,255,100', 0.3);
+                SoundEngine.ultimate();
+                projectiles.push(new Projectile(p.x, p.y, baseAngle, 0, wep.damage * 0.5, 90, '#ffff00', 'hyper_beam', 9999, wep.level, p));
+            } else if (wep.level >= 5) {
+                SoundEngine.heavyShoot();
+                for(let i=0; i < (10 + wep.level); i++) {
+                    setTimeout(() => {
+                        if (GAME_STATE !== 'PLAYING') return;
+                        let angle = baseAngle + (Math.random() - 0.5) * 0.5;
+                        projectiles.push(new Projectile(p.x, p.y, angle, 600 + Math.random()*300, wep.damage * 0.6, 15, '#ffd700', 'spirit_blast', 1, wep.level));
+                    }, i * 25);
+                }
+            } else {
+                SoundEngine.shoot();
+                let count = wep.level >= 3 ? 2 : 1;
+                let spread = 0.3; let startAngle = baseAngle - (spread * (count-1))/2;
+                for(let i=0; i<count; i++) {
+                    let angle = startAngle + (spread * i);
+                    let pierce = 1 + Math.floor(wep.level/2);
+                    projectiles.push(new Projectile(p.x, p.y, angle, 400 + (wep.level * 40), wep.damage, 10 + (wep.level*2), wep.color, 'spirit_blast', pierce, wep.level));
+                }
+            }
+        }
+    },
+    REAPER_SLASH: {
+        id: 'REAPER_SLASH', name: 'Reaper Slash', icon: '🌙',
+        desc: 'Piercing wave.<br><b>LVL 5:</b> Judgement Cut.<br><b>LVL 10:</b> Mugetsu wave.',
+        baseCooldown: 2.0, baseDamage: 40, color: '#c0182b',
+        onFire: (wep, p) => {
+            const target = findNearestEnemy(p.x, p.y);
+            let angle = target ? Math.atan2(target.y - p.y, target.x - p.x) : p.facingAngle;
+
+            if (wep.level >= 10) {
+                triggerShake(20); triggerImpactFrame(0.09); triggerFlash('255,255,255', 0.35);
+                SoundEngine.ultimate();
+                // A brief black pulse right after the white slash-flash -- "a massive veil of
+                // black Reiatsu erupts upward, darkening the sky" per canon Mugetsu.
+                setTimeout(() => { if (GAME_STATE === 'PLAYING') triggerFlash('0,0,0', 0.5); }, 130);
+                // Eruption burst at the swing: pale shockwave rings + void debris hurled out
+                createShockwave(p.x, p.y, '#e9eeff', 340, 0.45);
+                setTimeout(() => { if (GAME_STATE === 'PLAYING') createShockwave(p.x, p.y, '#e9eeff', 520, 0.5); }, 90);
+                createShards(p.x, p.y, '#11121a', 14);
+                createSparks(p.x, p.y, '#dfe6ff', 16, 1.3);
+                // A colossal wall of black reiatsu erupting outward from the swing.
+                projectiles.push(new Projectile(p.x, p.y, angle, 0, wep.damage * 2.2, 130, '#000', 'mugetsu', 9999, wep.level));
+            } else if (wep.level >= 5) {
+                SoundEngine.heavyShoot();
+                let targets = enemies.concat(bosses).slice(0, 4 + wep.level); 
+                targets.forEach((t, i) => {
+                    setTimeout(() => {
+                        if (GAME_STATE !== 'PLAYING') return;
+                        projectiles.push(new Projectile(t.x, t.y, 0, 0, wep.damage * 1.2, 50 + (wep.level*4), '#000', 'judgement_cut', 9999, wep.level));
+                        triggerShake(2);
+                    }, i * 50);
+                });
+                for(let i=0; i<3; i++) {
+                    setTimeout(() => {
+                        if (GAME_STATE !== 'PLAYING') return;
+                        let a = Math.random()*Math.PI*2; let dist = Math.random()*150;
+                        projectiles.push(new Projectile(p.x + Math.cos(a)*dist, p.y + Math.sin(a)*dist, 0, 0, wep.damage, 60, '#000', 'judgement_cut', 9999, wep.level));
+                    }, 250 + i * 50);
+                }
+            } else {
+                SoundEngine.shoot();
+                // Launch burst -- energy shedding backward off the swing
+                for (let i = 0; i < 6; i++) {
+                    createGlow(p.x, p.y, i % 2 ? wep.color : '#000', 1, { angle: angle + Math.PI + (Math.random()-0.5)*1.4, speed: 90 + Math.random()*110, life: 0.22, radius: 2 + Math.random()*3 });
+                }
+                createSparks(p.x, p.y, wep.color, 4, 0.8);
+                projectiles.push(new Projectile(p.x, p.y, angle, 300 + (wep.level * 20), wep.damage, 50 + (wep.level * 10), wep.color, 'reaper_slash', 9999, wep.level));
+            }
+        }
+    },
+    TRUTH_ORBS: {
+        id: 'TRUTH_ORBS', name: 'Truth Orbs', icon: '⚫',
+        desc: 'Orbiting spheres.<br><b>LVL 5:</b> Fast Void spin.<br><b>LVL 10:</b> Planetary Devastation.',
+        baseCooldown: 8.0, baseDamage: 18, color: '#111', 
+        levelUpLogic: (wep) => {
+            wep.orbCount = wep.level < 10 ? wep.level : 6; 
+            if(!wep.orbitals) wep.orbitals = [];
+            if(wep.orbitAngle === undefined) wep.orbitAngle = 0;
+            while(wep.orbitals.length < wep.orbCount) { wep.orbitals.push({ history: [] }); }
+        },
+        update: (wep, p, dt) => {
+            if(!wep.orbitals) return;
+            let speedMulti = wep.level >= 5 ? 8 : 2 + (wep.level * 0.5); 
+            let radius = wep.level >= 5 ? 100 : 70 + (wep.level * 5); 
+
+            // One shared rotation for the whole group -- each orb's slot is purely a fixed
+            // offset from it, so the balls always stay evenly spaced no matter when each
+            // one was added (previously each orb tracked its own independent angle that
+            // started accumulating whenever it was created, so orbs added at different
+            // weapon levels drifted out of sync with each other).
+            wep.orbitAngle = (wep.orbitAngle || 0) + speedMulti * dt * globalTimeScale;
+
+            wep.orbitals.forEach((orb, idx) => {
+                let targetBase = (Math.PI*2 / wep.orbCount) * idx;
+                const ox = p.x + Math.cos(wep.orbitAngle + targetBase) * radius;
+                const oy = p.y + Math.sin(wep.orbitAngle + targetBase) * radius;
+                
+                orb.history.push({x: ox, y: oy});
+                if(orb.history.length > (wep.level>=5 ? 15 : 10)) orb.history.shift();
+
+                let allMobs = enemies.concat(bosses);
+                for(let i=allMobs.length-1; i>=0; i--) {
+                    let e = allMobs[i];
+                    if (Math.abs(ox - e.x) > 100 || Math.abs(oy - e.y) > 100) continue;
+                    if(getDistSq(ox, oy, e.x, e.y) < (e.radius + 20)**2) {
+                        if(!e.hitByOrbTimer) e.hitByOrbTimer = 0;
+                        if(e.hitByOrbTimer <= 0) {
+                            createSparks(ox, oy, '#fff', 3, 0.5);
+                            if(e.takeDamage(wep.damage)) {
+                                if(e instanceof Enemy && !(e instanceof Boss)) enemies.splice(enemies.indexOf(e), 1);
+                                else if(e instanceof Boss) bosses.splice(bosses.indexOf(e), 1);
+                            }
+                            e.hitByOrbTimer = wep.level >= 5 ? 0.15 : 0.4; 
+                        }
+                    }
+                }
+            });
+        },
+        onFire: (wep, p) => {
+            if (wep.level >= 10) {
+                const target = findNearestEnemy(p.x, p.y) || p;
+                triggerImpactFrame(0.08); triggerFlash('138,43,226', 0.3); triggerShake(10);
+                SoundEngine.ultimate();
+                projectiles.push(new Projectile(target.x, target.y, 0, 0, wep.damage * 3, 160, '#000', 'chibaku', 9999, wep.level));
+            }
+        },
+        draw: (wep, p) => {
+            if(!wep.orbitals) return;
+            wep.orbitals.forEach(orb => {
+                if(orb.history.length > 1) {
+                    // Fading black trail with a white contour edge, matching the orb itself
+                    for (let i = 0; i < orb.history.length - 1; i++) {
+                        let h0 = orb.history[i], h1 = orb.history[i+1];
+                        let t = i / orb.history.length;
+                        ctx.globalAlpha = t * 0.5;
+                        ctx.strokeStyle = '#111';
+                        ctx.lineWidth = (wep.level >= 5 ? 20 : 13) * t; ctx.lineCap = 'round';
+                        ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(h1.x, h1.y); ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                    ctx.beginPath(); ctx.moveTo(orb.history[0].x, orb.history[0].y);
+                    for(let i=1; i<orb.history.length; i++) ctx.lineTo(orb.history[i].x, orb.history[i].y);
+                    ctx.strokeStyle = `rgba(255,255,255,0.75)`; ctx.lineWidth = 4; ctx.stroke();
+                }
+                let current = orb.history[orb.history.length-1];
+                if(current) {
+                    let r = wep.level >= 5 ? 20 : 15;
+                    ctx.save(); ctx.translate(current.x, current.y);
+                    // Solid matte-black sphere -- the Truth-Seeking Ball itself
+                    let grd = ctx.createRadialGradient(-r*0.3, -r*0.3, 1, 0, 0, r);
+                    grd.addColorStop(0, '#333'); grd.addColorStop(1, '#000');
+                    ctx.fillStyle = grd;
+                    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+                    // Iconic white swirl contour line dividing the sphere
+                    ctx.save(); ctx.rotate(wep.orbitAngle * (wep.level >= 5 ? 2.2 : 1));
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = wep.level >= 5 ? 3 : 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -r);
+                    ctx.quadraticCurveTo(r*0.65, -r*0.5, 0, 0);
+                    ctx.quadraticCurveTo(-r*0.65, r*0.5, 0, r);
+                    ctx.stroke();
+                    ctx.restore();
+                    // Thin white rim
+                    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.stroke();
+                    // Subtle dark chakra shimmer at max level -- accent, not a full recolor
+                    if (wep.level >= 10) drawBloom(r * 1.7, 'rgba(80,40,120,0.3)');
+                    ctx.restore();
+                }
+            });
+        }
+    },
+    CURSED_PURPLE: {
+        id: 'CURSED_PURPLE', name: 'Cursed Purple', icon: '🟣',
+        desc: 'Devastating vortex.<br><b>LVL 5:</b> Piercing Hollow Orb.<br><b>LVL 10:</b> Domain Expansion.',
+        baseCooldown: 5.2, baseDamage: 95, color: '#8a2be2',
+        onFire: (wep, p) => {
+            const target = findNearestEnemy(p.x, p.y);
+            if (wep.level >= 10) {
+                // Domain Expansion gets its own fixed, much longer cooldown -- the shared
+                // per-level formula worked out to ~1.2s at max level, far too often for a
+                // battlefield-freezing ultimate.
+                wep.cooldownMax = 9.0;
+                triggerShake(15); triggerImpactFrame(0.09); triggerFlash('138,43,226', 0.35);
+                SoundEngine.ultimate();
+                projectiles.push(new Projectile(p.x, p.y, 0, 0, wep.damage * 0.15, 400, '#fff', 'domain', 9999, wep.level, p));
+            } else if (wep.level >= 5 && target) {
+                triggerShake(5);
+                SoundEngine.heavyShoot();
+                const angle = Math.atan2(target.y - p.y, target.x - p.x);
+                projectiles.push(new Projectile(p.x, p.y, angle, 400, wep.damage * 1.5, 120, wep.color, 'cursed_purple', 9999, wep.level));
+            } else {
+                SoundEngine.heavyShoot();
+                const angle = target ? Math.atan2(target.y - p.y, target.x - p.x) : p.facingAngle;
+                projectiles.push(new Projectile(p.x, p.y, angle, 150, wep.damage, 40 + (wep.level * 10), wep.color, 'cursed_purple', 9999, wep.level));
+            }
+        }
+    },
+    GUM_GATLING: {
+        id: 'GUM_GATLING', name: 'Gum Gatling', icon: '👊',
+        desc: 'Barrage of punches.<br><b>LVL 5:</b> Red Roc fists.<br><b>LVL 10:</b> Bajrang Gun drop.',
+        baseCooldown: 1.5, baseDamage: 12, color: '#f39c12',
+        onFire: (wep, p) => {
+            if (wep.level >= 10) {
+                const target = findNearestEnemy(p.x, p.y) || {x: p.x + Math.cos(p.facingAngle)*200, y: p.y + Math.sin(p.facingAngle)*200};
+                triggerFlash('255,120,0', 0.2);
+                SoundEngine.ultimate();
+                projectiles.push(new Projectile(target.x, target.y - 600, 0, 0, wep.damage * 4, 180, '#000', 'bajrang', 9999, wep.level, {targetX: target.x, targetY: target.y}));
+            } else {
+                if (wep.level >= 5) SoundEngine.heavyShoot();
+                else SoundEngine.shoot();
+
+                // Punch count caps out at 10 (was an uncapped 15 that made this weapon's DPS blow past every other option)
+                const punchCount = wep.level >= 5 ? Math.min(10, 8 + Math.floor((wep.level - 5) / 2)) : 3 + (wep.level * 2); 
+                for(let i=0; i<punchCount; i++) {
+                    setTimeout(() => {
+                        if(GAME_STATE !== 'PLAYING') return;
+                        let spread = (Math.random() - 0.5) * (1.2 - wep.level*0.05); 
+                        let speed = 400 + (wep.level * 80) + (Math.random() * 200);
+                        let color = wep.level >= 5 ? '#ff4500' : (wep.level >= 4 ? '#000' : wep.color); 
+                        let radius = wep.level >= 5 ? 25 : 8 + (wep.level * 2);
+                        projectiles.push(new Projectile(p.x, p.y, p.facingAngle + spread, speed, wep.damage, radius, color, 'fist', wep.level>=5 ? 3 : 1, wep.level, p));
+                    }, i * (wep.level >= 5 ? 30 : 50)); 
+                }
+            }
+        }
+    },
+    WATER_WHEEL: {
+        id: 'WATER_WHEEL', name: 'Water Wheel', icon: '🌊',
+        desc: 'Expanding vortex.<br><b>LVL 5:</b> Sun God Dance.<br><b>LVL 10:</b> Flame Dragon.',
+        baseCooldown: 3.0, baseDamage: 25, color: '#3498db',
+        onFire: (wep, p) => {
+            if (wep.level >= 10) {
+                // Summon the pair once; they're persistent companions, not a repeating burst,
+                // so later cooldown ticks are a no-op instead of destroying and recreating them
+                // (which was causing the trail/orientation to reset constantly).
+                if (!projectiles.some(pr => pr.style === 'dragon')) {
+                    triggerFlash('255,100,0', 0.25);
+                    SoundEngine.ultimate();
+                    let d1 = new Projectile(p.x, p.y, 0, 0, wep.damage * 1.5, 50, '#ff4500', 'dragon', 9999, wep.level, p);
+                    d1.orbitRadius = 180; d1.orbitDir = 1; d1.rotation = 0;
+                    let d2 = new Projectile(p.x, p.y, 0, 0, wep.damage * 1.5, 50, '#ffcc00', 'dragon', 9999, wep.level, p);
+                    d2.orbitRadius = 300; d2.orbitDir = -1; d2.rotation = Math.PI;
+                    projectiles.push(d1, d2);
+                }
+            } else {
+                SoundEngine.heavyShoot();
+                let color = wep.level >= 5 ? '#ff4500' : wep.color;
+                let style = wep.level >= 5 ? 'sun_wheel' : 'water_wheel';
+                projectiles.push(new Projectile(p.x, p.y, 0, 0, wep.damage * (wep.level>=5?1.5:1), 25, color, style, 9999, wep.level));
+            }
+        }
+    }
+};
+
+const UPGRADE_POOL = [
+    { id: 'SPIRIT_BLAST', type: 'weapon' }, { id: 'REAPER_SLASH', type: 'weapon' },
+    { id: 'TRUTH_ORBS', type: 'weapon' }, { id: 'CURSED_PURPLE', type: 'weapon' },
+    { id: 'GUM_GATLING', type: 'weapon' }, { id: 'WATER_WHEEL', type: 'weapon' },
+    { id: 'MAX_HP', type: 'stat', name: 'Titan Body', icon: '❤️', desc: 'Increases Max HP by 30.' },
+    { id: 'SPEED', type: 'stat', name: 'Flash Step', icon: '⚡', desc: 'Increases Movement Speed.' },
+    { id: 'MAGNET', type: 'stat', name: 'Gravity Core', icon: '🧲', desc: 'Drastically increases EXP pickup range.' }
+];
+
+/**
+ * CLASSES
+ */
+
+class Player {
+    constructor(x, y) {
+        this.x = x; this.y = y; this.radius = 16; this.speed = 220;
+        this.maxHp = 100; this.hp = 100; this.level = 1; 
+        this.exp = 0; this.maxExp = 15; 
+        this.weapons = []; this.facingAngle = 0; this.godMode = false; this.pendingUpgrades = 0; 
+        this.magnetRange = 100;
+        this.auraPhase = 0;
+        this.trail = []; this.trailTimer = 0; this.dustTimer = 0;
+        this.bobPhase = 0; this.isMoving = false; this.stretch = 1; this.hurtTimer = 0;
+        this.addWeapon('SPIRIT_BLAST');
+    }
+
+    addWeapon(weaponId) {
+        let existing = this.weapons.find(w => w.id === weaponId);
+        if (existing) {
+            if(existing.level < 10) {
+                existing.level++;
+                existing.damage = Math.floor(existing.baseDamage * (1 + (existing.level - 1) * 0.3));
+                existing.cooldownMax = existing.baseCooldown * Math.pow(0.85, existing.level - 1);
+                if(existing.typeDef.levelUpLogic) existing.typeDef.levelUpLogic(existing);
+            }
+        } else {
+            const def = WEAPON_TYPES[weaponId];
+            const wep = {
+                id: weaponId, typeDef: def, level: 1, baseDamage: def.baseDamage, baseCooldown: def.baseCooldown,
+                damage: def.baseDamage, cooldownMax: def.baseCooldown, cooldown: def.baseCooldown, color: def.color
+            };
+            if(def.levelUpLogic) def.levelUpLogic(wep);
+            this.weapons.push(wep);
+        }
+    }
+
+    update(dt) {
+        let adjDt = dt * globalTimeScale; 
+        this.auraPhase += dt * 5;
+        let dx = 0, dy = 0;
+        if (joystick.active) { dx = joystick.dx; dy = joystick.dy; } 
+        else {
+            if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+        }
+
+        this.isMoving = (dx !== 0 || dy !== 0);
+        let targetStretch = this.isMoving ? 1.16 : 1.0;
+        this.stretch += (targetStretch - this.stretch) * Math.min(1, dt * 12);
+
+        if (this.isMoving) {
+            const length = Math.hypot(dx, dy); dx /= length; dy /= length;
+            this.facingAngle = Math.atan2(dy, dx);
+            const speedMod = joystick.active ? Math.hypot(joystick.dx, joystick.dy) : 1;
+            this.x += dx * this.speed * adjDt * speedMod; 
+            this.y += dy * this.speed * adjDt * speedMod;
+            this.bobPhase += adjDt * 13;
+
+            if (globalTimeScale > 0) {
+                // Afterimage trail
+                this.trailTimer -= adjDt;
+                if (this.trailTimer <= 0) {
+                    this.trailTimer = 0.04;
+                    this.trail.push({ x: this.x, y: this.y, angle: this.facingAngle, age: 0 });
+                    if (this.trail.length > 7) this.trail.shift();
+                }
+                // Ground dust kicked up behind the player
+                this.dustTimer -= adjDt;
+                if (this.dustTimer <= 0) {
+                    this.dustTimer = 0.07;
+                    createDust(this.x - Math.cos(this.facingAngle) * 6, this.y + this.radius * 0.7, 'rgba(190,225,255,0.55)', 1);
+                }
+                // Trailing energy motes
+                if (Math.random() < 0.55) {
+                    createGlow(this.x - Math.cos(this.facingAngle) * this.radius * 0.5, this.y - Math.sin(this.facingAngle) * this.radius * 0.5,
+                        this.godMode ? 'rgba(255,215,0,0.5)' : 'rgba(0,210,255,0.5)', 1, { speed: 6, life: 0.2, radius: 2 + Math.random() });
+                }
+            }
+        } else {
+            this.bobPhase += adjDt * 3.5;
+        }
+
+        // Age out and drop old afterimages
+        for (let i = this.trail.length - 1; i >= 0; i--) {
+            this.trail[i].age += adjDt;
+            if (this.trail[i].age > 0.3) this.trail.splice(i, 1);
+        }
+
+        this.weapons.forEach(wep => {
+            if(wep.typeDef.update) wep.typeDef.update(wep, this, adjDt);
+            if(wep.typeDef.onFire) {
+                wep.cooldown -= adjDt;
+                if(wep.cooldown <= 0 && globalTimeScale > 0) {
+                    wep.typeDef.onFire(wep, this); wep.cooldown = wep.cooldownMax;
+                    createGlow(this.x, this.y, wep.color, wep.level >= 10 ? 14 : (wep.level >= 5 ? 8 : 5), { speed: 90, life: 0.22, radius: 3 });
+                }
+            }
+        });
+        // Magnetism
+        let pRSq = this.magnetRange**2;
+        for(let i = gems.length - 1; i >= 0; i--) {
+            let g = gems[i];
+            if (Math.abs(this.x - g.x) > this.magnetRange || Math.abs(this.y - g.y) > this.magnetRange) continue;
+            let distSq = getDistSq(this.x, this.y, g.x, g.y);
+            if (distSq < pRSq) {
+                let angle = Math.atan2(this.y - g.y, this.x - g.x);
+                g.x += Math.cos(angle) * 700 * adjDt; g.y += Math.sin(angle) * 700 * adjDt;
+                if (distSq < (this.radius + g.radius)**2) { this.gainExp(g.value); gems.splice(i, 1); SoundEngine.pickup(); }
+            }
+        }
+    }
+
+    gainExp(amount) {
+        if(globalTimeScale === 0) return; 
+        this.exp += amount; let leveledUp = false;
+        while(this.exp >= this.maxExp) {
+            this.exp -= this.maxExp; this.level++; 
+            this.maxExp = 15 + (this.level * 15); 
+            this.pendingUpgrades++; leveledUp = true;
+        }
+        updateUI();
+        if(leveledUp && GAME_STATE === 'PLAYING') {
+            triggerLevelUp(); SoundEngine.levelUp();
+            createShockwave(this.x, this.y, '#ffd700', 150, 0.5);
+            createGlow(this.x, this.y, '#ffd700', 26, { speed: 150, life: 0.55, radius: 4 });
+            triggerFlash('255,215,0', 0.32);
+        }
+    }
+
+    takeDamage(amount) {
+        if(this.godMode) return; 
+        this.hp -= amount; createFloatingText(this.x, this.y - 20, Math.floor(amount), '#ff3333');
+        createSparks(this.x, this.y, '#ff3333', 8);
+        updateUI(); this.hurtTimer = 0.15; triggerShake(5); SoundEngine.hurt();
+        // Throttled so a swarm of hits in the same instant can't strobe the screen
+        const now = performance.now();
+        if (!this.lastDamageFlash || now - this.lastDamageFlash > 220) {
+            this.lastDamageFlash = now;
+            triggerFlash('255,30,30', Math.min(0.3, 0.08 + amount / 200));
+        }
+        if (this.hp <= 0) triggerGameOver();
+    }
+
+    draw() {
+        // Ground shadow (stays put, doesn't bob)
+        ctx.save();
+        ctx.beginPath(); ctx.ellipse(this.x, this.y + this.radius * 0.85, this.radius * (0.85 * this.stretch), this.radius * 0.32, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
+        ctx.restore();
+
+        // Afterimage trail (fades with age)
+        for (let i = 0; i < this.trail.length; i++) {
+            let t = this.trail[i];
+            let a = Math.max(0, 1 - t.age / 0.3) * 0.22;
+            if (a <= 0) continue;
+            ctx.save(); ctx.globalAlpha = a; ctx.translate(t.x, t.y); ctx.rotate(t.angle);
+            ctx.fillStyle = this.godMode ? '#f1c40f' : '#00d2ff';
+            ctx.beginPath(); ctx.ellipse(0, 0, this.radius * 0.9, this.radius * 0.65, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        let bobOffset = Math.sin(this.bobPhase) * (this.isMoving ? 2.4 : 1.1);
+        ctx.save(); ctx.translate(this.x, this.y + bobOffset);
+
+        // Ambient aura -- subtle always, stronger once transcendent (lvl>10) or god mode
+        ctx.globalCompositeOperation = 'screen';
+        let auraR = this.radius + 6 + Math.sin(this.auraPhase) * 3 + (this.level > 10 ? 7 : 0);
+        let auraColor = this.godMode ? 'rgba(241,196,15,0.4)' : (this.level > 10 ? 'rgba(0,210,255,0.32)' : 'rgba(0,210,255,0.16)');
+        ctx.beginPath(); ctx.arc(0, 0, auraR, 0, Math.PI * 2); ctx.fillStyle = auraColor; ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Body -- squashed/stretched along facing direction for a sense of motion
+        let baseColor = this.godMode ? '#f1c40f' : '#00d2ff';
+        if (this.hurtTimer > 0) { baseColor = '#ff3333'; this.hurtTimer -= 1 / 60; }
+        ctx.save();
+        ctx.rotate(this.facingAngle);
+        ctx.scale(this.stretch, 1 / this.stretch);
+        let grad = ctx.createRadialGradient(-this.radius * 0.3, -this.radius * 0.3, 1, 0, 0, this.radius * 1.1);
+        grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.4, baseColor); grad.addColorStop(1, this.godMode ? '#8a6d00' : '#004b6e');
+        ctx.shadowBlur = 16; ctx.shadowColor = baseColor;
+        ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+        ctx.shadowBlur = 0; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+
+        // Facing chevron
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.moveTo(this.radius - 3, -6); ctx.lineTo(this.radius + 11, 0); ctx.lineTo(this.radius - 3, 6); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.restore();
+
+        this.weapons.forEach(wep => { if(wep.typeDef.draw) wep.typeDef.draw(wep, this); });
+    }
+}
+
+class Enemy {
+    constructor(x, y, hp, speed, color, radius) {
+        this.x = x; this.y = y; this.hp = hp; this.maxHp = hp;
+        this.speed = speed; this.color = color; this.radius = radius;
+        this.damage = 10; this.hitByOrbTimer = 0; this.flashTimer = 0; this.wobble = Math.random() * Math.PI * 2;
+        this.shape = Math.floor(Math.random() * 3); 
+        this.history = [];
+        this.moveAngle = 0; this.spawnGrow = 0; this.frozenTimer = 0;
+    }
+
+    update(dt) {
+        let adjDt = dt * globalTimeScale; 
+        if(adjDt === 0) return;
+
+        if(this.hitByOrbTimer > 0) this.hitByOrbTimer -= adjDt;
+        if(this.flashTimer > 0) this.flashTimer -= adjDt;
+        if(this.spawnGrow < 1) this.spawnGrow = Math.min(1, this.spawnGrow + adjDt * 6);
+
+        if (this.frozenTimer > 0) {
+            this.frozenTimer -= adjDt;
+            return; // paralyzed: no movement, no contact damage, no animation
+        }
+
+        this.wobble += adjDt * 5;
+
+        let angle = Math.atan2(player.y - this.y, player.x - this.x);
+        this.moveAngle = angle;
+        this.x += Math.cos(angle) * this.speed * adjDt + Math.cos(this.wobble)*0.5;
+        this.y += Math.sin(angle) * this.speed * adjDt + Math.sin(this.wobble)*0.5;
+
+        // Trail history
+        if (Math.random() < 0.3) {
+            this.history.push({x: this.x, y: this.y});
+            if(this.history.length > 3) this.history.shift();
+        }
+
+        if (Math.abs(this.x - player.x) < 50 && Math.abs(this.y - player.y) < 50) {
+            if (getDistSq(this.x, this.y, player.x, player.y) < (this.radius + player.radius)**2) {
+                player.takeDamage(this.damage); this.x -= Math.cos(angle) * 40; this.y -= Math.sin(angle) * 40;
+            }
+        }
+        
+        if (getDistSq(this.x, this.y, player.x, player.y) > (Math.max(canvas.width, canvas.height) + 400)**2) {
+            let respawnAngle = Math.random() * Math.PI * 2; let respawnDistance = Math.max(canvas.width, canvas.height) / 2 + 100;
+            this.x = player.x + Math.cos(respawnAngle) * respawnDistance; this.y = player.y + Math.sin(respawnAngle) * respawnDistance;
+            this.history = [];
+        }
+    }
+
+    takeDamage(amount) {
+        this.hp -= amount; this.flashTimer = 0.1;
+        createFloatingText(this.x, this.y - this.radius, Math.floor(amount), '#fff');
+        let angle = Math.atan2(this.y - player.y, this.x - player.x);
+        this.x += Math.cos(angle) * 5; this.y += Math.sin(angle) * 5;
+        if (this.hp <= 0) { this.die(); return true; }
+        return false;
+    }
+
+    die() {
+        createParticles(this.x, this.y, this.color, Math.floor(this.radius/4)); 
+        createShards(this.x, this.y, this.color, 4);
+        createShockwave(this.x, this.y, this.color, this.radius * 2.2, 0.25);
+        gems.push(new Gem(this.x, this.y, 1));
+        SoundEngine.hit();
+    }
+
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft || this.x > camRight || this.y < camTop || this.y > camBottom) return;
+        ctx.save(); 
+
+        // Ground shadow
+        ctx.beginPath(); ctx.ellipse(this.x, this.y + this.radius * 0.75, this.radius * 0.8, this.radius * 0.3, 0, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+        
+        // Draw trailing shadows (motion smear)
+        ctx.globalAlpha = 0.25; ctx.fillStyle = this.color;
+        this.history.forEach((h, i) => {
+            ctx.beginPath();
+            if (this.shape === 0) ctx.arc(h.x, h.y, this.radius * (i/3), 0, Math.PI * 2);
+            else if (this.shape === 1) ctx.rect(h.x-this.radius, h.y-this.radius, this.radius*2, this.radius*2);
+            else { ctx.moveTo(h.x, h.y-this.radius); ctx.lineTo(h.x+this.radius, h.y+this.radius); ctx.lineTo(h.x-this.radius, h.y+this.radius); }
+            ctx.fill();
+        });
+        
+        ctx.globalAlpha = 1.0;
+        ctx.translate(this.x, this.y);
+        let spawnScale = this.spawnGrow < 1 ? (0.4 + this.spawnGrow * 0.6) : 1;
+        ctx.scale(spawnScale, spawnScale);
+        if (this.frozenTimer > 0) { ctx.fillStyle = '#4a2f66'; ctx.shadowBlur = 10; ctx.shadowColor = '#b57bff'; }
+        else if (this.flashTimer > 0) { ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 12; ctx.shadowColor = '#fff'; } 
+        else { ctx.fillStyle = this.color; ctx.shadowBlur = 6; ctx.shadowColor = this.color; }
+        
+        ctx.beginPath(); ctx.scale(1 + Math.cos(this.wobble)*0.1, 1 + Math.sin(this.wobble)*0.1);
+        if (this.shape === 0) { ctx.arc(0, 0, this.radius, 0, Math.PI * 2); } 
+        else if (this.shape === 1) { ctx.roundRect(-this.radius, -this.radius, this.radius*2, this.radius*2, 4); } 
+        else {
+            ctx.rotate(this.moveAngle + Math.PI/2);
+            ctx.moveTo(0, -this.radius); ctx.lineTo(this.radius, this.radius); ctx.lineTo(-this.radius, this.radius); ctx.closePath();
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Evil red eyes -- dimmed to a paralyzed purple glow while frozen
+        ctx.fillStyle = this.frozenTimer > 0 ? '#e0c8ff' : '#ff0000';
+        ctx.beginPath(); ctx.arc(-this.radius*0.3, -this.radius*0.2, this.radius*0.2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(this.radius*0.3, -this.radius*0.2, this.radius*0.2, 0, Math.PI*2); ctx.fill();
+        
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+
+        // Pulsing void-glyph ring around anything paralyzed by the domain
+        if (this.frozenTimer > 0) {
+            ctx.strokeStyle = `rgba(190,130,255,${0.5 + Math.sin(this.frozenTimer * 10) * 0.3})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius * 1.35, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+class Boss extends Enemy {
+    constructor(x, y, hp, speed, color, radius, name) {
+        super(x, y, hp, speed, color, radius);
+        this.name = name; this.maxHp = hp; this.attackTimer = 0;
+        createFloatingText(this.x, this.y - 80, `BOSS: ${name}`, color);
+        triggerFlash('255,0,60', 0.22);
+    }
+    get enraged() { return this.hp < this.maxHp * 0.3; }
+    die() {
+        createParticles(this.x, this.y, this.color, 50);
+        createShards(this.x, this.y, this.color, 16);
+        createShockwave(this.x, this.y, this.color, 240, 0.55);
+        createShockwave(this.x, this.y, '#fff', 160, 0.4);
+        triggerShake(22); triggerFlash('255,255,255', 0.55); triggerImpactFrame(0.09);
+        gems.push(new Gem(this.x, this.y, 100 * (bossMinuteCounter || 1)));
+        SoundEngine.ultimate();
+    }
+    // Shared ground shadow + enrage aura, called by subclasses in world space before translating
+    drawBossFX() {
+        ctx.beginPath(); ctx.ellipse(this.x, this.y + this.radius * 0.8, this.radius * 0.9, this.radius * 0.35, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();
+        if (this.enraged) {
+            ctx.save(); ctx.globalCompositeOperation = 'screen';
+            let r = this.radius + 16 + Math.sin(this.wobble * 2) * 6;
+            ctx.beginPath(); ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,20,20,0.28)'; ctx.fill();
+            ctx.restore();
+        }
+        if (this.frozenTimer > 0) {
+            ctx.save(); ctx.globalCompositeOperation = 'screen';
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 1.1, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(150,90,230,0.35)'; ctx.fill();
+            ctx.restore();
+            ctx.strokeStyle = `rgba(190,130,255,${0.5 + Math.sin(this.frozenTimer * 10) * 0.3})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 1.3, 0, Math.PI * 2); ctx.stroke();
+        }
+    }
+}
+
+class FriezaBoss extends Boss {
+    constructor(x, y, cycle) { super(x, y, 800 * cycle, 80, '#e8e8f5', 60, "ALIEN TYRANT"); this.chargeTime = 2.6; this.charging = false; this.beamAngle = 0; }
+    update(dt) {
+        let adjDt = dt * globalTimeScale; if(adjDt === 0) return;
+        super.update(dt); if (this.frozenTimer > 0) return;
+        this.attackTimer += adjDt;
+        // Longer, honest windup so the sight-line gives a real dodge window
+        let windup = this.enraged ? 0.55 : 0.75;
+        if (!this.charging && this.attackTimer > this.chargeTime - windup) {
+            this.charging = true;
+            // Aim is LOCKED the moment charging begins -- it no longer tracks the player
+            // all the way up to the shot, which is what made the beam unavoidable.
+            this.beamAngle = Math.atan2(player.y - this.y, player.x - this.x);
+        }
+        if (this.charging && Math.random() < 0.5) createSparks(this.x, this.y, '#ff00ff', 1, 0.4);
+        if (this.attackTimer > this.chargeTime) {
+            this.attackTimer = 0; this.charging = false;
+            triggerShake(6); createGlow(this.x, this.y, '#ff00ff', 10, { speed: 60, life: 0.3, radius: 4 });
+            projectiles.push(new Projectile(this.x, this.y, this.beamAngle, 1200, 20, 10, '#ff00ff', 'death_beam', 1, 1, this));
+        }
+    }
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft - 100 || this.x > camRight + 100 || this.y < camTop - 100 || this.y > camBottom + 100) return;
+        this.drawBossFX();
+        // Laser-sight telegraph -- fixed line, doesn't track the player, so stepping off it is a real dodge
+        if (this.charging) {
+            let chargeProgress = Math.min(1, (this.attackTimer - (this.chargeTime - (this.enraged?0.55:0.75))) / (this.enraged?0.55:0.75));
+            ctx.save(); ctx.globalAlpha = 0.45 + chargeProgress*0.25 + Math.sin(this.wobble * 6) * 0.15;
+            ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
+            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + Math.cos(this.beamAngle) * 1400, this.y + Math.sin(this.beamAngle) * 1400); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+        let r = this.radius; let bob = Math.sin(this.wobble) * 3;
+        ctx.save(); ctx.translate(this.x, this.y + bob);
+        let sq = 1 + Math.cos(this.wobble)*0.04;
+        ctx.scale(sq, 1/sq);
+        if (this.enraged) { ctx.shadowBlur = 22; ctx.shadowColor = '#ff0000'; }
+
+        // Tail curling from behind
+        ctx.save(); ctx.globalAlpha = 0.95;
+        ctx.strokeStyle = '#6b2fa3'; ctx.lineWidth = r*0.22; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(r*0.3, r*0.5);
+        ctx.quadraticCurveTo(r*1.6, r*0.8 + Math.sin(this.wobble*0.7)*8, r*1.3, r*1.8 + Math.sin(this.wobble*0.7)*10);
+        ctx.stroke();
+        ctx.fillStyle = '#6b2fa3'; ctx.beginPath();
+        let tx = r*1.3, ty = r*1.8 + Math.sin(this.wobble*0.7)*10;
+        ctx.moveTo(tx, ty-8); ctx.lineTo(tx+16, ty+6); ctx.lineTo(tx-2, ty+14); ctx.closePath(); ctx.fill();
+        ctx.restore();
+
+        // Torso -- hourglass silhouette
+        let torsoGrad = ctx.createLinearGradient(0, r*0.2, 0, r*1.3);
+        torsoGrad.addColorStop(0, '#9d6fd1'); torsoGrad.addColorStop(1, '#5a2d8c');
+        ctx.fillStyle = torsoGrad;
+        ctx.beginPath();
+        ctx.moveTo(-r*0.55, r*0.25); ctx.quadraticCurveTo(-r*0.15, r*0.55, -r*0.4, r*1.1);
+        ctx.quadraticCurveTo(0, r*1.35, r*0.4, r*1.1);
+        ctx.quadraticCurveTo(r*0.15, r*0.55, r*0.55, r*0.25);
+        ctx.closePath(); ctx.fill();
+
+        // Shoulder pauldrons
+        ctx.fillStyle = '#c9a8ec';
+        ctx.beginPath(); ctx.ellipse(-r*0.62, r*0.15, r*0.32, r*0.22, -0.3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(r*0.62, r*0.15, r*0.32, r*0.22, 0.3, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#4b2570'; ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Neck spike collar
+        ctx.fillStyle = '#5a2d8c';
+        for (let i = -3; i <= 3; i++) {
+            let a = i * 0.22;
+            ctx.save(); ctx.rotate(a); ctx.translate(0, -r*0.05);
+            ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(5, 0); ctx.lineTo(0, -r*0.32); ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.shadowBlur = this.enraged ? 22 : 0; ctx.shadowColor = '#ff0000';
+        // Head -- elongated dome
+        let headGrad = ctx.createRadialGradient(-r*0.2, -r*0.5, r*0.1, 0, -r*0.25, r*0.85);
+        headGrad.addColorStop(0, '#ffffff'); headGrad.addColorStop(0.55, this.flashTimer > 0 ? '#ffffff' : '#e8e8f5'); headGrad.addColorStop(1, '#b9b9d0');
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.moveTo(-r*0.55, -r*0.1);
+        ctx.quadraticCurveTo(-r*0.7, -r*0.85, 0, -r*0.95);
+        ctx.quadraticCurveTo(r*0.7, -r*0.85, r*0.55, -r*0.1);
+        ctx.quadraticCurveTo(r*0.3, r*0.15, 0, r*0.18);
+        ctx.quadraticCurveTo(-r*0.3, r*0.15, -r*0.55, -r*0.1);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#8888a0'; ctx.lineWidth = 1.5; ctx.stroke();
+
+        // Crown horns sweeping back
+        ctx.fillStyle = '#c9a8ec';
+        ctx.beginPath(); ctx.moveTo(-r*0.45, -r*0.6); ctx.quadraticCurveTo(-r*1.15, -r*0.8, -r*1.0, -r*1.35); ctx.quadraticCurveTo(-r*0.7, -r*0.9, -r*0.25, -r*0.75); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(r*0.45, -r*0.6); ctx.quadraticCurveTo(r*1.15, -r*0.8, r*1.0, -r*1.35); ctx.quadraticCurveTo(r*0.7, -r*0.9, r*0.25, -r*0.75); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#4b2570'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Forehead gem (glows when charging)
+        let gemGlow = this.charging ? (0.6 + Math.sin(this.wobble*10)*0.4) : 0.15;
+        ctx.save(); ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = `rgba(255,0,255,${gemGlow})`;
+        ctx.beginPath(); ctx.arc(0, -r*0.68, r*0.22, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = this.charging ? '#ff44ff' : '#8a2be2';
+        ctx.beginPath(); ctx.ellipse(0, -r*0.62, r*0.1, r*0.13, 0, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#3a1854'; ctx.lineWidth = 1.5; ctx.stroke();
+
+        // Eyes -- angled magenta almonds
+        ctx.fillStyle = '#ff2fd8';
+        ctx.beginPath(); ctx.ellipse(-r*0.24, -r*0.35, r*0.15, r*0.09, -0.25, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(r*0.24, -r*0.35, r*0.15, r*0.09, 0.25, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#1a0022';
+        ctx.beginPath(); ctx.arc(-r*0.24, -r*0.35, r*0.045, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(r*0.24, -r*0.35, r*0.045, 0, Math.PI*2); ctx.fill();
+
+        // Thin smirking mouth
+        ctx.strokeStyle = '#6b6b85'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-r*0.12, -r*0.05); ctx.quadraticCurveTo(0, r*0.0, r*0.14, -r*0.08); ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+class MadaraBoss extends Boss {
+    constructor(x, y, cycle) { super(x, y, 1200 * cycle, 40, '#8B0000', 70, "GHOST NINJA"); this.casting = 0; this.tomoeSpin = 0; }
+    update(dt) {
+        let adjDt = dt * globalTimeScale; if(adjDt === 0) return;
+        super.update(dt); if (this.frozenTimer > 0) return;
+        this.attackTimer += adjDt;
+        this.tomoeSpin += adjDt * (this.casting > 0 ? 6 : 1.2);
+        let interval = this.enraged ? 3.2 : 4.0;
+        if (this.attackTimer > interval - 0.5) this.casting = Math.min(1, this.casting + adjDt * 3);
+        if (this.attackTimer > interval) {
+            this.attackTimer = 0; this.casting = 0;
+            createGlow(this.x, this.y, '#ff2222', 14, { speed: 60, life: 0.4, radius: 4 });
+            triggerShake(4);
+            dangerZones.push(new DangerZone(player.x, player.y, 150, 2.0, 40));
+        }
+    }
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft - 120 || this.x > camRight + 120 || this.y < camTop - 120 || this.y > camBottom + 120) return;
+        this.drawBossFX();
+        let r = this.radius; let sway = Math.sin(this.wobble * 0.6) * 0.08;
+        ctx.save(); ctx.translate(this.x, this.y);
+        let sq = 1 + Math.cos(this.wobble)*0.05;
+        ctx.scale(sq, 1/sq);
+
+        // Tattered cloak behind, swaying
+        ctx.save(); ctx.rotate(sway);
+        let cloakGrad = ctx.createLinearGradient(0, -r*0.3, 0, r*1.6);
+        cloakGrad.addColorStop(0, '#5a0a0a'); cloakGrad.addColorStop(1, '#1a0000');
+        ctx.fillStyle = cloakGrad;
+        ctx.beginPath(); ctx.moveTo(-r*0.9, -r*0.2);
+        ctx.lineTo(-r*1.1, r*1.1); ctx.lineTo(-r*0.7, r*0.85); ctx.lineTo(-r*0.5, r*1.3);
+        ctx.lineTo(-r*0.15, r*0.9); ctx.lineTo(0, r*1.4); ctx.lineTo(r*0.15, r*0.9);
+        ctx.lineTo(r*0.5, r*1.3); ctx.lineTo(r*0.7, r*0.85); ctx.lineTo(r*1.1, r*1.1);
+        ctx.lineTo(r*0.9, -r*0.2);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+
+        if (this.enraged || this.casting > 0) { ctx.shadowBlur = 18 + this.casting*10; ctx.shadowColor = '#ff0000'; }
+
+        // Hood
+        let hoodGrad = ctx.createRadialGradient(0, -r*0.3, r*0.1, 0, -r*0.1, r*0.95);
+        hoodGrad.addColorStop(0, this.flashTimer > 0 ? '#fff' : '#7a1515'); hoodGrad.addColorStop(1, '#2a0505');
+        ctx.fillStyle = hoodGrad;
+        ctx.beginPath();
+        ctx.moveTo(-r*0.7, r*0.35);
+        ctx.quadraticCurveTo(-r*0.85, -r*0.55, -r*0.35, -r*0.9);
+        ctx.quadraticCurveTo(0, -r*1.05, r*0.35, -r*0.9);
+        ctx.quadraticCurveTo(r*0.85, -r*0.55, r*0.7, r*0.35);
+        ctx.quadraticCurveTo(0, r*0.55, -r*0.7, r*0.35);
+        ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#1a0000'; ctx.lineWidth = 2; ctx.stroke();
+
+        // Hood peak accent
+        ctx.fillStyle = '#3a0808';
+        ctx.beginPath(); ctx.moveTo(0, -r*1.05); ctx.lineTo(-r*0.1, -r*0.65); ctx.lineTo(r*0.1, -r*0.65); ctx.closePath(); ctx.fill();
+
+        // Bone mask across lower face
+        ctx.fillStyle = '#e8dcc8';
+        ctx.beginPath(); ctx.ellipse(0, r*0.05, r*0.55, r*0.35, 0, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#a89878'; ctx.lineWidth = 1.5; ctx.stroke();
+        // Red war-paint streaks
+        ctx.strokeStyle = '#c0202080'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(-r*0.45, -r*0.05); ctx.lineTo(-r*0.2, r*0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(r*0.45, -r*0.05); ctx.lineTo(r*0.2, r*0.2); ctx.stroke();
+        // Mouth guard vents
+        ctx.strokeStyle = '#8a7a5c'; ctx.lineWidth = 1.5;
+        for (let i=-1;i<=1;i++) { ctx.beginPath(); ctx.moveTo(-r*0.18, r*0.18+i*6); ctx.lineTo(r*0.18, r*0.18+i*6); ctx.stroke(); }
+
+        // Shadowed closed eye (left)
+        ctx.fillStyle = '#0a0000';
+        ctx.beginPath(); ctx.ellipse(-r*0.28, -r*0.15, r*0.12, r*0.06, -0.1, 0, Math.PI*2); ctx.fill();
+
+        // Glowing Sharingan eye (right) with orbiting tomoe
+        let eyeR = r*0.16;
+        ctx.save(); ctx.translate(r*0.28, -r*0.15);
+        ctx.save(); ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = `rgba(255,0,0,${0.5 + this.casting*0.4})`;
+        ctx.beginPath(); ctx.arc(0, 0, eyeR*2.2, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = '#dd0000'; ctx.beginPath(); ctx.arc(0, 0, eyeR, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, 0, eyeR*0.35, 0, Math.PI*2); ctx.fill();
+        for (let i=0;i<3;i++) {
+            let a = this.tomoeSpin + i*(Math.PI*2/3);
+            let tx = Math.cos(a)*eyeR*0.6, ty = Math.sin(a)*eyeR*0.6;
+            ctx.save(); ctx.translate(tx, ty); ctx.rotate(a + Math.PI/2);
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(0, 0, eyeR*0.22, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0,-eyeR*0.22); ctx.quadraticCurveTo(eyeR*0.35,-eyeR*0.1, 0, eyeR*0.05); ctx.quadraticCurveTo(-eyeR*0.1,-eyeR*0.1,0,-eyeR*0.22); ctx.fill();
+            ctx.restore();
+        }
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0,0,eyeR,0,Math.PI*2); ctx.stroke();
+        ctx.restore();
+
+        ctx.restore();
+    }
+}
+
+class DioBoss extends Boss {
+    constructor(x, y, cycle) { super(x, y, 700 * cycle, 90, '#f1c40f', 55, "VAMPIRE LORD"); this.timeStopped = false; this.warmup = 0; }
+    update(dt) {
+        if (this.frozenTimer > 0) { this.frozenTimer -= dt; return; }
+        this.wobble += dt * 5; let angle = Math.atan2(player.y - this.y, player.x - this.x);
+        this.x += Math.cos(angle) * this.speed * dt; this.y += Math.sin(angle) * this.speed * dt;
+        if(this.flashTimer > 0) this.flashTimer -= dt;
+        if(this.spawnGrow < 1) this.spawnGrow = Math.min(1, this.spawnGrow + dt * 6);
+        
+        if (Math.abs(this.x - player.x) < 50 && Math.abs(this.y - player.y) < 50) {
+            if (getDistSq(this.x, this.y, player.x, player.y) < (this.radius + player.radius)**2) {
+                player.takeDamage(this.damage); this.x -= Math.cos(angle) * 40; this.y -= Math.sin(angle) * 40;
+            }
+        }
+
+        this.attackTimer += dt;
+        // Brief golden warmup flash right before the world stops, so it never feels like a free hit
+        if (this.attackTimer > 5.6 && !this.timeStopped) {
+            this.warmup += dt;
+            if (Math.random() < 0.3) createSparks(this.x, this.y, '#f1c40f', 1, 0.5);
+        }
+        if (this.attackTimer > 6.0 && !this.timeStopped) {
+            this.timeStopped = true; this.warmup = 0; globalTimeScale = 0.0; 
+            createFloatingText(this.x, this.y - 100, "ZA WARUDO!", "#f1c40f"); triggerShake(10);
+            createShockwave(this.x, this.y, '#f1c40f', 400, 0.6); triggerFlash('241,196,15', 0.4);
+            SoundEngine.timeStop();
+            
+            // Fewer, slightly weaker knives than before -- still threatening, less of a guaranteed chunk of HP
+            const knifeCount = 6, knifeDamage = 12;
+            for(let i=0; i<knifeCount; i++) {
+                setTimeout(() => {
+                    if (GAME_STATE !== 'PLAYING') return;
+                    let a = Math.atan2(player.y - this.y, player.x - this.x) + (Math.random()-0.5)*0.5;
+                    projectiles.push(new Projectile(this.x, this.y, a, 700, knifeDamage, 8, '#ccc', 'knife', 1, 1, this));
+                }, 500 + i*150);
+            }
+            setTimeout(() => { globalTimeScale = 1.0; this.timeStopped = false; this.attackTimer = 0; }, 2500);
+        }
+    }
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft - 120 || this.x > camRight + 120 || this.y < camTop - 120 || this.y > camBottom + 120) return;
+        this.drawBossFX();
+        let r = this.radius;
+        ctx.save(); ctx.translate(this.x, this.y);
+        let sq = 1 + Math.cos(this.wobble)*0.05;
+        ctx.scale(sq, 1/sq);
+        let glowAmt = this.warmup > 0 ? 30 : 14;
+
+        // Popped cape collar behind head/shoulders
+        let capeGrad = ctx.createLinearGradient(0, -r*0.2, 0, r*0.9);
+        capeGrad.addColorStop(0, '#2ecc71'); capeGrad.addColorStop(1, '#0e5c34');
+        ctx.fillStyle = capeGrad;
+        ctx.beginPath();
+        ctx.moveTo(-r*0.2, r*0.6);
+        ctx.quadraticCurveTo(-r*0.75, r*0.3, -r*0.95, -r*0.55);
+        ctx.quadraticCurveTo(-r*0.5, -r*0.15, -r*0.35, r*0.15);
+        ctx.lineTo(r*0.35, r*0.15);
+        ctx.quadraticCurveTo(r*0.5, -r*0.15, r*0.95, -r*0.55);
+        ctx.quadraticCurveTo(r*0.75, r*0.3, r*0.2, r*0.6);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2; ctx.stroke();
+
+        ctx.shadowBlur = glowAmt; ctx.shadowColor = '#f1c40f';
+        // Pale face
+        let faceGrad = ctx.createRadialGradient(-r*0.15, -r*0.2, r*0.1, 0, 0, r*0.75);
+        faceGrad.addColorStop(0, this.flashTimer > 0 ? '#fff' : '#fdeee0'); faceGrad.addColorStop(1, '#e8c9a8');
+        ctx.fillStyle = faceGrad;
+        ctx.beginPath(); ctx.ellipse(0, r*0.05, r*0.55, r*0.62, 0, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Pompadour hair -- bold swept spikes
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.moveTo(-r*0.55, -r*0.1);
+        ctx.quadraticCurveTo(-r*0.65, -r*0.7, -r*0.3, -r*0.75);
+        ctx.quadraticCurveTo(-r*0.35, -r*1.15, 0, -r*1.3);
+        ctx.quadraticCurveTo(r*0.35, -r*1.15, r*0.3, -r*0.75);
+        ctx.quadraticCurveTo(r*0.65, -r*0.7, r*0.55, -r*0.1);
+        ctx.quadraticCurveTo(r*0.3, -r*0.45, 0, -r*0.35);
+        ctx.quadraticCurveTo(-r*0.3, -r*0.45, -r*0.55, -r*0.1);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 1.5; ctx.stroke();
+        // Widow's peak
+        ctx.fillStyle = '#fdeee0';
+        ctx.beginPath(); ctx.moveTo(-r*0.1, -r*0.3); ctx.lineTo(r*0.1, -r*0.3); ctx.lineTo(0, -r*0.12); ctx.closePath(); ctx.fill();
+
+        // Sharp angular red eyes
+        ctx.fillStyle = this.warmup > 0 ? '#ff5555' : '#c0392b';
+        ctx.beginPath(); ctx.moveTo(-r*0.38, -r*0.02); ctx.lineTo(-r*0.12, -r*0.08); ctx.lineTo(-r*0.14, r*0.05); ctx.lineTo(-r*0.36, r*0.08); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(r*0.38, -r*0.02); ctx.lineTo(r*0.12, -r*0.08); ctx.lineTo(r*0.14, r*0.05); ctx.lineTo(r*0.36, r*0.08); ctx.closePath(); ctx.fill();
+
+        // Smirk with fangs
+        ctx.strokeStyle = '#8a5a3a'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-r*0.15, r*0.32); ctx.quadraticCurveTo(0, r*0.4, r*0.2, r*0.28); ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.moveTo(-r*0.08, r*0.34); ctx.lineTo(-r*0.04, r*0.34); ctx.lineTo(-r*0.06, r*0.44); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(r*0.1, r*0.32); ctx.lineTo(r*0.14, r*0.32); ctx.lineTo(r*0.12, r*0.42); ctx.closePath(); ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+class DangerZone {
+    constructor(x, y, radius, time, damage) { this.x = x; this.y = y; this.radius = radius; this.maxTime = time; this.time = time; this.damage = damage; }
+    update(dt) {
+        this.time -= dt;
+        if (this.time <= 0) {
+            triggerShake(10); createParticles(this.x, this.y, '#ff4500', 30);
+            if (getDistSq(this.x, this.y, player.x, player.y) < (this.radius + player.radius)**2) player.takeDamage(this.damage);
+            return true; 
+        } return false;
+    }
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft - this.radius || this.x > camRight + this.radius || this.y < camTop - this.radius || this.y > camBottom + this.radius) return;
+        let progress = 1 - this.time / this.maxTime; // 0 -> 1 as detonation approaches
+        ctx.save(); ctx.translate(this.x, this.y);
+        ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.15 + progress * 0.35})`; ctx.fill();
+        // Pulsing warning ring that speeds up as it closes in on detonation
+        let pulse = Math.sin(progress * Math.PI * (4 + progress * 6));
+        ctx.beginPath(); ctx.arc(0, 0, this.radius * (0.85 + pulse * 0.08), 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(255, 60, 40, ${0.6 + progress * 0.4})`; ctx.lineWidth = 3 + progress * 3; ctx.stroke();
+        // Crosshair
+        ctx.strokeStyle = `rgba(255,255,255,${0.4 + progress*0.4})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(-this.radius*0.25,0); ctx.lineTo(this.radius*0.25,0); ctx.moveTo(0,-this.radius*0.25); ctx.lineTo(0,this.radius*0.25); ctx.stroke();
+        ctx.restore();
+    }
+}
+
+function drawFist(ctx, radius, isHaki, isFire) {
+    ctx.fillStyle = isHaki ? '#111' : '#fceabb';
+    ctx.strokeStyle = isFire ? '#ff4500' : '#000';
+    ctx.lineWidth = 3;
+    
+    // Palm
+    ctx.beginPath(); ctx.roundRect(-radius, -radius*0.8, radius*1.8, radius*1.6, 5); ctx.fill(); ctx.stroke();
+    // Fingers
+    ctx.fillStyle = isHaki ? '#222' : '#e5c9a0';
+    for(let i=0; i<4; i++) {
+        ctx.beginPath(); ctx.roundRect(radius*0.6, -radius*0.7 + i*(radius*0.4), radius*0.4, radius*0.35, 3); ctx.fill(); ctx.stroke();
+    }
+    // Thumb
+    ctx.beginPath(); ctx.roundRect(-radius*0.3, radius*0.5, radius*0.8, radius*0.35, 3); ctx.fill(); ctx.stroke();
+}
+
+// Reusable layered glow orb: hot white core -> saturated color -> transparent edge
+function drawEnergyOrb(radius, colorCore, colorEdge, coreStop = 0.35) {
+    let grd = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    grd.addColorStop(0, '#ffffff');
+    grd.addColorStop(coreStop, colorCore);
+    grd.addColorStop(1, colorEdge);
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
+}
+// Draws a soft outer bloom behind something -- call before the main shape
+function drawBloom(radius, color, alphaMul = 1) {
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha *= alphaMul;
+    let grd = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    grd.addColorStop(0, color); grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+}
+// Proper crescent-moon blade. The key: THICKNESS tapers to zero at both ends, which
+// produces genuine sharp horns/cusps like a crescent moon. (Previously the outer radius
+// was tapered against a constant inner radius, which left blunt stumps at both tips and
+// made the whole thing read as a bent band instead of a blade.)
+// `curve` >1 pushes the belly of the blade outward for a fuller, more aggressive arc.
+function buildCrescentBlade(arcArc, R, thickness, curve = 1.0) {
+    let steps = 30;
+    ctx.beginPath();
+    // Outer (leading) edge
+    for (let s = 0; s <= steps; s++) {
+        let t = s / steps; let a = -arcArc + t * arcArc * 2;
+        let belly = Math.sin(t * Math.PI);
+        let r = R * (1 + (curve - 1) * belly);
+        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    // Inner (trailing) edge, back toward the start -- thickness vanishes at both tips
+    for (let s = steps; s >= 0; s--) {
+        let t = s / steps; let a = -arcArc + t * arcArc * 2;
+        let belly = Math.sin(t * Math.PI);
+        let r = R * (1 + (curve - 1) * belly) - thickness * belly;
+        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+}
+
+function drawLightningArc(x1, y1, x2, y2, color, width = 2, segments = 6, jitter = 10) {
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    for (let i = 1; i < segments; i++) {
+        let t = i / segments;
+        let mx = x1 + (x2 - x1) * t + (Math.random() - 0.5) * jitter;
+        let my = y1 + (y2 - y1) * t + (Math.random() - 0.5) * jitter;
+        ctx.lineTo(mx, my);
+    }
+    ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+
+class Projectile {
+    constructor(x, y, angle, speed, damage, radius, color, style, pierce, level, originEntity = null) {
+        this.x = x; this.y = y; this.angle = angle; this.speed = speed;
+        this.damage = damage; this.radius = radius; this.color = color;
+        this.style = style; this.pierce = pierce; this.level = level; this.originEntity = originEntity;
+        
+        if(style === 'fist') this.lifespan = 0.3 + level*0.05;
+        else if(style === 'reaper_slash') this.lifespan = 1.5;
+        else if(style === 'judgement_cut') this.lifespan = 0.8;
+        else if(style === 'water_wheel' || style === 'sun_wheel') this.lifespan = 0.5 + level*0.2;
+        else if(style === 'dragon') this.lifespan = 999999; // persistent companion, not a short-lived burst
+        else if(style === 'domain') this.lifespan = 3.0;
+        else if(style === 'bajrang') this.lifespan = 1.0;
+        else if(style === 'hyper_beam') this.lifespan = 1.5;
+        else if(style === 'mugetsu') this.lifespan = 1.5;
+        else if(style === 'chibaku') this.lifespan = 3.0; 
+        else if(style === 'death_beam' || style === 'knife') this.lifespan = 3.0; 
+        else this.lifespan = 5.0;
+        
+        this.hitTargets = new Map(); 
+        this.age = 0; this.history = []; this.rotation = Math.random() * Math.PI*2; this.dragonTrail = [];
+        this.spawnX = x; this.spawnY = y;
+        
+        // Initial setup for dropping attacks
+        if(this.style === 'bajrang') {
+            this.targetY = y; this.y = y - 800; // Start high up
+            this.impactDone = false;
+        }
+    }
+
+    update(dt) {
+        let adjDt = dt;
+        if (this.originEntity instanceof Boss || this.style === 'death_beam' || this.style === 'knife') { adjDt = dt; } 
+        else { adjDt = dt * globalTimeScale; if (adjDt === 0) return; }
+
+        this.age += adjDt; this.rotation += adjDt * (this.style === 'sun_wheel' ? 20 : 10);
+        this.history.push({x: this.x, y: this.y}); if(this.history.length > 8) this.history.shift(); 
+        
+        if (this.style === 'water_wheel' || this.style === 'sun_wheel' || this.style === 'domain') {
+            this.x = player.x; this.y = player.y; 
+            if(this.style !== 'domain') {
+                this.radius += (250 + this.level*50) * adjDt;
+                if (Math.random() < 0.7) {
+                    let a = Math.random() * Math.PI * 2;
+                    let px = this.x + Math.cos(a) * this.radius, py = this.y + Math.sin(a) * this.radius;
+                    if (this.style === 'sun_wheel') createGlow(px, py, '#ff8800', 1, { speed: 40, life: 0.3, radius: 2 + Math.random()*2 });
+                    else createDust(px, py, 'rgba(150,210,255,0.7)', 1);
+                }
+            } else {
+                // Paralyze everything inside -- Unlimited Void immobilizes rather than
+                // damaging. Continuously refreshed so anyone who wanders in mid-domain
+                // gets caught too, and thaws naturally ~0.3s after leaving or the domain ending.
+                let rSq = this.radius * this.radius;
+                enemies.concat(bosses).forEach(e => {
+                    if (getDistSq(this.x, this.y, e.x, e.y) < rSq && e.frozenTimer < 0.3) e.frozenTimer = 0.3;
+                });
+            }
+        } else if (this.style === 'dragon') {
+            let orbitR = this.orbitRadius || 230; let dir = this.orbitDir || 1;
+            this.rotation += adjDt * 1.7 * dir;
+            this.x = player.x + Math.cos(this.rotation) * orbitR; this.y = player.y + Math.sin(this.rotation) * orbitR;
+            this.dragonTrail.push({x: this.x, y: this.y}); if(this.dragonTrail.length > 30) this.dragonTrail.shift();
+            if (Math.random() < 0.6) createGlow(this.x, this.y, '#ff6a00', 1, { speed: 30, life: 0.35, radius: 3 + Math.random()*2 });
+        } else if (this.style === 'judgement_cut' || this.style === 'chibaku' || this.style === 'mugetsu') {
+            // stationary -- Mugetsu's wave expands via its draw/collision radius, anchored
+            // at the point it was unleashed rather than traveling as a projectile
+            // stationary
+        } else if (this.style === 'bajrang') {
+            // Drop logic
+            let progress = Math.min(1, this.age / 0.3); // Drops in 0.3s
+            this.y = this.targetY - 800 * (1 - Math.pow(progress, 3)); // easeIn cubic
+            if(progress >= 1 && !this.impactDone) { this.impactDone = true; triggerShake(25); triggerImpactFrame(0.07); triggerFlash('255,120,0', 0.3); } // Impact!
+        } else if (this.style === 'hyper_beam') {
+            this.x = player.x; this.y = player.y; this.angle += adjDt * 0.5; 
+        } else {
+            this.x += Math.cos(this.angle) * this.speed * adjDt; this.y += Math.sin(this.angle) * this.speed * adjDt;
+        }
+
+        // Particle generation
+        if (this.style === 'reaper_slash') {
+            // Dark energy shedding off the two horn tips -- the crackling "bleed" an anime
+            // energy blade leaves in its wake
+            let arcArc = Math.PI / 2.6;
+            let R = this.radius + 10 + this.level * 2;
+            for (let side = -1; side <= 1; side += 2) {
+                if (Math.random() > 0.55) continue;
+                let a = this.angle + side * arcArc;
+                let hx = this.x + Math.cos(a) * R, hy = this.y + Math.sin(a) * R;
+                createGlow(hx, hy, '#000', 1, { angle: this.angle + Math.PI + (Math.random()-0.5), speed: 60 + Math.random()*90, life: 0.25 + Math.random()*0.2, radius: 3 + Math.random()*4 });
+                if (Math.random() < 0.5) createSparks(hx, hy, this.color, 1, 0.5);
+            }
+            // Embers peeling back off the leading edge
+            if (Math.random() < 0.7) {
+                let a = this.angle + (Math.random() - 0.5) * arcArc * 1.6;
+                let ex = this.x + Math.cos(a) * R, ey = this.y + Math.sin(a) * R;
+                createGlow(ex, ey, this.color, 1, { angle: this.angle + Math.PI + (Math.random()-0.5)*1.2, speed: 70 + Math.random()*70, life: 0.2 + Math.random()*0.15, radius: 1.5 + Math.random()*2 });
+            }
+        }
+        if (this.style === 'mugetsu') {
+            // Rising black smoke/veil -- canon Mugetsu "causes a massive veil of black
+            // Reiatsu to erupt upward, darkening the sky"
+            if (Math.random() < 0.8) {
+                let px = this.x + (Math.random() - 0.5) * this.radius * 3;
+                let py = this.y + (Math.random() - 0.5) * this.radius * 2;
+                createGlow(px, py, 'rgba(8,8,10,0.6)', 1, { angle: -Math.PI/2 + (Math.random()-0.5) * 0.8, speed: 50 + Math.random()*50, life: 0.5 + Math.random()*0.3, radius: 4 + Math.random()*5 });
+            }
+            // Void debris and pale streaks torn along the advancing wave front
+            let grow = Math.min(1, this.age / 0.45);
+            let ease = 1 - Math.pow(1 - grow, 3);
+            let waveR = 70 + ease * (this.radius * 4.2);
+            if (this.age < 0.7 && Math.random() < 0.85) {
+                let a = this.angle + (Math.random() - 0.5) * (Math.PI / 1.75) * 2;
+                let wx = this.x + Math.cos(a) * waveR, wy = this.y + Math.sin(a) * waveR;
+                createGlow(wx, wy, '#0a0a0f', 1, { angle: a, speed: 120 + Math.random()*160, life: 0.3 + Math.random()*0.25, radius: 5 + Math.random()*7 });
+                if (Math.random() < 0.45) createSparks(wx, wy, '#dfe6ff', 1, 0.7);
+                if (Math.random() < 0.2) createShards(wx, wy, '#11121a', 1);
+            }
+        }
+        if (this.style === 'spirit_blast' && Math.random() < 0.5) {
+            createGlow(this.x, this.y, this.color, 1, { speed: 15, life: 0.18, radius: 1.5 });
+        }
+        if (this.style === 'cursed_purple' && Math.random() < 0.4) {
+            let a = this.rotation + Math.random() * Math.PI * 2;
+            createGlow(this.x + Math.cos(a) * this.radius * 0.7, this.y + Math.sin(a) * this.radius * 0.7, '#8a2be2', 1, { speed: -40, life: 0.3, radius: 2 });
+        }
+        if (this.style === 'knife' && Math.random() < 0.5) {
+            createSparks(this.x, this.y, '#eee', 1, 0.3);
+        }
+
+        if (this.style === 'death_beam') {
+            // Only the segment the bolt has actually traveled (spawn -> current tip) can hit --
+            // previously this checked 1200px *ahead* of the current position every frame, which
+            // meant the beam could hit the player almost the instant it fired with no way to dodge.
+            let l2 = getDistSq(this.spawnX, this.spawnY, this.x, this.y);
+            let projX, projY;
+            if (l2 > 1) {
+                let t = ((player.x - this.spawnX) * (this.x - this.spawnX) + (player.y - this.spawnY) * (this.y - this.spawnY)) / l2;
+                t = Math.max(0, Math.min(1, t));
+                projX = this.spawnX + t * (this.x - this.spawnX); projY = this.spawnY + t * (this.y - this.spawnY);
+            } else { projX = this.x; projY = this.y; }
+            if (getDistSq(player.x, player.y, projX, projY) < (player.radius + this.radius)**2) {
+                player.takeDamage(this.damage); this.pierce--;
+            }
+            return;
+        } else if (this.style === 'knife') {
+            if (getDistSq(this.x, this.y, player.x, player.y) < (this.radius + player.radius)**2) { player.takeDamage(this.damage); this.pierce--; }
+            return;
+        }
+
+        if (this.style === 'cursed_purple' && this.level >= 3) {
+            let suckRadiusSq = (this.radius * (this.level >= 5 ? 5 : 3))**2;
+            let mobs = enemies.concat(bosses);
+            mobs.forEach(e => {
+                let distSq = getDistSq(this.x, this.y, e.x, e.y);
+                if(distSq < suckRadiusSq) {
+                    let pullAngle = Math.atan2(this.y - e.y, this.x - e.x);
+                    e.x += Math.cos(pullAngle) * (150 * adjDt); e.y += Math.sin(pullAngle) * (150 * adjDt);
+                }
+            });
+        } else if (this.style === 'chibaku') {
+            let mobs = enemies.concat(bosses);
+            mobs.forEach(e => {
+                let distSq = getDistSq(this.x, this.y, e.x, e.y);
+                if(distSq < 1000**2) { 
+                    let pullAngle = Math.atan2(this.y - e.y, this.x - e.x);
+                    e.x += Math.cos(pullAngle) * (150 * adjDt); e.y += Math.sin(pullAngle) * (150 * adjDt);
+                }
+            });
+            if(Math.random() < 0.3) {
+                let a = Math.random() * Math.PI*2;
+                cosmicDebris.push({x: this.x + Math.cos(a)*400, y: this.y + Math.sin(a)*400, targetX: this.x, targetY: this.y});
+            }
+        }
+
+        // Damage Collision Phase
+        let maxSearchRadius = this.radius + 60; 
+        if(this.style === 'hyper_beam') maxSearchRadius = 1500; 
+        else if(this.style === 'domain') maxSearchRadius = 450;
+        else if(this.style === 'mugetsu') maxSearchRadius = 900;
+
+        let targets = enemies.concat(bosses);
+
+        for (let i = targets.length - 1; i >= 0; i--) {
+            let e = targets[i];
+            
+            let hitCooldown = 0.2;
+            if(this.style === 'chibaku') hitCooldown = 0.5; 
+            else if(this.style === 'domain') hitCooldown = 0.5; 
+            else if(this.style === 'bajrang') hitCooldown = 999; // HITS ONLY ONCE
+            else if(this.style === 'mugetsu') hitCooldown = 999; // the wave sweeps through each target once
+
+            let lastHit = this.hitTargets.get(e);
+            if (lastHit !== undefined && this.age - lastHit < hitCooldown) continue;
+
+            if (this.style !== 'hyper_beam' && this.style !== 'domain') {
+                if (Math.abs(this.x - e.x) > maxSearchRadius || Math.abs(this.y - e.y) > maxSearchRadius) continue;
+            }
+
+            let isHit = false;
+
+            if (this.style === 'reaper_slash') {
+                let dist = Math.sqrt(getDistSq(this.x, this.y, e.x, e.y));
+                let outerR = this.radius + 16 + this.level * 3 + e.radius;
+                let innerR = Math.max(0, this.radius - 10 - this.level - e.radius);
+                if (dist > innerR && dist < outerR) {
+                    let angleToEnemy = Math.atan2(e.y - this.y, e.x - this.x);
+                    let diff = Math.atan2(Math.sin(angleToEnemy - this.angle), Math.cos(angleToEnemy - this.angle));
+                    let arcWidth = Math.PI / (3.6 - this.level * 0.12);
+                    if (Math.abs(diff) < arcWidth) isHit = true;
+                }
+            } else if (this.style === 'mugetsu') {
+                // Expanding crescent-wave band -- mirrors the draw's growth curve, arc
+                // width and thickness exactly so the hitbox matches what's on screen
+                let grow = Math.min(1, this.age / 0.45);
+                let ease = 1 - Math.pow(1 - grow, 3);
+                let R = 70 + ease * (this.radius * 4.2);
+                let thick = 130 + ease * 190;
+                let dist = Math.sqrt(getDistSq(this.x, this.y, e.x, e.y));
+                if (dist < R + e.radius && dist > R - thick - e.radius) {
+                    let angleToEnemy = Math.atan2(e.y - this.y, e.x - this.x);
+                    let diff = Math.atan2(Math.sin(angleToEnemy - this.angle), Math.cos(angleToEnemy - this.angle));
+                    if (Math.abs(diff) < Math.PI / 1.75) isHit = true;
+                }
+            } else if (this.style === 'water_wheel' || this.style === 'sun_wheel') {
+                let dist = Math.sqrt(getDistSq(this.x, this.y, e.x, e.y));
+                if (Math.abs(dist - this.radius) < 30 + e.radius) isHit = true;
+            } else if (this.style === 'hyper_beam') {
+                let beamEndX = this.x + Math.cos(this.angle) * 1500; let beamEndY = this.y + Math.sin(this.angle) * 1500;
+                let l2 = getDistSq(this.x, this.y, beamEndX, beamEndY);
+                if(l2 !== 0) {
+                    let t = ((e.x - this.x) * (beamEndX - this.x) + (e.y - this.y) * (beamEndY - this.y)) / l2;
+                    t = Math.max(0, Math.min(1, t));
+                    let projX = this.x + t * (beamEndX - this.x); let projY = this.y + t * (beamEndY - this.y);
+                    if (getDistSq(e.x, e.y, projX, projY) < (e.radius + this.radius)**2) isHit = true;
+                }
+            } else if (this.style === 'domain') {
+                if (getDistSq(this.x, this.y, e.x, e.y) < this.radius**2) isHit = true;
+            } else if (this.style === 'dragon') {
+                if (getDistSq(this.x, this.y, e.x, e.y) < (this.radius + e.radius)**2) isHit = true;
+            } else if (this.style === 'bajrang') {
+                // Only deal damage if it has fully dropped
+                if (this.age >= 0.3 && getDistSq(this.x, this.targetY, e.x, e.y) < (this.radius + e.radius)**2) isHit = true;
+            } else {
+                if (getDistSq(this.x, this.y, e.x, e.y) < (this.radius + e.radius)**2) isHit = true;
+            }
+
+            if (isHit) {
+                let killed = e.takeDamage(this.damage);
+                if (killed) {
+                    if(e instanceof Enemy && !(e instanceof Boss)) enemies.splice(enemies.indexOf(e), 1);
+                    else if (e instanceof Boss) bosses.splice(bosses.indexOf(e), 1);
+                }
+                this.hitTargets.set(e, this.age); 
+                createParticles(e.x, e.y, this.style === 'mugetsu' ? '#fff' : this.color, 3);
+                if (!killed) createSparks(e.x, e.y, '#fff', this.style === 'fist' || this.style === 'bajrang' ? 5 : 3, 0.6);
+                if ((this.style === 'fist' && this.level >= 5) || this.style === 'bajrang' || this.style === 'mugetsu') {
+                    createShockwave(e.x, e.y, this.style === 'mugetsu' ? '#fff' : this.color, e.radius * 2.5, 0.25);
+                }
+                
+                if (this.style !== 'domain' && this.style !== 'hyper_beam' && this.style !== 'mugetsu' && this.style !== 'chibaku' && this.style !== 'bajrang') {
+                    this.pierce--; if (this.pierce <= 0) break;
+                }
+            }
+        }
+    }
+
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.style !== 'hyper_beam' && this.style !== 'domain' && this.style !== 'mugetsu' && this.style !== 'death_beam' && (this.x < camLeft - this.radius || this.x > camRight + this.radius || this.y < camTop - this.radius || this.y > camBottom + this.radius)) return;
+
+        ctx.save();
+        let alpha = Math.max(0, 1 - (this.age / this.lifespan));
+        
+        if (this.style === 'fist') {
+            ctx.globalAlpha = alpha;
+            if(this.originEntity) {
+                ctx.beginPath(); ctx.moveTo(this.originEntity.x, this.originEntity.y); ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = this.level >= 5 ? '#ff4500' : '#fceabb'; ctx.lineWidth = this.radius * 0.8; ctx.lineCap = 'round'; ctx.stroke();
+            }
+            // Speed streaks trailing the punch
+            ctx.save(); ctx.globalAlpha = alpha * 0.5; ctx.strokeStyle = this.level >= 5 ? '#ffb066' : '#fff';
+            for (let i = 0; i < this.history.length - 1; i++) {
+                let h = this.history[i];
+                ctx.lineWidth = 2 + i; ctx.beginPath();
+                ctx.moveTo(h.x - Math.cos(this.angle) * 6, h.y - Math.sin(this.angle) * 6);
+                ctx.lineTo(h.x + Math.cos(this.angle) * 6, h.y + Math.sin(this.angle) * 6);
+                ctx.stroke();
+            }
+            ctx.restore();
+            ctx.translate(this.x, this.y); ctx.rotate(this.angle); 
+            if (this.level >= 5) { ctx.shadowBlur = 16; ctx.shadowColor = '#ff4500'; drawBloom(this.radius * 1.8, 'rgba(255,120,0,0.5)'); }
+            drawFist(ctx, this.radius, this.level >= 4, this.level >= 5);
+            ctx.shadowBlur = 0;
+            
+        } else if (this.style === 'bajrang') {
+            // REDRAWN BAJRANG: Giant Haki Fist with shadow
+            ctx.translate(this.x, this.y);
+            let dropProgress = Math.min(1, this.age / 0.3);
+            
+            // Draw Ground Shadow
+            ctx.save();
+            ctx.translate(0, this.targetY - this.y); // Offset to target
+            let shadowScale = 0.5 + (0.5 * dropProgress);
+            ctx.scale(shadowScale, shadowScale * 0.5);
+            ctx.fillStyle = `rgba(0,0,0,${0.5 * dropProgress})`;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2); ctx.fill();
+            
+            // Impact Shockwave (double ring for more weight) + crater cracks
+            if(this.age > 0.3) {
+                ctx.beginPath(); ctx.arc(0, 0, (this.age - 0.3) * 1000, 0, Math.PI*2);
+                ctx.strokeStyle = `rgba(255, 69, 0, ${alpha})`; ctx.lineWidth = 30; ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, 0, (this.age - 0.3) * 700, 0, Math.PI*2);
+                ctx.strokeStyle = `rgba(255, 220, 150, ${alpha*0.8})`; ctx.lineWidth = 10; ctx.stroke();
+                if (this.age < 0.6) {
+                    let crackA = alpha * (1 - (this.age-0.3)/0.3);
+                    for (let i = 0; i < 7; i++) {
+                        drawLightningArc(0, 0, Math.cos(i*0.9)*this.radius*3, Math.sin(i*0.9)*this.radius*1.2, `rgba(80,40,10,${crackA})`, 3, 4, 12);
+                    }
+                }
+            }
+            ctx.restore();
+
+            // Wind streaks trailing the falling fist
+            if (dropProgress < 1) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 3;
+                for (let i = 0; i < 4; i++) {
+                    let ox = (i - 1.5) * this.radius * 0.5;
+                    ctx.beginPath(); ctx.moveTo(ox, -60 - (1-dropProgress)*100); ctx.lineTo(ox, -20); ctx.stroke();
+                }
+            }
+
+            // Draw Fist
+            ctx.globalAlpha = alpha;
+            ctx.rotate(Math.PI/2); // point down
+            if (dropProgress >= 1) drawBloom(this.radius * 2, 'rgba(255,120,0,0.6)');
+            drawFist(ctx, this.radius, true, true);
+            
+        } else if (this.style === 'spirit_blast') {
+            ctx.globalAlpha = alpha;
+            // Simple tapering comet trail -- a fading string of shrinking circles behind the blast
+            if (this.history.length > 1) {
+                for (let i = 0; i < this.history.length; i++) {
+                    let t = i / this.history.length; // 0 = oldest/tail, 1 = newest/near head
+                    let h = this.history[i];
+                    ctx.globalAlpha = alpha * t * 0.55;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath(); ctx.arc(h.x, h.y, this.radius * 0.85 * t, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.globalAlpha = alpha;
+            }
+            ctx.translate(this.x, this.y);
+            drawBloom(this.radius * 2.8, this.color, 0.9);
+
+            // Wavering, unstable outer edge -- the flickering energy look that reads as "ki"
+            // rather than a smooth magic-circle orb
+            let edgeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius * 1.3);
+            edgeGrad.addColorStop(0, '#fff'); edgeGrad.addColorStop(0.45, this.color); edgeGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = edgeGrad;
+            ctx.beginPath();
+            let steps = 18;
+            for (let s = 0; s <= steps; s++) {
+                let a = (Math.PI * 2 / steps) * s;
+                let jitter = Math.sin(a * 5 + this.age * 26) * this.radius * 0.13 + Math.sin(a * 3 - this.age * 19) * this.radius * 0.07;
+                let r = this.radius * 1.15 + jitter;
+                let px = Math.cos(a) * r, py = Math.sin(a) * r;
+                if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.closePath(); ctx.fill();
+
+            // Pulsing "breathing" ring
+            let pulse = (this.age * 5.5) % 1;
+            ctx.strokeStyle = `rgba(255,255,255,${(1 - pulse) * 0.55})`; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius * (0.55 + pulse * 0.75), 0, Math.PI * 2); ctx.stroke();
+
+            // Blinding hot core
+            drawEnergyOrb(this.radius * 0.6, '#fff', this.color, 0.5);
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, this.radius * 0.3, 0, Math.PI * 2); ctx.fill();
+        } else if (this.style === 'hyper_beam') {
+            // Rebuilt to match Aura Fighters' beam construction: additive "lighter" blending,
+            // a stroked line with a pulsing width (not a filled rect), a muzzle flare at the
+            // origin, and a separate white-hot core stroke layered on top of the glow.
+            ctx.globalAlpha = alpha;
+            let chargeT = Math.min(1, this.age / 0.15);
+            if (chargeT < 1) { ctx.save(); ctx.translate(this.x, this.y); drawBloom(this.radius * 4 * chargeT, '#fff', 1); ctx.restore(); }
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            let cos = Math.cos(this.angle), sin = Math.sin(this.angle);
+            let sx = this.x, sy = this.y;
+            let ex = this.x + cos * 2000 * chargeT, ey = this.y + sin * 2000 * chargeT;
+            let cw = this.radius * (0.7 + chargeT * 1.3) * (0.85 + Math.random() * 0.3); // pulsing width
+
+            // Muzzle flare at the origin
+            let flareR = cw * 1.4;
+            let flareGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, flareR);
+            flareGrad.addColorStop(0, '#ffffff'); flareGrad.addColorStop(0.4, '#ffee00'); flareGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = flareGrad;
+            ctx.beginPath(); ctx.arc(sx, sy, flareR, 0, Math.PI * 2); ctx.fill();
+
+            // Outer glow
+            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = cw; ctx.shadowBlur = 32; ctx.shadowColor = '#ffcc00';
+            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+
+            // White-hot core
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = cw * 0.4; ctx.shadowBlur = 12; ctx.shadowColor = '#ffffff';
+            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Traveling energy pulses racing down the beam
+            for (let i = 0; i < 4; i++) {
+                let phase = (this.age * 3 + i * 0.3) % 1;
+                ctx.globalAlpha = alpha * (1 - phase) * 0.8 * chargeT;
+                ctx.fillStyle = '#fff';
+                let px = sx + cos * phase * 1800, py = sy + sin * phase * 1800;
+                ctx.beginPath(); ctx.ellipse(px, py, 26, cw * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+        } else if (this.style === 'reaper_slash') {
+            // GETSUGA TENSHO -- a crescent-moon energy wave. Black core with a searing red
+            // rim (the Bankai "Black Getsuga"). Built from a real crescent with sharp horns.
+            ctx.globalAlpha = alpha;
+
+            // Lingering "cut scar" -- the glowing tear the blade rips through the air,
+            // drawn in world space along the path already traveled. Classic anime slash cue.
+            if (this.history.length > 2) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                let perp = this.angle + Math.PI / 2;
+                for (let pass = 0; pass < 2; pass++) {
+                    ctx.beginPath();
+                    for (let i = 0; i < this.history.length; i++) {
+                        let t = i / (this.history.length - 1);
+                        let h = this.history[i];
+                        let w = (pass === 0 ? 16 : 5) * Math.sin(t * Math.PI) * t;
+                        ctx.lineTo(h.x + Math.cos(perp) * w, h.y + Math.sin(perp) * w);
+                    }
+                    for (let i = this.history.length - 1; i >= 0; i--) {
+                        let t = i / (this.history.length - 1);
+                        let h = this.history[i];
+                        let w = (pass === 0 ? 16 : 5) * Math.sin(t * Math.PI) * t;
+                        ctx.lineTo(h.x - Math.cos(perp) * w, h.y - Math.sin(perp) * w);
+                    }
+                    ctx.closePath();
+                    ctx.globalAlpha = alpha * (pass === 0 ? 0.28 : 0.6);
+                    ctx.fillStyle = pass === 0 ? this.color : '#fff';
+                    ctx.fill();
+                }
+                ctx.restore();
+                ctx.globalAlpha = alpha;
+            }
+
+            ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+
+            let arcArc = Math.PI / 2.6;                      // wide, sweeping crescent
+            let R = this.radius + 10 + this.level * 2;
+            let thick = 26 + this.level * 4;                 // fat belly, sharp horns
+            let curve = 1.16;
+
+            // Trailing wake -- receding ghost crescents, pure black
+            for (let i = 4; i >= 1; i--) {
+                ctx.globalAlpha = alpha * 0.10 * i;
+                buildCrescentBlade(arcArc * (1 - i * 0.05), R - i * 9, thick * (1 - i * 0.14), curve);
+                ctx.fillStyle = '#000'; ctx.fill();
+            }
+            ctx.globalAlpha = alpha;
+
+            // Outer red aura -- layered soft strokes under the blade so it haloes rather
+            // than washing it out (avoids ctx.filter blur, which is costly per-frame)
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineJoin = 'round';
+            for (let i = 3; i >= 1; i--) {
+                ctx.globalAlpha = alpha * 0.13;
+                ctx.strokeStyle = this.color; ctx.lineWidth = 6 * i;
+                buildCrescentBlade(arcArc, R, thick, curve); ctx.stroke();
+            }
+            ctx.restore();
+
+            // Solid black body -- no shadow active, so it stays truly black
+            buildCrescentBlade(arcArc, R, thick, curve);
+            ctx.fillStyle = '#000'; ctx.fill();
+
+            // Searing red rim
+            ctx.save();
+            ctx.shadowBlur = 16; ctx.shadowColor = this.color;
+            ctx.strokeStyle = this.color; ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
+            buildCrescentBlade(arcArc, R, thick, curve); ctx.stroke();
+            ctx.restore();
+
+            // White-hot leading edge, hugging the outer curve only
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.9;
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                let t = s / 30; let a = -arcArc + t * arcArc * 2;
+                let belly = Math.sin(t * Math.PI);
+                let r = R * (1 + (curve - 1) * belly);
+                ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            ctx.stroke();
+            ctx.restore();
+        } else if (this.style === 'mugetsu') {
+            // MUGETSU -- a colossal wall of pure black reiatsu that erupts and engulfs
+            // everything, pitch black with a thin pale-white searing edge. Not a projectile
+            // blade like stage 1: it's an expanding wave that swallows the screen.
+            ctx.globalAlpha = alpha;
+            ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+
+            let grow = Math.min(1, this.age / 0.45);
+            let ease = 1 - Math.pow(1 - grow, 3);            // fast burst, then settle
+            let R = 70 + ease * (this.radius * 4.2);
+            let arcArc = Math.PI / 1.75;                     // enormous sweep, nearly a wall
+            let thick = 130 + ease * 190;
+            let curve = 1.1;
+            let fade = Math.max(0, (this.age - 0.85) / 0.55);
+            ctx.globalAlpha = alpha * (1 - fade);
+
+            // Billowing black smoke body behind the wave
+            for (let i = 5; i >= 1; i--) {
+                ctx.globalAlpha = alpha * (1 - fade) * 0.16 * i;
+                let wob = Math.sin(this.age * 7 + i) * 7;
+                buildCrescentBlade(arcArc * (1 - i * 0.02), R - i * 16 + wob, thick * (1 - i * 0.09), curve);
+                ctx.fillStyle = '#000'; ctx.fill();
+            }
+            ctx.globalAlpha = alpha * (1 - fade);
+
+            // The wave itself -- absolute black
+            buildCrescentBlade(arcArc, R, thick, curve);
+            ctx.fillStyle = '#000'; ctx.fill();
+
+            // Pale searing edge along the leading curve -- the only light in the technique
+            ctx.save();
+            ctx.shadowBlur = 26; ctx.shadowColor = '#dfe6ff';
+            ctx.strokeStyle = 'rgba(233,238,255,0.95)'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+            ctx.beginPath();
+            for (let s = 0; s <= 40; s++) {
+                let t = s / 40; let a = -arcArc + t * arcArc * 2;
+                let belly = Math.sin(t * Math.PI);
+                let r = R * (1 + (curve - 1) * belly) + Math.sin(t * 14 + this.age * 9) * 4;
+                ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // Faint white streaks streaming through the void, along the sweep
+            ctx.save();
+            ctx.globalAlpha = alpha * (1 - fade) * 0.5;
+            ctx.strokeStyle = '#cdd6f5'; ctx.lineWidth = 1.5;
+            for (let i = 0; i < 9; i++) {
+                let t = (i + 0.5) / 9; let a = -arcArc + t * arcArc * 2;
+                let belly = Math.sin(t * Math.PI);
+                let rOut = R * (1 + (curve - 1) * belly) - 6;
+                let rIn = rOut - thick * belly * (0.55 + Math.sin(i * 2.3 + this.age * 5) * 0.25);
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(a) * rIn, Math.sin(a) * rIn);
+                ctx.lineTo(Math.cos(a) * rOut, Math.sin(a) * rOut);
+                ctx.stroke();
+            }
+            ctx.restore();
+        } else if (this.style === 'judgement_cut') {
+            ctx.globalAlpha = alpha;
+            ctx.translate(this.x, this.y);
+            // Bright white flash on the very first frames -- "you're already cut" feel
+            if (this.age < 0.1) {
+                ctx.save(); ctx.globalAlpha = alpha * (1 - this.age/0.1) * 0.8;
+                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, this.radius*1.3, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+            ctx.shadowBlur = 18; ctx.shadowColor = '#fff';
+            for(let i=0; i<9; i++) {
+                ctx.rotate(Math.random() * Math.PI); ctx.beginPath();
+                ctx.moveTo(-this.radius + Math.random()*20, (Math.random()-0.5)*20);
+                ctx.lineTo(this.radius - Math.random()*20, (Math.random()-0.5)*20);
+                ctx.strokeStyle = i%2===0 ? '#000' : '#fff'; ctx.lineWidth = Math.random() * 8 + 2; ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            let burstGrad = ctx.createRadialGradient(0,0,0,0,0,this.radius);
+            burstGrad.addColorStop(0, 'rgba(255,255,255,0.5)'); burstGrad.addColorStop(0.4, 'rgba(0,0,0,0.35)'); burstGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+            ctx.fillStyle = burstGrad; ctx.fill();
+        } else if (this.style === 'chibaku') {
+            // Planetary Devastation -- a colossal chunk of rock held together by crushing
+            // purple gravity. Previously the silhouette used Math.random() every single
+            // frame, which reshuffled the whole outline 60 times a second into a vibrating
+            // mess instead of a solid asteroid; now it's a stable shape (seeded once) that
+            // just slowly rotates.
+            ctx.globalAlpha = alpha;
+            ctx.translate(this.x, this.y);
+            let size = this.radius * Math.min(1, this.age / 1.5);
+            if (this.chibakuSeed === undefined) this.chibakuSeed = Math.random() * 1000;
+
+            // Soft purple bloom halo behind everything
+            drawBloom(size * 2.2, 'rgba(138,43,226,0.55)', 1);
+
+            ctx.save(); ctx.rotate(this.rotation * 0.25);
+            ctx.beginPath();
+            let steps = 20;
+            for (let i = 0; i <= steps; i++) {
+                let a = (Math.PI * 2 / steps) * i;
+                let n = Math.sin(a * 3.1 + this.chibakuSeed) * 0.16 + Math.sin(a * 5.7 + this.chibakuSeed * 2) * 0.09;
+                let r = size * (1 + n);
+                if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            ctx.closePath();
+            let rockGrad = ctx.createRadialGradient(-size * 0.3, -size * 0.3, size * 0.1, 0, 0, size * 1.1);
+            rockGrad.addColorStop(0, '#3a2a4a'); rockGrad.addColorStop(0.55, '#221830'); rockGrad.addColorStop(1, '#0d0812');
+            ctx.fillStyle = rockGrad; ctx.fill();
+            ctx.strokeStyle = 'rgba(138,43,226,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Branching purple energy cracks across the surface
+            ctx.strokeStyle = `rgba(180,90,255,${0.65 + Math.sin(this.age * 6) * 0.3})`;
+            ctx.lineWidth = 2; ctx.shadowBlur = 10; ctx.shadowColor = '#8a2be2';
+            for (let i = 0; i < 5; i++) {
+                let a = i * 1.257 + this.chibakuSeed;
+                let midR = size * 0.55, endR = size * 0.92;
+                let mx = Math.cos(a) * midR, my = Math.sin(a) * midR;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(mx, my); ctx.stroke();
+                // fork
+                let forkA = a + 0.5;
+                ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(Math.cos(forkA) * endR, Math.sin(forkA) * endR); ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            ctx.restore();
+
+            // Orbiting rock chunks -- bigger, shaded, with a faint trailing glow
+            for (let i = 0; i < 5; i++) {
+                let a = this.rotation * (0.6 + i * 0.1) + i * (Math.PI * 2 / 5);
+                let orbR = size * 1.55 + Math.sin(this.age * 2 + i) * 7;
+                let cx = Math.cos(a) * orbR, cy = Math.sin(a) * orbR;
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(a * 1.4);
+                let chunkGrad = ctx.createLinearGradient(-6, -6, 6, 6);
+                chunkGrad.addColorStop(0, '#4a3a5e'); chunkGrad.addColorStop(1, '#181022');
+                ctx.fillStyle = chunkGrad;
+                ctx.beginPath();
+                ctx.moveTo(-5, -5); ctx.lineTo(6, -4); ctx.lineTo(5, 6); ctx.lineTo(-6, 4); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = 'rgba(180,90,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.restore();
+            }
+
+            // Event horizon core -- swirling void with a pulsing ring
+            let corePulse = 1 + Math.sin(this.age * 5) * 0.08;
+            let coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.42 * corePulse);
+            coreGrad.addColorStop(0, '#1a0a2a'); coreGrad.addColorStop(0.7, '#050005'); coreGrad.addColorStop(1, '#000');
+            ctx.fillStyle = coreGrad;
+            ctx.beginPath(); ctx.arc(0, 0, size * 0.42 * corePulse, 0, Math.PI * 2); ctx.fill();
+            ctx.save();
+            ctx.shadowBlur = 18; ctx.shadowColor = '#a855f7';
+            ctx.strokeStyle = 'rgba(180,90,255,0.9)'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(0, 0, size * 0.42 * corePulse, 0, Math.PI * 2); ctx.stroke();
+            ctx.restore();
+        } else if (this.style === 'cursed_purple') {
+            ctx.globalAlpha = alpha;
+            ctx.translate(this.x, this.y);
+            ctx.shadowBlur = 26; ctx.shadowColor = this.color;
+            let pulse = (Math.sin(this.age * 8) + 1) / 2;
+
+            // Core
+            let grd = ctx.createRadialGradient(0,0,this.radius*0.15, 0,0,this.radius);
+            grd.addColorStop(0, '#fff'); grd.addColorStop(0.3, '#000'); grd.addColorStop(0.6, this.color); grd.addColorStop(1, 'transparent');
+            ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Warped distortion rings -- reads as space itself bending inward
+            ctx.strokeStyle = 'rgba(200,120,255,0.35)'; ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                ctx.save(); ctx.rotate(this.rotation * (i % 2 === 0 ? 1 : -1) * 0.5 + i);
+                ctx.beginPath(); ctx.ellipse(0, 0, this.radius * (0.5 + i*0.22), this.radius * (0.3 + i*0.15), 0, 0, Math.PI*2); ctx.stroke();
+                ctx.restore();
+            }
+
+            // Two spiraling energy arms (red & blue) converging inward -- Hollow Purple reference
+            for (let arm = 0; arm < 2; arm++) {
+                let col = arm === 0 ? '#ff2222' : '#3355ff';
+                ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath();
+                let steps = 16;
+                for (let s = 0; s <= steps; s++) {
+                    let t = s / steps;
+                    let spiralA = this.rotation * (arm === 0 ? 1 : -1) + t * Math.PI * 3 + arm * Math.PI;
+                    let spiralR = this.radius * (1 - t) * 0.85;
+                    let sx = Math.cos(spiralA) * spiralR, sy = Math.sin(spiralA) * spiralR;
+                    if (s === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+                }
+                ctx.stroke();
+                let endA = this.rotation * (arm === 0 ? 1 : -1) + arm * Math.PI;
+                ctx.fillStyle = col;
+                ctx.beginPath(); ctx.arc(Math.cos(endA)*this.radius*0.85, Math.sin(endA)*this.radius*0.85, this.radius*0.15, 0, Math.PI*2); ctx.fill();
+            }
+
+            // Pulsing white-hot implosion point
+            ctx.save(); ctx.globalCompositeOperation = 'screen';
+            ctx.fillStyle = `rgba(255,255,255,${0.5 + pulse*0.4})`;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius*0.15*(1+pulse*0.5), 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        } else if (this.style === 'domain') {
+            // Unlimited Void reference: "the center of outer space... stars, galaxies,
+            // black holes... numerous white patches." A domain of infinite cosmic depth,
+            // not a mandala.
+            ctx.globalAlpha = alpha * 0.95;
+            ctx.translate(this.x, this.y);
+            ctx.globalCompositeOperation = 'source-over'; // proper opaque cover, not inherited 'screen'
+
+            // Deep space interior
+            let grd = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+            grd.addColorStop(0, 'rgba(25,0,45,0.95)'); grd.addColorStop(0.6, 'rgba(6,0,16,0.97)'); grd.addColorStop(1, 'rgba(0,0,4,0.98)');
+            ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
+
+            // Seed the cosmic contents once per cast so they drift instead of reshuffling
+            if (!this.domainStars) {
+                this.domainStars = [];
+                for (let i = 0; i < 55; i++) {
+                    this.domainStars.push({ a: Math.random() * Math.PI * 2, r: Math.random() * this.radius * 0.96, size: 0.6 + Math.random() * 1.6, tw: Math.random() * 10, drift: (Math.random() - 0.5) * 0.05 });
+                }
+                this.domainGalaxies = [];
+                for (let i = 0; i < 4; i++) {
+                    this.domainGalaxies.push({ a: Math.random() * Math.PI * 2, r: this.radius * (0.28 + Math.random() * 0.55), size: this.radius * (0.07 + Math.random() * 0.09), rot: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 0.6, hue: Math.random() < 0.5 ? '190,150,255' : '150,200,255' });
+                }
+            }
+
+            ctx.save();
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.clip();
+            ctx.globalCompositeOperation = 'lighter'; // stars/galaxies glow additively over the dark interior
+
+            // Twinkling starfield
+            ctx.fillStyle = '#fff';
+            this.domainStars.forEach(s => {
+                let a = s.a + this.age * s.drift;
+                let tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(this.age * 2.2 + s.tw));
+                ctx.globalAlpha = alpha * tw;
+                ctx.beginPath(); ctx.arc(Math.cos(a) * s.r, Math.sin(a) * s.r, s.size, 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.globalAlpha = alpha * 0.95;
+
+            // Distant spiral galaxies -- soft glowing swirls, white/lavender/blue patches
+            this.domainGalaxies.forEach(g => {
+                let gx = Math.cos(g.a) * g.r, gy = Math.sin(g.a) * g.r;
+                ctx.save(); ctx.translate(gx, gy); ctx.rotate(g.rot + this.age * g.spin);
+                let gg = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+                gg.addColorStop(0, `rgba(${g.hue},0.55)`); gg.addColorStop(0.5, `rgba(${g.hue},0.22)`); gg.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gg;
+                ctx.beginPath(); ctx.ellipse(0, 0, g.size, g.size * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.beginPath(); ctx.ellipse(0, 0, g.size * 0.25, g.size * 0.1, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            });
+
+            // Black hole at the center, with a glowing accretion disk
+            let bhR = this.radius * 0.13;
+            ctx.save(); ctx.rotate(this.age * 0.5);
+            let ringGrad = ctx.createRadialGradient(0, 0, bhR * 0.9, 0, 0, bhR * 2.4);
+            ringGrad.addColorStop(0, 'rgba(255,255,255,0)'); ringGrad.addColorStop(0.45, 'rgba(200,150,255,0.65)'); ringGrad.addColorStop(1, 'rgba(138,43,226,0)');
+            ctx.fillStyle = ringGrad;
+            ctx.beginPath(); ctx.ellipse(0, 0, bhR * 2.4, bhR * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, 0, bhR, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(210,170,255,0.85)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            ctx.restore(); // end clip
+
+            // Barrier boundary
+            ctx.shadowBlur = 22; ctx.shadowColor = '#8a2be2';
+            let ringPulse = 1 + Math.sin(this.age * 5) * 0.02;
+            ctx.strokeStyle = 'rgba(160,90,255,0.85)'; ctx.lineWidth = 7;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius * ringPulse, 0, Math.PI * 2); ctx.stroke();
+            ctx.shadowBlur = 0;
+
+        } else if (this.style === 'water_wheel' || this.style === 'sun_wheel') {
+            // A literal spinning wheel of water/flame -- two overlapping rotating arc-bands,
+            // which is the silhouette that actually reads as Tanjiro's "Water Wheel" technique.
+            ctx.globalAlpha = alpha;
+            ctx.translate(this.x, this.y);
+            let isSun = this.style === 'sun_wheel';
+            let layers = this.level >= 3 ? 3 : 2;
+
+            ctx.save(); ctx.rotate(this.rotation * (isSun ? 0.9 : 0.6));
+            ctx.shadowBlur = isSun ? 24 : 16; ctx.shadowColor = isSun ? '#ff6a00' : '#3498db';
+
+            for (let layer = 0; layer < layers; layer++) {
+                let r = this.radius - layer * 20; if (r <= 12) continue;
+                let lw = 17 - layer * 3;
+                for (let half = 0; half < 2; half++) {
+                    let startA = half * Math.PI + layer * 0.5;
+                    let grad = ctx.createLinearGradient(Math.cos(startA)*r, Math.sin(startA)*r, Math.cos(startA+Math.PI)*r, Math.sin(startA+Math.PI)*r);
+                    if (isSun) { grad.addColorStop(0, '#ff3300'); grad.addColorStop(0.5, '#ff8800'); grad.addColorStop(1, '#ffdd66'); }
+                    else { grad.addColorStop(0, '#0a4d8f'); grad.addColorStop(0.5, '#2e86de'); grad.addColorStop(1, '#9fe6ff'); }
+
+                    ctx.beginPath();
+                    let steps = 20;
+                    for (let s = 0; s <= steps; s++) {
+                        let a = startA + (Math.PI * s / steps);
+                        // Choppy water-splash / flame-lick edge instead of a perfectly smooth arc
+                        let wobble = isSun ? Math.sin(a * 7 + this.age * 16) * (r * 0.06) : Math.sin(a * 5 + this.age * 8) * (r * 0.035);
+                        let rr = r + wobble;
+                        let px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+                        if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                    }
+                    ctx.strokeStyle = grad; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.stroke();
+
+                    // Bright foam / searing-edge highlight along the same arc
+                    if (layer === 0) {
+                        ctx.strokeStyle = isSun ? 'rgba(255,255,200,0.8)' : 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        for (let s = 0; s <= steps; s++) {
+                            let a = startA + (Math.PI * s / steps);
+                            let wobble = isSun ? Math.sin(a * 7 + this.age * 16) * (r * 0.06) : Math.sin(a * 5 + this.age * 8) * (r * 0.035);
+                            let rr = r + wobble;
+                            let px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+                            if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                        }
+                        ctx.stroke();
+                    }
+                }
+            }
+            ctx.shadowBlur = 0;
+            ctx.restore();
+            // Central glow -- the source of the technique
+            drawBloom(this.radius * 0.3, isSun ? '#ffaa00' : '#3498db', 0.6);
+        } else if (this.style === 'dragon') {
+            // Streamlined serpentine body -- ONE continuous tapered shape from tail through the
+            // snout tip. The head previously faced the orbital (radial) direction while the body
+            // followed the curved path it had actually traveled (tangential) -- a ~90 degree
+            // mismatch that twisted the outline right at the neck. Both now use the same
+            // direction: the body's own tangent, so the head is a smooth continuation.
+            ctx.globalAlpha = alpha;
+            let tipPt = null;
+            let headAngle = this.rotation + Math.PI/2; // fallback if the trail is too short
+            if (this.dragonTrail.length > 2) {
+                let leftPts = [], rightPts = [];
+                let n = this.dragonTrail.length;
+                for (let i = 0; i < n; i++) {
+                    let t = i / (n - 1); // 0 near tail -> 1 near neck
+                    let w = this.radius * (0.12 + 0.55 * t); // modest, even taper -- no wide base at the neck
+                    let cur = this.dragonTrail[i];
+                    let next = this.dragonTrail[Math.min(i+1, n-1)];
+                    let prev = this.dragonTrail[Math.max(i-1, 0)];
+                    let dx = next.x - prev.x, dy = next.y - prev.y;
+                    let len = Math.hypot(dx, dy) || 1;
+                    let perpX = -dy/len, perpY = dx/len;
+                    leftPts.push({x: cur.x + perpX*w, y: cur.y + perpY*w});
+                    rightPts.push({x: cur.x - perpX*w, y: cur.y - perpY*w});
+                }
+                // Extend through the head using the body's own tangent direction at the neck
+                let tIdx0 = Math.max(n - 3, 0);
+                let tdx = this.dragonTrail[n-1].x - this.dragonTrail[tIdx0].x;
+                let tdy = this.dragonTrail[n-1].y - this.dragonTrail[tIdx0].y;
+                let tlen = Math.hypot(tdx, tdy) || 1;
+                let fwdX = tdx / tlen, fwdY = tdy / tlen;
+                headAngle = Math.atan2(fwdY, fwdX);
+                let perpX2 = -fwdY, perpY2 = fwdX;
+                let cheekFwd = this.radius * 0.5, cheekW = this.radius * 0.85;
+                leftPts.push({x: this.x + fwdX*cheekFwd + perpX2*cheekW, y: this.y + fwdY*cheekFwd + perpY2*cheekW});
+                rightPts.push({x: this.x + fwdX*cheekFwd - perpX2*cheekW, y: this.y + fwdY*cheekFwd - perpY2*cheekW});
+                tipPt = {x: this.x + fwdX*this.radius*2.1, y: this.y + fwdY*this.radius*2.1};
+
+                ctx.beginPath();
+                ctx.moveTo(leftPts[0].x, leftPts[0].y);
+                for (let i = 1; i < leftPts.length; i++) ctx.lineTo(leftPts[i].x, leftPts[i].y);
+                ctx.lineTo(tipPt.x, tipPt.y);
+                for (let i = rightPts.length - 1; i >= 0; i--) ctx.lineTo(rightPts[i].x, rightPts[i].y);
+                ctx.closePath();
+                let bodyGrad = ctx.createLinearGradient(leftPts[0].x, leftPts[0].y, tipPt.x, tipPt.y);
+                bodyGrad.addColorStop(0, '#c1440e'); bodyGrad.addColorStop(0.7, this.color); bodyGrad.addColorStop(1, '#ffdd55');
+                ctx.shadowBlur = 16; ctx.shadowColor = '#ff4500';
+                ctx.fillStyle = bodyGrad; ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(255,220,150,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+                // Thin bright spine line for a clean, streamlined highlight
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(this.dragonTrail[0].x, this.dragonTrail[0].y);
+                for (let i = 1; i < n; i++) ctx.lineTo(this.dragonTrail[i].x, this.dragonTrail[i].y);
+                ctx.lineTo(tipPt.x, tipPt.y);
+                ctx.stroke();
+            }
+
+            // Local space now uses the SAME tangent direction as the polygon's head extension
+            ctx.translate(this.x, this.y); ctx.rotate(headAngle + Math.PI/2);
+
+            // Horns (small, sit on the cheek -- no longer a wide base overlapping the neck)
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath(); ctx.moveTo(-this.radius*0.55, this.radius*0.25); ctx.lineTo(-this.radius*0.9, this.radius*1.1); ctx.lineTo(-this.radius*0.25, this.radius*0.35); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(this.radius*0.55, this.radius*0.25); ctx.lineTo(this.radius*0.9, this.radius*1.1); ctx.lineTo(this.radius*0.25, this.radius*0.35); ctx.fill();
+            // Glowing eyes
+            ctx.shadowBlur = 8; ctx.shadowColor = '#fff';
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(-this.radius*0.35, -this.radius*0.1, 4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(this.radius*0.35, -this.radius*0.1, 4, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+
+        } else if (this.style === 'death_beam') {
+            ctx.globalAlpha = alpha;
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            let pw = this.radius * (0.85 + Math.random() * 0.3); // pulsing width
+
+            // Muzzle flare at the spawn point
+            let flareGrad = ctx.createRadialGradient(this.spawnX, this.spawnY, 0, this.spawnX, this.spawnY, pw * 1.6);
+            flareGrad.addColorStop(0, '#ffffff'); flareGrad.addColorStop(0.4, '#ff00ff'); flareGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = flareGrad;
+            ctx.beginPath(); ctx.arc(this.spawnX, this.spawnY, pw * 1.6, 0, Math.PI * 2); ctx.fill();
+
+            // Trail follows the segment actually traveled -- matches the (now fixed) hit detection
+            ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = pw; ctx.lineCap = 'round'; ctx.shadowBlur = 24; ctx.shadowColor = '#ff00ff';
+            ctx.beginPath(); ctx.moveTo(this.spawnX, this.spawnY); ctx.lineTo(this.x, this.y); ctx.stroke();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = pw * 0.4; ctx.shadowBlur = 10; ctx.shadowColor = '#ffffff';
+            ctx.beginPath(); ctx.moveTo(this.spawnX, this.spawnY); ctx.lineTo(this.x, this.y); ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+
+            // Bright glowing head at the leading tip
+            ctx.save(); ctx.translate(this.x, this.y);
+            drawBloom(this.radius * 3, '#ff00ff');
+            drawEnergyOrb(this.radius * 1.2, '#ff00ff', '#ff00ff', 0.3);
+            ctx.restore();
+        } else if (this.style === 'knife') {
+            ctx.globalAlpha = alpha;
+            // Thin motion trail
+            if (this.history.length > 1) {
+                ctx.strokeStyle = 'rgba(220,220,220,0.35)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(this.history[0].x, this.history[0].y);
+                for (let i=1; i<this.history.length; i++) ctx.lineTo(this.history[i].x, this.history[i].y);
+                ctx.stroke();
+            }
+            ctx.translate(this.x, this.y); ctx.rotate(this.angle + this.age * 25);
+            let knifeGrad = ctx.createLinearGradient(-10, 0, 20, 0);
+            knifeGrad.addColorStop(0, '#888'); knifeGrad.addColorStop(0.5, '#fff'); knifeGrad.addColorStop(1, '#ccc');
+            ctx.fillStyle = knifeGrad; ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(-10, 5); ctx.lineTo(-10, -5); ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
+class Gem {
+    constructor(x, y, value) { this.x = x; this.y = y; this.value = value; this.radius = value > 50 ? 12 : 6; this.color = value > 50 ? '#ff00ff' : '#00ffff'; this.wobbleY = Math.random() * Math.PI; }
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft || this.x > camRight || this.y < camTop || this.y > camBottom) return;
+        this.wobbleY += 0.1; let drawY = this.y + Math.sin(this.wobbleY) * 3;
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(this.x, drawY - this.radius); ctx.lineTo(this.x + this.radius, drawY); ctx.lineTo(this.x, drawY + this.radius); ctx.lineTo(this.x - this.radius, drawY); ctx.fill();
+        ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(this.x, drawY - this.radius + 2); ctx.lineTo(this.x + this.radius - 2, drawY); ctx.lineTo(this.x, drawY + this.radius - 2); ctx.lineTo(this.x - this.radius + 2, drawY); ctx.fill();
+        // Sparkle
+        if(Math.random() < 0.05) createParticles(this.x, drawY, '#fff', 1);
+    }
+}
+
+class Particle {
+    constructor(x, y, color, opts = {}) {
+        this.x = x; this.y = y; this.color = color;
+        this.type = opts.type || 'circle';
+        this.angle = opts.angle !== undefined ? opts.angle : Math.random() * Math.PI * 2;
+        this.speed = opts.speed !== undefined ? opts.speed : Math.random() * 150;
+        this.life = opts.life !== undefined ? opts.life : 0.3 + Math.random() * 0.3;
+        this.maxLife = this.life;
+        this.radius = opts.radius !== undefined ? opts.radius : Math.random() * 3 + 1;
+        this.drag = opts.drag !== undefined ? opts.drag : 0.9;
+        this.gravity = opts.gravity || 0;
+        this.vy = 0;
+        this.growth = opts.growth || 0;
+        this.glow = !!opts.glow;
+        this.spin = opts.spin || 0;
+        this.rot = Math.random() * Math.PI * 2;
+    }
+    update(dt) {
+        this.x += Math.cos(this.angle) * this.speed * dt;
+        this.y += Math.sin(this.angle) * this.speed * dt + this.vy * dt;
+        this.vy += this.gravity * dt;
+        this.speed *= this.drag;
+        this.radius += this.growth * dt;
+        this.rot += this.spin * dt;
+        this.life -= dt;
+    }
+    draw(camLeft, camRight, camTop, camBottom) {
+        let pad = this.radius + 24;
+        if(this.x < camLeft - pad || this.x > camRight + pad || this.y < camTop - pad || this.y > camBottom + pad) return;
+        let lifeRatio = Math.max(0, this.life / this.maxLife);
+        ctx.globalAlpha = lifeRatio;
+        if (this.type === 'ring') {
+            ctx.strokeStyle = this.color; ctx.lineWidth = Math.max(0.5, 3.5 * lifeRatio);
+            ctx.beginPath(); ctx.arc(this.x, this.y, Math.max(0, this.radius), 0, Math.PI * 2); ctx.stroke();
+        } else if (this.type === 'spark') {
+            let tailLen = Math.min(28, this.speed * 0.05 + 5);
+            ctx.strokeStyle = this.color; ctx.lineWidth = Math.max(1, this.radius); ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x - Math.cos(this.angle) * tailLen, this.y - Math.sin(this.angle) * tailLen);
+            ctx.stroke();
+        } else if (this.type === 'shard') {
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot);
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.moveTo(0, -this.radius); ctx.lineTo(this.radius * 0.5, this.radius); ctx.lineTo(-this.radius * 0.5, this.radius); ctx.fill();
+            ctx.restore();
+        } else {
+            if (this.glow) { ctx.shadowBlur = this.radius * 2.5; ctx.shadowColor = this.color; }
+            ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, Math.max(0, this.radius), 0, Math.PI * 2); ctx.fill();
+            if (this.glow) ctx.shadowBlur = 0;
+        }
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+class FloatingText {
+    constructor(x, y, text, color) { this.x = x + (Math.random()*20-10); this.y = y + (Math.random()*10-5); this.text = text; this.color = color; this.life = 0.7; this.maxLife = 0.7; this.vy = -80; this.scale = 1.5; }
+    update(dt) { this.y += this.vy * dt; this.vy *= 0.9; this.life -= dt; if(this.scale > 1) this.scale -= dt * 2; }
+    draw(camLeft, camRight, camTop, camBottom) {
+        if(this.x < camLeft || this.x > camRight || this.y < camTop || this.y > camBottom) return;
+        ctx.save(); ctx.globalAlpha = Math.max(0, this.life / this.maxLife); ctx.translate(this.x, this.y); ctx.scale(Math.max(1, this.scale), Math.max(1, this.scale));
+        ctx.fillStyle = this.color; ctx.font = "bold 20px 'Bangers', cursive"; ctx.textAlign = "center"; ctx.fillText(this.text, 0, 0); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeText(this.text, 0, 0); ctx.restore();
+    }
+}
+
+const MAX_PARTICLES = 750;
+function createParticles(x, y, color, count) { if (particles.length > MAX_PARTICLES) return; for(let i=0; i<count; i++) particles.push(new Particle(x, y, color)); }
+function createSparks(x, y, color, count, speedMult = 1) {
+    if (particles.length > MAX_PARTICLES) return;
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, color, { type: 'spark', speed: (180 + Math.random() * 260) * speedMult, life: 0.12 + Math.random() * 0.16, radius: 1.5 + Math.random() * 1.5, drag: 0.82 }));
+    }
+}
+function createShockwave(x, y, color, maxRadius = 60, life = 0.35) {
+    particles.push(new Particle(x, y, color, { type: 'ring', speed: 0, radius: 4, growth: (maxRadius - 4) / life, life }));
+}
+function createDust(x, y, color, count = 1) {
+    if (particles.length > MAX_PARTICLES) return;
+    for (let i = 0; i < count; i++) {
+        let a = -Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+        particles.push(new Particle(x, y, color, { type: 'circle', angle: a, speed: 15 + Math.random() * 35, life: 0.3 + Math.random() * 0.25, radius: 1.5 + Math.random() * 2, drag: 0.9, gravity: 90 }));
+    }
+}
+function createGlow(x, y, color, count = 1, opts = {}) {
+    if (particles.length > MAX_PARTICLES) return;
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, color, Object.assign({ type: 'circle', glow: true, speed: 8 + Math.random() * 18, life: 0.22 + Math.random() * 0.18, radius: 2.5 + Math.random() * 2, drag: 0.9 }, opts)));
+    }
+}
+function createShards(x, y, color, count = 4) {
+    if (particles.length > MAX_PARTICLES) return;
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, color, { type: 'shard', speed: 100 + Math.random() * 220, life: 0.3 + Math.random() * 0.25, radius: 3 + Math.random() * 3, drag: 0.88, spin: (Math.random() - 0.5) * 12 }));
+    }
+}
+function createFloatingText(x, y, text, color) { if (floatingTexts.length > 50) floatingTexts.shift(); floatingTexts.push(new FloatingText(x, y, text, color)); }
+
+/**
+ * GAME LOOP
+ */
+
+const MAX_ENEMIES = 260;
+function spawnEnemy() {
+    if (enemies.length >= MAX_ENEMIES) return;
+    let side = Math.floor(Math.random() * 4); let x, y; let margin = 100;
+    if (side === 0) { x = camera.x + Math.random() * canvas.width; y = camera.y - margin; } 
+    else if (side === 1) { x = camera.x + canvas.width + margin; y = camera.y + Math.random() * canvas.height; } 
+    else if (side === 2) { x = camera.x + Math.random() * canvas.width; y = camera.y + canvas.height + margin; } 
+    else { x = camera.x - margin; y = camera.y + Math.random() * canvas.height; } 
+
+    let hpMod = 1 + (gameTime / 120); let hp = 15 * hpMod;
+    // Speed grows with time but is capped well below player base speed so late fights stay dodgeable
+    let speed = Math.min(50 + Math.random() * 30 + (gameTime / 25), 190);
+    let colors = ['#8e44ad', '#34495e', '#e74c3c', '#d35400', '#2980b9']; let color = colors[Math.floor(Math.random() * colors.length)];
+    let e = new Enemy(x, y, hp, speed, color, 18);
+    // Contact damage creeps up slowly over a run instead of staying flat forever
+    e.damage = Math.min(10 + Math.floor(gameTime / 100) * 2, 24);
+    enemies.push(e);
+}
+
+function spawnBoss() {
+    enemies.forEach(e => createParticles(e.x, e.y, e.color, 5));
+    enemies = [];
+    triggerShake(20);
+    bossMinuteCounter++;
+    SoundEngine.bossSpawn();
+    
+    bossWarning.style.opacity = 1;
+    setTimeout(() => { bossWarning.style.opacity = 0; }, 3000);
+
+    let angle = Math.random() * Math.PI * 2;
+    let x = player.x + Math.cos(angle) * 400; let y = player.y + Math.sin(angle) * 400;
+    
+    let type = Math.floor(Math.random() * 3);
+    if(type === 0) bosses.push(new FriezaBoss(x, y, bossMinuteCounter));
+    else if(type === 1) bosses.push(new MadaraBoss(x, y, bossMinuteCounter));
+    else bosses.push(new DioBoss(x, y, bossMinuteCounter));
+}
+
+function updateUI() {
+    let expPercent = (player.exp / player.maxExp) * 100; expBar.style.width = `${expPercent}%`; expText.innerText = `EXP ${Math.floor(player.exp)} / ${player.maxExp}`;
+    let hpPercent = Math.max(0, (player.hp / player.maxHp) * 100); hpBar.style.width = `${hpPercent}%`; hpText.innerText = `HP ${Math.floor(player.hp)} / ${player.maxHp}`;
+    levelText.innerText = `LVL ${player.level}`; timerText.innerText = formatTime(gameTime);
+    lowHpVignette.style.opacity = hpPercent < 30 ? String(1 - hpPercent / 30) : '0';
+}
+
+let lastBossHpPercent = 1;
+function updateBossUI() {
+    if (bosses.length === 0) { bossHpWrap.classList.remove('show'); return; }
+    // Track the boss with the lowest HP as the "focus" boss for the bar
+    let b = bosses.reduce((a, c) => (c.hp < a.hp ? c : a), bosses[0]);
+    bossHpWrap.classList.add('show');
+    bossNameEl.innerText = bosses.length > 1 ? `${b.name} (+${bosses.length - 1})` : b.name;
+    let pct = Math.max(0, b.hp / b.maxHp) * 100;
+    bossHpBar.style.width = `${pct}%`;
+    bossHpBar.style.background = b.enraged
+        ? 'linear-gradient(90deg, #ff0000 0%, #ff5500 60%, #ffcc00 100%)'
+        : 'linear-gradient(90deg, #ff0044 0%, #ff5566 60%, #ffaa00 100%)';
+    if (pct < lastBossHpPercent - 0.01) {
+        bossHpFlash.style.transition = 'none'; bossHpFlash.style.width = `${lastBossHpPercent}%`; bossHpFlash.style.opacity = '0.7';
+        requestAnimationFrame(() => {
+            bossHpFlash.style.transition = 'width 0.3s ease-out, opacity 0.3s ease-out 0.1s';
+            bossHpFlash.style.width = `${pct}%`; bossHpFlash.style.opacity = '0';
+        });
+    }
+    lastBossHpPercent = pct;
+}
+
+function hash2(x, y) { let s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
+function drawStarLayer(parallax, cellSize, minR, maxR, alpha) {
+    let px = camera.x * parallax, py = camera.y * parallax;
+    let startX = Math.floor(px / cellSize) * cellSize - cellSize;
+    let startY = Math.floor(py / cellSize) * cellSize - cellSize;
+    let endX = px + canvas.width + cellSize; let endY = py + canvas.height + cellSize;
+    ctx.fillStyle = '#ffffff';
+    for (let x = startX; x < endX; x += cellSize) {
+        for (let y = startY; y < endY; y += cellSize) {
+            let hx = hash2(x, y); let hy = hash2(y, x);
+            let sx = x + hx * cellSize - px; let sy = y + hy * cellSize - py;
+            let tw = 0.6 + 0.4 * Math.sin(gameTime * 1.5 + hx * 60);
+            let r = minR + hx * (maxR - minR);
+            ctx.globalAlpha = alpha * tw;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+    ctx.globalAlpha = 1;
+}
+
+function drawBackground() {
+    // Deep space gradient rather than a flat fill, for a bit of depth
+    let grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, Math.max(canvas.width, canvas.height) * 0.75);
+    grd.addColorStop(0, '#0b0b14'); grd.addColorStop(1, '#020203');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawStarLayer(0.12, 260, 0.5, 1.3, 0.3);
+    drawStarLayer(0.3, 160, 0.8, 1.8, 0.45);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)'; ctx.lineWidth = 2; let gridSize = 100;
+    let startX = -(camera.x % gridSize); let startY = -(camera.y % gridSize);
+    if (startX > 0) startX -= gridSize; if (startY > 0) startY -= gridSize;
+    ctx.beginPath();
+    for (let x = startX; x < canvas.width; x += gridSize) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+    for (let y = startY; y < canvas.height; y += gridSize) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+    ctx.stroke();
+    
+    if (globalTimeScale < 1.0) {
+        ctx.fillStyle = 'rgba(120, 100, 0, 0.22)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    if (bosses.length > 0) {
+        let enraged = bosses.some(b => b.enraged);
+        ctx.fillStyle = enraged ? `rgba(140,0,0,${0.09 + 0.05 * Math.sin(gameTime * 6)})` : 'rgba(60,0,10,0.06)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function drawJoystick() {
+    if (!joystick.active) return;
+    ctx.save(); ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(joystick.startX, joystick.startY, 50, 0, Math.PI*2);
+    ctx.fillStyle = '#444'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    let stickX = joystick.startX + (joystick.dx * 50); let stickY = joystick.startY + (joystick.dy * 50);
+    ctx.beginPath(); ctx.arc(stickX, stickY, 25, 0, Math.PI*2); ctx.fillStyle = '#ddd'; ctx.fill(); ctx.stroke(); ctx.restore();
+}
+
+function mainLoop(timestamp) {
+    if (!lastTime) lastTime = timestamp; const dt = Math.min((timestamp - lastTime) / 1000, 0.1); lastTime = timestamp;
+
+    // Impact frame: a very brief true freeze on big hits (shake/particles keep moving) --
+    // capped at 0.09s in triggerImpactFrame() so this can never compound into a long freeze.
+    let simDt = dt;
+    if (impactFrameTimer > 0) { impactFrameTimer -= dt; simDt = dt * 0.015; }
+
+    if (GAME_STATE === 'PLAYING') {
+        gameTime += simDt * globalTimeScale;
+        
+        let currentInterval = Math.floor(gameTime / 120);
+        if (currentInterval > bossMinuteCounter && currentInterval > 0) {
+            if (bosses.length === 0) spawnBoss();
+        }
+        
+        if (globalTimeScale > 0 && bosses.length === 0) {
+            spawnRate = Math.max(0.4, 1.5 - (gameTime / 180)); spawnTimer += simDt;
+            if (spawnTimer >= spawnRate) { spawnTimer = 0; let spawnCount = Math.min(1 + Math.floor(gameTime / 90), 6); for(let i=0; i<spawnCount; i++) spawnEnemy(); }
+        }
+
+        player.update(simDt);
+        
+        if(screenShake > 0) screenShake -= dt * 30; if(screenShake < 0) screenShake = 0;
+        camera.x = player.x - canvas.width / 2 + ((Math.random() - 0.5) * screenShake); camera.y = player.y - canvas.height / 2 + ((Math.random() - 0.5) * screenShake);
+
+        for (let i = enemies.length - 1; i >= 0; i--) enemies[i].update(simDt);
+        for (let i = bosses.length - 1; i >= 0; i--) bosses[i].update(simDt);
+        updateBossUI();
+        
+        for (let i = dangerZones.length - 1; i >= 0; i--) { if(dangerZones[i].update(simDt * globalTimeScale)) dangerZones.splice(i, 1); }
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            let p = projectiles[i]; p.update(simDt);
+            if (p.pierce <= 0 || p.age >= p.lifespan || getDistSq(p.x, p.y, player.x, player.y) > 6000000) projectiles.splice(i, 1);
+        }
+        
+        for (let i = cosmicDebris.length - 1; i >= 0; i--) {
+            let d = cosmicDebris[i];
+            let dx = d.targetX - d.x; let dy = d.targetY - d.y;
+            d.x += dx * 5 * simDt; d.y += dy * 5 * simDt;
+            if(Math.abs(dx) < 10 && Math.abs(dy) < 10) cosmicDebris.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(dt * globalTimeScale); if(particles[i].life <= 0) particles.splice(i, 1); }
+        for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].update(dt * globalTimeScale); if(floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
+        if (gems.length > 500) gems.shift();
+        timerText.innerText = formatTime(gameTime);
+    }
+
+    if (GAME_STATE === 'PLAYING' || GAME_STATE === 'LEVEL_UP') {
+        ctx.clearRect(0,0, canvas.width, canvas.height); drawBackground();
+        ctx.save(); ctx.translate(-camera.x, -camera.y);
+        let pad = 100; let cL = camera.x - pad, cR = camera.x + canvas.width + pad; let cT = camera.y - pad, cB = camera.y + canvas.height + pad;
+        
+        ctx.globalCompositeOperation = 'source-over'; 
+        dangerZones.forEach(d => d.draw(cL, cR, cT, cB));
+        gems.forEach(g => g.draw(cL, cR, cT, cB)); 
+        enemies.forEach(e => e.draw(cL, cR, cT, cB));
+        bosses.forEach(b => b.draw(cL, cR, cT, cB));
+        
+        ctx.save(); ctx.shadowBlur = 6; ctx.shadowColor = '#a855f7'; ctx.fillStyle = '#6b5b7a';
+        cosmicDebris.forEach(d => { ctx.beginPath(); ctx.arc(d.x, d.y, 3, 0, Math.PI*2); ctx.fill(); });
+        ctx.restore();
+
+        ctx.globalCompositeOperation = 'screen'; particles.forEach(p => p.draw(cL, cR, cT, cB)); projectiles.forEach(p => p.draw(cL, cR, cT, cB)); 
+        ctx.globalCompositeOperation = 'source-over'; player.draw(); floatingTexts.forEach(ft => ft.draw(cL, cR, cT, cB));
+        ctx.restore(); drawJoystick();
+    }
+    requestAnimationFrame(mainLoop);
+}
+
+/**
+ * MENU & STATE MANAGEMENT
+ */
+
+function startGame() {
+    player = new Player(0, 0); camera = { x: -canvas.width/2, y: -canvas.height/2 }; screenShake = 0;
+    enemies = []; bosses = []; dangerZones = []; projectiles = []; gems = []; particles = []; floatingTexts = []; cosmicDebris = [];
+    gameTime = 0; spawnTimer = 0; bossMinuteCounter = 0; globalTimeScale = 1.0; lastBossHpPercent = 1;
+    
+    startMenu.classList.add('hidden'); gameOverMenu.classList.add('hidden');
+    uiTopBar.classList.remove('hidden'); timerText.classList.remove('hidden');
+    bossHpWrap.classList.remove('show'); lowHpVignette.style.opacity = '0';
+    updateUI(); GAME_STATE = 'PLAYING';
+    SoundEngine.init();
+}
+
+function triggerGameOver() {
+    GAME_STATE = 'GAME_OVER'; uiTopBar.classList.add('hidden'); timerText.classList.add('hidden');
+    bossHpWrap.classList.remove('show'); lowHpVignette.style.opacity = '0';
+    triggerShake(18); createShockwave(player.x, player.y, '#ff3333', 200, 0.6); triggerFlash('255,0,0', 0.5);
+    gameOverMenu.classList.remove('hidden'); document.getElementById('survival-time').innerText = `You survived for: ${formatTime(gameTime)}`;
+}
+
+function triggerLevelUp() {
+    GAME_STATE = 'LEVEL_UP'; levelUpMenu.classList.remove('hidden'); upgradeContainer.innerHTML = '';
+    let availablePool = UPGRADE_POOL.filter(u => {
+        if(u.type === 'weapon') { let existing = player.weapons.find(w => w.id === u.id); return !existing || existing.level < 10; } return true; 
+    });
+    if(availablePool.length === 0) availablePool.push({ id: 'HEAL', type: 'stat', name: 'Senzu Bean', icon: '🟢', desc: 'Restores all HP.' });
+
+    let choices = []; let poolCopy = [...availablePool];
+    for(let i=0; i<3; i++) { if(poolCopy.length === 0) break; let idx = Math.floor(Math.random() * poolCopy.length); choices.push(poolCopy.splice(idx, 1)[0]); }
+
+    choices.forEach(choice => {
+        let card = document.createElement('div'); card.className = 'upgrade-card'; let icon, title, desc, levelClass = "", levelStr = "";
+        
+        if (choice.type === 'weapon') {
+            let def = WEAPON_TYPES[choice.id]; icon = def.icon;
+            let existing = player.weapons.find(w => w.id === choice.id);
+            if(existing) {
+                title = `${def.name}`; 
+                if(existing.level + 1 === 10) { levelStr = "ULTIMATE"; levelClass="ultimate"; desc = def.desc.split('<b>LVL 10:</b> ')[1]; }
+                else if(existing.level + 1 === 5) { levelStr = "AWAKEN"; levelClass="awaken"; desc = def.desc.split('<br>')[1].split('<b>LVL 5:</b> ')[1]; }
+                else { levelStr = `LVL ${existing.level + 1}`; desc = `Upgrade damage, speed, and efficiency.`; }
+            } else { title = `${def.name}`; levelStr = "NEW"; desc = def.desc.split('<br>')[0]; }
+        } else { icon = choice.icon; title = choice.name; desc = choice.desc; }
+
+        card.innerHTML = `<div class="upgrade-icon">${icon}</div><h3 class="upgrade-title">${title}</h3>${levelStr ? `<div class="upgrade-level ${levelClass}">${levelStr}</div>` : ''}<p class="upgrade-desc">${desc}</p>`;
+        card.addEventListener('click', () => applyUpgrade(choice)); upgradeContainer.appendChild(card);
+    });
+}
+
+function applyUpgrade(choice) {
+    if (choice.type === 'weapon') player.addWeapon(choice.id);
+    else if (choice.type === 'stat') {
+        if(choice.id === 'MAX_HP') { player.maxHp += 30; player.hp += 30; } 
+        else if (choice.id === 'SPEED') { player.speed += 35; } 
+        else if (choice.id === 'MAGNET') { player.magnetRange += 60; }
+        else if (choice.id === 'HEAL') { player.hp = player.maxHp; }
+    }
+    
+    if(player.pendingUpgrades > 0) player.pendingUpgrades--;
+    levelUpMenu.classList.add('hidden'); updateUI();
+    if (player.pendingUpgrades > 0) { triggerLevelUp(); } else { GAME_STATE = 'PLAYING'; }
+}
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('restart-btn').addEventListener('click', startGame);
+requestAnimationFrame(mainLoop);
+</script>
+</body>
+</html>

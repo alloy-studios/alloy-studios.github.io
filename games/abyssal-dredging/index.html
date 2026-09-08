@@ -1,0 +1,2370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Abyssal Dredging</title>
+    <style>
+        /* === FONTS & RESET === */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Share+Tech+Mono&family=Teko:wght@400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        :root {
+            --bg-deep: #010306;
+            --bg-mid: #050a10;
+            --bg-rust: #38241b;
+            --bg-rust-dark: #120c0a;
+            
+            --text-main: #d1c5b4;
+            --text-dim: #7a7065;
+            --text-alert: #d95129;
+            --text-dev: #3bc453;
+            
+            --panel-border: #3b2e26;
+            --panel-bg: linear-gradient(135deg, #14100e 0%, #0a0807 100%);
+            --button-rust: linear-gradient(to bottom, #7a3214, #361405);
+            --button-rust-hover: linear-gradient(to bottom, #943d1a, #4a1c09);
+            
+            --rarity-common: #8c929c;
+            --rarity-uncommon: #4b8f51;
+            --rarity-rare: #3b74b8;
+            --rarity-epic: #8a3bb8;
+            --rarity-legendary: #d69f36;
+            --rarity-mythic: #d63636;
+            --rarity-eldritch: #27c4b5;
+            --rarity-unfathomable: #ffffff;
+            --rarity-absolute: #ff0055; /* The Ultimate Tier */
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Teko', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: filter 0.5s ease, background-color 0.5s ease;
+        }
+
+        /* Wraps rig-section + control-panel only, so it can carry the grayscale "corruption" filter during
+           cutscenes without dragging #corrupted-overlay (a fixed-position sibling) down with it. Takes over
+           the column flex layout body used to provide directly to those two sections. */
+        #game-ui {
+            display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%;
+            transition: filter 0.5s ease, background-color 0.5s ease;
+        }
+
+        /* === INITIAL BOOT SCREEN (To Unlock Audio Context) === */
+        #boot-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: opacity 1s ease;
+        }
+        #boot-text {
+            font-family: 'Share Tech Mono', monospace; font-size: 1.5rem;
+            color: var(--text-alert); text-transform: uppercase; letter-spacing: 4px;
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+        @keyframes pulseGlow { 0% { opacity: 0.4; } 100% { opacity: 1; text-shadow: 0 0 10px var(--text-alert); } }
+
+        /* === STORM ALERT OVERLAY === */
+        #storm-alert {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            font-family: 'Share Tech Mono', monospace; font-size: 1.2rem;
+            color: #fff; text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff;
+            background: rgba(0, 30, 50, 0.8); border: 1px solid #00aaff;
+            padding: 5px 15px; border-radius: 4px; pointer-events: none;
+            opacity: 0; z-index: 10; transition: opacity 0.5s ease;
+        }
+        #storm-alert.active {
+            opacity: 1; animation: stormAlertPulse 1.5s infinite alternate;
+        }
+        @keyframes stormAlertPulse { 
+            0% { box-shadow: 0 0 5px #00aaff; opacity: 0.8; } 
+            100% { box-shadow: 0 0 20px #00aaff, inset 0 0 10px #00aaff; opacity: 1; text-shadow: 0 0 20px #00aaff, 0 0 40px #fff; } 
+        }
+
+        /* === ITEM-SPECIFIC CUSTOM CUTSCENES === */
+        #corrupted-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; pointer-events: none; opacity: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease; overflow: hidden; perspective: 1000px; 
+        }
+
+        #corrupted-overlay.active { opacity: 1; pointer-events: all; cursor: none; }
+        #corrupted-shapes { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; }
+        #corrupted-text { position: relative; z-index: 3; font-family: 'Cinzel Decorative', serif; font-size: 4.5rem; color: transparent; text-align: center; padding: 0 20px; }
+
+        /* Universal cutscene polish layer: scanlines + breathing, rarity-tinted vignette (applies under every item-specific theme) */
+        #corrupted-overlay.active { animation: cutsceneVignettePulse 4s ease-in-out infinite; }
+        @keyframes cutsceneVignettePulse {
+            0%, 100% { box-shadow: inset 0 0 160px 50px rgba(0,0,0,0.65), inset 0 0 110px 25px rgba(0,0,0,0.3); }
+            50% { box-shadow: inset 0 0 230px 70px rgba(0,0,0,0.82), inset 0 0 110px 25px rgba(0,0,0,0.3); }
+        }
+        @supports (color: color-mix(in srgb, red, blue)) {
+            @keyframes cutsceneVignettePulse {
+                0%, 100% { box-shadow: inset 0 0 160px 50px rgba(0,0,0,0.65), inset 0 0 130px 30px color-mix(in srgb, var(--cutscene-tint, #000) 22%, transparent); }
+                50% { box-shadow: inset 0 0 230px 70px rgba(0,0,0,0.82), inset 0 0 130px 30px color-mix(in srgb, var(--cutscene-tint, #000) 34%, transparent); }
+            }
+        }
+        #corrupted-overlay.active::before {
+            content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+            background: repeating-linear-gradient(0deg, rgba(255,255,255,0.045) 0px, rgba(255,255,255,0.045) 1px, transparent 1px, transparent 3px);
+            mix-blend-mode: overlay; opacity: 0.45;
+        }
+
+        /* Particle layer: per-item drifting/swirling/bursting motes drawn on a canvas above the CSS backgrounds */
+        #cutscene-particle-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
+        /* Radiating light rays behind the text, tinted to the item's rarity — gives every reveal a "burst of power" backdrop */
+        #corrupted-rays {
+            position: absolute; top: 50%; left: 50%; width: 145vmax; height: 145vmax;
+            transform: translate(-50%, -50%) rotate(0deg); z-index: 2; pointer-events: none; opacity: 0;
+            mix-blend-mode: screen; background: none;
+        }
+        #corrupted-overlay.active #corrupted-rays { animation: raysAppear 1.4s ease-out forwards 0.05s, raysSpin 45s linear infinite; }
+        @supports (color: color-mix(in srgb, red, blue)) {
+            #corrupted-rays {
+                background: repeating-conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--cutscene-tint, #fff) 45%, transparent) 3deg, transparent 10deg, transparent 26deg);
+            }
+        }
+        @keyframes raysAppear { from { opacity: 0; } to { opacity: 0.6; } }
+        @keyframes raysSpin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* Flash burst on cutscene reveal: a hot white core immediately followed by a rarity-colored wash
+           (skipped for The Depth Itself, which has its own choreographed bang) */
+        #corrupted-flash {
+            position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+            background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.35) 28%, transparent 65%);
+        }
+        #corrupted-flash.burst { animation: cutsceneFlashBurst 0.9s ease-out forwards; }
+        @keyframes cutsceneFlashBurst {
+            0% { opacity: 0; transform: scale(0.3); }
+            12% { opacity: 1; transform: scale(1.4); }
+            100% { opacity: 0; transform: scale(2.8); }
+        }
+        #corrupted-flash-tint {
+            position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+        }
+        @supports (color: color-mix(in srgb, red, blue)) {
+            #corrupted-flash-tint {
+                background: radial-gradient(circle, color-mix(in srgb, var(--cutscene-tint, #fff) 75%, white) 0%, color-mix(in srgb, var(--cutscene-tint, #fff) 45%, transparent) 32%, transparent 70%);
+            }
+        }
+        #corrupted-flash-tint.burst { animation: cutsceneTintBurst 1.3s ease-out forwards; }
+        @keyframes cutsceneTintBurst {
+            0% { opacity: 0; transform: scale(0.4); }
+            25% { opacity: 0.85; transform: scale(1.3); }
+            100% { opacity: 0; transform: scale(2.3); }
+        }
+
+        /* Rarity tier badge — a bold "MYTHIC" / "ABSOLUTE" callout above the emblem, gacha-reveal style */
+        #corrupted-tier-badge {
+            position: absolute; top: 9%; left: 50%; z-index: 4; pointer-events: none; opacity: 0;
+            font-family: 'Share Tech Mono', monospace; font-weight: bold; letter-spacing: 6px; font-size: 1.05rem;
+            text-transform: uppercase; padding: 6px 22px; border-radius: 3px; border: 1px solid currentColor;
+            background: rgba(0,0,0,0.45); box-shadow: 0 0 20px currentColor, inset 0 0 12px currentColor;
+            transform: translate(-50%, -50%) scale(0.4);
+        }
+        #corrupted-tier-badge:empty { display: none; }
+        #corrupted-overlay.active #corrupted-tier-badge { animation: tierBadgeIn 0.9s cubic-bezier(0.2, 0.9, 0.25, 1.3) forwards 0.15s; }
+        @keyframes tierBadgeIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) translateY(8px); }
+            70% { opacity: 1; transform: translate(-50%, -50%) scale(1.18) translateY(0); }
+            100% { opacity: 0.95; transform: translate(-50%, -50%) scale(1) translateY(0); }
+        }
+
+        /* Rune emblem: a spinning sigil-ring with a glyph unique to the item, floating above the main text */
+        #corrupted-emblem {
+            position: absolute; top: 22%; left: 50%; width: 150px; height: 150px; z-index: 3;
+            pointer-events: none; opacity: 0; transform: translate(-50%, -50%);
+            filter: drop-shadow(0 0 14px currentColor);
+        }
+        #corrupted-emblem:empty { display: none; }
+        #corrupted-emblem svg {
+            width: 100%; height: 100%; overflow: visible;
+            animation: emblemAppear 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, emblemFloat 4.5s ease-in-out infinite 1.5s;
+        }
+        @keyframes emblemAppear {
+            0% { opacity: 0; transform: scale(0.35) rotate(-30deg); }
+            65% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+            100% { opacity: 0.92; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes emblemFloat {
+            0%, 100% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.03) translateY(-7px); }
+        }
+        .emblem-ring-outer, .emblem-ring-inner { fill: none; stroke: currentColor; stroke-width: 1; transform-origin: 60px 60px; }
+        .emblem-ring-outer { opacity: 0.55; animation: emblemRingSpin 34s linear infinite; }
+        .emblem-ring-inner { opacity: 0.32; animation: emblemRingSpin 24s linear infinite reverse; }
+        @keyframes emblemRingSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .emblem-ticks line { stroke: currentColor; stroke-width: 1.4; opacity: 0.5; }
+        .emblem-glyph { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+
+        /* Glowing divider lines flanking the main cutscene text, colored to match whatever rarity/text color is active */
+        #corrupted-text::before, #corrupted-text::after {
+            content: ''; position: absolute; left: 50%; width: 130px; height: 2px;
+            background: currentColor; opacity: 0.55; transform: translateX(-50%);
+            box-shadow: 0 0 14px currentColor;
+        }
+        #corrupted-text::before { top: -20px; }
+        #corrupted-text::after { bottom: -20px; }
+
+        /* Odds subtitle shown under the main cutscene text */
+        #corrupted-subtext {
+            position: absolute; bottom: 13%; left: 0; right: 0; text-align: center; z-index: 5; pointer-events: none;
+            font-family: 'Share Tech Mono', monospace; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
+            opacity: 0; text-shadow: 0 0 12px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.9);
+            animation: subtextFadeIn 1.4s ease-out forwards 0.6s;
+        }
+        @keyframes subtextFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 0.9; transform: translateY(0); } }
+
+        /* Skip cutscene controls */
+        #cutscene-controls {
+            position: absolute; bottom: 40px; right: 40px; z-index: 20; display: flex; flex-direction: column;
+            align-items: flex-end; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        #cutscene-controls.visible { opacity: 0.92; pointer-events: all; }
+        #skip-cutscene-btn {
+            background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.45); color: #fff;
+            font-family: 'Share Tech Mono', monospace; letter-spacing: 2px; font-size: 0.9rem; padding: 8px 18px;
+            border-radius: 4px; cursor: pointer; transition: background 0.15s, border-color 0.15s; text-transform: uppercase;
+        }
+        #skip-cutscene-btn:hover { background: rgba(0,0,0,0.85); border-color: #fff; }
+        #always-skip-label {
+            display: flex; align-items: center; gap: 6px; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+            color: rgba(255,255,255,0.75); letter-spacing: 1px; cursor: pointer; background: rgba(0,0,0,0.4);
+            padding: 4px 10px; border-radius: 3px; text-transform: uppercase;
+        }
+        #always-skip-label input { cursor: pointer; accent-color: #d95129; width: 12px; height: 12px; }
+
+        /* 1. The Heart of the Trench (Mythic) */
+        #corrupted-overlay.the-heart-of-the-trench { background: radial-gradient(circle, #2a0000 0%, #000 80%); }
+        #corrupted-overlay.the-heart-of-the-trench #corrupted-shapes { background: repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 40px, rgba(255, 0, 0, 0.15) 41px, rgba(255, 0, 0, 0.4) 50px, transparent 51px); animation: pulseRings 1.2s infinite linear; }
+        @keyframes pulseRings { 0% { transform: scale(0.8); opacity: 0.5; } 50% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        #corrupted-overlay.the-heart-of-the-trench #corrupted-text { animation: heartThump 1.2s infinite; color: #ff3333; text-shadow: 0 0 30px #ff0000, 0 0 10px #ff0000; }
+        @keyframes heartThump { 0%, 100% { transform: scale(1); opacity: 0.8; } 10% { transform: scale(1.15); opacity: 1; filter: brightness(1.5); } 25% { transform: scale(1.05); opacity: 0.9; } 35% { transform: scale(1.2); opacity: 1; filter: brightness(2); } }
+
+        /* 2. Cursed Figurehead (Mythic) */
+        #corrupted-overlay.cursed-figurehead { background: linear-gradient(to bottom, #001a11, #000905); }
+        #corrupted-overlay.cursed-figurehead #corrupted-shapes { background: repeating-linear-gradient(45deg, rgba(0, 255, 150, 0.05) 0px, transparent 40px, rgba(0, 200, 100, 0.05) 80px), repeating-linear-gradient(-45deg, rgba(0, 200, 150, 0.05) 0px, transparent 50px, rgba(0, 255, 100, 0.05) 100px); background-size: 200% 200%; animation: fogDrift 8s infinite linear; }
+        @keyframes fogDrift { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+        #corrupted-overlay.cursed-figurehead #corrupted-text { animation: ghostlySway 5s ease-in-out infinite; color: #88ccaa; text-shadow: 0 0 20px #448866, 0 5px 5px #000; letter-spacing: 5px; }
+        @keyframes ghostlySway { 0%, 100% { transform: rotate(-3deg) translateY(0); filter: blur(1px); } 50% { transform: rotate(3deg) translateY(-15px); filter: blur(4px); } }
+
+        /* 3. Phantom Lighthouse (Mythic) */
+        #corrupted-overlay.phantom-lighthouse { background: #000508; }
+        #corrupted-overlay.phantom-lighthouse #corrupted-shapes { background: conic-gradient(from 180deg at 50% 120%, transparent 0deg, rgba(255, 255, 100, 0.4) 30deg, transparent 60deg); transform-origin: 50% 120%; animation: lighthouseSweep 6s infinite ease-in-out alternate; mix-blend-mode: screen; }
+        @keyframes lighthouseSweep { 0% { transform: rotate(-50deg); } 100% { transform: rotate(50deg); } }
+        #corrupted-overlay.phantom-lighthouse #corrupted-text { background: linear-gradient(90deg, #222 0%, #fff 50%, #222 100%); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textBeam 6s infinite ease-in-out alternate; filter: drop-shadow(0 0 15px rgba(255,255,150,0.5)); }
+        @keyframes textBeam { 0% { background-position: 100% 0; } 100% { background-position: 0% 0; } }
+
+        /* 4. The Drowned Crown (Eldritch) */
+        #corrupted-overlay.the-drowned-crown { background: radial-gradient(circle at center, #004455 0%, #000b1a 100%); }
+        #corrupted-overlay.the-drowned-crown #corrupted-shapes { background-image: radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.6) 0%, transparent 4%), radial-gradient(circle at 80% 90%, rgba(255, 215, 0, 0.8) 0%, transparent 3%), radial-gradient(circle at 40% 60%, rgba(255, 215, 0, 0.4) 0%, transparent 5%), radial-gradient(circle at 60% 70%, rgba(255, 215, 0, 0.6) 0%, transparent 4%), radial-gradient(circle at 50% 40%, rgba(255, 215, 0, 0.9) 0%, transparent 12%); animation: bubblesRise 7s ease-in forwards; }
+        @keyframes bubblesRise { 0% { transform: translateY(100px) scale(0.8); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-150px) scale(1.5); opacity: 0; } }
+        #corrupted-overlay.the-drowned-crown #corrupted-text { animation: sinkingCrown 7s ease-in forwards; color: #ffd700; text-shadow: 0 0 40px #b8860b, 0 0 10px #ffea00, 0 0 50px #000; letter-spacing: 2px; }
+        @keyframes sinkingCrown { 0% { transform: translateY(-80px); opacity: 0; filter: blur(10px); } 20% { opacity: 1; filter: blur(0px); } 80% { opacity: 1; filter: blur(0px); } 100% { transform: translateY(80px); opacity: 0; filter: blur(5px); } }
+
+        /* 5. Whispering Obelisk (Eldritch) */
+        #corrupted-overlay.whispering-obelisk { background: #0a001a; }
+        #corrupted-overlay.whispering-obelisk #corrupted-shapes { background-image: linear-gradient(rgba(0, 255, 255, 0.3) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 0, 255, 0.3) 2px, transparent 2px); background-size: 60px 60px; transform: perspective(600px) rotateX(60deg) translateY(-50px) translateZ(-200px); animation: gridMove 2s infinite linear; }
+        @keyframes gridMove { 0% { background-position: 0 0; } 100% { background-position: 0 60px; } }
+        #corrupted-overlay.whispering-obelisk #corrupted-text { animation: obeliskGlitch 0.15s infinite; color: #aa00ff; text-shadow: -4px 0 #00ffff, 4px 0 #ff00ff; font-family: 'Share Tech Mono', monospace; font-size: 3.5rem; font-weight: bold; }
+        @keyframes obeliskGlitch { 0% { transform: translate(3px, -3px) skew(-5deg); } 33% { transform: translate(-3px, 2px) skew(5deg); } 66% { transform: translate(2px, 3px) skew(0deg); } 100% { transform: translate(-2px, -2px) skew(-2deg); } }
+
+        /* 6. Abyssal Leviathan Spine (Eldritch) */
+        #corrupted-overlay.abyssal-leviathan-spine { background: radial-gradient(circle, #001a14 0%, #000 80%); }
+        #corrupted-overlay.abyssal-leviathan-spine #corrupted-shapes { background: radial-gradient(ellipse at 50% -50%, transparent 60%, rgba(0, 255, 150, 0.15) 65%, transparent 70%), radial-gradient(ellipse at 50% 150%, transparent 60%, rgba(0, 255, 150, 0.15) 65%, transparent 70%); background-size: 300px 100%; animation: spinePass 4s infinite linear; }
+        @keyframes spinePass { 0% { background-position: 0 0; } 100% { background-position: -300px 0; } }
+        #corrupted-overlay.abyssal-leviathan-spine #corrupted-text { color: #ccffee; text-shadow: 0 0 20px #00ffaa, 0 10px 10px #000; animation: leviathanBreath 6s ease-in-out infinite; letter-spacing: 8px; }
+        @keyframes leviathanBreath { 0%, 100% { transform: scale(1) translateY(0); filter: blur(3px); opacity: 0.6; } 50% { transform: scale(1.1) translateY(-5px); filter: blur(0px); opacity: 1; } }
+
+        /* 7. Tear of the Abyss (Unfathomable) */
+        #corrupted-overlay.tear-of-the-abyss { animation: tearFlashbangBg 10s forwards ease-out; }
+        @keyframes tearFlashbangBg { 0%, 15% { background: #ffffff; } 40% { background: radial-gradient(circle, #fff 0%, #0044aa 50%, #000 100%); } 100% { background: #000411; } }
+        #corrupted-overlay.tear-of-the-abyss #corrupted-shapes { background: radial-gradient(3px 3px at 20% 30%, #ffffff 50%, rgba(0,0,0,0)), radial-gradient(4px 4px at 40% 70%, #ffffff 50%, rgba(0,0,0,0)), radial-gradient(2px 2px at 60% 20%, #ffffff 50%, rgba(0,0,0,0)), radial-gradient(5px 5px at 80% 80%, #ffffff 50%, rgba(0,0,0,0)), radial-gradient(3px 3px at 10% 90%, #ffffff 50%, rgba(0,0,0,0)), radial-gradient(4px 4px at 90% 10%, #ffffff 50%, rgba(0,0,0,0)); background-size: 200px 200px; animation: starryVortex 10s linear forwards; opacity: 0; }
+        @keyframes starryVortex { 0%, 20% { opacity: 0; transform: scale(0.1) rotate(0deg); } 50% { opacity: 1; } 100% { opacity: 0.5; transform: scale(4) rotate(180deg); } }
+        #corrupted-overlay.tear-of-the-abyss #corrupted-text { animation: tearText 10s forwards; color: #fff; text-shadow: 0 0 50px #00aaff, 0 0 100px #fff; }
+        @keyframes tearText { 0% { opacity: 0; transform: scale(0.3); letter-spacing: -10px; filter: blur(20px); } 20% { opacity: 1; transform: scale(1); letter-spacing: 5px; filter: blur(0px); } 80% { opacity: 1; transform: scale(1.1); letter-spacing: 20px; filter: blur(0px); } 100% { opacity: 0; transform: scale(1.5); letter-spacing: 45px; filter: blur(15px); } }
+
+        /* 8. The Sunken Moon (Unfathomable) */
+        #corrupted-overlay.the-sunken-moon { background: #000511; animation: deepSeaEclipse 11s forwards; }
+        @keyframes deepSeaEclipse { 0% { background: #000; } 50% { background: radial-gradient(circle at bottom, #002244 0%, #000 70%); } 100% { background: #fff; } }
+        #corrupted-overlay.the-sunken-moon #corrupted-shapes { background: radial-gradient(circle, #ffffee 0%, #ffffaa 20%, transparent 60%); border-radius: 50%; width: 200vw; height: 200vw; position: absolute; left: -50vw; top: 100vh; animation: lunarRise 11s cubic-bezier(0.25, 0.1, 0.25, 1) forwards; box-shadow: 0 0 200px 100px rgba(255,255,200,0.8); mix-blend-mode: screen; }
+        @keyframes lunarRise { 0% { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-150vh); opacity: 1; } }
+        #corrupted-overlay.the-sunken-moon #corrupted-text { color: #000; text-shadow: 0 0 20px #fff, 0 0 40px #ffffaa, 0 0 80px #ffcc00; animation: moonText 11s ease-in-out forwards; mix-blend-mode: overlay; z-index: 3; }
+        @keyframes moonText { 0% { opacity: 0; transform: scale(0.8); letter-spacing: -5px; } 30% { opacity: 1; transform: scale(1); letter-spacing: 5px; } 80% { opacity: 1; transform: scale(1.1); letter-spacing: 15px; color: #fff; } 100% { opacity: 0; transform: scale(1.5); letter-spacing: 30px; filter: blur(10px); } }
+
+        /* 9. Echo of the Genesis (Unfathomable) */
+        #corrupted-overlay.echo-of-the-genesis { background: #000; }
+        #corrupted-overlay.echo-of-the-genesis #corrupted-shapes { background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,255,255,0.8) 40px, rgba(0,255,255,0.8) 45px), repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,0,255,0.8) 40px, rgba(255,0,255,0.8) 45px); width: 300vw; height: 300vh; position: absolute; left: -100vw; top: -100vh; transform-origin: center; animation: genesisHyperDrive 9s cubic-bezier(0.1, 0.7, 0.1, 1) forwards; opacity: 0; }
+        @keyframes genesisHyperDrive { 0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.1); opacity: 0; filter: hue-rotate(0deg); } 10% { opacity: 1; } 90% { transform: rotateX(60deg) rotateY(20deg) rotateZ(180deg) scale(5); opacity: 1; filter: hue-rotate(360deg); } 100% { transform: rotateX(90deg) rotateY(45deg) rotateZ(360deg) scale(10); opacity: 0; filter: hue-rotate(720deg); } }
+        #corrupted-overlay.echo-of-the-genesis #corrupted-text { font-family: 'Share Tech Mono', monospace; font-size: 5rem; color: #fff; animation: genesisText 9s forwards, textJitter 0.05s infinite; }
+        @keyframes genesisText { 0% { opacity: 0; transform: scale(0.1); text-shadow: none; letter-spacing: -20px; } 20% { opacity: 1; transform: scale(1); text-shadow: -10px 0 20px #f0f, 10px 0 20px #0ff; letter-spacing: 0px; } 80% { opacity: 1; transform: scale(1.5); text-shadow: -30px 0 50px #f0f, 30px 0 50px #0ff; letter-spacing: 20px; } 100% { opacity: 0; transform: scale(3); text-shadow: -100px 0 100px #f0f, 100px 0 100px #0ff; letter-spacing: 50px; filter: blur(10px); } }
+
+        /* 10. THE DEPTH ITSELF (ABSOLUTE TIER) - 18 SECOND EPIC CUTSCENE */
+        #corrupted-overlay.the-depth-itself { animation: absoluteBg 18s forwards; }
+        @keyframes absoluteBg {
+            0%, 48% { background: #000000; }
+            49% { background: #050011; }
+            50%, 52% { background: #ffffff; } /* The Flashbang */
+            55% { background: radial-gradient(circle at center, #003366 0%, #000 80%); } /* Breathing Cosmos */
+            75% { background: radial-gradient(circle at center, #330033 0%, #000 90%); }
+            100% { background: radial-gradient(circle at center, #00020a 0%, #000 100%); }
+        }
+        
+        /* Layer 1: The Black Hole / Singularity Implosion */
+        #corrupted-overlay.the-depth-itself #corrupted-shapes {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 20px 5px #ff0055, 0 0 50px 15px #00ffff;
+            animation: absoluteSingularity 18s forwards cubic-bezier(0.4, 0, 1, 1);
+            z-index: 1;
+        }
+        @keyframes absoluteSingularity {
+            0% { width: 0px; height: 0px; opacity: 0; }
+            5% { width: 2px; height: 2px; opacity: 1; }
+            45% { width: 15px; height: 15px; box-shadow: 0 0 100px 40px #ff0055, 0 0 200px 80px #00ffff; filter: brightness(1); }
+            49% { width: 0px; height: 0px; box-shadow: 0 0 500px 500px #fff; filter: brightness(5); } /* Implosion */
+            50%, 100% { width: 0px; height: 0px; opacity: 0; box-shadow: none; }
+        }
+
+        /* Layer 1.5: Divine Ascension Particles */
+        #corrupted-overlay.the-depth-itself::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,1) 0%, transparent 2%),
+                radial-gradient(circle at 30% 70%, rgba(0,255,255,1) 0%, transparent 3%),
+                radial-gradient(circle at 70% 30%, rgba(255,0,85,1) 0%, transparent 2%),
+                radial-gradient(circle at 20% 40%, rgba(255,255,255,1) 0%, transparent 3%),
+                radial-gradient(circle at 80% 80%, rgba(0,255,255,1) 0%, transparent 2%);
+            background-size: 150px 150px;
+            animation: absoluteAscension 18s forwards linear;
+            z-index: 2; pointer-events: none; opacity: 0;
+            mix-blend-mode: screen;
+        }
+        @keyframes absoluteAscension {
+            0%, 49% { opacity: 0; transform: translateY(100vh) scale(0.5); }
+            51% { opacity: 1; transform: translateY(50vh) scale(1.5); }
+            100% { opacity: 0; transform: translateY(-100vh) scale(3); }
+        }
+
+        /* Layer 2: The Divine Light Rays (Post-Bang) */
+        #corrupted-overlay.the-depth-itself::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: repeating-conic-gradient(from 0deg at 50% -10%, transparent 0deg, rgba(0, 255, 255, 0.05) 5deg, transparent 10deg, rgba(255, 0, 255, 0.05) 15deg, transparent 20deg);
+            animation: divineRays 18s forwards;
+            z-index: 2;
+            pointer-events: none;
+        }
+        @keyframes divineRays {
+            0%, 50% { opacity: 0; transform: scale(1) rotate(-5deg); }
+            52% { opacity: 1; transform: scale(1.5) rotate(0deg); filter: brightness(2); }
+            100% { opacity: 0.5; transform: scale(2.5) rotate(15deg); filter: brightness(1); }
+        }
+
+        /* Layer 3: The Majestic Levitating Text */
+        #corrupted-overlay.the-depth-itself #corrupted-text {
+            font-family: 'Share Tech Mono', monospace; font-size: 5rem; color: #ffffff;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #ff0055, 0 0 80px #fff;
+            animation: absoluteText 18s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 3;
+            white-space: nowrap;
+        }
+        @keyframes absoluteText {
+            0%, 49% { opacity: 0; transform: scale(0.5) translateY(0); letter-spacing: -20px; }
+            51% { opacity: 1; transform: scale(2.5) translateY(0); letter-spacing: 50px; filter: blur(20px) brightness(5); color: #fff; } 
+            60% { opacity: 1; transform: scale(1.1) translateY(-10px); letter-spacing: 10px; filter: blur(0px) brightness(2); color: #ffffff; text-shadow: 0 0 50px #00ffff, 0 0 100px #ff0055, 0 0 150px #fff; }
+            85% { opacity: 1; transform: scale(1.15) translateY(-30px); letter-spacing: 15px; filter: blur(0px) brightness(1.5); color: #ffffff; text-shadow: 0 0 30px #00ffff, 0 0 80px #ff0055, 0 0 120px #fff; }
+            100% { opacity: 0; transform: scale(1.3) translateY(-60px); letter-spacing: 30px; filter: blur(20px); }
+        }
+
+
+        /* === THE DEPTH ITSELF — ABSOLUTE TIER FLAGSHIP UPGRADE (1 in 50,000,000) === */
+
+        /* Real starfield backdrop: two parallax layers of hand-placed stars, hidden for every other cutscene */
+        #corrupted-starfield-far, #corrupted-starfield-near {
+            position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; border-radius: 50%;
+            background: transparent; opacity: 0; z-index: 1; pointer-events: none;
+        }
+        #corrupted-overlay.the-depth-itself #corrupted-starfield-far {
+            box-shadow: -109px -131px 0.5px rgba(255,255,255,0.33), -59px -689px 0.9px rgba(255,255,255,0.28), -153px 82px 0.5px rgba(255,255,255,0.43), 305px 51px 0.8px rgba(255,255,255,0.44), 115px 611px 0.9px rgba(255,255,255,0.25), 243px -665px 0.5px rgba(255,255,255,0.3), 404px -111px 0.4px rgba(255,255,255,0.28), 364px -518px 0.9px rgba(255,255,255,0.51), -905px -210px 0.6px rgba(255,255,255,0.44), 309px -566px 0.9px rgba(255,255,255,0.45), -53px -179px 0.5px rgba(255,255,255,0.35), 295px 162px 0.4px rgba(255,255,255,0.35), -291px -333px 0.6px rgba(255,255,255,0.32), -96px 894px 0.8px rgba(255,255,255,0.46), 349px 645px 0.4px rgba(255,255,255,0.38), 661px -44px 0.7px rgba(255,255,255,0.49), 425px -643px 0.5px rgba(255,255,255,0.26), -146px 334px 0.4px rgba(255,255,255,0.58), 287px -282px 0.8px rgba(255,255,255,0.39), 444px -264px 0.5px rgba(255,255,255,0.34), -334px -135px 0.7px rgba(255,255,255,0.56), -263px 192px 1.0px rgba(255,255,255,0.43), 158px 101px 0.4px rgba(255,255,255,0.47), 127px -471px 0.3px rgba(255,255,255,0.38), 573px -14px 1.0px rgba(255,255,255,0.55), 725px 52px 0.8px rgba(255,255,255,0.44), -70px 659px 0.4px rgba(255,255,255,0.4), -875px 262px 0.9px rgba(255,255,255,0.34), -293px -1px 0.9px rgba(255,255,255,0.55), -198px 631px 0.7px rgba(255,255,255,0.3), 46px -580px 0.8px rgba(255,255,255,0.44), 409px 1px 0.3px rgba(255,255,255,0.58), 590px -563px 0.5px rgba(255,255,255,0.27), 654px -629px 0.4px rgba(255,255,255,0.42), 688px 320px 0.8px rgba(255,255,255,0.29), -583px 91px 0.5px rgba(255,255,255,0.56), -283px 148px 0.7px rgba(255,255,255,0.51), 121px 381px 1.0px rgba(255,255,255,0.48), -522px 214px 0.4px rgba(255,255,255,0.33), -326px 528px 0.5px rgba(255,255,255,0.33), 591px 283px 0.5px rgba(255,255,255,0.57), 131px -160px 0.5px rgba(255,255,255,0.48), 57px 249px 1.0px rgba(255,255,255,0.45), -766px 133px 0.9px rgba(255,255,255,0.32), 406px 283px 0.6px rgba(255,255,255,0.41), -90px -683px 1.0px rgba(255,255,255,0.28), -345px 242px 0.9px rgba(255,255,255,0.34), 187px 473px 0.6px rgba(255,255,255,0.35), 1px 889px 0.6px rgba(255,255,255,0.55), -181px -59px 1.0px rgba(255,255,255,0.54), 874px -172px 0.9px rgba(255,255,255,0.31), -320px 29px 0.6px rgba(255,255,255,0.27), -680px 647px 0.5px rgba(255,255,255,0.52), -469px 136px 1.0px rgba(255,255,255,0.6), -681px -249px 0.4px rgba(255,255,255,0.35), 602px -120px 0.7px rgba(255,255,255,0.51), 578px 217px 0.7px rgba(255,255,255,0.55), 505px 768px 0.4px rgba(255,255,255,0.32), -571px -388px 0.5px rgba(255,255,255,0.29), 268px -221px 0.7px rgba(255,255,255,0.47), -539px 300px 0.7px rgba(255,255,255,0.58), 205px 693px 0.5px rgba(255,255,255,0.39), -184px -344px 0.5px rgba(255,255,255,0.51), 464px 227px 1.0px rgba(255,255,255,0.6), 287px 142px 0.5px rgba(255,255,255,0.58), 625px -581px 0.6px rgba(255,255,255,0.31), 358px -616px 0.7px rgba(255,255,255,0.6), -89px -129px 0.9px rgba(255,255,255,0.35), -467px -771px 0.4px rgba(255,255,255,0.29), 464px 369px 0.5px rgba(255,255,255,0.46), -63px -306px 0.7px rgba(255,255,255,0.34), -872px 63px 0.9px rgba(255,255,255,0.28), -329px 172px 0.3px rgba(255,255,255,0.52), -234px -273px 0.8px rgba(255,255,255,0.44), -142px 69px 0.4px rgba(255,255,255,0.56), 483px -333px 0.9px rgba(255,255,255,0.45), 151px 202px 0.5px rgba(255,255,255,0.56), 240px -804px 0.9px rgba(255,255,255,0.32), 1px 232px 0.8px rgba(255,255,255,0.56), -538px 359px 0.4px rgba(255,255,255,0.58), 614px -700px 0.9px rgba(255,255,255,0.56), 730px 115px 0.5px rgba(255,255,255,0.58), 271px -796px 0.9px rgba(255,255,255,0.34), 55px -230px 0.9px rgba(255,255,255,0.55), 138px 791px 0.6px rgba(255,255,255,0.36), 93px -319px 0.3px rgba(255,255,255,0.32), -397px 742px 1.0px rgba(255,255,255,0.35), -296px -365px 1.0px rgba(255,255,255,0.44), 225px -90px 1.0px rgba(255,255,255,0.31), 352px -85px 0.4px rgba(255,255,255,0.4), -54px -397px 0.7px rgba(255,255,255,0.43), -459px 404px 0.5px rgba(255,255,255,0.5), 890px 9px 0.7px rgba(255,255,255,0.5), -35px -686px 0.6px rgba(255,255,255,0.27), -213px -355px 0.5px rgba(255,255,255,0.55), -74px -383px 0.5px rgba(255,255,255,0.39), -316px 222px 0.4px rgba(255,255,255,0.4), 644px -253px 0.9px rgba(255,255,255,0.47), -185px 558px 0.3px rgba(255,255,255,0.35), -555px 262px 0.8px rgba(255,255,255,0.41), -300px 114px 0.6px rgba(255,255,255,0.57), 81px -274px 0.4px rgba(255,255,255,0.43), -281px -310px 0.9px rgba(255,255,255,0.51), -154px -292px 0.4px rgba(255,255,255,0.26), 17px 530px 0.9px rgba(255,255,255,0.28), -562px 335px 0.4px rgba(255,255,255,0.49), -345px 12px 0.8px rgba(255,255,255,0.25), 5px -766px 0.4px rgba(255,255,255,0.4), 411px 819px 0.7px rgba(255,255,255,0.27), 4px 829px 0.6px rgba(255,255,255,0.53);
+            animation: depthStarsAppear 18s forwards, depthStarsDriftFar 60s linear infinite;
+        }
+        #corrupted-overlay.the-depth-itself #corrupted-starfield-near {
+            box-shadow: -318px -559px 1.7px rgba(255,255,255,0.93), 339px -276px 1.9px rgba(255,255,255,0.73), 195px -351px 2.1px rgba(255,255,255,0.83), -239px 38px 1.3px rgba(255,255,255,0.79), 38px -385px 1.8px rgba(255,255,255,0.62), 227px 120px 1.3px rgba(255,255,255,0.64), -171px -44px 1.3px rgba(255,255,255,0.81), -37px -130px 1.5px rgba(255,255,255,0.74), -185px 108px 1.5px rgba(255,255,255,0.91), -417px -243px 2.0px rgba(255,255,255,0.84), -75px 70px 1.4px rgba(255,255,255,0.84), 378px -497px 1.5px rgba(255,255,255,0.84), -414px -123px 1.3px rgba(255,255,255,0.6), -107px 45px 1.4px rgba(255,255,255,0.81), -157px 108px 1.6px rgba(255,255,255,0.56), -83px -80px 1.5px rgba(255,255,255,0.75), 447px 77px 1.2px rgba(255,255,255,0.71), 293px 96px 1.3px rgba(255,255,255,0.65), 22px -308px 1.9px rgba(255,255,255,0.87), -2px 145px 1.0px rgba(255,255,255,0.74), 292px -0px 1.8px rgba(255,255,255,0.85), -298px -420px 2.1px rgba(255,255,255,0.59), 182px 23px 1.2px rgba(255,255,255,0.8), -202px -86px 1.8px rgba(255,255,255,0.85), 214px 377px 1.9px rgba(255,255,255,0.55), 266px -572px 1.1px rgba(255,255,255,0.51), -179px 437px 2.1px rgba(255,255,255,0.68), -31px -138px 1.8px rgba(255,255,255,0.78), 421px 314px 2.0px rgba(255,255,255,0.77), 464px 442px 1.9px rgba(255,255,255,0.66), -274px 132px 1.6px rgba(255,255,255,0.65), 323px -448px 1.1px rgba(255,255,255,0.93), -366px -418px 1.8px rgba(255,255,255,0.7), -64px -628px 1.3px rgba(255,255,255,0.86), -355px -87px 1.5px rgba(255,255,255,0.83), -66px 565px 2.0px rgba(255,255,255,0.54), 172px -159px 1.6px rgba(255,255,255,0.77), -84px 80px 2.0px rgba(255,255,255,0.58), 127px 524px 1.4px rgba(255,255,255,0.9), -76px -240px 1.0px rgba(255,255,255,0.93), 426px 254px 1.6px rgba(255,255,255,0.84), -166px -424px 1.6px rgba(255,255,255,0.86), 185px 122px 1.8px rgba(255,255,255,0.64), -314px -177px 1.6px rgba(255,255,255,0.69), -7px -282px 1.8px rgba(255,255,255,0.62), -1px 166px 1.2px rgba(255,255,255,0.55), -506px -116px 1.2px rgba(255,255,255,0.6), -496px 49px 2.2px rgba(255,255,255,0.74), -32px 152px 1.2px rgba(255,255,255,0.6), 46px 97px 1.6px rgba(255,255,255,0.62), 399px -65px 1.8px rgba(255,255,255,0.56), 251px -272px 2.0px rgba(255,255,255,0.76), -336px 65px 1.2px rgba(255,255,255,0.52), 338px -131px 2.0px rgba(255,255,255,0.68), 399px 200px 1.1px rgba(255,255,255,0.57);
+            animation: depthStarsAppear 18s forwards, depthStarsDriftNear 38s linear infinite reverse;
+        }
+        @keyframes depthStarsAppear {
+            0%, 48% { opacity: 0; }
+            58% { opacity: 1; }
+            100% { opacity: 0.85; }
+        }
+        @keyframes depthStarsDriftFar { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes depthStarsDriftNear { from { transform: translate(-50%, -50%) rotate(0deg) scale(1); } to { transform: translate(-50%, -50%) rotate(360deg) scale(1.08); } }
+
+        /* Expanding shockwave ring, timed to detonate right at the flashbang moment */
+        #corrupted-shockwave {
+            position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; border-radius: 50%;
+            border: 3px solid #fff; transform: translate(-50%, -50%); opacity: 0; pointer-events: none; z-index: 3;
+            box-shadow: 0 0 50px 15px rgba(255,255,255,0.9), inset 0 0 50px 15px rgba(0,255,255,0.6);
+        }
+        #corrupted-overlay.the-depth-itself #corrupted-shockwave { animation: depthShockwave 18s forwards; }
+        @keyframes depthShockwave {
+            0%, 48.5% { width: 10px; height: 10px; opacity: 0; border-width: 4px; }
+            49.5% { width: 10px; height: 10px; opacity: 1; border-width: 10px; }
+            58% { width: 250vmax; height: 250vmax; opacity: 0; border-width: 1px; }
+            100% { opacity: 0; }
+        }
+
+        /* Hero item-name treatment + secondary "prophecy" line (used only by this cutscene) */
+        #corrupted-prophecy {
+            position: absolute; top: 63%; left: 0; right: 0; text-align: center; z-index: 4; pointer-events: none;
+            font-family: 'Share Tech Mono', monospace; font-style: italic; font-size: 1.3rem; letter-spacing: 4px;
+            text-transform: uppercase; opacity: 0; text-shadow: 0 0 16px currentColor, 0 0 4px rgba(0,0,0,0.9);
+        }
+        #corrupted-prophecy:empty { display: none; }
+        #corrupted-overlay.the-depth-itself #corrupted-prophecy { animation: depthProphecyIn 2s ease-out forwards 11.3s; }
+        @keyframes depthProphecyIn {
+            0% { opacity: 0; transform: translateY(12px); letter-spacing: 10px; }
+            100% { opacity: 0.85; transform: translateY(0); letter-spacing: 4px; }
+        }
+
+        /* Bigger, more ornate emblem exclusively for The Depth Itself */
+        #corrupted-overlay.the-depth-itself #corrupted-emblem { width: 210px; height: 210px; top: 26%; }
+        #corrupted-overlay.the-depth-itself #corrupted-emblem svg {
+            animation: emblemAppear 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 9.3s, emblemFloat 6s ease-in-out infinite 11.1s;
+        }
+        #corrupted-overlay.the-depth-itself .emblem-ring-outer { animation-duration: 50s; }
+        #corrupted-overlay.the-depth-itself .emblem-ring-inner { animation-duration: 34s; }
+        #corrupted-overlay.the-depth-itself .emblem-accents { fill: currentColor; stroke: none; opacity: 0.85; animation: emblemRingSpin 20s linear infinite reverse; transform-origin: 60px 60px; }
+
+        /* Shimmering multi-color tier badge, unique to the Absolute reveal */
+        #corrupted-overlay.the-depth-itself #corrupted-tier-badge {
+            font-size: 1.3rem; letter-spacing: 8px; padding: 8px 30px;
+            animation: tierBadgeIn 0.9s cubic-bezier(0.2, 0.9, 0.25, 1.3) forwards 10.6s, absoluteBadgeShimmer 2.4s ease-in-out infinite 11.5s;
+        }
+        @keyframes absoluteBadgeShimmer {
+            0%, 100% { color: #ff0055; box-shadow: 0 0 22px #ff0055, inset 0 0 12px #ff0055; border-color: #ff0055; }
+            33% { color: #00ffff; box-shadow: 0 0 22px #00ffff, inset 0 0 12px #00ffff; border-color: #00ffff; }
+            66% { color: #fff; box-shadow: 0 0 26px #fff, inset 0 0 14px #fff; border-color: #fff; }
+        }
+
+        /* Environmental Mechanics — this filter deliberately excludes #corrupted-overlay (a sibling, not a
+           descendant, of #game-ui) so the cutscene's own colors stay vivid while the game world behind it
+           desaturates. A child element's filter can never "undo" a filter already applied by an ancestor,
+           so the overlay has to live outside this wrapper rather than try to counteract it from within. */
+        #game-ui.corrupted { background-color: #000; filter: grayscale(1) contrast(1.5) brightness(0.8); }
+        #game-ui.corrupted .preserve-color { filter: grayscale(0) !important; }
+
+        @keyframes screenShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-0.5deg); }
+            20% { transform: translate(-3px, 0px) rotate(0.5deg); }
+            30% { transform: translate(0px, -1px) rotate(0deg); }
+            40% { transform: translate(2px, 1px) rotate(0.5deg); }
+            50% { transform: translate(-1px, 2px) rotate(-0.5deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-0.5deg); }
+            80% { transform: translate(-1px, -1px) rotate(0.5deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .shake { animation: screenShake 0.4s ease-out; }
+
+        /* === TOP HALF: THE RIG === */
+        #rig-section {
+            flex: 0 0 35vh; position: relative; background: linear-gradient(to bottom, #03060a 0%, #010305 100%);
+            border-bottom: 4px solid var(--panel-border); box-shadow: inset 0 -20px 50px rgba(0,0,0,0.9);
+            display: flex; overflow: hidden;
+        }
+
+        #storm-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; opacity: 0.75; }
+        .vignette { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.85) 100%); pointer-events: none; z-index: 4; }
+
+        .fine-fog { position: absolute; top: 0; left: 0; width: 200%; height: 100%; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.45"/></svg>'); mix-blend-mode: overlay; pointer-events: none; z-index: 4; }
+        .fog-mist { position: absolute; top: 0; left: 0; width: 200%; height: 100%; background: linear-gradient(to right, transparent 0%, rgba(130, 160, 180, 0.25) 20%, transparent 40%, rgba(130, 160, 180, 0.4) 60%, transparent 80%); animation: driftMist 20s linear infinite; pointer-events: none; z-index: 4; }
+        @keyframes driftMist { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        /* === WINCH VISUAL ASSEMBLY === */
+        #winch-rig-assembly { position: absolute; left: 5%; bottom: 0; top: 0; width: 380px; z-index: 3; pointer-events: none; transition: transform 0.3s ease; }
+        .winch-support-frame { position: absolute; bottom: 0; left: 20px; width: 140px; height: 100%; border-right: 8px solid #241913; border-left: 8px solid #1c130f; background: repeating-linear-gradient(45deg, #18110d, #18110d 15px, #241913 15px, #241913 30px); box-shadow: inset 0 0 10px #000, 5px 0 15px rgba(0,0,0,0.5); opacity: 0.9; }
+        .winch-diagonal-brace { position: absolute; bottom: 0; left: 20px; width: 180px; height: 12px; background: #201611; border: 2px solid #140e0b; transform: rotate(-35deg); transform-origin: left bottom; }
+        .winch-drum-housing { position: absolute; bottom: 15px; left: 50px; width: 100px; height: 100px; background: #14100e; border: 5px solid #2c1e17; border-radius: 50%; box-shadow: 0 10px 15px rgba(0,0,0,0.8), inset 0 0 15px #000; display: flex; align-items: center; justify-content: center; z-index: 4; }
+        .winch-spool-shaft { position: absolute; width: 30px; height: 30px; background: #0d0a09; border: 3px solid #38281f; border-radius: 50%; }
+        .winch-wire-coils { width: 76px; height: 76px; border-radius: 50%; border: 8px double #5a544f; background: radial-gradient(circle, #242220 30%, #3e3a36 70%); transition: transform 0.1s linear; }
+        .winch-jib-boom { position: absolute; top: -20px; left: 85px; width: 160px; height: 14px; background: linear-gradient(180deg, #30231c, #1a1310); border: 2px solid #120d0b; transform: rotate(-25deg); transform-origin: left center; box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
+        .winch-guide-pulley { position: absolute; top: 28px; left: 215px; width: 55px; height: 55px; border-radius: 50%; border: 5px solid #2b1f1a; background: radial-gradient(circle, #1a1310 25%, #423229 60%, #1a1310 90%); box-shadow: 0 8px 12px rgba(0,0,0,0.6), inset 0 0 10px #000; display: flex; align-items: center; justify-content: center; transition: transform 0.1s linear; z-index: 5; }
+        .winch-pulley-spokes { width: 100%; height: 100%; background: linear-gradient(0deg, transparent 40%, #150e0c 40%, #150e0c 60%, transparent 60%), linear-gradient(90deg, transparent 40%, #150e0c 40%, #150e0c 60%, transparent 60%); border-radius: 50%; }
+        .winch-steel-cable { position: absolute; top: 55px; left: 242px; width: 4px; height: calc(100% - 55px); background: linear-gradient(90deg, #444, #888, #222); box-shadow: 2px 0 5px rgba(0,0,0,0.6); z-index: 3; transform-origin: top center; animation: atmosphericSway 6s ease-in-out infinite alternate; }
+        .spool-descending { animation: spinClockwise 1.5s linear infinite; }
+        .spool-ascending { animation: spinCounterClockwise 1.5s linear infinite; }
+        @keyframes spinClockwise { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spinCounterClockwise { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+        .dredge-net-cage { position: absolute; bottom: -20px; left: -20px; width: 44px; height: 55px; border: 3px solid #443731; border-top: 4px solid #1a1310; background-color: rgba(18, 14, 12, 0.8); background-image: linear-gradient(45deg, #2b1f1a 25%, transparent 25%), linear-gradient(-45deg, #2b1f1a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #2b1f1a 75%), linear-gradient(-45deg, transparent 75%, #2b1f1a 75%); background-size: 8px 8px; border-radius: 4px 4px 18px 18px; box-shadow: 0 10px 15px rgba(0,0,0,0.9), inset 0 0 10px #000; display: flex; align-items: center; justify-content: center; }
+        .dredge-net-cage::before { content: ''; position: absolute; top: -16px; left: 5px; width: 28px; height: 16px; border: 3px solid #2b221e; border-bottom: none; border-radius: 12px 12px 0 0; }
+        @keyframes atmosphericSway { 0% { transform: rotate(-1.5deg); } 100% { transform: rotate(1.5deg); } }
+
+        /* The Log */
+        #log-container { position: absolute; right: 20px; top: 15px; bottom: 15px; width: 320px; background: rgba(3, 5, 8, 0.95); border: 2px solid var(--panel-border); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; box-shadow: inset 0 0 20px rgba(0,0,0,0.95), 0 10px 25px rgba(0,0,0,0.7); z-index: 5; backdrop-filter: blur(4px); }
+        #log-header { font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--panel-border); padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 2px; display: flex; justify-content: space-between; }
+        #log-entries { flex: 1; overflow-y: auto; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; min-height: 0; }
+        #log-entries::-webkit-scrollbar { width: 5px; } #log-entries::-webkit-scrollbar-track { background: #000; } #log-entries::-webkit-scrollbar-thumb { background: var(--bg-rust); }
+        .log-entry { animation: fadeIn 0.25s ease-out; text-shadow: 1px 1px 0 #000; line-height: 1.2; }
+        .log-entry.mythic-plus { font-weight: bold; text-shadow: 0 0 5px currentColor; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* === BOTTOM HALF: CONTROL PANEL === */
+        #control-panel { flex: 1; background: var(--bg-rust-dark); background-image: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.02) 0%, transparent 60%), repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(0,0,0,0.15) 15px, rgba(0,0,0,0.15) 30px); display: grid; grid-template-columns: 1.1fr 1fr 1.2fr; gap: 15px; padding: 15px; box-shadow: inset 0 20px 40px rgba(0,0,0,0.9); min-height: 0; }
+        .panel-section { background: var(--panel-bg); border: 3px solid var(--panel-border); border-radius: 8px; box-shadow: inset 0 0 30px rgba(0,0,0,0.95), 0 10px 25px rgba(0,0,0,0.7); padding: 12px; display: flex; flex-direction: column; min-height: 0; }
+        .panel-title { font-size: 1.5rem; color: var(--text-alert); text-transform: uppercase; text-align: center; border-bottom: 2px solid var(--panel-border); padding-bottom: 4px; margin-bottom: 12px; text-shadow: 2px 2px 4px #000; letter-spacing: 1px; flex-shrink: 0; }
+
+        /* Upgrades Menu */
+        #upgrades-container { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; min-height: 0; padding-right: 3px; }
+        #upgrades-container::-webkit-scrollbar { width: 5px; } #upgrades-container::-webkit-scrollbar-track { background: #000; } #upgrades-container::-webkit-scrollbar-thumb { background: var(--bg-rust); }
+        .upgrade-card { background: rgba(0,0,0,0.5); border: 1px solid #2e241f; padding: 8px 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .upgrade-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; font-weight: 600; }
+        .upgrade-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.15; }
+        .upgrade-action { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; }
+        .cost-text { font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--rarity-common); }
+        .btn-upgrade { background: var(--button-rust); color: #fff; border: 1px solid #1c0a03; padding: 2px 12px; font-family: 'Teko', sans-serif; font-size: 1.1rem; cursor: pointer; box-shadow: inset 0 1px 3px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.5); border-radius: 3px; text-transform: uppercase; transition: all 0.1s; }
+        .btn-upgrade:hover { background: var(--button-rust-hover); } .btn-upgrade:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); } .btn-upgrade:disabled { filter: grayscale(1); opacity: 0.35; cursor: not-allowed; }
+
+        /* Middle Area */
+        #dredge-section { display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; box-shadow: none; padding: 0; }
+        .dredge-button-wrapper { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+        .dredge-pulse-ring { position: absolute; width: 170px; height: 170px; border-radius: 50%; border: 2px solid rgba(217, 81, 41, 0.4); animation: pulseGlowCircle 2s infinite ease-out; pointer-events: none; }
+        @keyframes pulseGlowCircle { 0% { transform: scale(0.95); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+
+        #dredge-button { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #3e4852, #141a20); border: 10px solid #000; box-shadow: inset 0 0 40px rgba(0,0,0,0.95), 0 10px 20px rgba(0,0,0,0.8), 0 0 0 3px var(--panel-border); cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: transform 0.1s, box-shadow 0.1s; z-index: 3; }
+        #dredge-button::before { content: ''; position: absolute; width: 85%; height: 85%; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #9c3314 0%, #401002 80%); box-shadow: inset 0 4px 15px rgba(0,0,0,0.9); z-index: 1; transition: background 0.3s; }
+        #dredge-button:hover::before { background: radial-gradient(circle at 50% 50%, #b83d19 0%, #541604 80%); }
+        #dredge-button:active { transform: translateY(6px); box-shadow: inset 0 0 40px rgba(0,0,0,0.95), 0 4px 8px rgba(0,0,0,0.8), 0 0 0 3px var(--panel-border); }
+        #dredge-text { position: relative; z-index: 2; font-family: 'Cinzel Decorative', serif; font-size: 2rem; color: #ffdcb5; text-shadow: 0 2px 8px #000, 0 0 15px #d95129; pointer-events: none; letter-spacing: 1px; }
+        #dredge-button.cooldown::before { background: radial-gradient(circle at 50% 50%, #262626 0%, #0d0d0d 80%); }
+        #dredge-button.cooldown { cursor: not-allowed; transform: translateY(4px); }
+        #dredge-button.cooldown #dredge-text { color: #444; text-shadow: 0 2px 4px #000; }
+
+        .auto-switch-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--panel-border); }
+        .switch-label { font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--text-dim); letter-spacing: 1px; }
+        .switch { position: relative; display: inline-block; width: 46px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #261c18; transition: .3s; border-radius: 22px; border: 1px solid var(--panel-border); }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: #7a7065; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        input:checked + .slider { background-color: #b35025; border-color: #ff8c42; }
+        input:checked + .slider:before { transform: translateX(24px); background-color: #ffdcb5; box-shadow: 0 0 8px #ff8c42; }
+
+        #progress-container { width: 100%; max-width: 300px; height: 22px; background: #000; border: 3px solid var(--panel-border); border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 4px 8px rgba(0,0,0,0.9), 0 4px 8px rgba(0,0,0,0.6); }
+        #progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #401002, #b35025, #ff8c42); box-shadow: 0 0 15px #b35025; transition: width 0.1s linear; }
+        #progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: #fff; text-shadow: 1px 1px 2px #000; z-index: 2; letter-spacing: 1px; }
+
+        /* Right Side Panels */
+        #inventory-section { display: flex; flex-direction: column; min-height: 0; }
+        #currency-header { font-size: 1.15rem; color: var(--text-main); margin-bottom: 10px; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #2e241f; font-family: 'Share Tech Mono', monospace; flex-shrink: 0; }
+        #currency-amount { color: var(--rarity-common); font-weight: bold; font-size: 1.3rem; }
+
+        #inventory-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 3px; min-height: 0; }
+        #inventory-list::-webkit-scrollbar { width: 5px; } #inventory-list::-webkit-scrollbar-track { background: #000; } #inventory-list::-webkit-scrollbar-thumb { background: var(--bg-rust); }
+
+        .inv-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 6px 10px; border: 1px solid #1a1a1a; border-left: 4px solid; border-radius: 4px; font-size: 1.1rem; flex-shrink: 0; }
+        .inv-item-info { display: flex; align-items: center; gap: 8px; }
+        .inv-item-count { font-family: 'Share Tech Mono', monospace; color: var(--text-dim); font-size: 0.85rem; }
+
+        .btn-crush { background: linear-gradient(to bottom, #3b1304, #1a0600); color: #ff8c42; border: 1px solid #a3461f; padding: 2px 8px; font-family: 'Teko', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; border-radius: 3px; transition: all 0.1s; }
+        .btn-crush:hover { background: #ff8c42; color: #000; border-color: #ff8c42; box-shadow: 0 0 10px rgba(255,140,66,0.5); }
+        .btn-crush:active { transform: scale(0.95); }
+
+        /* === RARITY FIND TOASTS (Legendary/Epic, non-blocking) === */
+        #toast-container {
+            position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 60;
+            display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none;
+        }
+        .rarity-toast {
+            --toast-color: #fff;
+            background: linear-gradient(135deg, rgba(10,8,7,0.96), rgba(20,15,12,0.96));
+            border: 1px solid var(--toast-color); box-shadow: 0 0 20px var(--toast-color), 0 8px 20px rgba(0,0,0,0.6);
+            border-radius: 6px; padding: 8px 20px; display: flex; flex-direction: column; align-items: center;
+            font-family: 'Share Tech Mono', monospace; min-width: 230px; animation: toastIn 0.4s ease-out;
+        }
+        .rarity-toast.toast-out { animation: toastOut 0.5s ease-in forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-15px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px) scale(0.95); } }
+        .toast-rarity { color: var(--toast-color); font-weight: bold; letter-spacing: 2px; font-size: 0.8rem; text-shadow: 0 0 8px var(--toast-color); }
+        .toast-item { color: #fff; font-size: 1.1rem; font-family: 'Teko', sans-serif; letter-spacing: 1px; }
+        .toast-odds { color: var(--text-dim); font-size: 0.7rem; margin-top: 2px; }
+
+        /* Bigger variant used when a Mythic+ cutscene find is announced via Always-Skip (no overlay shown) */
+        .rarity-toast.toast-big {
+            min-width: 300px; padding: 14px 26px; border-width: 2px;
+            box-shadow: 0 0 30px var(--toast-color), 0 10px 30px rgba(0,0,0,0.7);
+            animation: toastIn 0.4s ease-out, toastBigPulse 1.4s ease-in-out infinite 0.4s;
+        }
+        .rarity-toast.toast-big .toast-rarity { font-size: 0.95rem; }
+        .rarity-toast.toast-big .toast-item { font-size: 1.6rem; }
+        .rarity-toast.toast-big .toast-odds { font-size: 0.8rem; }
+        @keyframes toastBigPulse {
+            0%, 100% { box-shadow: 0 0 30px var(--toast-color), 0 10px 30px rgba(0,0,0,0.7); }
+            50% { box-shadow: 0 0 48px var(--toast-color), 0 10px 30px rgba(0,0,0,0.7); }
+        }
+
+        /* === ODDS INFO BUTTON + MODAL === */
+        #odds-info-btn {
+            position: fixed; top: 15px; left: 15px; z-index: 50; width: 38px; height: 38px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #3e4852, #141a20); border: 3px solid var(--panel-border);
+            color: var(--text-alert); font-family: 'Cinzel Decorative', serif; font-size: 1.05rem; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.7); transition: all 0.15s;
+        }
+        #odds-info-btn:hover { border-color: var(--text-alert); box-shadow: 0 4px 15px rgba(217,81,41,0.5); transform: scale(1.05); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 500; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: var(--panel-bg); border: 3px solid var(--panel-border); border-radius: 8px; width: 92%; max-width: 540px; max-height: 82vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.9); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 2px solid var(--panel-border); font-size: 1.4rem; color: var(--text-alert); text-transform: uppercase; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; flex-shrink: 0; }
+        .modal-close { background: none; border: 1px solid var(--panel-border); color: var(--text-dim); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem; line-height: 1; transition: all 0.15s; }
+        .modal-close:hover { color: #fff; border-color: var(--text-alert); background: rgba(217,81,41,0.2); }
+        .odds-luck-info { padding: 10px 18px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--text-main); border-bottom: 1px solid var(--panel-border); flex-shrink: 0; background: rgba(0,0,0,0.3); }
+        .odds-modal-body { overflow-y: auto; padding: 12px 18px; }
+        .odds-modal-body::-webkit-scrollbar { width: 5px; } .odds-modal-body::-webkit-scrollbar-track { background: #000; } .odds-modal-body::-webkit-scrollbar-thumb { background: var(--bg-rust); }
+        .odds-tier-header { font-family: 'Teko', sans-serif; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid; padding-bottom: 3px; margin: 12px 0 6px; }
+        .odds-tier-header:first-child { margin-top: 0; }
+        .odds-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.95rem; padding: 3px 0; gap: 10px; }
+        .odds-item-name { flex-shrink: 0; }
+        .odds-value { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: var(--text-dim); text-align: right; white-space: nowrap; }
+        .odds-effective { color: var(--text-alert); }
+        .modal-footer-settings { border-top: 1px solid var(--panel-border); padding: 10px 18px; flex-shrink: 0; }
+        .modal-toggle-row { display: flex; justify-content: space-between; align-items: center; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: var(--text-main); }
+
+        /* Log entry odds tag */
+        .log-odds { color: var(--text-dim); font-size: 0.8em; }
+
+        /* === DEPTH STATUS (rank + permanent prestige bonus) — a small sub-line under the scrap total, out of the rig's way === */
+        #depth-status-bar {
+            margin-top: 4px; font-size: 0.65rem; letter-spacing: 0.5px; color: var(--text-dim);
+        }
+        #depth-rank-label { color: var(--rarity-legendary); font-weight: bold; letter-spacing: 1px; }
+        #depth-bonus-label { color: #00ffaa; }
+
+        /* Collection button lives in the same fixed top-left icon cluster as the odds button */
+        #collection-btn {
+            position: fixed; top: 15px; left: 63px; z-index: 50; width: 38px; height: 38px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #3e4852, #141a20); border: 3px solid var(--panel-border);
+            color: var(--rarity-legendary); font-size: 1.05rem; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.7); transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #collection-btn:hover { border-color: var(--rarity-legendary); box-shadow: 0 4px 15px rgba(255,215,0,0.5); transform: scale(1.05); }
+        #collection-badge {
+            position: absolute; bottom: -7px; right: -10px; background: #0c0e10; border: 1px solid var(--rarity-legendary);
+            color: var(--rarity-legendary); font-family: 'Share Tech Mono', monospace; font-size: 0.52rem;
+            padding: 1px 5px; border-radius: 8px; white-space: nowrap; line-height: 1.3;
+        }
+        #collection-btn.complete { color: #00ffaa; }
+        #collection-btn.complete #collection-badge { border-color: #00ffaa; color: #00ffaa; }
+
+        /* === THE DESCEND BUTTON (prestige) — hidden until every upgrade is maxed === */
+        #descend-container {
+            display: none; flex-direction: column; align-items: center; gap: 6px; margin-top: 12px;
+            padding: 12px; border: 1px solid #aa00ff; border-radius: 6px;
+            background: radial-gradient(circle, rgba(80,0,120,0.25), rgba(20,0,30,0.4));
+            animation: descendPulse 2.4s ease-in-out infinite;
+        }
+        #descend-container.unlocked { display: flex; }
+        @keyframes descendPulse {
+            0%, 100% { box-shadow: 0 0 16px rgba(170,0,255,0.3); }
+            50% { box-shadow: 0 0 32px rgba(170,0,255,0.6); }
+        }
+        #descend-btn {
+            background: linear-gradient(135deg, #4a0066, #1a0022); border: 2px solid #cc66ff; color: #fff;
+            font-family: 'Cinzel Decorative', serif; font-size: 1rem; letter-spacing: 2px; text-transform: uppercase;
+            padding: 10px 26px; border-radius: 5px; cursor: pointer; transition: all 0.2s;
+        }
+        #descend-btn:hover { background: linear-gradient(135deg, #6a0090, #2a0033); box-shadow: 0 0 20px #cc66ff; transform: scale(1.03); }
+        #descend-hint { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: #cc99ff; text-align: center; }
+
+        .descend-modal-body { padding: 18px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; line-height: 1.7; color: var(--text-main); }
+        .descend-modal-body .highlight { color: #cc66ff; font-weight: bold; }
+        .descend-modal-actions { display: flex; gap: 10px; padding: 0 18px 18px; }
+        .descend-modal-actions button {
+            flex: 1; padding: 10px; border-radius: 4px; cursor: pointer; font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px; text-transform: uppercase; font-size: 0.85rem; transition: all 0.15s;
+        }
+        #descend-cancel-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--panel-border); color: var(--text-dim); }
+        #descend-cancel-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        #descend-confirm-btn { background: linear-gradient(135deg, #4a0066, #1a0022); border: 1px solid #cc66ff; color: #fff; }
+        #descend-confirm-btn:hover { box-shadow: 0 0 15px #cc66ff; }
+
+        /* === CURATOR'S COLLECTION MODAL === */
+        .collection-progress {
+            padding: 10px 18px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
+            border-bottom: 1px solid var(--panel-border); background: rgba(0,0,0,0.3); flex-shrink: 0;
+        }
+        .collection-progress-bar-track { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+        .collection-progress-bar-fill { height: 100%; background: linear-gradient(90deg, #00ffaa, #00aaff); transition: width 0.4s ease; }
+        .collection-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px;
+            padding: 14px 18px; overflow-y: auto;
+        }
+        .collection-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            padding: 10px 4px; border-radius: 5px; border: 1px solid var(--panel-border);
+            background: rgba(0,0,0,0.3); text-align: center; min-height: 70px;
+        }
+        .collection-item.found { border-color: currentColor; box-shadow: inset 0 0 10px currentColor; }
+        .collection-item .ci-name { font-size: 0.62rem; line-height: 1.2; font-family: 'Share Tech Mono', monospace; word-break: break-word; }
+        .collection-item.locked { opacity: 0.35; }
+        .collection-item.locked .ci-name { color: var(--text-dim); }
+        .collection-item .ci-icon { font-size: 1.1rem; }
+
+        /* === AUTO-SCRAP CONTROLS === */
+        .auto-scrap-container { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,0,0,0.35); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--panel-border); margin-bottom: 10px; flex-wrap: wrap; flex-shrink: 0; }
+        #auto-scrap-threshold { background: #1a120f; color: var(--text-main); border: 1px solid var(--panel-border); font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; padding: 3px 6px; border-radius: 3px; cursor: pointer; }
+        #auto-scrap-threshold:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Small hover polish */
+        .upgrade-card { transition: box-shadow 0.2s, border-color 0.2s; }
+        .upgrade-card:hover { border-color: var(--text-alert); box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 15px rgba(217,81,41,0.25); }
+        .inv-item { transition: transform 0.15s, box-shadow 0.15s; }
+        .inv-item:hover { transform: translateX(2px); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        /* === MOBILE RESPONSIVE STRUCTURE === */
+        .mobile-tabs { display: none; } .desktop-only { display: inline; }
+
+        @media (max-width: 768px) {
+            .desktop-only { display: none; }
+            #rig-section { flex: 0 0 28vh; }
+            #winch-rig-assembly { transform: scale(0.65); transform-origin: left bottom; left: 2%; }
+            #log-container { width: 125px; right: 8px; top: 8px; bottom: 8px; font-size: 0.75rem; padding: 6px; }
+            #log-header { font-size: 0.8rem; margin-bottom: 4px; } #log-entries { font-size: 0.7rem; gap: 2px; }
+
+            #control-panel { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr auto; gap: 8px; padding: 10px; }
+            .mobile-tabs { display: flex; width: 100%; gap: 8px; grid-row: 1; margin-bottom: 2px; }
+            .tab-btn { flex: 1; background: #1a120f; border: 2px solid var(--panel-border); color: var(--text-dim); padding: 6px; font-family: 'Teko', sans-serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 4px; cursor: pointer; text-align: center; transition: all 0.2s; }
+            .tab-btn.active-tab { background: var(--button-rust); color: #fff; border-color: var(--text-alert); box-shadow: 0 0 10px rgba(217, 81, 41, 0.4); }
+
+            .panel-section { display: none !important; grid-row: 2; }
+            .panel-section.mobile-active { display: flex !important; flex: 1; min-height: 0; }
+
+            #dredge-section { grid-row: 3; flex-direction: row; justify-content: space-between; align-items: center; gap: 10px; background: rgba(0, 0, 0, 0.4); padding: 8px; border-radius: 6px; border: 1px solid var(--panel-border); width: 100%; }
+            .auto-switch-container { margin-bottom: 0; padding: 4px 8px; flex: 0 0 auto; }
+            .dredge-button-wrapper { margin-bottom: 0; flex: 0 0 auto; }
+            #dredge-button { width: 90px; height: 90px; border-width: 6px; } #dredge-text { font-size: 1.4rem; }
+            .dredge-pulse-ring { width: 105px; height: 105px; }
+            #progress-container { max-width: 100%; flex: 1; height: 20px; } #progress-text { font-size: 0.75rem; }
+
+            .upgrade-card { padding: 6px 8px; } .upgrade-header { font-size: 1.05rem; } .upgrade-desc { font-size: 0.8rem; } .btn-upgrade { font-size: 1rem; padding: 1px 10px; } .inv-item { padding: 5px 8px; font-size: 1rem; } .btn-crush { font-size: 0.85rem; padding: 1px 6px; }
+
+            #odds-info-btn { width: 32px; height: 32px; font-size: 0.9rem; top: 8px; left: 8px; }
+            #collection-btn { width: 32px; height: 32px; font-size: 0.9rem; top: 8px; left: 48px; }
+            #collection-badge { font-size: 0.45rem; bottom: -6px; right: -8px; padding: 1px 4px; }
+            #toast-container { top: 50px; }
+            .rarity-toast { min-width: 180px; padding: 6px 14px; }
+            .toast-item { font-size: 0.95rem; }
+            #cutscene-controls { bottom: 20px; right: 20px; gap: 6px; }
+            #skip-cutscene-btn { font-size: 0.75rem; padding: 6px 14px; }
+            #always-skip-label { font-size: 0.6rem; padding: 3px 8px; }
+            #corrupted-subtext { font-size: 0.7rem; letter-spacing: 1.5px; bottom: 10%; }
+            .modal-box { max-height: 88vh; }
+            .auto-scrap-container { font-size: 0.8rem; padding: 5px 8px; }
+
+            #depth-status-bar { font-size: 0.58rem; }
+            #descend-btn { font-size: 0.85rem; padding: 8px 18px; }
+            #descend-hint { font-size: 0.62rem; }
+            .collection-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); padding: 10px; gap: 6px; }
+            .collection-item { min-height: 56px; padding: 6px 3px; }
+            .collection-item .ci-name { font-size: 0.55rem; }
+
+            #corrupted-emblem { width: 95px; height: 95px; top: 16%; }
+            #corrupted-tier-badge { font-size: 0.7rem; letter-spacing: 3px; padding: 4px 12px; top: 7%; }
+            #corrupted-text::before, #corrupted-text::after { width: 80px; }
+            #corrupted-text::before { top: -12px; }
+            #corrupted-text::after { bottom: -12px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- BOOT SCREEN TO ENABLE AUDIO -->
+    <div id="boot-screen" onclick="bootSystem()">
+        <div id="boot-text">INITIALIZE SYSTEM</div>
+    </div>
+
+    <!-- ABYSSAL STORM ALERT -->
+    <div id="storm-alert"></div>
+
+    <!-- ODDS TABLE ACCESS -->
+    <button id="odds-info-btn" onclick="game.openOddsModal()" title="View Dredge Odds">%</button>
+    <button id="collection-btn" onclick="game.openCollectionModal()" title="Curator's Collection">
+        &#128218;
+        <span id="collection-badge">0/30</span>
+    </button>
+
+    <!-- RARITY FIND TOASTS -->
+    <div id="toast-container"></div>
+
+    <!-- DREDGE ODDS MODAL -->
+    <div id="odds-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>Dredge Odds Table</span>
+                <button class="modal-close" onclick="game.closeOddsModal()">&#10005;</button>
+            </div>
+            <div id="odds-modal-luck" class="odds-luck-info"></div>
+            <div id="odds-modal-body" class="odds-modal-body"></div>
+            <div class="modal-footer-settings">
+                <div class="modal-toggle-row">
+                    <span>Always Skip Cutscenes</span>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-skip-toggle-modal" onchange="game.toggleAutoSkip(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="descend-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>The Abyssal Descent</span>
+                <button class="modal-close" onclick="game.closeDescendModal()">&#10005;</button>
+            </div>
+            <div class="descend-modal-body" id="descend-modal-body"></div>
+            <div class="descend-modal-actions">
+                <button id="descend-cancel-btn" onclick="game.closeDescendModal()">Stay Here</button>
+                <button id="descend-confirm-btn" onclick="game.confirmDescend()">Descend</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="collection-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>Curator's Collection</span>
+                <button class="modal-close" onclick="game.closeCollectionModal()">&#10005;</button>
+            </div>
+            <div id="collection-progress" class="collection-progress"></div>
+            <div id="collection-grid" class="collection-grid"></div>
+        </div>
+    </div>
+
+    <div id="corrupted-overlay">
+        <div id="corrupted-starfield-far"></div>
+        <div id="corrupted-starfield-near"></div>
+        <div id="corrupted-shapes"></div>
+        <div id="corrupted-shockwave"></div>
+        <div id="corrupted-rays"></div>
+        <div id="corrupted-flash"></div>
+        <div id="corrupted-flash-tint"></div>
+        <canvas id="cutscene-particle-canvas"></canvas>
+        <div id="corrupted-tier-badge"></div>
+        <div id="corrupted-emblem"></div>
+        <div id="corrupted-text"></div>
+        <div id="corrupted-prophecy"></div>
+        <div id="corrupted-subtext"></div>
+        <div id="cutscene-controls">
+            <button id="skip-cutscene-btn" onclick="game.skipCutscene()">Skip &#9193;</button>
+            <label id="always-skip-label">
+                <input type="checkbox" id="auto-skip-toggle" onchange="game.toggleAutoSkip(this.checked)">
+                Always Skip
+            </label>
+        </div>
+    </div>
+
+    <div id="game-ui">
+    <div id="rig-section">
+        <canvas id="storm-canvas"></canvas>
+        <div class="fine-fog"></div>
+        <div class="fog-mist"></div>
+        <div class="vignette"></div>
+        
+        <div id="winch-rig-assembly">
+            <div class="winch-support-frame"></div>
+            <div class="winch-diagonal-brace"></div>
+            <div class="winch-drum-housing">
+                <div class="winch-wire-coils" id="winch-drum-spool"></div>
+                <div class="winch-spool-shaft"></div>
+            </div>
+            <div class="winch-jib-boom"></div>
+            <div class="winch-guide-pulley" id="winch-pulley-wheel">
+                <div class="winch-pulley-spokes"></div>
+            </div>
+            <div class="winch-steel-cable" id="winch-cable">
+                <div class="dredge-net-cage"></div>
+            </div>
+        </div>
+
+        <div id="log-container">
+            <div id="log-header">
+                <span><span class="desktop-only">Extraction </span>Log</span>
+                <span style="font-size: 0.8em; color: var(--text-alert);" id="winch-speed-display">Ready</span>
+            </div>
+            <div id="log-entries"></div>
+        </div>
+    </div>
+
+    <div id="control-panel">
+        <div class="mobile-tabs">
+            <button class="tab-btn active-tab" id="tab-btn-upgrades" onclick="switchMobileTab('upgrades')">Upgrades</button>
+            <button class="tab-btn" id="tab-btn-cargo" onclick="switchMobileTab('cargo')">Cargo Hold</button>
+        </div>
+
+        <div class="panel-section mobile-active" id="upgrades-panel">
+            <div class="panel-title desktop-only">Winch Upgrade Matrix</div>
+            <div id="upgrades-container"></div>
+        </div>
+
+        <div id="dredge-section">
+            <div class="auto-switch-container">
+                <span class="switch-label">AUTO</span>
+                <label class="switch">
+                    <input type="checkbox" id="auto-dredge-toggle" onchange="game.toggleAutoDredge(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="dredge-button-wrapper">
+                <div class="dredge-pulse-ring"></div>
+                <button id="dredge-button" onclick="game.startDredge()">
+                    <span id="dredge-text">DREDGE</span>
+                </button>
+            </div>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+                <div id="progress-text">IDLE</div>
+            </div>
+            <div id="descend-container">
+                <div id="descend-hint">Projected: +0 Pressure Cores</div>
+                <button id="descend-btn" onclick="game.openDescendModal()">&#9875; Descend Deeper</button>
+            </div>
+        </div>
+
+        <div class="panel-section" id="inventory-panel">
+            <div class="panel-title desktop-only">Rig Cargo Hold</div>
+            <div id="currency-header">
+                Total Scrap: <span id="currency-amount">0</span>
+                <div id="depth-status-bar">
+                    <span id="depth-rank-label">Surface Dredger</span> &middot; <span id="depth-bonus-label">+0% Permanent Luck</span>
+                </div>
+            </div>
+            <div class="auto-scrap-container">
+                <div class="auto-switch-container" style="margin-bottom: 0; background: none; border: none; padding: 0;">
+                    <span class="switch-label">AUTO-SCRAP</span>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-scrap-toggle" onchange="game.toggleAutoScrap(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <select id="auto-scrap-threshold" onchange="game.setAutoScrapThreshold(this.value)" title="Crush junk at or below this rarity automatically after each dredge">
+                    <option value="UNCOMMON">Up to Uncommon</option>
+                    <option value="RARE">Up to Rare</option>
+                    <option value="EPIC">Up to Epic</option>
+                </select>
+            </div>
+            <div id="inventory-list"></div>
+        </div>
+
+    </div>
+    </div>
+
+    <script>
+        // === PROCEDURAL AUDIO SYSTEM ===
+        class AudioSystem {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.rainGain = null;
+                this.isInitialized = false;
+                this.baseRainVol = 0.4;
+                this.activeCutsceneNodes = [];
+            }
+
+            init() {
+                if(this.isInitialized) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.5;
+                this.masterGain.connect(this.ctx.destination);
+                this.startRain();
+                this.isInitialized = true;
+            }
+
+            startRain() {
+                const bufferSize = this.ctx.sampleRate * 2;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for(let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+
+                this.rainSource = this.ctx.createBufferSource();
+                this.rainSource.buffer = buffer;
+                this.rainSource.loop = true;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 400;
+
+                this.rainGain = this.ctx.createGain();
+                this.rainGain.gain.value = this.baseRainVol;
+
+                this.rainSource.connect(filter);
+                filter.connect(this.rainGain);
+                this.rainGain.connect(this.masterGain);
+                this.rainSource.start();
+            }
+
+            fadeRain(targetVol, transitionTime) {
+                if(!this.rainGain || !this.ctx) return;
+                this.rainGain.gain.setTargetAtTime(targetVol, this.ctx.currentTime, transitionTime);
+            }
+
+            // Quickly duck the master volume then restore it — used when a cutscene is skipped
+            // so any still-playing drone/chime layers don't linger audibly.
+            duck(durationSec) {
+                if(!this.ctx || !this.masterGain) return;
+                const now = this.ctx.currentTime;
+                const current = this.masterGain.gain.value;
+                this.masterGain.gain.cancelScheduledValues(now);
+                this.masterGain.gain.setValueAtTime(current, now);
+                this.masterGain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+                this.masterGain.gain.linearRampToValueAtTime(0.5, now + 0.12 + durationSec);
+            }
+
+            setHeavyStormAudio(active) {
+                if(!this.ctx || !this.rainGain) return;
+                this.baseRainVol = active ? 0.9 : 0.4;
+                if(typeof game !== 'undefined' && !game.isCutsceneActive) {
+                    this.fadeRain(this.baseRainVol, 2);
+                }
+            }
+
+            playThunder(intensity) {
+                if(!this.ctx) return;
+                if(typeof game !== 'undefined' && game.isCutsceneActive) return;
+
+                const bufferSize = this.ctx.sampleRate * 4;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for(let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+
+                const source = this.ctx.createBufferSource();
+                source.buffer = buffer;
+                
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 150 + (intensity * 200);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(intensity * 1.5, this.ctx.currentTime + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 3);
+
+                source.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
+                source.start(); source.stop(this.ctx.currentTime + 4);
+            }
+
+            playDredge(isAuto, durationMs) {
+                if(!this.ctx) return;
+                const vol = isAuto ? 0.04 : 0.15; 
+                const duration = durationMs / 1000;
+                const now = this.ctx.currentTime;
+                
+                const playHeavyClang = (time) => {
+                    const bufferSize = this.ctx.sampleRate * 0.6;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for(let i=0; i<bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    
+                    const resonantFreqs = [220, 380, 650, 1100, 1800];
+                    resonantFreqs.forEach((f, idx) => {
+                        const noise = this.ctx.createBufferSource();
+                        noise.buffer = buffer;
+                        
+                        const bp = this.ctx.createBiquadFilter();
+                        bp.type = 'bandpass';
+                        bp.frequency.value = f;
+                        bp.Q.value = 25; 
+                        
+                        const gain = this.ctx.createGain();
+                        gain.gain.setValueAtTime(0, time);
+                        gain.gain.linearRampToValueAtTime((vol * 3.5) / resonantFreqs.length, time + 0.01);
+                        
+                        const decay = 0.5 - (idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, time + Math.max(0.1, decay));
+                        
+                        noise.connect(bp); bp.connect(gain); gain.connect(this.masterGain);
+                        noise.start(time);
+                    });
+
+                    const crunch = this.ctx.createBufferSource();
+                    crunch.buffer = buffer;
+                    const lp = this.ctx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.value = 300; 
+                    
+                    const lpGain = this.ctx.createGain();
+                    lpGain.gain.setValueAtTime(0, time);
+                    lpGain.gain.linearRampToValueAtTime(vol * 3.0, time + 0.02);
+                    lpGain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+                    
+                    crunch.connect(lp); lp.connect(lpGain); lpGain.connect(this.masterGain);
+                    crunch.start(time);
+                };
+                
+                const playGrind = (startTime, dur) => {
+                    const bufferSize = this.ctx.sampleRate * dur;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for(let i=0; i<bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const bp = this.ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 180; 
+                    bp.Q.value = 2;
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.type = 'sawtooth';
+                    lfo.frequency.value = 8; 
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.value = 150;
+                    lfo.connect(lfoGain); lfoGain.connect(bp.frequency);
+                    lfo.start(startTime); lfo.stop(startTime + dur);
+                    
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(vol * 0.5, startTime + 0.1);
+                    gain.gain.setValueAtTime(vol * 0.5, startTime + dur - 0.1);
+                    gain.gain.linearRampToValueAtTime(0, startTime + dur);
+                    
+                    noise.connect(bp); bp.connect(gain); gain.connect(this.masterGain);
+                    noise.start(startTime);
+                };
+
+                playHeavyClang(now); 
+                playGrind(now, duration); 
+                playHeavyClang(now + duration); 
+            }
+
+            playCutsceneDrone(tierId, durationMs) {
+                if(!this.ctx) return;
+                this.fadeRain(0.01, 1.0); 
+                this.activeCutsceneNodes = []; // reset tracking so skipCutscene can hard-stop these specific nodes
+                
+                const dur = durationMs / 1000;
+                const now = this.ctx.currentTime;
+                let freqs = []; 
+                
+                // MASSIVE CINEMATIC REVERB BUS
+                const echo = this.ctx.createDelay();
+                echo.delayTime.value = 0.5; // 500ms massive cavern echo
+                const echoFeedback = this.ctx.createGain();
+                echoFeedback.gain.value = 0.6; // 60% echo tail
+                const echoFilter = this.ctx.createBiquadFilter();
+                echoFilter.type = 'lowpass';
+                echoFilter.frequency.value = 1500;
+                echo.connect(echoFilter); echoFilter.connect(echoFeedback); echoFeedback.connect(echo);
+                echo.connect(this.masterGain);
+
+                if(tierId === 'absolute') {
+                    // PHASE 1: The Cosmic Siren & Void Vacuum (0s - 9s)
+                    const siren = this.ctx.createOscillator();
+                    siren.type = 'sawtooth';
+                    siren.frequency.setValueAtTime(50, now);
+                    siren.frequency.exponentialRampToValueAtTime(800, now + 8.8);
+                    
+                    const sirenLp = this.ctx.createBiquadFilter();
+                    sirenLp.type = 'lowpass';
+                    sirenLp.frequency.setValueAtTime(100, now);
+                    sirenLp.frequency.exponentialRampToValueAtTime(3000, now + 8.8);
+                    
+                    const sirenGain = this.ctx.createGain();
+                    sirenGain.gain.setValueAtTime(0, now);
+                    sirenGain.gain.linearRampToValueAtTime(0.5, now + 8.5);
+                    sirenGain.gain.exponentialRampToValueAtTime(0.001, now + 8.9);
+                    
+                    siren.connect(sirenLp); sirenLp.connect(sirenGain); sirenGain.connect(echo); sirenGain.connect(this.masterGain);
+                    siren.start(now); siren.stop(now + 9.0);
+                    this.activeCutsceneNodes.push({ source: siren, gain: sirenGain });
+
+                    // Vacuum wind
+                    const wBuf = this.ctx.createBuffer(1, this.ctx.sampleRate * 9, this.ctx.sampleRate);
+                    const wData = wBuf.getChannelData(0);
+                    for(let i=0; i<wData.length; i++) wData[i] = Math.random() * 2 - 1;
+                    const wind = this.ctx.createBufferSource(); wind.buffer = wBuf;
+                    const wFilt = this.ctx.createBiquadFilter(); wFilt.type = 'bandpass'; wFilt.Q.value = 5;
+                    wFilt.frequency.setValueAtTime(200, now); wFilt.frequency.exponentialRampToValueAtTime(4000, now + 8.8);
+                    const wGain = this.ctx.createGain(); wGain.gain.setValueAtTime(0, now); wGain.gain.linearRampToValueAtTime(1.5, now + 8.5); wGain.gain.exponentialRampToValueAtTime(0.001, now + 8.9);
+                    wind.connect(wFilt); wFilt.connect(wGain); wGain.connect(echo); wGain.connect(this.masterGain);
+                    wind.start(now);
+                    this.activeCutsceneNodes.push({ source: wind, gain: wGain });
+
+                    // PHASE 2: The Sub Drop & Big Bang (9.0s)
+                    const drop = this.ctx.createOscillator();
+                    drop.type = 'sine';
+                    drop.frequency.setValueAtTime(150, now + 8.5);
+                    drop.frequency.exponentialRampToValueAtTime(10, now + 10.5);
+                    const dropGain = this.ctx.createGain();
+                    dropGain.gain.setValueAtTime(0, now + 8.4);
+                    dropGain.gain.linearRampToValueAtTime(0.8, now + 8.5);
+                    dropGain.gain.exponentialRampToValueAtTime(0.01, now + 12.0);
+                    drop.connect(dropGain); dropGain.connect(this.masterGain);
+                    drop.start(now + 8.5); drop.stop(now + 12.0);
+                    this.activeCutsceneNodes.push({ source: drop, gain: dropGain });
+
+                    const bangDur = 5;
+                    const bBuf = this.ctx.createBuffer(1, this.ctx.sampleRate * bangDur, this.ctx.sampleRate);
+                    const bData = bBuf.getChannelData(0);
+                    for(let i=0; i<bData.length; i++) bData[i] = Math.random() * 2 - 1;
+                    const blast = this.ctx.createBufferSource(); blast.buffer = bBuf;
+                    
+                    const bFilt = this.ctx.createBiquadFilter(); bFilt.type = 'lowpass';
+                    bFilt.frequency.setValueAtTime(2500, now + 9.0); bFilt.frequency.exponentialRampToValueAtTime(50, now + 9.0 + bangDur);
+                    
+                    const bGain = this.ctx.createGain(); bGain.gain.setValueAtTime(0, now + 8.9); bGain.gain.setValueAtTime(4.0, now + 9.0); bGain.gain.exponentialRampToValueAtTime(0.001, now + 9.0 + bangDur);
+                    blast.connect(bFilt); bFilt.connect(bGain); bGain.connect(echo); bGain.connect(this.masterGain);
+                    blast.start(now + 9.0);
+                    this.activeCutsceneNodes.push({ source: blast, gain: bGain });
+                    
+                    // PHASE 3: The Majestic Void Pad (9.1s - 18s) - Huge C Maj7 Lydian chord
+                    freqs = [130.81, 164.81, 196.00, 261.63, 329.63, 392.00];
+                    freqs.forEach((freq, idx) => {
+                        for(let j=0; j<2; j++) {
+                            const osc = this.ctx.createOscillator();
+                            osc.type = j===0 ? 'sawtooth' : 'triangle';
+                            osc.frequency.value = freq + ((Math.random() - 0.5) * 4); 
+                            
+                            const pLp = this.ctx.createBiquadFilter();
+                            pLp.type = 'lowpass';
+                            pLp.frequency.setValueAtTime(100, now + 9.1);
+                            pLp.frequency.linearRampToValueAtTime(1200, now + 12);
+                            pLp.frequency.linearRampToValueAtTime(200, now + 17);
+
+                            const pGain = this.ctx.createGain();
+                            pGain.gain.setValueAtTime(0, now + 9.0);
+                            pGain.gain.linearRampToValueAtTime(0.15 / freqs.length, now + 10.5);
+                            pGain.gain.setValueAtTime(0.15 / freqs.length, now + 15);
+                            pGain.gain.linearRampToValueAtTime(0, now + dur);
+
+                            osc.connect(pLp); pLp.connect(pGain); pGain.connect(echo); pGain.connect(this.masterGain);
+                            osc.start(now + 9.1); osc.stop(now + dur);
+                            this.activeCutsceneNodes.push({ source: osc, gain: pGain });
+                        }
+                    });
+
+                    // PHASE 4: Divine Shimmering Bells (Post-Bang Ascension)
+                    const bellFreqs = [1046.50, 1318.51, 1567.98, 2093.00]; // C6, E6, G6, C7
+                    bellFreqs.forEach((freq, idx) => {
+                        const bell = this.ctx.createOscillator();
+                        bell.type = 'sine';
+                        bell.frequency.value = freq;
+                        
+                        const bGain2 = this.ctx.createGain();
+                        const startTime = now + 9.5 + (idx * 0.4); // Stagger the bell chimes
+                        
+                        bGain2.gain.setValueAtTime(0, now + 9.0);
+                        bGain2.gain.setValueAtTime(0, startTime);
+                        bGain2.gain.linearRampToValueAtTime(0.08, startTime + 0.1);
+                        bGain2.gain.exponentialRampToValueAtTime(0.001, startTime + 3.0);
+                        
+                        bell.connect(bGain2); bGain2.connect(echo); bGain2.connect(this.masterGain);
+                        bell.start(startTime); bell.stop(startTime + 3.5);
+                        this.activeCutsceneNodes.push({ source: bell, gain: bGain2 });
+                    });
+                    
+                    setTimeout(() => { this.fadeRain(this.baseRainVol, 3); }, durationMs - 1500);
+                    return; 
+                }
+                
+                // Other Rarities (Uses the shared variable declared at the top)
+                if(tierId === 'mythic') freqs = [130.81, 196.00, 261.63]; 
+                else if(tierId === 'eldritch') freqs = [110.00, 164.81, 220.00]; 
+                else if(tierId === 'unfathomable') freqs = [87.31, 130.81, 174.61, 261.63]; 
+                
+                freqs.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine'; 
+                    
+                    const lfo = this.ctx.createOscillator();
+                    lfo.type = 'sine';
+                    lfo.frequency.value = 0.1 + (idx * 0.05); 
+                    const lfoGain = this.ctx.createGain();
+                    lfoGain.gain.value = 3; 
+                    lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+                    lfo.start(now); lfo.stop(now + dur);
+                    
+                    osc.frequency.value = freq;
+                    
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain); 
+                    gain.connect(echo); 
+                    gain.connect(this.masterGain);
+                    
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.6 / freqs.length, now + dur * 0.3); 
+                    gain.gain.setValueAtTime(0.6 / freqs.length, now + dur * 0.7);
+                    gain.gain.linearRampToValueAtTime(0, now + dur);
+                    
+                    osc.start(now); osc.stop(now + dur);
+                    this.activeCutsceneNodes.push({ source: osc, gain: gain });
+                    this.activeCutsceneNodes.push({ source: lfo, gain: null });
+                });
+                
+                setTimeout(() => { this.fadeRain(this.baseRainVol, 3); }, durationMs - 1500);
+            }
+
+            // Immediately silences every node currently playing as part of the cutscene drone
+            // (used when a cutscene is skipped, so nothing keeps ringing out after the overlay closes).
+            stopCutsceneDrone() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                (this.activeCutsceneNodes || []).forEach(({ source, gain }) => {
+                    try {
+                        if (gain && gain.gain) {
+                            gain.gain.cancelScheduledValues(now);
+                            gain.gain.setValueAtTime(gain.gain.value, now);
+                            gain.gain.linearRampToValueAtTime(0.0001, now + 0.1);
+                        }
+                    } catch(e) {}
+                    try { if (source && source.stop) source.stop(now + 0.12); } catch(e) {}
+                });
+                this.activeCutsceneNodes = [];
+                this.fadeRain(this.baseRainVol, 1.2);
+            }
+        }
+        
+        const sfx = new AudioSystem();
+
+        function bootSystem() {
+            sfx.init();
+            const boot = document.getElementById('boot-screen');
+            boot.style.opacity = '0';
+            setTimeout(() => boot.style.display = 'none', 1000);
+        }
+
+        function switchMobileTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+            document.getElementById('tab-btn-' + tabName).classList.add('active-tab');
+            if (tabName === 'upgrades') {
+                document.getElementById('upgrades-panel').classList.add('mobile-active');
+                document.getElementById('inventory-panel').classList.remove('mobile-active');
+            } else {
+                document.getElementById('upgrades-panel').classList.remove('mobile-active');
+                document.getElementById('inventory-panel').classList.add('mobile-active');
+            }
+        }
+
+        // === STORM BACKGROUND MANAGER ===
+        class StormController {
+            constructor() {
+                this.canvas = document.getElementById('storm-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.lightningTimer = 0;
+                this.lightningFlash = 0;
+                this.isHeavyStorm = false;
+                this.init();
+            }
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                for (let i = 0; i < 80; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        length: Math.random() * 20 + 10,
+                        speedX: -2 - Math.random() * 2,
+                        speedY: Math.random() * 12 + 15,
+                        opacity: Math.random() * 0.4 + 0.1
+                    });
+                }
+                this.animate();
+            }
+            resize() {
+                this.canvas.width = this.canvas.parentElement.clientWidth;
+                this.canvas.height = this.canvas.parentElement.clientHeight;
+            }
+            setHeavyStorm(active) {
+                this.isHeavyStorm = active;
+                if (active) {
+                    for (let i = 0; i < 150; i++) {
+                        this.particles.push({
+                            x: Math.random() * this.canvas.width,
+                            y: Math.random() * this.canvas.height,
+                            length: Math.random() * 30 + 15,
+                            speedX: -4 - Math.random() * 4,
+                            speedY: Math.random() * 20 + 20,
+                            opacity: Math.random() * 0.6 + 0.2
+                        });
+                    }
+                } else {
+                    this.particles.splice(80);
+                }
+            }
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.lightningTimer++;
+                
+                const lightningMax = this.isHeavyStorm ? 80 : 250;
+                const lightningProb = this.isHeavyStorm ? 0.05 : 0.01;
+                
+                if (this.lightningTimer > lightningMax && Math.random() < lightningProb) {
+                    this.lightningFlash = Math.random() > 0.5 ? 0.9 : 0.6;
+                    this.lightningTimer = 0;
+                    if(sfx.isInitialized) sfx.playThunder(this.lightningFlash);
+                }
+                if (this.lightningFlash > 0) {
+                    this.ctx.fillStyle = `rgba(180, 210, 255, ${this.lightningFlash})`;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.lightningFlash -= 0.08;
+                }
+                this.ctx.strokeStyle = 'rgba(156, 180, 204, 0.45)';
+                this.ctx.lineWidth = 1;
+                this.particles.forEach(p => {
+                    this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x + p.speedX, p.y + p.speedY); this.ctx.stroke();
+                    p.x += p.speedX; p.y += p.speedY;
+                    if (p.y > this.canvas.height) { p.y = -p.length; p.x = Math.random() * (this.canvas.width + 100); }
+                    if (p.x < -p.length) { p.x = this.canvas.width + p.length; }
+                });
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+        window.stormController = new StormController();
+
+        // === CUTSCENE PARTICLE ENGINE ===
+        // Lightweight canvas particle system layered above the CSS cutscene backgrounds.
+        // Each item gets a distinct "mode" (rise / drift / swirl / burst) and color so the
+        // rarer reveals feel like they're actually happening in the space, not just painted CSS.
+        class CutsceneParticles {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.rafId = null;
+                this.active = false;
+                this.preset = null;
+                window.addEventListener('resize', () => { if (this.active) this.resize(); });
+            }
+            resize() {
+                this.canvas.width = this.canvas.parentElement.clientWidth || window.innerWidth;
+                this.canvas.height = this.canvas.parentElement.clientHeight || window.innerHeight;
+            }
+            start(preset) {
+                this.stop();
+                this.resize();
+                this.preset = preset;
+                this.active = true;
+                this.particles = [];
+                for (let i = 0; i < preset.count; i++) this.particles.push(this.spawn(true));
+                this.loop();
+            }
+            spawn(initial) {
+                const p = this.preset;
+                const w = this.canvas.width, h = this.canvas.height;
+                if (p.mode === 'rise') {
+                    return { x: Math.random() * w, y: initial ? Math.random() * h : h + 20, size: p.minSize + Math.random() * (p.maxSize - p.minSize), speed: p.minSpeed + Math.random() * (p.maxSpeed - p.minSpeed), drift: (Math.random() - 0.5) * p.driftAmt, alpha: 0.3 + Math.random() * 0.6 };
+                }
+                if (p.mode === 'swirl') {
+                    return { angle: Math.random() * Math.PI * 2, radius: 30 + Math.random() * (Math.min(w, h) * 0.32), speedAngle: (p.minSpeed + Math.random() * (p.maxSpeed - p.minSpeed)) * (Math.random() < 0.5 ? 1 : -1), size: p.minSize + Math.random() * (p.maxSize - p.minSize), alpha: 0.3 + Math.random() * 0.6, radiusJitter: (Math.random() - 0.5) * 0.4 };
+                }
+                if (p.mode === 'drift') {
+                    return { x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * p.maxSpeed, vy: (Math.random() - 0.5) * p.maxSpeed, size: p.minSize + Math.random() * (p.maxSize - p.minSize), alpha: 0.2 + Math.random() * 0.5 };
+                }
+                // burst: fountains out from center, fades, then re-spawns from center again (continuous pulse)
+                const angle = Math.random() * Math.PI * 2;
+                const speed = p.minSpeed + Math.random() * (p.maxSpeed - p.minSpeed);
+                return { x: w / 2, y: h / 2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: p.minSize + Math.random() * (p.maxSize - p.minSize), alpha: 0.7 + Math.random() * 0.3 };
+            }
+            loop() {
+                if (!this.active) return;
+                const ctx = this.ctx, w = this.canvas.width, h = this.canvas.height, p = this.preset;
+                ctx.clearRect(0, 0, w, h);
+                ctx.globalCompositeOperation = 'lighter';
+                this.particles.forEach((particle, idx) => {
+                    let drawX, drawY;
+                    if (p.mode === 'rise') {
+                        particle.y -= particle.speed; particle.x += particle.drift * 0.02;
+                        if (particle.y < -20) this.particles[idx] = this.spawn(false);
+                        drawX = particle.x; drawY = particle.y;
+                    } else if (p.mode === 'swirl') {
+                        particle.angle += particle.speedAngle * 0.012;
+                        particle.radius += particle.radiusJitter;
+                        if (particle.radius < 20) particle.radius = 20;
+                        drawX = w / 2 + Math.cos(particle.angle) * particle.radius;
+                        drawY = h / 2 + Math.sin(particle.angle) * particle.radius * 0.62;
+                    } else if (p.mode === 'drift') {
+                        particle.x += particle.vx * 0.3; particle.y += particle.vy * 0.3;
+                        if (particle.x < 0) particle.x = w; if (particle.x > w) particle.x = 0;
+                        if (particle.y < 0) particle.y = h; if (particle.y > h) particle.y = 0;
+                        drawX = particle.x; drawY = particle.y;
+                    } else {
+                        particle.x += particle.vx * 0.55; particle.y += particle.vy * 0.55;
+                        particle.vx *= 0.985; particle.vy *= 0.985;
+                        particle.alpha -= 0.007;
+                        if (particle.alpha <= 0) this.particles[idx] = this.spawn(false);
+                        drawX = particle.x; drawY = particle.y;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(drawX, drawY, particle.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color.replace('ALPHA', Math.max(0, particle.alpha).toFixed(2));
+                    ctx.shadowBlur = p.glow || 0;
+                    ctx.shadowColor = p.glowColor || '#fff';
+                    ctx.fill();
+                });
+                this.rafId = requestAnimationFrame(() => this.loop());
+            }
+            stop() {
+                this.active = false;
+                if (this.rafId) cancelAnimationFrame(this.rafId);
+                this.rafId = null;
+                if (this.ctx && this.canvas.width) this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+        }
+
+        const CUTSCENE_PARTICLE_PRESETS = {
+            'the-heart-of-the-trench': { mode: 'burst', count: 45, minSize: 1.5, maxSize: 4, minSpeed: 1, maxSpeed: 5, color: 'rgba(255,60,60,ALPHA)', glow: 16, glowColor: '#ff3333' },
+            'cursed-figurehead': { mode: 'rise', count: 35, minSize: 1, maxSize: 3, minSpeed: 0.3, maxSpeed: 1.1, driftAmt: 18, color: 'rgba(140,220,180,ALPHA)', glow: 10, glowColor: '#66ffcc' },
+            'phantom-lighthouse': { mode: 'drift', count: 28, minSize: 1, maxSize: 2.5, maxSpeed: 0.6, color: 'rgba(255,250,190,ALPHA)', glow: 12, glowColor: '#ffff99' },
+            'the-drowned-crown': { mode: 'rise', count: 32, minSize: 1.5, maxSize: 3.5, minSpeed: 0.4, maxSpeed: 1.3, driftAmt: 14, color: 'rgba(255,215,0,ALPHA)', glow: 14, glowColor: '#ffd700' },
+            'whispering-obelisk': { mode: 'drift', count: 55, minSize: 1, maxSize: 2, maxSpeed: 2.6, color: 'rgba(200,80,255,ALPHA)', glow: 8, glowColor: '#aa00ff' },
+            'abyssal-leviathan-spine': { mode: 'swirl', count: 22, minSize: 1.5, maxSize: 3.5, minSpeed: 0.25, maxSpeed: 0.9, color: 'rgba(0,255,180,ALPHA)', glow: 14, glowColor: '#00ffaa' },
+            'tear-of-the-abyss': { mode: 'swirl', count: 65, minSize: 1, maxSize: 3, minSpeed: 0.8, maxSpeed: 2.4, color: 'rgba(255,255,255,ALPHA)', glow: 16, glowColor: '#00aaff' },
+            'the-sunken-moon': { mode: 'rise', count: 28, minSize: 1, maxSize: 2.8, minSpeed: 0.2, maxSpeed: 0.7, driftAmt: 10, color: 'rgba(255,255,220,ALPHA)', glow: 14, glowColor: '#ffffaa' },
+            'echo-of-the-genesis': { mode: 'swirl', count: 75, minSize: 1, maxSize: 2.5, minSpeed: 1.4, maxSpeed: 3.8, color: 'rgba(0,255,255,ALPHA)', glow: 14, glowColor: '#ff00ff' },
+            'the-depth-itself': { mode: 'burst', count: 85, minSize: 1, maxSize: 4, minSpeed: 1, maxSpeed: 7.5, color: 'rgba(255,255,255,ALPHA)', glow: 20, glowColor: '#ff0055' },
+        };
+
+        // === CUTSCENE RUNE EMBLEMS ===
+        // A shared "magic circle" ring (ticks + double ring) with a unique inner glyph per item.
+        const EMBLEM_TICKS = '<line x1="113.0" y1="60.0" x2="119.0" y2="60.0"/><line x1="105.9" y1="86.5" x2="111.1" y2="89.5"/><line x1="86.5" y1="105.9" x2="89.5" y2="111.1"/><line x1="60.0" y1="113.0" x2="60.0" y2="119.0"/><line x1="33.5" y1="105.9" x2="30.5" y2="111.1"/><line x1="14.1" y1="86.5" x2="8.9" y2="89.5"/><line x1="7.0" y1="60.0" x2="1.0" y2="60.0"/><line x1="14.1" y1="33.5" x2="8.9" y2="30.5"/><line x1="33.5" y1="14.1" x2="30.5" y2="8.9"/><line x1="60.0" y1="7.0" x2="60.0" y2="1.0"/><line x1="86.5" y1="14.1" x2="89.5" y2="8.9"/><line x1="105.9" y1="33.5" x2="111.1" y2="30.5"/>';
+
+        const CUTSCENE_EMBLEM_GLYPHS = {
+            'the-heart-of-the-trench': '<polyline points="30,60 42,60 48,44 56,76 64,48 70,60 90,60"/>',
+            'cursed-figurehead': '<path d="M28 46 Q40 38 50 46 T72 46 T92 46"/><path d="M28 60 Q40 52 50 60 T72 60 T92 60"/><path d="M28 74 Q40 66 50 74 T72 74 T92 74"/>',
+            'phantom-lighthouse': '<line x1="60" y1="28" x2="60" y2="92"/><line x1="60" y1="42" x2="92" y2="26"/><line x1="60" y1="42" x2="28" y2="26"/><line x1="60" y1="54" x2="96" y2="50"/><line x1="60" y1="54" x2="24" y2="50"/>',
+            'the-drowned-crown': '<path d="M30 76 L37 38 L50 58 L60 33 L70 58 L83 38 L90 76 Z"/><circle cx="37" cy="38" r="3" fill="currentColor" stroke="none"/><circle cx="60" cy="33" r="3.5" fill="currentColor" stroke="none"/><circle cx="83" cy="38" r="3" fill="currentColor" stroke="none"/>',
+            'whispering-obelisk': '<path d="M60 28 L87 84 L33 84 Z"/><circle cx="60" cy="67" r="9"/><circle cx="60" cy="67" r="2.5" fill="currentColor" stroke="none"/>',
+            'abyssal-leviathan-spine': '<path d="M26 42 Q60 20 94 42 Q60 64 26 86"/><circle cx="28" cy="43" r="3.2" fill="currentColor" stroke="none"/><circle cx="46" cy="29" r="3.2" fill="currentColor" stroke="none"/><circle cx="66" cy="26" r="3.2" fill="currentColor" stroke="none"/><circle cx="84" cy="35" r="3.2" fill="currentColor" stroke="none"/><circle cx="93" cy="43" r="3.2" fill="currentColor" stroke="none"/>',
+            'tear-of-the-abyss': '<path d="M60 24 C75 45 86 60 86 73 C86 88 74 96 60 96 C46 96 34 88 34 73 C34 60 45 45 60 24 Z"/>',
+            'the-sunken-moon': '<path d="M60 32 A 28 28 0 1 1 60 88 A 22 30 0 1 0 60 32 Z"/>',
+            'echo-of-the-genesis': '<path d="M60 60 L60.9 58.6 L61.7 57.2 L62.6 55.9 L63.6 54.6 L64.5 53.3 L65.6 52.1 L66.7 50.9 L67.8 49.9 L69.1 49 L70.4 48.3 L71.8 47.8 L73.2 47.6 L74.7 47.7 L76.3 48.2 L77.7 49.1 L79.1 50.6 L80.3 52.4 L81.2 54.7 L81.8 57.3 L82 60 L81.8 62.7 L81.2 65.3 L80.3 67.6 L79.1 69.4 L77.7 70.9 L76.3 71.8 L74.7 72.3 L73.2 72.4 L71.8 72.2 L70.4 71.7 L69.1 71 L67.8 70.1 L66.7 69.1 L65.6 67.9 L64.5 66.7 L63.6 65.4 L62.6 64.1 L61.7 62.8 L60.9 61.4 L60 60 L59.1 58.6 L58.3 57.2 L57.4 55.9 L56.4 54.6 L55.5 53.3 L54.4 52.1 L53.3 50.9 L52.2 49.9 L50.9 49 L49.6 48.3 L48.2 47.8 L46.8 47.6 L45.3 47.7 L43.7 48.2 L42.3 49.1 L40.9 50.6 L39.7 52.4 L38.8 54.7 L38.2 57.3 L38 60 L38.2 62.7 L38.8 65.3 L39.7 67.6 L40.9 69.4 L42.3 70.9 L43.7 71.8 L45.3 72.3 L46.8 72.4 L48.2 72.2 L49.6 71.7 L50.9 71 L52.2 70.1 L53.3 69.1 L54.4 67.9 L55.5 66.7 L56.4 65.4 L57.4 64.1 L58.3 62.8 L59.1 61.4 Z"/>',
+            'the-depth-itself': '<circle cx="60" cy="60" r="38" opacity="0.35" stroke-width="1.4"/><path d="M62 60 L62.6 60.6 L62.9 61.5 L63 62.5 L62.7 63.6 L62.1 64.7 L61.1 65.7 L59.7 66.4 L58.1 66.8 L56.3 66.7 L54.4 66.2 L52.6 65.1 L51.1 63.5 L49.9 61.5 L49.2 59.1 L49.1 56.4 L49.6 53.7 L50.9 51.1 L52.8 48.7 L55.4 46.7 L58.5 45.4 L61.9 44.8 L65.6 45.1 L69.2 46.2 L72.5 48.2 L75.4 51.1 L77.7 54.7 L79.1 58.8 L79.5 63.3 L78.8 67.9 L77 72.3 L74.1 76.4 L70.3 79.7 L65.7 82.2 L60.5 83.5 L55 83.6 L49.4 82.4 L44.2 79.9 L39.6 76.2 L35.8 71.4 L33.3 65.7 L32 59.4 L32.3 52.9 L34.1 46.5 L37.4 40.5 L42.1 35.3 L47.9 31.3 L54.7 28.7 L62 27.7 L69.5 28.4 L76.8 30.8 L83.5 35 L89.1 40.7 L93.3 47.6 L95.9 55.5 L96.6 63.9"/><circle cx="62" cy="60" r="2" fill="currentColor" stroke="none"/><circle cx="62" cy="60" r="5" opacity="0.5" stroke-width="1.2"/><g class="emblem-accents"><polygon points="110.0,55.5 114.5,60.0 110.0,64.5 105.5,60.0"/><polygon points="95.4,90.9 99.9,95.4 95.4,99.9 90.9,95.4"/><polygon points="60.0,105.5 64.5,110.0 60.0,114.5 55.5,110.0"/><polygon points="24.6,90.9 29.1,95.4 24.6,99.9 20.1,95.4"/><polygon points="10.0,55.5 14.5,60.0 10.0,64.5 5.5,60.0"/><polygon points="24.6,20.1 29.1,24.6 24.6,29.1 20.1,24.6"/><polygon points="60.0,5.5 64.5,10.0 60.0,14.5 55.5,10.0"/><polygon points="95.4,20.1 99.9,24.6 95.4,29.1 90.9,24.6"/></g>',
+        };
+
+        function buildEmblemSVG(itemClass) {
+            const glyph = CUTSCENE_EMBLEM_GLYPHS[itemClass];
+            if (!glyph) return '';
+            return `<svg class="emblem-svg" viewBox="0 0 120 120">
+                <circle class="emblem-ring-outer" cx="60" cy="60" r="52"/>
+                <circle class="emblem-ring-inner" cx="60" cy="60" r="44"/>
+                <g class="emblem-ticks">${EMBLEM_TICKS}</g>
+                <g class="emblem-glyph">${glyph}</g>
+            </svg>`;
+        }
+
+        // === RARITIES DATA MODULE ===
+        const RARITIES = {
+            ABSOLUTE: { id: 'absolute', name: "Absolute", color: "var(--rarity-absolute)", shadow: "0 0 10px #ff00ff, 0 0 20px #fff", chance: 1/50000000, items: ["The Depth Itself"], canCrush: true, crushYield: 50000000 },
+            UNFATHOMABLE: { id: 'unfathomable', name: "Unfathomable", color: "var(--rarity-unfathomable)", shadow: "var(--glow-unfath)", chance: 1/5000000, items: ["Tear of the Abyss", "The Sunken Moon", "Echo of the Genesis"], canCrush: true, crushYield: 5000000 },
+            ELDRITCH: { id: 'eldritch', name: "Eldritch", color: "var(--rarity-eldritch)", shadow: "var(--glow-eldritch)", chance: 1/1000000, items: ["The Drowned Crown", "Whispering Obelisk", "Abyssal Leviathan Spine"], canCrush: true, crushYield: 1000000 },
+            MYTHIC: { id: 'mythic', name: "Mythic", color: "var(--rarity-mythic)", shadow: "var(--glow-mythic)", chance: 1/150000, items: ["The Heart of the Trench", "Cursed Figurehead", "Phantom Lighthouse"], canCrush: true, crushYield: 250000 },
+            LEGENDARY: { id: 'legendary', name: "Legendary", color: "var(--rarity-legendary)", shadow: "none", chance: 1/15000, items: ["Deep-Trench Pearl", "Petrified Kraken Eye", "Ghost Ship Wheel", "Sunken Throne", "Gilded Megalodon Scale"], canCrush: true, crushYield: 50000 },
+            EPIC: { id: 'epic', name: "Epic", color: "var(--rarity-epic)", shadow: "none", chance: 1/2000, items: ["Abyssal Angler Lure", "Drowned Sailor's Watch", "Kraken Ink Sac", "Sunken Reliquary", "Cursed Pirate Cutlass", "Bioluminescent Jelly"], canCrush: true, crushYield: 8000 },
+            RARE: { id: 'rare', name: "Rare", color: "var(--rarity-rare)", shadow: "none", chance: 1/300, items: ["Leviathan Tooth", "Glowing Isopod", "Intact Captain's Log", "Phosphorescent Algae"], canCrush: true, crushYield: 1000 },
+            UNCOMMON: { id: 'uncommon', name: "Uncommon", color: "var(--rarity-uncommon)", shadow: "none", chance: 1/60, items: ["Waterlogged Bone", "Sunken Coin", "Blind Cave Fish", "Rusted Anchor", "Tarnished Compass"], canCrush: true, crushYield: 150 },
+            COMMON: { id: 'common', name: "Common", color: "var(--rarity-common)", shadow: "none", chance: 1, items: ["Rusted Scrap", "Dead Kelp", "Waterlogged Boot", "Barnacle Cluster", "Silt Core"], canCrush: false }
+        };
+
+        const RARITY_ORDER = [RARITIES.ABSOLUTE, RARITIES.UNFATHOMABLE, RARITIES.ELDRITCH, RARITIES.MYTHIC, RARITIES.LEGENDARY, RARITIES.EPIC, RARITIES.RARE, RARITIES.UNCOMMON];
+
+        const UPGRADES_DEF = {
+            winch: { id: 'winch', name: "High-Torque Motor", desc: "Speeds up net descent and recovery operations.", baseCost: 50, costMult: 1.45, baseValue: 5000, valueChange: -300, format: (val) => (val/1000).toFixed(1) + "s Recovery", maxLevel: 15 },
+            lures: { id: 'lures', name: "Phosphor-Lures", desc: "Illuminates dark abyssal trenches to attract rarer specimen.", baseCost: 60, costMult: 1.25, baseValue: 1, valueChange: 15.0, format: (val) => val.toFixed(1) + "x Rarity Draw", maxLevel: 50 },
+            capacity: { id: 'capacity', name: "Massive Heavy Net", desc: "Structural enhancement to pull multiple payloads concurrently.", baseCost: 250, costMult: 1.80, baseValue: 1, valueChange: 1, format: (val) => val + " Items / Pull", maxLevel: 10 }
+        };
+
+        // === CORE ENGINE INTERNALS ===
+        class AbyssalDredging {
+            constructor() {
+                this.inventory = {};
+                this.scrapCount = 0;
+                this.upgrades = { winch: 0, lures: 0, capacity: 0 };
+                this.isDredging = false;
+                this.autoDredge = false;
+                this.isCutsceneActive = false; 
+                this.dredgeStartTime = 0;
+                this.currentCooldown = 5000;
+                this.animationFrameId = null;
+
+                this.autoScrapEnabled = false;
+                this.autoScrapThreshold = 'RARE';
+                this.autoSkipCutscenes = false;
+                this.cutsceneTimeoutId = null;
+                this.skipBtnTimer = null;
+                this.cutsceneParticles = new CutsceneParticles(document.getElementById('cutscene-particle-canvas'));
+
+                // Endgame progression: once every upgrade is maxed, players can Descend for a permanent
+                // luck bonus, and chase full item discovery — both persist across resets.
+                this.lifetimeScrapEarned = 0; // resets each dive; drives Pressure Core payout on Descend
+                this.pressureCores = 0;       // permanent, never resets — powers the permanent luck bonus
+                this.totalDescents = 0;       // permanent, never resets — drives rank title
+                this.discoveredItems = {};    // permanent, never resets — Uncommon+ items ever pulled
+                
+                this.stormActive = false;
+                this.stormTimeLeft = 0;
+                this.stormTick = setInterval(() => this.gameTick(), 1000);
+
+                this.loadGame();
+                this.initUI();
+                this.updateUI();
+                this.initSettingsUI();
+            }
+
+            // Reflect loaded/saved toggle & dropdown state into the actual DOM controls
+            initSettingsUI() {
+                const scrapToggle = document.getElementById('auto-scrap-toggle');
+                const scrapThreshold = document.getElementById('auto-scrap-threshold');
+                const skipToggle = document.getElementById('auto-skip-toggle');
+                const skipToggleModal = document.getElementById('auto-skip-toggle-modal');
+
+                scrapToggle.checked = this.autoScrapEnabled;
+                scrapThreshold.value = this.autoScrapThreshold;
+                scrapThreshold.disabled = !this.autoScrapEnabled;
+                skipToggle.checked = this.autoSkipCutscenes;
+                skipToggleModal.checked = this.autoSkipCutscenes;
+            }
+            
+            gameTick() {
+                if (this.stormActive) {
+                    this.stormTimeLeft--;
+                    document.getElementById('storm-alert').innerText = `ABYSSAL STORM ACTIVE: LUCK x3 (${this.stormTimeLeft}s)`;
+                    if (this.stormTimeLeft <= 0) this.endStorm();
+                } else {
+                    if (Math.random() < 0.006) {
+                        this.startStorm();
+                    }
+                }
+            }
+
+            startStorm() {
+                if(this.stormActive) return;
+                this.stormActive = true;
+                this.stormTimeLeft = 60; 
+                
+                document.getElementById('storm-alert').classList.add('active');
+                document.getElementById('storm-alert').innerText = `ABYSSAL STORM ACTIVE: LUCK x3 (${this.stormTimeLeft}s)`;
+                
+                if (window.stormController) window.stormController.setHeavyStorm(true);
+                if (sfx.isInitialized) sfx.setHeavyStormAudio(true);
+                
+                this.logEntry("WARNING: ABYSSAL STORM FRONT DETECTED. RARITY RATES SPIKING.", RARITIES.LEGENDARY);
+            }
+
+            endStorm() {
+                this.stormActive = false;
+                document.getElementById('storm-alert').classList.remove('active');
+                
+                if (window.stormController) window.stormController.setHeavyStorm(false);
+                if (sfx.isInitialized) sfx.setHeavyStormAudio(false);
+                
+                this.logEntry("The abyssal storm has passed.", RARITIES.UNCOMMON);
+            }
+
+            saveGame() {
+                localStorage.setItem('abyssalSave', JSON.stringify({
+                    inventory: this.inventory,
+                    scrapCount: this.scrapCount,
+                    upgrades: this.upgrades,
+                    autoScrapEnabled: this.autoScrapEnabled,
+                    autoScrapThreshold: this.autoScrapThreshold,
+                    autoSkipCutscenes: this.autoSkipCutscenes,
+                    lifetimeScrapEarned: this.lifetimeScrapEarned,
+                    pressureCores: this.pressureCores,
+                    totalDescents: this.totalDescents,
+                    discoveredItems: this.discoveredItems
+                }));
+            }
+
+            loadGame() {
+                const saved = localStorage.getItem('abyssalSave');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        this.inventory = data.inventory || {};
+                        this.upgrades = data.upgrades || { winch: 0, lures: 0, capacity: 0 };
+                        this.autoScrapEnabled = data.autoScrapEnabled || false;
+                        this.autoScrapThreshold = data.autoScrapThreshold || 'RARE';
+                        this.autoSkipCutscenes = data.autoSkipCutscenes || false;
+                        this.lifetimeScrapEarned = data.lifetimeScrapEarned || 0;
+                        this.pressureCores = data.pressureCores || 0;
+                        this.totalDescents = data.totalDescents || 0;
+                        this.discoveredItems = data.discoveredItems || {};
+                        this.recalcScrap(false); // false: restoring, not earning — don't double-count lifetime total
+                    } catch(e) { console.error("Save load failure", e); }
+                }
+            }
+
+            recalcScrap(trackLifetime = true) {
+                let total = 0;
+                for (let item of RARITIES.COMMON.items) { if (this.inventory[item]) total += this.inventory[item]; }
+                if (trackLifetime && total > this.scrapCount) {
+                    this.lifetimeScrapEarned = (this.lifetimeScrapEarned || 0) + (total - this.scrapCount);
+                }
+                this.scrapCount = total;
+            }
+
+            findRarity(itemName) {
+                for (let key in RARITIES) { if (RARITIES[key].items.includes(itemName)) return RARITIES[key]; }
+                return RARITIES.COMMON;
+            }
+
+            // Base odds for a single item within its rarity tier (chance is split evenly across that tier's items)
+            getItemOdds(itemName, rarity) {
+                const r = rarity || this.findRarity(itemName);
+                if (!r || r.id === 'common') return { chance: 1, denom: 1 };
+                const itemChance = r.chance / r.items.length;
+                const denom = Math.max(1, Math.round(1 / itemChance));
+                return { chance: itemChance, denom };
+            }
+
+            // === ENDGAME PROGRESSION: Pressure Cores (prestige) + the Curator's Collection ===
+
+            // Permanent luck multiplier from all past Descents (+1% per Pressure Core, ever-growing),
+            // plus a flat +25% bonus once every collectible item has been discovered at least once.
+            getPermanentLuckMult() {
+                let mult = 1 + (this.pressureCores * 0.01);
+                if (this.isCollectionComplete()) mult *= 1.25;
+                return mult;
+            }
+
+            getTotalCollectibleCount() {
+                return Object.keys(RARITIES).filter(k => k !== 'COMMON').reduce((sum, k) => sum + RARITIES[k].items.length, 0);
+            }
+
+            getDiscoveredCount() {
+                return Object.keys(this.discoveredItems).length;
+            }
+
+            isCollectionComplete() {
+                return this.getDiscoveredCount() >= this.getTotalCollectibleCount();
+            }
+
+            isFullyUpgraded() {
+                return Object.keys(UPGRADES_DEF).every(id => this.upgrades[id] >= UPGRADES_DEF[id].maxLevel);
+            }
+
+            // How many Pressure Cores the player would earn by Descending right now, based on this dive's
+            // total lifetime scrap earned (spending doesn't reduce it — only new scrap counts).
+            getProjectedCores() {
+                return Math.floor(Math.sqrt((this.lifetimeScrapEarned || 0) / 400));
+            }
+
+            getRankTitle(descents) {
+                const d = descents === undefined ? this.totalDescents : descents;
+                if (d >= 50) return "Sovereign of the Deep";
+                if (d >= 21) return "Leviathan's Peer";
+                if (d >= 11) return "Void-Touched";
+                if (d >= 6) return "Abyssal Veteran";
+                if (d >= 3) return "Trench Walker";
+                if (d >= 1) return "Deep Diver";
+                return "Surface Dredger";
+            }
+
+            getUpgradeValue(id) {
+                const def = UPGRADES_DEF[id];
+                let val = def.baseValue + (def.valueChange * this.upgrades[id]);
+                if (id === 'winch') val = Math.max(500, val);
+                return val;
+            }
+
+            getUpgradeCost(id) { return Math.floor(UPGRADES_DEF[id].baseCost * Math.pow(UPGRADES_DEF[id].costMult, this.upgrades[id])); }
+
+            buyUpgrade(id) {
+                if (this.isCutsceneActive) return; 
+                const cost = this.getUpgradeCost(id);
+                if (this.scrapCount >= cost && this.upgrades[id] < UPGRADES_DEF[id].maxLevel) {
+                    this.deductScrap(cost); this.upgrades[id]++; this.saveGame(); this.updateUI();
+                    document.getElementById('rig-section').classList.add('shake');
+                    setTimeout(() => document.getElementById('rig-section').classList.remove('shake'), 400);
+                }
+            }
+
+            deductScrap(amount) {
+                let rem = amount;
+                for (let item of RARITIES.COMMON.items) {
+                    if (rem <= 0) break;
+                    if (this.inventory[item]) {
+                        if (this.inventory[item] >= rem) { this.inventory[item] -= rem; rem = 0; }
+                        else { rem -= this.inventory[item]; this.inventory[item] = 0; }
+                        if (this.inventory[item] === 0) delete this.inventory[item];
+                    }
+                }
+                this.recalcScrap();
+            }
+
+            crushItem(itemName, rarityId) {
+                if (this.isCutsceneActive) return; 
+                if (this.inventory[itemName] && this.inventory[itemName] > 0) {
+                    this.inventory[itemName]--;
+                    if (this.inventory[itemName] === 0) delete this.inventory[itemName];
+                    this.inventory["Rusted Scrap"] = (this.inventory["Rusted Scrap"] || 0) + RARITIES[rarityId.toUpperCase()].crushYield;
+                    this.recalcScrap(); this.saveGame(); this.updateUI();
+                    const listEl = document.getElementById('inventory-list');
+                    listEl.style.boxShadow = "inset 0 0 25px rgba(217, 81, 41, 0.4)";
+                    setTimeout(() => listEl.style.boxShadow = "none", 250);
+                }
+            }
+
+            toggleAutoDredge(isChecked) { 
+                if (this.isCutsceneActive) return; 
+                this.autoDredge = isChecked; 
+                if (this.autoDredge && !this.isDredging) this.startDredge(); 
+            }
+
+            toggleAutoScrap(isChecked) {
+                this.autoScrapEnabled = isChecked;
+                document.getElementById('auto-scrap-threshold').disabled = !isChecked;
+                if (this.autoScrapEnabled) this.performAutoScrap();
+                this.saveGame(); this.updateUI();
+            }
+
+            setAutoScrapThreshold(value) {
+                this.autoScrapThreshold = value;
+                if (this.autoScrapEnabled) this.performAutoScrap();
+                this.saveGame(); this.updateUI();
+            }
+
+            // Auto-crushes junk items (Uncommon/Rare/Epic tiers, per the chosen threshold) into scrap.
+            // Legendary and above are never touched by this, so real finds are always safe.
+            performAutoScrap() {
+                if (!this.autoScrapEnabled) return;
+                const thresholdOrder = ['UNCOMMON', 'RARE', 'EPIC'];
+                const thresholdIndex = thresholdOrder.indexOf(this.autoScrapThreshold);
+                if (thresholdIndex === -1) return;
+
+                let totalGained = 0;
+                let crushedAny = false;
+
+                Object.keys(this.inventory).forEach(itemName => {
+                    const rarity = this.findRarity(itemName);
+                    const rarityKey = Object.keys(RARITIES).find(k => RARITIES[k] === rarity);
+                    const idx = thresholdOrder.indexOf(rarityKey);
+                    if (idx === -1 || idx > thresholdIndex || !rarity.canCrush) return;
+
+                    const count = this.inventory[itemName];
+                    if (count > 0) {
+                        totalGained += count * rarity.crushYield;
+                        delete this.inventory[itemName];
+                        crushedAny = true;
+                    }
+                });
+
+                if (crushedAny) {
+                    this.inventory["Rusted Scrap"] = (this.inventory["Rusted Scrap"] || 0) + totalGained;
+                    this.recalcScrap();
+                }
+            }
+
+            startDredge() {
+                if (this.isDredging || this.isCutsceneActive) return; 
+                this.isDredging = true;
+                this.currentCooldown = this.getUpgradeValue('winch');
+                this.dredgeStartTime = performance.now();
+                
+                if(sfx.isInitialized) {
+                    sfx.playDredge(this.autoDredge, this.currentCooldown);
+                }
+                
+                document.getElementById('dredge-button').classList.add('cooldown');
+                document.getElementById('progress-text').innerText = "DISPATCHING NETS...";
+                document.getElementById('winch-speed-display').innerText = "Dredging...";
+                document.getElementById('winch-speed-display').style.color = "var(--text-alert)";
+                
+                document.getElementById('winch-drum-spool').className = "winch-wire-coils spool-descending";
+                document.getElementById('winch-pulley-wheel').className = "winch-guide-pulley spool-descending";
+
+                const cable = document.getElementById('winch-cable');
+                cable.style.transition = `height ${this.currentCooldown / 2000}s ease-in-out`;
+                cable.style.height = `120%`;
+
+                document.getElementById('rig-section').classList.add('shake');
+                setTimeout(() => document.getElementById('rig-section').classList.remove('shake'), 400);
+
+                this.animationFrameId = requestAnimationFrame((t) => this.dredgeLoop(t));
+            }
+
+            dredgeLoop(timestamp) {
+                const elapsed = timestamp - this.dredgeStartTime;
+                const progress = Math.min(elapsed / this.currentCooldown, 1);
+                document.getElementById('progress-bar').style.width = `${progress * 100}%`;
+                
+                if (progress < 0.5) {
+                    document.getElementById('progress-text').innerText = `DESCENDING... (${(progress * 200).toFixed(0)}m)`;
+                } else {
+                    document.getElementById('progress-text').innerText = `WINCHING UP... (${((1 - progress) * 200).toFixed(0)}m)`;
+                    document.getElementById('winch-drum-spool').className = "winch-wire-coils spool-ascending";
+                    document.getElementById('winch-pulley-wheel').className = "winch-guide-pulley spool-ascending";
+                    const cable = document.getElementById('winch-cable');
+                    cable.style.transition = `height ${this.currentCooldown / 2000}s ease-in-out`;
+                    cable.style.height = `30%`;
+                }
+
+                if (progress >= 1) this.finishDredge();
+                else this.animationFrameId = requestAnimationFrame((t) => this.dredgeLoop(t));
+            }
+
+            finishDredge() {
+                this.isDredging = false;
+                document.getElementById('dredge-button').classList.remove('cooldown');
+                document.getElementById('progress-bar').style.width = `0%`;
+                document.getElementById('progress-text').innerText = "IDLE";
+                document.getElementById('winch-speed-display').innerText = "Ready";
+                document.getElementById('winch-speed-display').style.color = "var(--rarity-uncommon)";
+
+                document.getElementById('winch-drum-spool').className = "winch-wire-coils";
+                document.getElementById('winch-pulley-wheel').className = "winch-guide-pulley";
+
+                document.getElementById('rig-section').classList.add('shake');
+                setTimeout(() => document.getElementById('rig-section').classList.remove('shake'), 350);
+                
+                const capacity = this.getUpgradeValue('capacity');
+                let luck = this.getUpgradeValue('lures');
+                if (this.stormActive) luck *= 3; 
+                luck *= this.getPermanentLuckMult();
+                
+                const pulls = [];
+                for(let i=0; i<capacity; i++) { pulls.push(this.rollRNG(luck)); }
+
+                let triggeredEvent = null;
+                let toastEvent = null;
+                pulls.forEach(pull => {
+                    this.inventory[pull.item] = (this.inventory[pull.item] || 0) + 1;
+                    if (pull.rarityKey !== 'COMMON') this.discoveredItems[pull.item] = true;
+                    this.logEntry(pull.item, pull.rarity);
+                    
+                    if (['ABSOLUTE', 'MYTHIC', 'ELDRITCH', 'UNFATHOMABLE'].includes(pull.rarityKey)) {
+                        if (!triggeredEvent || pull.rarity.chance < triggeredEvent.rarity.chance) {
+                            triggeredEvent = { item: pull.item, rarity: pull.rarity };
+                        }
+                    } else if (['LEGENDARY', 'EPIC'].includes(pull.rarityKey)) {
+                        if (!toastEvent || pull.rarity.chance < toastEvent.rarity.chance) {
+                            toastEvent = { item: pull.item, rarity: pull.rarity };
+                        }
+                    }
+                });
+
+                this.performAutoScrap();
+                this.recalcScrap(); this.saveGame(); this.updateUI();
+
+                if (triggeredEvent) {
+                    this.triggerCutscene(triggeredEvent);
+                } else {
+                    if (toastEvent) this.showRarityToast(toastEvent.item, toastEvent.rarity);
+                    if (this.autoDredge) {
+                        setTimeout(() => { if (this.autoDredge && !this.isDredging && !this.isCutsceneActive) this.startDredge(); }, 300);
+                    }
+                }
+            }
+
+            showRarityToast(itemName, rarity, big) {
+                const container = document.getElementById('toast-container');
+                const odds = this.getItemOdds(itemName, rarity);
+                const toast = document.createElement('div');
+                toast.className = big ? 'rarity-toast toast-big' : 'rarity-toast';
+                toast.style.setProperty('--toast-color', rarity.color);
+                toast.innerHTML = `
+                    <span class="toast-rarity">${rarity.name} FIND${big ? ' \u2014 AUTO-SKIPPED' : ''}</span>
+                    <span class="toast-item">${itemName}</span>
+                    <span class="toast-odds">ODDS: 1 in ${odds.denom.toLocaleString()}</span>
+                `;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.classList.add('toast-out');
+                    setTimeout(() => toast.remove(), 500);
+                }, big ? 4500 : 3200);
+            }
+
+            rollRNG(luckMultiplier) {
+                const roll = Math.random();
+                for (let rarity of RARITY_ORDER) {
+                    if (roll < (rarity.chance * luckMultiplier)) {
+                        const item = rarity.items[Math.floor(Math.random() * rarity.items.length)];
+                        return { item, rarity: rarity, rarityKey: Object.keys(RARITIES).find(k => RARITIES[k] === rarity) };
+                    }
+                }
+                return { item: RARITIES.COMMON.items[Math.floor(Math.random() * RARITIES.COMMON.items.length)], rarity: RARITIES.COMMON, rarityKey: 'COMMON' };
+            }
+
+            triggerCutscene(eventData) {
+                if (this.isCutsceneActive) return;
+
+                // "Always Skip" means never show any part of the overlay — not even a brief flash.
+                // The find is still surfaced clearly via a bigger toast so it's never silent/invisible.
+                if (this.autoSkipCutscenes) {
+                    this.showRarityToast(eventData.item, eventData.rarity, true);
+                    if (this.autoDredge && !this.isDredging) this.startDredge();
+                    return;
+                }
+
+                this.isCutsceneActive = true;
+
+                const gameUI = document.getElementById('game-ui');
+                const overlay = document.getElementById('corrupted-overlay');
+                const shapes = document.getElementById('corrupted-shapes');
+                const text = document.getElementById('corrupted-text');
+                const subtext = document.getElementById('corrupted-subtext');
+                const controls = document.getElementById('cutscene-controls');
+                const emblem = document.getElementById('corrupted-emblem');
+                const flash = document.getElementById('corrupted-flash');
+                const flashTint = document.getElementById('corrupted-flash-tint');
+                const tierBadge = document.getElementById('corrupted-tier-badge');
+                const prophecy = document.getElementById('corrupted-prophecy');
+                
+                const itemClass = eventData.item.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                
+                overlay.className = ''; shapes.className = ''; text.className = '';
+                void overlay.offsetWidth; 
+
+                gameUI.classList.add('corrupted'); 
+                overlay.classList.add('active', itemClass);
+                overlay.style.setProperty('--cutscene-tint', eventData.rarity.color);
+                
+                text.style.textShadow = eventData.rarity.shadow; 
+                text.style.color = eventData.rarity.color;
+
+                // Rarity tier badge (e.g. "MYTHIC TIER")
+                tierBadge.style.color = eventData.rarity.color;
+                tierBadge.textContent = eventData.rarity.name + ' TIER';
+
+                // Rune emblem: unique glyph per item, colored to match its rarity
+                emblem.style.color = eventData.rarity.color;
+                emblem.innerHTML = buildEmblemSVG(itemClass);
+
+                // Reveal flash: hot white core + rarity-colored wash (skipped for The Depth Itself, which has its own bang sequence already)
+                flash.classList.remove('burst'); void flash.offsetWidth;
+                flashTint.classList.remove('burst'); void flashTint.offsetWidth;
+                if (itemClass !== 'the-depth-itself') {
+                    flash.classList.add('burst');
+                    flashTint.classList.add('burst');
+                }
+
+                // Ambient particles matched to this item's mood
+                const particlePreset = CUTSCENE_PARTICLE_PRESETS[itemClass];
+                if (particlePreset) this.cutsceneParticles.start(particlePreset);
+                else this.cutsceneParticles.stop();
+
+                let messages = ["ANOMALY DETECTED"];
+                let duration = 5000;
+
+                switch(itemClass) {
+                    case 'the-heart-of-the-trench': messages = ["THUMP...", "THUMP...", "THE ABYSS HAS A PULSE"]; duration = 6000; document.getElementById('rig-section').style.animation = "screenShake 0.4s infinite"; break;
+                    case 'cursed-figurehead': messages = ["SHE WEEPS SALT WATER", "A CAPTAIN'S REGRET", "THE WOOD GROANS"]; duration = 5000; break;
+                    case 'the-drowned-crown': messages = ["BOW TO THE TIDE", "HEAVY IS THE HEAD", "A KINGDOM OF SILT"]; duration = 7000; break;
+                    case 'whispering-obelisk': messages = ["/// NON-EUCLIDEAN ERROR ///", "IT SPEAKS IN DEAD TONGUES", "GEOMETRY OF THE DEEP"]; duration = 6000; document.getElementById('rig-section').style.animation = "screenShake 0.1s infinite"; break;
+                    case 'tear-of-the-abyss': messages = ["THE OCEAN WEEPS", "A FRACTURE IN REALITY", "SINGULARITY ACHIEVED"]; duration = 10000; document.getElementById('rig-section').style.animation = "screenShake 0.05s infinite"; break;
+                    case 'the-sunken-moon': messages = ["IT ILLUMINATES THE DEEP", "A LIGHT IN THE DARKNESS", "THE TIDES OBEY"]; duration = 11000; break;
+                    case 'echo-of-the-genesis': messages = ["SYSTEM ERROR: 0x000000", "NULL", "BEGINNING AND END"]; duration = 9000; document.getElementById('rig-section').style.animation = "screenShake 0.05s infinite"; break;
+                    case 'abyssal-leviathan-spine': messages = ["THE GIANTS STILL ROAM", "A REMNANT OF THE ANCIENTS", "COLOSSAL DECAY"]; duration = 7000; document.getElementById('rig-section').style.animation = "screenShake 0.8s infinite"; break;
+                    case 'phantom-lighthouse': messages = ["IT GUIDES THEM DOWN", "DO NOT FOLLOW THE LIGHT", "LOST AT SEA"]; duration = 6000; break;
+                    case 'the-depth-itself': messages = ["I AM THE OCEAN", "THERE IS NO BOTTOM", "YOU HAVE REACHED THE END"]; duration = 18000; document.getElementById('rig-section').style.animation = "screenShake 0.1s infinite"; break;
+                }
+
+                if(sfx.isInitialized) {
+                    sfx.playCutsceneDrone(eventData.rarity.id, duration);
+                }
+
+                // The Depth Itself gets its own name as the huge hero text, with the poetic line
+                // demoted to a secondary "prophecy" beneath it. Every other item just shows the phrase.
+                if (itemClass === 'the-depth-itself') {
+                    text.innerText = eventData.item.toUpperCase();
+                    prophecy.textContent = messages[Math.floor(Math.random() * messages.length)];
+                    prophecy.style.color = eventData.rarity.color;
+                } else {
+                    text.innerText = messages[Math.floor(Math.random() * messages.length)];
+                    prophecy.textContent = '';
+                }
+
+                const odds = this.getItemOdds(eventData.item, eventData.rarity);
+                subtext.style.animation = 'none'; void subtext.offsetWidth; subtext.style.animation = '';
+                subtext.style.color = eventData.rarity.color;
+                subtext.innerText = `${eventData.item}  \u00B7  ODDS: 1 IN ${odds.denom.toLocaleString()}`;
+
+                document.getElementById('log-container').classList.add('preserve-color');
+
+                // Skip button appears after a short beat so the reveal always gets a moment on screen first.
+                controls.classList.remove('visible');
+                clearTimeout(this.skipBtnTimer);
+                this.skipBtnTimer = setTimeout(() => {
+                    if (this.isCutsceneActive) controls.classList.add('visible');
+                }, 900);
+
+                clearTimeout(this.cutsceneTimeoutId);
+                this.cutsceneTimeoutId = setTimeout(() => this.endCutscene(), duration);
+            }
+
+            // Shared cleanup for both a natural cutscene end and a manual/auto skip.
+            endCutscene() {
+                if (!this.isCutsceneActive) return;
+                clearTimeout(this.cutsceneTimeoutId);
+                clearTimeout(this.skipBtnTimer);
+                this.cutsceneTimeoutId = null;
+
+                document.getElementById('game-ui').classList.remove('corrupted'); 
+                document.getElementById('corrupted-overlay').classList.remove('active');
+                document.getElementById('cutscene-controls').classList.remove('visible');
+                document.getElementById('log-container').classList.remove('preserve-color');
+                document.getElementById('rig-section').style.animation = "";
+                document.getElementById('corrupted-emblem').innerHTML = '';
+                document.getElementById('corrupted-tier-badge').textContent = '';
+                document.getElementById('corrupted-prophecy').textContent = '';
+                document.getElementById('corrupted-flash').classList.remove('burst');
+                document.getElementById('corrupted-flash-tint').classList.remove('burst');
+                this.cutsceneParticles.stop();
+                this.isCutsceneActive = false; 
+
+                if (this.autoDredge && !this.isDredging) {
+                    this.startDredge();
+                }
+            }
+
+            skipCutscene() {
+                if (!this.isCutsceneActive) return;
+                if (sfx.isInitialized) sfx.stopCutsceneDrone();
+                this.endCutscene();
+            }
+
+            toggleAutoSkip(isChecked) {
+                this.autoSkipCutscenes = isChecked;
+                document.getElementById('auto-skip-toggle').checked = isChecked;
+                document.getElementById('auto-skip-toggle-modal').checked = isChecked;
+                this.saveGame();
+            }
+
+            formatCrushYield(amount) {
+                if (amount >= 1000000) return (amount / 1000000).toFixed(0) + "M";
+                if (amount >= 1000) return (amount / 1000).toFixed(0) + "K";
+                return amount;
+            }
+
+            initUI() {
+                const upCont = document.getElementById('upgrades-container');
+                upCont.innerHTML = '';
+                Object.values(UPGRADES_DEF).forEach(def => {
+                    upCont.innerHTML += `
+                        <div class="upgrade-card" id="card-${def.id}">
+                            <div class="upgrade-header">
+                                <span>${def.name} <span style="font-size: 0.8em; color: var(--text-dim)">Lvl <span id="lvl-${def.id}">0</span></span></span>
+                            </div>
+                            <div class="upgrade-desc">${def.desc}</div>
+                            <div style="color: var(--text-alert); margin-top: 3px; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace;">
+                                Output: <span id="val-${def.id}"></span>
+                            </div>
+                            <div class="upgrade-action">
+                                <span class="cost-text">Cost: <span id="cost-${def.id}">0</span> Scrap</span>
+                                <button class="btn-upgrade" id="btn-up-${def.id}" onclick="game.buyUpgrade('${def.id}')">Assemble</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            updateUI() {
+                document.getElementById('currency-amount').innerText = this.scrapCount.toLocaleString();
+                Object.keys(UPGRADES_DEF).forEach(id => {
+                    const def = UPGRADES_DEF[id]; const level = this.upgrades[id]; const cost = this.getUpgradeCost(id);
+                    document.getElementById(`lvl-${id}`).innerText = level;
+                    document.getElementById(`val-${id}`).innerText = def.format(this.getUpgradeValue(id));
+                    const btn = document.getElementById(`btn-up-${id}`);
+                    if (level >= def.maxLevel) { document.getElementById(`cost-${id}`).innerText = "MAX"; btn.disabled = true; btn.innerText = "BUILT"; }
+                    else { document.getElementById(`cost-${id}`).innerText = cost.toLocaleString(); btn.disabled = this.scrapCount < cost; }
+                });
+
+                // Depth status bar: rank title, permanent luck bonus, collection progress, and the Descend button
+                document.getElementById('depth-rank-label').innerText = this.getRankTitle();
+                document.getElementById('depth-bonus-label').innerText = `+${(this.pressureCores * 1).toFixed(0)}% Permanent Luck`;
+                document.getElementById('collection-badge').innerText = `${this.getDiscoveredCount()}/${this.getTotalCollectibleCount()}`;
+                document.getElementById('collection-btn').classList.toggle('complete', this.isCollectionComplete());
+                document.getElementById('descend-container').classList.toggle('unlocked', this.isFullyUpgraded());
+                if (this.isFullyUpgraded()) {
+                    document.getElementById('descend-hint').innerText = `Projected: +${this.getProjectedCores().toLocaleString()} Pressure Cores`;
+                }
+
+                const invList = document.getElementById('inventory-list'); invList.innerHTML = '';
+                const sortedInv = [];
+                Object.keys(this.inventory).forEach(itemName => {
+                    let itemRarity = RARITIES.COMMON; let rarityKey = 'COMMON';
+                    for (let key in RARITIES) { if (RARITIES[key].items.includes(itemName)) { itemRarity = RARITIES[key]; rarityKey = key; break; } }
+                    sortedInv.push({ name: itemName, count: this.inventory[itemName], rarity: itemRarity, key: rarityKey });
+                });
+
+                sortedInv.sort((a, b) => {
+                    const idxA = Object.keys(RARITIES).indexOf(a.key); const idxB = Object.keys(RARITIES).indexOf(b.key);
+                    return idxA !== idxB ? idxA - idxB : a.name.localeCompare(b.name);
+                });
+
+                sortedInv.forEach(entry => {
+                    const canCrush = entry.rarity.canCrush;
+                    const displayYield = canCrush ? this.formatCrushYield(entry.rarity.crushYield) : '0';
+                    invList.innerHTML += `
+                        <div class="inv-item" style="border-left-color: ${entry.rarity.color}">
+                            <div class="inv-item-info">
+                                <span style="color: ${entry.rarity.color}; text-shadow: ${entry.rarity.shadow === 'none' ? '' : entry.rarity.shadow}">${entry.name}</span>
+                                <span class="inv-item-count">x${entry.count.toLocaleString()}</span>
+                            </div>
+                            ${canCrush ? `<button class="btn-crush" data-item="${entry.name.replace(/"/g, '&quot;')}" data-rarity="${entry.key}" onclick="game.crushItem(this.getAttribute('data-item'), this.getAttribute('data-rarity'))">CRUSH (+${displayYield})</button>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            logEntry(itemName, rarity) {
+                const log = document.getElementById('log-entries'); const entry = document.createElement('div'); entry.className = 'log-entry';
+                const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
+                let oddsHtml = '';
+                if (rarity.id !== 'common' && rarity.items.includes(itemName)) {
+                    const odds = this.getItemOdds(itemName, rarity);
+                    oddsHtml = ` <span class="log-odds">1:${odds.denom.toLocaleString()}</span>`;
+                }
+                entry.innerHTML = `<span style="color: var(--text-dim)">[${time}]</span> <span style="color: ${rarity.color}; text-shadow: ${rarity.shadow === 'none' ? '1px 1px 0 #000' : rarity.shadow}">${itemName}</span>${oddsHtml}`;
+                if (['absolute', 'mythic', 'eldritch', 'unfathomable'].includes(rarity.id)) entry.classList.add('mythic-plus');
+                log.prepend(entry);
+                if (log.children.length > 30) log.removeChild(log.lastChild);
+            }
+
+            // === ODDS TABLE MODAL ===
+            openOddsModal() {
+                this.renderOddsTable();
+                document.getElementById('odds-modal-overlay').classList.add('active');
+            }
+
+            closeOddsModal() {
+                document.getElementById('odds-modal-overlay').classList.remove('active');
+            }
+
+            renderOddsTable() {
+                const bodyEl = document.getElementById('odds-modal-body');
+                const luckInfo = document.getElementById('odds-modal-luck');
+
+                let luck = this.getUpgradeValue('lures');
+                if (this.stormActive) luck *= 3;
+                luck *= this.getPermanentLuckMult();
+                luckInfo.innerHTML = `Current Luck Multiplier: <strong>${luck.toFixed(1)}x</strong>${this.stormActive ? ' <span style="color:#00aaff">(Abyssal Storm Active)</span>' : ''}${this.pressureCores > 0 ? ` <span style="color:#cc66ff">(includes +${(this.pressureCores * 1).toFixed(0)}% Depth Pressure)</span>` : ''}`;
+
+                const allTiers = [...RARITY_ORDER, RARITIES.COMMON];
+                let html = '';
+                allTiers.forEach(rarity => {
+                    html += `<div class="odds-tier-header" style="color:${rarity.color}; border-color:${rarity.color};">${rarity.name}</div>`;
+                    if (rarity.id === 'common') {
+                        html += `<div class="odds-row"><span class="odds-item-name" style="color:${rarity.color}">${rarity.items.join(', ')}</span><span class="odds-value">Base Tier</span></div>`;
+                    } else {
+                        rarity.items.forEach(item => {
+                            const base = this.getItemOdds(item, rarity);
+                            const effChance = Math.min(1, base.chance * luck);
+                            const effDenom = Math.max(1, Math.round(1 / effChance));
+                            html += `<div class="odds-row"><span class="odds-item-name" style="color:${rarity.color}">${item}</span><span class="odds-value">1 in ${base.denom.toLocaleString()}<br><span class="odds-effective">now: 1 in ${effDenom.toLocaleString()}</span></span></div>`;
+                        });
+                    }
+                });
+                bodyEl.innerHTML = html;
+            }
+
+            // === THE ABYSSAL DESCENT (prestige) ===
+            openDescendModal() {
+                if (!this.isFullyUpgraded()) return;
+                const cores = this.getProjectedCores();
+                const currentBonus = this.pressureCores * 1;
+                const nextBonus = (this.pressureCores + cores) * 1;
+                document.getElementById('descend-modal-body').innerHTML = `
+                    Your rig is fully mastered — every upgrade built to its limit. There is nothing deeper
+                    to build here, only <span class="highlight">further</span> to fall.<br><br>
+                    Descending will scuttle this operation: <span class="highlight">scrap, cargo, and every upgrade reset to zero.</span>
+                    In exchange, the crushing pressure below permanently strengthens every dive from now on.<br><br>
+                    Pressure Cores earned this descent: <span class="highlight">${cores.toLocaleString()}</span><br>
+                    Permanent Luck Bonus: <span class="highlight">+${currentBonus}%</span> &rarr; <span class="highlight">+${nextBonus}%</span><br>
+                    Rank after descending: <span class="highlight">${this.getRankTitle(this.totalDescents + 1)}</span>
+                `;
+                document.getElementById('descend-modal-overlay').classList.add('active');
+            }
+
+            closeDescendModal() {
+                document.getElementById('descend-modal-overlay').classList.remove('active');
+            }
+
+            confirmDescend() {
+                if (!this.isFullyUpgraded()) return;
+                const coresEarned = this.getProjectedCores();
+
+                this.pressureCores += coresEarned;
+                this.totalDescents += 1;
+
+                // Reset everything resettable — the collection log and permanent stats above are untouched.
+                this.inventory = {};
+                this.scrapCount = 0;
+                this.lifetimeScrapEarned = 0;
+                this.upgrades = { winch: 0, lures: 0, capacity: 0 };
+
+                this.closeDescendModal();
+                this.saveGame();
+                this.updateUI();
+
+                const log = document.getElementById('log-entries');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry mythic-plus';
+                entry.innerHTML = `<span style="color:#cc66ff; text-shadow: 0 0 12px #cc66ff, 0 0 24px #fff;">\u2693 DESCENDED — Rank: ${this.getRankTitle()} · +${coresEarned.toLocaleString()} Pressure Cores (permanent +${(this.pressureCores*1).toFixed(0)}% Luck)</span>`;
+                log.prepend(entry);
+            }
+
+            // === CURATOR'S COLLECTION ===
+            openCollectionModal() {
+                this.renderCollection();
+                document.getElementById('collection-modal-overlay').classList.add('active');
+            }
+
+            closeCollectionModal() {
+                document.getElementById('collection-modal-overlay').classList.remove('active');
+            }
+
+            renderCollection() {
+                const found = this.getDiscoveredCount();
+                const total = this.getTotalCollectibleCount();
+                const pct = total > 0 ? Math.round((found / total) * 100) : 0;
+
+                document.getElementById('collection-progress').innerHTML = `
+                    ${found} / ${total} Discovered (${pct}%)${this.isCollectionComplete() ? ' — <span style="color:#00ffaa">COMPLETE, +25% permanent Luck active</span>' : ''}
+                    <div class="collection-progress-bar-track"><div class="collection-progress-bar-fill" style="width:${pct}%"></div></div>
+                `;
+
+                const grid = document.getElementById('collection-grid');
+                let html = '';
+                Object.keys(RARITIES).filter(k => k !== 'COMMON').forEach(key => {
+                    const rarity = RARITIES[key];
+                    rarity.items.forEach(item => {
+                        const isFound = !!this.discoveredItems[item];
+                        html += `<div class="collection-item ${isFound ? 'found' : 'locked'}" style="color:${rarity.color}" title="${isFound ? item : 'Undiscovered'}">
+                            <span class="ci-icon">${isFound ? '\u2713' : '\u2753'}</span>
+                            <span class="ci-name">${isFound ? item : '???'}</span>
+                        </div>`;
+                    });
+                });
+                grid.innerHTML = html;
+            }
+        }
+
+        const game = new AbyssalDredging();
+
+    </script>
+</body>
+</html>

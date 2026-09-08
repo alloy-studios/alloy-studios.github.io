@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cosmic Climb</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --ink: #14213d;
+      --paper: #f8fbff;
+      --accent: #ffb703;
+      --accent-2: #2a9d8f;
+      --glass: rgba(255, 255, 255, 0.74);
+      --shadow: rgba(20, 33, 61, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #050517; /* Deep space fallback */
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button {
+      border: 0;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .game-shell {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: stretch;
+      touch-action: none;
+      user-select: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: max(14px, env(safe-area-inset-left));
+      right: max(14px, env(safe-area-inset-right));
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .stat-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill,
+    .menu,
+    .touch-pad button {
+      background: var(--glass);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      box-shadow: 0 12px 32px var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .pill {
+      min-width: 86px;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.66;
+    }
+
+    .value {
+      display: block;
+      margin-top: 2px;
+      font-size: clamp(20px, 4vw, 32px);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    #realmValue {
+      font-size: clamp(15px, 2.8vw, 22px);
+      max-width: 132px;
+      overflow-wrap: anywhere;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .icon-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      font-weight: 900;
+      background: var(--glass);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      box-shadow: 0 12px 32px var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .menu-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 183, 3, 0.28), transparent 30%),
+        radial-gradient(circle at 78% 72%, rgba(157, 78, 221, 0.22), transparent 30%),
+        rgba(147, 213, 255, 0.15);
+      backdrop-filter: blur(4px);
+    }
+
+    .menu-layer[hidden] {
+      display: none;
+    }
+
+    .menu {
+      width: min(460px, 100%);
+      padding: 22px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .menu h1 {
+      margin: 0;
+      font-size: clamp(36px, 8vw, 64px);
+      line-height: 0.94;
+      letter-spacing: 0;
+    }
+
+    .menu p {
+      margin: 14px auto 0;
+      max-width: 34ch;
+      font-size: 16px;
+      line-height: 1.45;
+      opacity: 0.82;
+    }
+
+    .start-button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #2b1800;
+      font-weight: 900;
+      box-shadow: 0 12px 26px rgba(255, 183, 3, 0.28);
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+      text-align: left;
+    }
+
+    .mini-grid span {
+      min-height: 54px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.52);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .touch-pad {
+      position: fixed;
+      left: max(14px, env(safe-area-inset-left));
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 4;
+      display: none;
+      justify-content: space-between;
+      align-items: end;
+      pointer-events: none;
+    }
+
+    .touch-pad .move,
+    .touch-pad .jump {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .touch-pad button {
+      width: 64px;
+      height: 58px;
+      border-radius: 8px;
+      font-size: 24px;
+      font-weight: 950;
+    }
+
+    .touch-pad .jump button {
+      width: 88px;
+      background: rgba(255, 183, 3, 0.82);
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      .touch-pad {
+        display: flex;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .hud {
+        align-items: stretch;
+      }
+      .pill {
+        min-width: 76px;
+        padding: 9px 10px;
+      }
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell" aria-label="Cosmic Climb game">
+    <canvas id="game" aria-label="Vertical climbing game canvas"></canvas>
+  </main>
+
+  <section class="hud" aria-live="polite">
+    <div class="stat-row">
+      <div class="pill">
+        <span class="label">Height</span>
+        <span class="value"><span id="heightValue">0</span>m</span>
+      </div>
+      <div class="pill">
+        <span class="label">Best</span>
+        <span class="value"><span id="bestValue">0</span>m</span>
+      </div>
+      <div class="pill">
+        <span class="label">Goal</span>
+        <span class="value"><span id="goalValue">3000</span>m</span>
+      </div>
+      <div class="pill">
+        <span class="label">Realm</span>
+        <span class="value" id="realmValue">Sky</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="pauseButton" class="icon-button" type="button" title="Pause">II</button>
+      <button id="restartButton" class="icon-button" type="button" title="Restart">R</button>
+    </div>
+  </section>
+
+  <section id="menuLayer" class="menu-layer">
+    <div class="menu" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+      <h1 id="menuTitle">Cosmic Climb</h1>
+      <p id="menuCopy">Ascend 3,000 meters through the stratosphere, deep space, and nebulas to reach the Center of the Universe.</p>
+      <div class="mini-grid" aria-hidden="true">
+        <span>Move: A/D or arrows</span>
+        <span>Jump: W, Up, or Space</span>
+        <span>Mobile: touch buttons</span>
+      </div>
+      <button id="startButton" class="start-button" type="button">Start Climbing</button>
+    </div>
+  </section>
+
+  <nav class="touch-pad" aria-label="Touch controls">
+    <div class="move">
+      <button data-hold="left" type="button" aria-label="Move left">←</button>
+      <button data-hold="right" type="button" aria-label="Move right">→</button>
+    </div>
+    <div class="jump">
+      <button data-tap="jump" type="button" aria-label="Jump">↑</button>
+    </div>
+  </nav>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const heightValue = document.getElementById("heightValue");
+      const bestValue = document.getElementById("bestValue");
+      const goalValue = document.getElementById("goalValue");
+      const realmValue = document.getElementById("realmValue");
+      const menuLayer = document.getElementById("menuLayer");
+      const menuTitle = document.getElementById("menuTitle");
+      const menuCopy = document.getElementById("menuCopy");
+      const startButton = document.getElementById("startButton");
+      const pauseButton = document.getElementById("pauseButton");
+      const restartButton = document.getElementById("restartButton");
+
+      const WORLD = {
+        gravity: 2200,
+        runAccel: 4300,
+        maxRun: 520,
+        friction: 0.82,
+        jump: 860,
+        platformGap: 92,
+        maxStepX: 238,
+        targetMeters: 3000,
+        meterScale: 22
+      };
+
+      const REALMS = [
+        {
+          name: "Sky", at: 0,
+          sky: ["#83cfff", "#dff7ff", "#fff0bd"],
+          platform: "#2a9d8f", moving: "#577590", spring: "#ffb703"
+        },
+        {
+          name: "Stratosphere", at: 300,
+          sky: ["#1e6091", "#34a0a4", "#f7d488"],
+          platform: "#184e77", moving: "#1a759f", spring: "#f2cc8f"
+        },
+        {
+          name: "Orbit", at: 700,
+          sky: ["#0b162c", "#1e3d59", "#ff6e40"],
+          platform: "#ffc13b", moving: "#f5f0e1", spring: "#ff6e40"
+        },
+        {
+          name: "Deep Space", at: 1200,
+          sky: ["#050517", "#0a0a2a", "#1a1a4a"],
+          platform: "#6f42c1", moving: "#4361ee", spring: "#00f5d4"
+        },
+        {
+          name: "Nebula", at: 1800,
+          sky: ["#10002b", "#3c096c", "#9d4edd"],
+          platform: "#ff9e00", moving: "#e0aaff", spring: "#390099"
+        },
+        {
+          name: "Galactic Core", at: 2400,
+          sky: ["#000000", "#140005", "#ff4d6d"],
+          platform: "#ffb703", moving: "#fb8500", spring: "#ffffff"
+        },
+        {
+          name: "The Void", at: 2800,
+          sky: ["#000000", "#000000", "#0a0a0a"],
+          platform: "#444444", moving: "#666666", spring: "#888888"
+        },
+        {
+          name: "Center", at: 3000,
+          sky: ["#050014", "#240046", "#ff8fab"],
+          platform: "#ff4d8d", moving: "#7b2cbf", spring: "#ffe66d"
+        }
+      ];
+
+      const input = {
+        left: false,
+        right: false,
+        jumpQueued: false
+      };
+
+      const state = {
+        mode: "menu",
+        width: 1,
+        height: 1,
+        dpr: 1,
+        cameraY: 0,
+        shake: 0,
+        score: 0,
+        best: Number(localStorage.getItem("skylineClimbBest") || 0),
+        time: 0,
+        last: 0,
+        cutsceneTimer: 0,
+        particles: [],
+        clouds: [],
+        stars: [],
+        shootingStars: [],
+        celestialBodies: [],
+        platforms: [],
+        player: null
+      };
+
+      function createPlayer() {
+        return {
+          x: state.width / 2 - 18,
+          y: state.height - 112,
+          w: 36,
+          h: 44,
+          vx: 0,
+          vy: 0,
+          grounded: false,
+          coyote: 0,
+          face: 1
+        };
+      }
+
+      function resize() {
+        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        state.width = window.innerWidth;
+        state.height = window.innerHeight;
+        canvas.width = Math.floor(state.width * state.dpr);
+        canvas.height = Math.floor(state.height * state.dpr);
+        canvas.style.width = `${state.width}px`;
+        canvas.style.height = `${state.height}px`;
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        if (!state.player) resetWorld(false);
+      }
+
+      function makePlatform(x, y, w, type = "normal") {
+        return {
+          x, y, w, h: type === "spring" ? 20 : 18,
+          type, phase: Math.random() * Math.PI * 2,
+          baseX: x, touched: false
+        };
+      }
+
+      function makeCloud(y) {
+        return {
+          x: -120 + Math.random() * (state.width + 240),
+          y,
+          size: 34 + Math.random() * 82,
+          speed: 5 + Math.random() * 16
+        };
+      }
+
+      function makeStars() {
+        const stars = [];
+        for (let i = 0; i < 250; i++) {
+          stars.push({
+            x: Math.random(),
+            y: Math.random(),
+            size: Math.random() * 2 + 0.5,
+            parallax: 0.05 + Math.random() * 0.3,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.5 + Math.random() * 2.5,
+            color: Math.random() > 0.85 ? "#ffebb8" : Math.random() > 0.65 ? "#cce4ff" : "#ffffff"
+          });
+        }
+        return stars;
+      }
+
+      function makeCosmos() {
+        return [
+          { type: 'moon', m: 500, px: 0.8, size: 45, parallax: 0.15, c1: '#e0e1dd', c2: '#adb5bd' },
+          { type: 'moon', m: 950, px: 0.2, size: 25, parallax: 0.1, c1: '#ced4da', c2: '#6c757d' },
+          { type: 'gas_giant', m: 1400, px: 0.75, size: 140, parallax: 0.05, c1: '#ffb703', c2: '#fb8500', c3: '#9d0208', cRings: 'rgba(255,183,3,0.4)', angle: -0.2 },
+          { type: 'nebula', m: 1800, px: 0.35, size: 400, parallax: 0.02, c1: 'rgba(157, 78, 221, 0.18)' },
+          { type: 'nebula', m: 2050, px: 0.7, size: 550, parallax: 0.03, c1: 'rgba(255, 0, 110, 0.12)' },
+          { type: 'nebula', m: 2350, px: 0.5, size: 600, parallax: 0.01, c1: 'rgba(58, 12, 163, 0.2)' },
+          { type: 'gas_giant', m: 2600, px: 0.2, size: 180, parallax: 0.04, c1: '#4cc9f0', c2: '#4361ee', c3: '#3a0ca3', cRings: 'rgba(76,201,240,0.3)', angle: 0.35 },
+          { type: 'blackhole', m: 2850, px: 0.5, size: 120, parallax: 0.01 }
+        ];
+      }
+
+      function resetWorld(startPlaying = true) {
+        state.cameraY = 0;
+        state.score = 0;
+        state.time = 0;
+        state.shake = 0;
+        state.particles = [];
+        state.shootingStars = [];
+        state.player = createPlayer();
+        state.clouds = Array.from({ length: 26 }, (_, i) => makeCloud(state.height - i * 135 - Math.random() * 150));
+        state.stars = makeStars();
+        state.celestialBodies = makeCosmos();
+        
+        state.platforms = [
+          makePlatform(state.width / 2 - 110, state.height - 40, 220, "start"),
+          makePlatform(state.width / 2 + 38, state.height - 174, 128),
+          makePlatform(state.width / 2 - 188, state.height - 306, 140),
+          makePlatform(state.width / 2 - 24, state.height - 442, 116, "spring")
+        ];
+        
+        let y = state.height - 540;
+        while (y > -4200) {
+          addReachablePlatformAt(y);
+          y -= nextPlatformGap(y);
+        }
+        
+        if (startPlaying) {
+          state.mode = "playing";
+          menuLayer.hidden = true;
+        }
+        updateHud();
+      }
+
+      function climbDifficulty(y) {
+        const meters = Math.max(0, state.height - y) / WORLD.meterScale;
+        return Math.min(10, Math.floor(meters / 250));
+      }
+
+      function nextPlatformGap(y) {
+        const difficulty = climbDifficulty(y);
+        return WORLD.platformGap + difficulty * 3.5 + Math.random() * Math.max(15, 35 - difficulty * 1.5);
+      }
+
+      function addReachablePlatformAt(y) {
+        const previous = state.platforms.reduce((highest, p) => p.y < highest.y ? p : highest);
+        const difficulty = climbDifficulty(y);
+        const minW = Math.max(54, 130 - difficulty * 7);
+        const w = minW + Math.random() * Math.max(30, 70 - difficulty * 4);
+        const previousCenter = previous.x + previous.w / 2;
+        const stepLimit = Math.min(reachableStepLimit(previous, y, w), WORLD.maxStepX + difficulty * 10, state.width * 0.45);
+        const step = (Math.random() * 2 - 1) * stepLimit;
+        const center = clamp(previousCenter + step, 38 + w / 2, state.width - 38 - w / 2);
+        const x = center - w / 2;
+        const roll = Math.random();
+        
+        // As you get higher, springs and moving platforms become more common
+        const type = roll > 0.92 ? "spring" : roll > Math.max(0.45, 0.88 - difficulty * 0.04) ? "moving" : "normal";
+        state.platforms.push(makePlatform(x, y, w, type));
+      }
+
+      function getRealm(meters) {
+        let realm = REALMS[0];
+        for (const candidate of REALMS) {
+          if (meters >= candidate.at) realm = candidate;
+        }
+        return realm;
+      }
+
+      function getRealmBlend(meters) {
+        let from = REALMS[0], to = REALMS[REALMS.length - 1];
+        for (let i = 0; i < REALMS.length; i += 1) {
+          if (meters >= REALMS[i].at) from = REALMS[i];
+          if (meters < REALMS[i].at) {
+            to = REALMS[i];
+            break;
+          }
+        }
+        if (from === to) return { from, to, t: 0 };
+        const span = Math.max(1, to.at - from.at);
+        return { from, to, t: clamp((meters - from.at) / span, 0, 1) };
+      }
+
+      function reachableStepLimit(previous, nextY, nextW) {
+        const rise = Math.max(0, previous.y - nextY);
+        const disc = Math.max(0, WORLD.jump * WORLD.jump - 2 * WORLD.gravity * rise);
+        const airTime = (WORLD.jump + Math.sqrt(disc)) / WORLD.gravity;
+        const runup = 70;
+        const landingHelp = previous.w * 0.32 + nextW * 0.32;
+        return Math.max(110, WORLD.maxRun * airTime * 0.72 + landingHelp + runup);
+      }
+
+      function ensurePlatforms() {
+        let top = Math.min(...state.platforms.map(p => p.y));
+        while (top > state.cameraY - state.height * 1.5) {
+          top -= nextPlatformGap(top);
+          addReachablePlatformAt(top);
+        }
+        state.platforms = state.platforms.filter(p => p.y < state.cameraY + state.height + 260);
+      }
+
+      function queueJump() { input.jumpQueued = true; }
+      function startGame() { resetWorld(true); }
+
+      function setPaused(paused) {
+        if (paused && state.mode === "playing") {
+          state.mode = "paused";
+          showMenu("Paused", "Catch your breath. The cosmos will wait.");
+          startButton.textContent = "Resume";
+          pauseButton.textContent = ">";
+        } else if (!paused && state.mode === "paused") {
+          state.mode = "playing";
+          menuLayer.hidden = true;
+          pauseButton.textContent = "II";
+        }
+      }
+
+      function showMenu(title, copy) {
+        menuTitle.textContent = title;
+        menuCopy.textContent = copy;
+        menuLayer.hidden = false;
+      }
+
+      function endRun(won = false) {
+        state.mode = won ? "won" : "ended";
+        state.shake = 18;
+        if (state.score > state.best) {
+          state.best = state.score;
+          localStorage.setItem("skylineClimbBest", String(state.best));
+        }
+        updateHud();
+        if (won) {
+          showMenu("You Found It", "You reached the Center of the Universe. The climb is complete, but the cosmos is waiting for another run.");
+        } else {
+          showMenu("Nice Climb", `You reached ${state.score}m. Start again and take the universe a little higher.`);
+        }
+        startButton.textContent = "Climb Again";
+        pauseButton.textContent = "II";
+      }
+
+      function updateHud() {
+        heightValue.textContent = String(state.score);
+        bestValue.textContent = String(Math.max(state.best, state.score));
+        realmValue.textContent = getRealm(state.score).name;
+      }
+
+      function spawnBurst(x, y, color, count = 12) {
+        for (let i = 0; i < count; i += 1) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 90 + Math.random() * 240;
+          state.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 0.45 + Math.random() * 0.35,
+            max: 0.8, color
+          });
+        }
+      }
+
+      function startCutscene() {
+        state.mode = "cutscene";
+        state.cutsceneTimer = 0;
+        state.shake = 10;
+        spawnBurst(state.player.x + state.player.w / 2, state.player.y + state.player.h / 2, "#ffffff", 24);
+      }
+
+      function update(dt) {
+        if (state.mode === "cutscene") {
+          state.time += dt;
+          state.cutsceneTimer += dt;
+          
+          const p = state.player;
+          const targetY = state.height - 100 - WORLD.targetMeters * WORLD.meterScale;
+          const centerX = state.width / 2;
+          
+          // Float towards center
+          p.x += (centerX - p.w / 2 - p.x) * dt * 2.5;
+          p.y += (targetY - p.y) * dt * 2.5;
+          
+          // Camera smoothly centers on the destination
+          const targetCamera = targetY - state.height / 2;
+          state.cameraY += (targetCamera - state.cameraY) * dt * 2;
+
+          // Pull particles into the center
+          for (const particle of state.particles) {
+            particle.life -= dt;
+            particle.x += (centerX - particle.x) * dt * 4;
+            particle.y += (targetY - particle.y) * dt * 4;
+          }
+          state.particles = state.particles.filter(p => p.life > 0);
+
+          if (state.cutsceneTimer > 5) endRun(true);
+          return;
+        }
+
+        if (state.mode !== "playing") return;
+        state.time += dt;
+        const p = state.player;
+        p.coyote = Math.max(0, p.coyote - dt);
+
+        const direction = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+        if (direction !== 0) {
+          p.vx += direction * WORLD.runAccel * dt;
+          p.face = direction;
+        } else {
+          p.vx *= Math.pow(WORLD.friction, dt * 60);
+        }
+        p.vx = clamp(p.vx, -WORLD.maxRun, WORLD.maxRun);
+
+        if (input.jumpQueued) {
+          if (p.grounded || p.coyote > 0) {
+            p.vy = -WORLD.jump;
+            p.grounded = false;
+            p.coyote = 0;
+            spawnBurst(p.x + p.w / 2, p.y + p.h, "#ffffff", 8);
+          }
+          input.jumpQueued = false;
+        }
+
+        p.vy += WORLD.gravity * dt;
+
+        const oldY = p.y;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        if (p.x < -p.w) p.x = state.width;
+        if (p.x > state.width) p.x = -p.w;
+        p.grounded = false;
+
+        for (const platform of state.platforms) {
+          if (platform.type === "moving") {
+            platform.x = platform.baseX + Math.sin(state.time * 1.45 + platform.phase) * 42;
+          }
+          const falling = p.vy >= 0;
+          const wasAbove = oldY + p.h <= platform.y + 5;
+          const hitsX = p.x + p.w > platform.x && p.x < platform.x + platform.w;
+          const hitsY = p.y + p.h >= platform.y && p.y + p.h <= platform.y + platform.h + 18;
+          if (falling && wasAbove && hitsX && hitsY) {
+            p.y = platform.y - p.h;
+            p.vy = platform.type === "spring" ? -WORLD.jump * 1.34 : 0;
+            p.grounded = true;
+            p.coyote = 0.08;
+            if (platform.type === "spring") {
+              spawnBurst(p.x + p.w / 2, platform.y, "#ffb703", 18);
+              state.shake = 7;
+            } else if (!platform.touched) {
+              spawnBurst(p.x + p.w / 2, platform.y, "#2a9d8f", 6);
+            }
+            platform.touched = true;
+          }
+        }
+
+        const targetCamera = Math.min(state.cameraY, p.y - state.height * 0.42);
+        
+        state.cameraY += (targetCamera - state.cameraY) * Math.min(1, dt * 5.6);
+        
+        state.score = Math.max(state.score, Math.floor(Math.max(0, (state.height - 100 - p.y) / WORLD.meterScale)));
+        state.best = Math.max(state.best, state.score);
+
+        // Update Clouds
+        for (const cloud of state.clouds) {
+          cloud.x += cloud.speed * dt;
+          if (cloud.x - cloud.size > state.width + 60) cloud.x = -cloud.size - Math.random() * 80;
+        }
+        recycleClouds();
+
+        // Spawn Shooting Stars in higher realms
+        if (state.score > 800 && Math.random() < 0.015) {
+          state.shootingStars.push({
+            x: state.width + Math.random() * state.width,
+            y: state.cameraY - Math.random() * state.height,
+            vx: -800 - Math.random() * 1200,
+            vy: 400 + Math.random() * 800,
+            life: 1.0 + Math.random() * 0.5
+          });
+        }
+        
+        // Update Particles & Shooting Stars
+        for (let i = state.shootingStars.length - 1; i >= 0; i--) {
+          const ss = state.shootingStars[i];
+          ss.x += ss.vx * dt;
+          ss.y += ss.vy * dt;
+          ss.life -= dt * 1.5;
+          if (ss.life <= 0) state.shootingStars.splice(i, 1);
+        }
+
+        for (const particle of state.particles) {
+          particle.life -= dt;
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+          particle.vy += 500 * dt;
+        }
+        state.particles = state.particles.filter(p => p.life > 0);
+        state.shake = Math.max(0, state.shake - 50 * dt);
+
+        ensurePlatforms();
+        if (state.score >= WORLD.targetMeters) startCutscene();
+        else if (p.y - state.cameraY > state.height + 170) endRun();
+        updateHud();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, state.width, state.height);
+        const altitude = Math.max(0, -state.cameraY);
+        const meters = altitude / WORLD.meterScale;
+
+        drawSky(meters);
+        drawStars(dtGlobal, altitude, meters);
+        
+        const shakeX = state.shake ? (Math.random() - 0.5) * state.shake : 0;
+        const shakeY = state.shake ? (Math.random() - 0.5) * state.shake : 0;
+        
+        ctx.save();
+        ctx.translate(shakeX, -state.cameraY + shakeY);
+        
+        drawCosmos(altitude);
+        drawClouds(altitude);
+        drawShootingStars();
+        drawUniverseCenter();
+        drawPlatforms(meters);
+        drawPlayer();
+        drawParticles();
+        drawDropLine();
+        
+        ctx.restore();
+
+        let whiteout = 0;
+        if (state.mode === "cutscene") whiteout = Math.max(0, state.cutsceneTimer - 3.5) / 1.5;
+        else if (state.mode === "won") whiteout = 1;
+
+        if (whiteout > 0) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${whiteout})`;
+          ctx.fillRect(0, 0, state.width, state.height);
+        }
+      }
+
+      function drawSky(meters) {
+        const blend = getRealmBlend(meters);
+        const topColor = mixColor(blend.from.sky[0], blend.to.sky[0], blend.t);
+        const midColor = mixColor(blend.from.sky[1], blend.to.sky[1], blend.t);
+        const lowColor = mixColor(blend.from.sky[2], blend.to.sky[2], blend.t);
+        
+        const top = ctx.createLinearGradient(0, 0, 0, state.height);
+        top.addColorStop(0, topColor);
+        top.addColorStop(0.48, midColor);
+        top.addColorStop(1, lowColor);
+        ctx.fillStyle = top;
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        // Draw Sun fading into deep space
+        const spacePhase = clamp((meters - 190) / 400, 0, 1);
+        if (spacePhase < 0.98) {
+          const sunY = 92 + Math.sin(state.time * 0.2) * 8 + spacePhase * 120;
+          ctx.fillStyle = mixColor("#ffd166", "#fff1a8", spacePhase);
+          ctx.beginPath();
+          ctx.arc(state.width - 82, sunY, 38 - spacePhase * 16, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawStars(dt, altitude, meters) {
+        const spaceAlpha = clamp((meters - 200) / 400, 0, 1);
+        if (spaceAlpha <= 0) return;
+
+        for (const star of state.stars) {
+          star.phase += dt * star.speed;
+          const alpha = (0.3 + Math.sin(star.phase) * 0.7) * spaceAlpha;
+          
+          const screenY = (star.y * state.height * 2 + altitude * star.parallax) % state.height;
+          const screenX = star.x * state.width;
+
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = star.color;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, star.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawCosmos(altitude) {
+        for (const body of state.celestialBodies) {
+          const bodyY = state.height - 100 - body.m * WORLD.meterScale;
+          // Fix: Proper parallax calculation based on camera distance
+          const drawY = bodyY + (state.cameraY - bodyY) * body.parallax; 
+          const drawX = body.px * state.width;
+
+          // Culling to save performance
+          if (drawY < state.cameraY - body.size * 2 || drawY > state.cameraY + state.height + body.size * 2) continue;
+
+          ctx.save();
+          ctx.translate(drawX, drawY);
+
+          if (body.type === 'moon') {
+            ctx.fillStyle = body.c1;
+            ctx.beginPath(); ctx.arc(0, 0, body.size, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = body.c2;
+            ctx.beginPath(); ctx.arc(-body.size*0.3, -body.size*0.2, body.size*0.2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(body.size*0.4, body.size*0.1, body.size*0.15, 0, Math.PI*2); ctx.fill();
+          } 
+          else if (body.type === 'gas_giant') {
+            // 1. Draw the full ring behind the planet first
+            ctx.beginPath();
+            ctx.ellipse(0, 0, body.size * 1.8, body.size * 0.35, body.angle, 0, Math.PI*2);
+            ctx.lineWidth = body.size * 0.2;
+            ctx.strokeStyle = body.cRings;
+            ctx.stroke();
+
+            // 2. Draw the planet body over the ring
+            const grad = ctx.createLinearGradient(-body.size, -body.size, body.size, body.size);
+            grad.addColorStop(0, body.c1); grad.addColorStop(0.5, body.c2); grad.addColorStop(1, body.c3);
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(0, 0, body.size, 0, Math.PI*2); ctx.fill();
+            
+            // 3. Redraw only the front half of the ring (0 to PI) over the planet
+            ctx.beginPath();
+            ctx.ellipse(0, 0, body.size * 1.8, body.size * 0.35, body.angle, 0, Math.PI);
+            ctx.stroke();
+          } 
+          else if (body.type === 'nebula') {
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, body.size);
+            grad.addColorStop(0, body.c1);
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(0, 0, body.size, 0, Math.PI*2); ctx.fill();
+          }
+          else if (body.type === 'blackhole') {
+            const pulse = 1 + Math.sin(state.time * 2) * 0.05;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, body.size * 2.5 * pulse, body.size * 0.6 * pulse, 0.1, 0, Math.PI*2);
+            const diskGrad = ctx.createRadialGradient(0, 0, body.size * 0.8, 0, 0, body.size * 2.5);
+            diskGrad.addColorStop(0, 'rgba(255, 150, 50, 0.9)');
+            diskGrad.addColorStop(0.5, 'rgba(200, 50, 50, 0.4)');
+            diskGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = diskGrad; ctx.fill();
+
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.arc(0, 0, body.size, 0, Math.PI*2); ctx.fill();
+            
+            ctx.shadowBlur = 30; ctx.shadowColor = 'rgba(255, 100, 50, 0.8)';
+            ctx.strokeStyle = 'rgba(255, 200, 100, 0.6)'; ctx.lineWidth = 3;
+            ctx.stroke(); ctx.shadowBlur = 0;
+          }
+          ctx.restore();
+        }
+      }
+
+      function drawClouds(altitude) {
+        const alpha = 0.72 - clamp(altitude / 8000, 0, 0.72);
+        if (alpha <= 0) return;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        for (const cloud of state.clouds) drawPuffyCloud(cloud.x, cloud.y, cloud.size);
+      }
+
+      function recycleClouds() {
+        const top = state.cameraY - 180;
+        const bottom = state.cameraY + state.height + 180;
+        for (const cloud of state.clouds) {
+          if (cloud.y > bottom) {
+            const fresh = makeCloud(top - Math.random() * state.height * 1.8);
+            cloud.x = fresh.x; cloud.y = fresh.y; cloud.size = fresh.size; cloud.speed = fresh.speed;
+          }
+          if (cloud.y < top - state.height * 2.2) cloud.y = bottom + Math.random() * 180;
+        }
+      }
+
+      function drawPuffyCloud(x, y, size) {
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.36, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.32, y - size * 0.08, size * 0.46, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.74, y, size * 0.34, 0, Math.PI * 2);
+        ctx.rect(x - size * 0.08, y, size * 0.9, size * 0.24);
+        ctx.fill();
+      }
+
+      function drawShootingStars() {
+        for (const ss of state.shootingStars) {
+          ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, ss.life)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ss.x, ss.y);
+          ctx.lineTo(ss.x - ss.vx * 0.08, ss.y - ss.vy * 0.08);
+          ctx.stroke();
+        }
+      }
+
+      function drawPlatforms(currentMeters) {
+        for (const platform of state.platforms) {
+          const bob = platform.type === "spring" ? Math.sin(state.time * 7 + platform.phase) * 3 : 0;
+          const x = platform.x, y = platform.y + bob;
+          
+          // Color based on platform altitude, not just camera altitude
+          const pMeters = Math.max(0, (state.height - 100 - platform.y) / WORLD.meterScale);
+          const theme = getRealm(pMeters);
+
+          ctx.fillStyle = platform.type === "moving" ? theme.moving : platform.type === "spring" ? theme.spring : theme.platform;
+          roundRect(x, y, platform.w, platform.h, 8);
+          ctx.fill();
+
+          ctx.fillStyle = platform.type === "spring" ? "rgba(255, 255, 255, 0.52)" : "rgba(255, 255, 255, 0.34)";
+          roundRect(x + 7, y + 4, platform.w - 14, 4, 3);
+          ctx.fill();
+
+          if (platform.type === "spring") {
+            ctx.fillStyle = "rgba(62, 35, 0, 0.58)";
+            for (let sx = x + 18; sx < x + platform.w - 18; sx += 18) {
+              roundRect(sx, y + platform.h + 3, 12, 6, 4);
+              ctx.fill();
+            }
+          }
+        }
+      }
+
+      function drawUniverseCenter() {
+        const targetY = state.height - 100 - WORLD.targetMeters * WORLD.meterScale;
+        if (targetY - state.cameraY < -800 || targetY - state.cameraY > state.height + 800) return;
+        
+        const x = state.width / 2;
+        let pulse = 1 + Math.sin(state.time * 3) * 0.08;
+        
+        if (state.mode === "cutscene") pulse += Math.pow(state.cutsceneTimer, 2) * 0.8;
+        else if (state.mode === "won") pulse = 25;
+        
+        ctx.save();
+        ctx.translate(x, targetY);
+        
+        const glow = ctx.createRadialGradient(0, 0, 20, 0, 0, 450 * pulse);
+        glow.addColorStop(0, "rgba(255, 255, 255, 1)");
+        glow.addColorStop(0.15, "rgba(255, 230, 109, 0.9)");
+        glow.addColorStop(0.4, "rgba(255, 77, 141, 0.4)");
+        glow.addColorStop(0.8, "rgba(123, 44, 191, 0.1)");
+        glow.addColorStop(1, "rgba(123, 44, 191, 0)");
+        
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(0, 0, 450 * pulse, 0, Math.PI * 2); ctx.fill();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, 60 * pulse, 0, Math.PI * 2); ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(0, 0, 18 * pulse, 0, Math.PI * 2); ctx.fill();
+        
+        ctx.restore();
+      }
+
+      function drawPlayer() {
+        const p = state.player;
+        let lean = clamp(p.vx / WORLD.maxRun, -1, 1) * 6;
+        if (state.mode === "cutscene") lean = state.cutsceneTimer * 180; // Spin into the light!
+
+        ctx.save();
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        ctx.rotate(lean * Math.PI / 180);
+
+        ctx.fillStyle = "#ffffff";
+        roundRect(-p.w / 2 + 4, -p.h / 2 + 12, p.w - 8, p.h - 4, 8);
+        ctx.fill();
+
+        ctx.fillStyle = "#f4a261";
+        ctx.beginPath(); ctx.arc(0, -p.h / 2 + 10, 13, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(5 * p.face, -p.h / 2 + 7, 3, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = "#14213d";
+        ctx.beginPath(); ctx.arc(6 * p.face, -p.h / 2 + 7, 1.4, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        for (const particle of state.particles) {
+          ctx.globalAlpha = Math.max(0, particle.life / particle.max);
+          ctx.fillStyle = particle.color;
+          ctx.beginPath(); ctx.arc(particle.x, particle.y, 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawDropLine() {
+        const y = state.cameraY + state.height + 68;
+        ctx.strokeStyle = "rgba(230, 57, 70, 0.72)";
+        ctx.lineWidth = 4; ctx.setLineDash([12, 10]);
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(state.width, y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      function roundRect(x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.arcTo(x + w, y, x + w, y + h, radius);
+        ctx.arcTo(x + w, y + h, x, y + h, radius);
+        ctx.arcTo(x, y + h, x, y, radius);
+        ctx.arcTo(x, y, x + w, y, radius);
+        ctx.closePath();
+      }
+
+      function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+      function mixColor(from, to, amount) {
+        const a = hexToRgb(from), b = hexToRgb(to), t = clamp(amount, 0, 1);
+        const r = Math.round(a.r + (b.r - a.r) * t);
+        const g = Math.round(a.g + (b.g - a.g) * t);
+        const blue = Math.round(a.b + (b.b - a.b) * t);
+        return `rgb(${r}, ${g}, ${blue})`;
+      }
+
+      function hexToRgb(hex) {
+        const value = Number.parseInt(hex.slice(1), 16);
+        return { r: (value >> 16) & 255, g: (value >> 8) & 255, b: value & 255 };
+      }
+
+      let dtGlobal = 0;
+      function frame(now) {
+        const dt = Math.min(0.033, (now - state.last) / 1000 || 0);
+        dtGlobal = dt;
+        state.last = now;
+        update(dt);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      const keyMap = new Map([
+        ["ArrowLeft", "left"], ["KeyA", "left"],
+        ["ArrowRight", "right"], ["KeyD", "right"]
+      ]);
+
+      window.addEventListener("keydown", e => {
+        if (keyMap.has(e.code)) { input[keyMap.get(e.code)] = true; e.preventDefault(); }
+        if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") { queueJump(); e.preventDefault(); }
+        if (e.code === "Escape") setPaused(state.mode === "playing");
+      });
+
+      window.addEventListener("keyup", e => {
+        if (keyMap.has(e.code)) { input[keyMap.get(e.code)] = false; e.preventDefault(); }
+      });
+
+      document.querySelectorAll("[data-hold]").forEach(btn => {
+        const action = btn.dataset.hold;
+        const set = v => { input[action] = v; };
+        btn.addEventListener("pointerdown", e => { btn.setPointerCapture(e.pointerId); set(true); });
+        btn.addEventListener("pointerup", () => set(false));
+        btn.addEventListener("pointercancel", () => set(false));
+        btn.addEventListener("lostpointercapture", () => set(false));
+      });
+
+      document.querySelector("[data-tap='jump']").addEventListener("pointerdown", e => {
+        e.preventDefault(); queueJump();
+      });
+
+      startButton.addEventListener("click", () => {
+        if (state.mode === "paused") setPaused(false);
+        else { startButton.textContent = "Start Climbing"; startGame(); }
+      });
+
+      pauseButton.addEventListener("click", () => {
+        if (state.mode === "playing") setPaused(true);
+        else if (state.mode === "paused") setPaused(false);
+      });
+
+      restartButton.addEventListener("click", startGame);
+      window.addEventListener("resize", resize);
+
+      bestValue.textContent = String(state.best);
+      resize();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aura Fighters</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050505;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .bar-container {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .bar {
+            height: 12px;
+            border-radius: 4px;
+            width: 100%;
+            transition: width 0.1s ease-out, background-color 0.3s;
+            box-shadow: inset 0 0 5px rgba(255,255,255,0.5);
+        }
+        #health-bar { background: linear-gradient(90deg, #ff3b3b, #ff8c3b); }
+        #ki-bar { background: linear-gradient(90deg, #3b82ff, #3be0ff); }
+        
+        #enemy-ui {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+        
+        .label {
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px black;
+            display: flex;
+            justify-content: space-between;
+        }
+        #controls {
+            align-self: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: #ddd;
+            font-size: 13px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .key {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-family: monospace;
+            font-weight: bold;
+            box-shadow: 0 2px 0 #111;
+        }
+        #form-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+            margin-bottom: 10px;
+            font-style: italic;
+            transition: color 0.3s, text-shadow 0.3s;
+            display: inline-block;
+        }
+        @keyframes formPop {
+            0% { transform: scale(1.6); filter: brightness(2); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        #form-name.pop { animation: formPop 0.5s cubic-bezier(.2,1.4,.4,1); }
+
+        .combo-text {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            font-size: 48px;
+            font-weight: 900;
+            color: white;
+            font-style: italic;
+            text-shadow: 3px 3px 0 #000, 0 0 20px #ff0;
+            opacity: 0;
+            transition: opacity 0.1s, transform 0.08s cubic-bezier(.3,1.8,.4,1);
+        }
+
+        @keyframes lowHpPulse {
+            0%, 100% { box-shadow: inset 0 0 5px rgba(255,255,255,0.5), 0 0 6px rgba(255,0,0,0.4); }
+            50% { box-shadow: inset 0 0 5px rgba(255,255,255,0.5), 0 0 22px rgba(255,0,0,0.9); }
+        }
+        #health-bar.low-hp { animation: lowHpPulse 0.6s ease-in-out infinite; }
+
+        #next-form-hint {
+            margin-top: 6px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.55);
+            text-shadow: 1px 1px 2px black;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        #next-form-hint .ready { color: #ffdd66; text-shadow: 0 0 8px rgba(255,221,102,0.8); }
+        #next-form-hint .locked { color: #7788aa; }
+
+        #vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+        }
+        #vignette-danger {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(ellipse at center, rgba(120,0,0,0) 35%, rgba(150,0,0,0.6) 100%);
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        #vignette-danger.active {
+            opacity: 1;
+            animation: dangerPulse 1s ease-in-out infinite;
+        }
+        @keyframes dangerPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        #film-grain {
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.035;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* --- Game Loop UI --- */
+        #top-tracker {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-family: monospace;
+        }
+        #wave-power-label {
+            background: rgba(0,0,0,0.65);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 6px 18px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 0 6px rgba(255,180,60,0.8);
+            display: flex;
+            gap: 18px;
+        }
+        #wave-power-label span.hl { color: #ffcc33; }
+        #dragonball-tracker {
+            display: flex;
+            gap: 4px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .db-pip {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #5a3d00, #2a1c00);
+            border: 1px solid rgba(255,150,0,0.3);
+            transition: all 0.3s;
+        }
+        .db-pip.filled {
+            background: radial-gradient(circle at 35% 30%, #ffdd66, #ff9900);
+            box-shadow: 0 0 8px #ffaa00, 0 0 2px #fff inset;
+            border-color: #ffcc66;
+        }
+
+        #victory-banner {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            font-size: 42px;
+            font-weight: 900;
+            font-style: italic;
+            color: #fff;
+            text-shadow: 0 0 20px #ffcc00, 3px 3px 0 #000;
+            opacity: 0;
+            text-align: center;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #victory-banner.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        #victory-banner .sub {
+            display: block;
+            font-size: 18px;
+            color: #ffdd88;
+            margin-top: 6px;
+            font-style: normal;
+        }
+
+        #zenkai-popup {
+            position: absolute;
+            top: 42%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            font-size: 26px;
+            font-weight: 900;
+            font-style: italic;
+            color: #ff5544;
+            text-shadow: 0 0 18px #ff2200, 2px 2px 0 #000;
+            opacity: 0;
+            text-align: center;
+            transition: opacity 0.35s, transform 0.35s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #zenkai-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #locked-form-popup {
+            position: absolute;
+            top: 58%;
+            left: 50%;
+            transform: translate(-50%, -50%) translateY(6px);
+            font-size: 18px;
+            font-weight: bold;
+            color: #99aabb;
+            text-shadow: 0 0 10px rgba(150,180,220,0.6), 2px 2px 0 #000;
+            opacity: 0;
+            text-align: center;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #locked-form-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) translateY(0);
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10;
+            pointer-events: auto;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+            padding: 30px;
+        }
+        .modal-box h1 {
+            font-size: 36px;
+            font-style: italic;
+            margin: 0 0 10px 0;
+            text-shadow: 0 0 20px currentColor;
+        }
+        #shenron-modal h1 { color: #33ff88; }
+        #gameover-modal h1 { color: #ff3333; }
+        .modal-box p {
+            font-size: 15px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+        .modal-box .stats {
+            font-family: monospace;
+            font-size: 16px;
+            color: #ffcc66;
+            margin: 16px 0;
+        }
+        .wish-buttons {
+            display: flex;
+            gap: 14px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .wish-btn, .restart-btn {
+            background: linear-gradient(180deg, #2a2a3a, #15151f);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            max-width: 180px;
+        }
+        .wish-btn:hover, .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(255,200,0,0.3);
+        }
+        .wish-btn .title, .restart-btn { display: block; }
+        .wish-btn .title { color: #ffdd66; font-size: 15px; margin-bottom: 4px; }
+        .wish-btn .desc { color: #aaa; font-weight: normal; font-size: 12px; }
+        .restart-btn {
+            font-size: 16px;
+            padding: 16px 32px;
+            color: #ff8888;
+        }
+
+        /* --- Secret Admin/Testing Panel (press ` to toggle) --- */
+        #admin-panel {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            width: 280px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: rgba(10, 10, 16, 0.92);
+            border: 1px solid rgba(0, 255, 120, 0.4);
+            border-radius: 10px;
+            padding: 14px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #cfffdd;
+            z-index: 50;
+            pointer-events: auto;
+            display: none;
+            box-shadow: 0 0 30px rgba(0, 255, 120, 0.25);
+        }
+        #admin-panel.active { display: block; }
+        #admin-panel h3 {
+            margin: 0 0 10px 0;
+            color: #33ff99;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(51,255,153,0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #admin-panel .admin-close {
+            cursor: pointer;
+            color: #ff6666;
+            font-weight: bold;
+            padding: 0 4px;
+        }
+        .admin-section {
+            border-top: 1px dashed rgba(255,255,255,0.15);
+            padding: 8px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+        .admin-section label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #aaddc8;
+            width: 100%;
+        }
+        .admin-section input[type="number"] {
+            width: 60px;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-family: monospace;
+        }
+        .admin-section select {
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            padding: 3px;
+            font-family: monospace;
+            width: 100%;
+        }
+        .admin-section button {
+            background: #1a3d2a;
+            border: 1px solid #2f7050;
+            color: #baffd8;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: monospace;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .admin-section button:hover { background: #235c3c; }
+        .admin-section button.danger { background: #3d1a1a; border-color: #703030; color: #ffbaba; }
+        .admin-section button.danger:hover { background: #5c2323; }
+        #admin-telemetry {
+            border-top: 1px dashed rgba(255,255,255,0.15);
+            padding-top: 8px;
+            margin-top: 4px;
+            line-height: 1.6;
+            color: #88ccaa;
+            white-space: pre-wrap;
+        }
+        #admin-toggle-hint {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            font-family: monospace;
+            font-size: 10px;
+            color: rgba(255,255,255,0.15);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="vignette"></div>
+    <div id="vignette-danger"></div>
+    <div id="film-grain"></div>
+
+    <div id="ui-layer">
+        <div>
+            <div id="form-name">Base Form</div>
+            <div class="bar-container">
+                <div class="label"><span>Health</span> <span id="hp-text">100%</span></div>
+                <div class="bar" id="health-bar"></div>
+            </div>
+            <div class="bar-container">
+                <div class="label"><span>Ki</span> <span id="ki-text">0%</span></div>
+                <div class="bar" id="ki-bar" style="width: 0%;"></div>
+            </div>
+            <div id="next-form-hint"></div>
+        </div>
+        
+        <div id="enemy-ui">
+            <div class="label" id="enemy-name-label" style="justify-content: flex-end; margin-bottom: 10px; font-size: 18px;">Scouter Grunt</div>
+            <div class="bar-container" style="margin-left: auto;">
+                <div class="bar" id="enemy-health-bar" style="background: linear-gradient(90deg, #ff1111, #ff5555);"></div>
+            </div>
+        </div>
+        
+        <div class="combo-text" id="combo-display">Combo 0</div>
+        <div id="victory-banner">WAVE CLEARED<span class="sub" id="victory-sub"></span></div>
+        <div id="zenkai-popup">ZENKAI BOOST!</div>
+        <div id="locked-form-popup"></div>
+
+        <div id="top-tracker">
+            <div id="wave-power-label">
+                <span>WAVE <span class="hl" id="wave-count">1</span></span>
+                <span>POWER LEVEL <span class="hl" id="power-level">0</span></span>
+            </div>
+            <div id="dragonball-tracker"></div>
+        </div>
+
+        <div id="controls">
+            Aim: <span class="key">Mouse</span> &nbsp;|&nbsp;
+            Move: <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> &nbsp;|&nbsp;
+            Dash: <span class="key">Q</span> &nbsp;|&nbsp;
+            M1: <span class="key">Left Click</span> &nbsp;|&nbsp;
+            Ki Blast: <span class="key">1</span> &nbsp;|&nbsp;
+            Special: <span class="key">2</span> &nbsp;|&nbsp;
+            Charge: <span class="key">Hold C</span> &nbsp;|&nbsp;
+            Transform: <span class="key">T</span>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="shenron-modal">
+        <div class="modal-box">
+            <h1>SHENRON HAS RISEN</h1>
+            <p>"You have gathered the seven Dragon Balls. Speak your wish, and it shall be granted."</p>
+            <div class="wish-buttons">
+                <button class="wish-btn" data-wish="power">
+                    <span class="title">⚡ Overwhelming Power</span>
+                    <span class="desc">Permanently increase all damage dealt</span>
+                </button>
+                <button class="wish-btn" data-wish="vitality">
+                    <span class="title">❤ Vitality Surge</span>
+                    <span class="desc">Permanently increase max health</span>
+                </button>
+                <button class="wish-btn" data-wish="restore">
+                    <span class="title">✨ Full Restoration</span>
+                    <span class="desc">Fully heal and refill Ki instantly</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="gameover-modal">
+        <div class="modal-box">
+            <h1>YOU HAVE FALLEN</h1>
+            <p>Even the strongest warriors are tested. Train harder and rise again.</p>
+            <div class="stats" id="gameover-stats"></div>
+            <button class="restart-btn" id="restart-btn">↻ RESTART TRAINING</button>
+        </div>
+    </div>
+
+    <div id="admin-panel">
+        <h3>🛠 ADMIN PANEL <span class="admin-close" id="admin-close-btn">✕</span></h3>
+
+        <div class="admin-section">
+            <label>Wave: <input type="number" id="admin-wave-input" min="1" value="1"></label>
+            <button data-action="set-wave">Set</button>
+            <button data-action="wave+1">+1</button>
+            <button data-action="wave+5">+5</button>
+        </div>
+
+        <div class="admin-section">
+            <button data-action="full-hp">Full HP</button>
+            <button data-action="full-ki">Full Ki</button>
+            <label><input type="checkbox" id="admin-god-mode"> God Mode</label>
+        </div>
+
+        <div class="admin-section">
+            <label>Form: <select id="admin-form-select"></select></label>
+            <button data-action="force-form">Force Transform</button>
+        </div>
+
+        <div class="admin-section">
+            <button data-action="kill-enemy">Instant-Kill Enemy</button>
+            <button data-action="add-dball">+1 Dragon Ball</button>
+            <button data-action="trigger-shenron">Force Shenron</button>
+        </div>
+
+        <div class="admin-section">
+            <label>Zenkai Dmg×: <input type="number" step="0.1" id="admin-zenkai-dmg" value="1"></label>
+            <label>Zenkai HP×: <input type="number" step="0.1" id="admin-zenkai-hp" value="1"></label>
+            <button data-action="apply-zenkai">Apply</button>
+        </div>
+
+        <div class="admin-section">
+            <button class="danger" data-action="force-gameover">Force Game Over</button>
+            <button class="danger" data-action="restart">Restart Run</button>
+        </div>
+
+        <div id="admin-telemetry"></div>
+    </div>
+    <div id="admin-toggle-hint">` admin</div>
+
+<script>
+/**
+ * AURA FIGHTERS ENGINE (Top-Down Overhaul)
+ */
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- Game State ---
+const keys = {};
+window.addEventListener('keydown', e => {
+    // Secret admin/testing panel toggle — works even while focused elsewhere
+    if (e.key === '`') {
+        e.preventDefault();
+        toggleAdminPanel();
+        return;
+    }
+    // While typing in an admin panel field, don't let keystrokes fall through as game controls
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
+        return;
+    }
+    if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+        e.preventDefault();
+    }
+    keys[e.key.toLowerCase()] = true;
+});
+window.addEventListener('keyup', e => {
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
+        return;
+    }
+    keys[e.key.toLowerCase()] = false;
+});
+
+// Mouse bindings
+window.addEventListener('mousedown', e => {
+    if (e.button === 0) keys['m1'] = true;
+});
+window.addEventListener('mouseup', e => {
+    if (e.button === 0) keys['m1'] = false;
+});
+
+// Top-down mouse tracking
+let mouseX = width / 2;
+let mouseY = height / 2;
+window.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+// Camera and Environment
+const camera = { x: 0, y: 0, zoom: 1, targetZoom: 1, shakeX: 0, shakeY: 0, shakeAmount: 0, shakeRot: 0 };
+let particles = [];
+let projectiles = [];
+let hitboxes = [];
+let effects = []; 
+
+// Hit-stop: brief time-freeze on impactful hits to sell weight
+let hitStopTimer = 0;
+let godMode = false; // toggled from the secret admin panel — makes the player immune to damage
+function triggerHitStop(frames) {
+    hitStopTimer = Math.max(hitStopTimer, frames);
+}
+
+function screenShake(amount, rot=0) {
+    camera.shakeAmount = Math.max(camera.shakeAmount, amount);
+    camera.shakeRot = Math.max(camera.shakeRot, rot);
+}
+
+// --- Background atmosphere: parallax starfield + drifting energy motes ---
+const STAR_FIELD_SIZE = 6000;
+const stars = [];
+for (let i = 0; i < 220; i++) {
+    stars.push({
+        x: random(-STAR_FIELD_SIZE, STAR_FIELD_SIZE),
+        y: random(-STAR_FIELD_SIZE, STAR_FIELD_SIZE),
+        size: random(0.5, 2.2),
+        depth: random(0.15, 0.6), // parallax factor
+        twinkleSpeed: random(0.5, 2),
+        twinkleOffset: random(0, Math.PI * 2)
+    });
+}
+const motes = [];
+for (let i = 0; i < 40; i++) {
+    motes.push({
+        x: random(-STAR_FIELD_SIZE/2, STAR_FIELD_SIZE/2),
+        y: random(-STAR_FIELD_SIZE/2, STAR_FIELD_SIZE/2),
+        size: random(1, 3),
+        depth: random(0.3, 0.7),
+        driftAngle: random(0, Math.PI*2),
+        driftSpeed: random(0.1, 0.4)
+    });
+}
+
+function drawBackground(ctx, camX, camY, time) {
+    // Deep space gradient base
+    let bgGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height) * 0.75);
+    bgGrad.addColorStop(0, "#0b0b16");
+    bgGrad.addColorStop(0.6, "#07070d");
+    bgGrad.addColorStop(1, "#020203");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Stars (parallax, twinkle)
+    ctx.save();
+    for (const s of stars) {
+        let sx = s.x - camX * s.depth;
+        let sy = s.y - camY * s.depth;
+        // wrap around so field feels infinite
+        sx = ((sx % width) + width) % width;
+        sy = ((sy % height) + height) % height;
+        let tw = 0.5 + 0.5 * Math.sin(time * 0.001 * s.twinkleSpeed + s.twinkleOffset);
+        ctx.globalAlpha = 0.25 + tw * 0.55;
+        ctx.fillStyle = "#cfe0ff";
+        ctx.beginPath();
+        ctx.arc(sx, sy, s.size, 0, Math.PI*2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Drifting energy motes (subtle colored glows for atmosphere)
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (const m of motes) {
+        let mx = m.x - camX * m.depth + Math.cos(m.driftAngle) * time * 0.002 * m.driftSpeed;
+        let my = m.y - camY * m.depth + Math.sin(m.driftAngle) * time * 0.002 * m.driftSpeed;
+        mx = ((mx % width) + width) % width;
+        my = ((my % height) + height) % height;
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = "#3b82ff";
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#3b82ff";
+        ctx.beginPath();
+        ctx.arc(mx, my, m.size, 0, Math.PI*2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+// --- Forms Configuration ---
+const FORMS = [
+    { 
+        name: "Base Form", 
+        color: "#ffffff", 
+        auraColor: "rgba(255, 255, 255, 0.2)",
+        auraStyle: "soft",
+        speedMultiplier: 1, 
+        damageMultiplier: 1,
+        m1Cooldown: 15,
+        m1Range: 50,
+        m1Dash: 10,
+        kiCost: 10,
+        unlockWave: 1,
+        specialType: "punch", specialCost: 20,
+        kiBlastType: "standard",
+        desc: "Basic strikes and ki blasts."
+    },
+    { 
+        name: "Super", 
+        color: "#ffdd00", 
+        auraColor: "rgba(255, 221, 0, 0.4)",
+        auraStyle: "fire",
+        speedMultiplier: 1.4, 
+        damageMultiplier: 2.0,
+        m1Cooldown: 12,
+        m1Range: 60,
+        m1Dash: 20,
+        kiCost: 8,
+        unlockWave: 1,
+        specialType: "beam", specialCost: 40, beamWidth: 50, beamDmg: 5, beamWrap: "none",
+        kiBlastType: "twin",
+        desc: "Twin Blast ki attacks (1). Unlocks a channeled Beam Special (2)."
+    },
+    { 
+        name: "Ascended", 
+        color: "#ffcc00", 
+        energyColor: "#ffff00",
+        auraColor: "rgba(255, 204, 0, 0.6)",
+        auraStyle: "lightning",
+        lightningColor: "#33bbff",
+        speedMultiplier: 1.8, 
+        damageMultiplier: 3.5,
+        m1Cooldown: 9,
+        m1Range: 75,
+        m1Dash: 35,
+        kiCost: 5,
+        unlockWave: 2,
+        specialType: "barrage", specialCost: 50,
+        barrageCount: 4, barrageInterval: 10, barrageRadius: 85, barrageDamage: 35,
+        kiBlastType: "spread", kiBlastShots: 3,
+        desc: "Lightning M1s. Fan Spread (1) and the tracking Lightning Barrage (2)."
+    },
+    { 
+        name: "Divine", 
+        color: "#00eeff", 
+        auraColor: "rgba(0, 238, 255, 0.5)",
+        auraStyle: "ethereal",
+        speedMultiplier: 2.5, 
+        damageMultiplier: 6.0,
+        m1Cooldown: 7,
+        m1Range: 150, 
+        m1Dash: 100, 
+        kiCost: 2,
+        unlockWave: 4,
+        teleportM1: true,
+        specialType: "beam", specialCost: 40, beamWidth: 80, beamDmg: 12, dualBeam: true, beamWrap: "holy",
+        kiBlastType: "sphere", kiBlastSize: 40, kiBlastStyle: "normal", kiBlastHoming: true, kiBlastHomingStrength: 0.045,
+        desc: "Teleporting M1s. Homing Orb (1) and the twin Divine Beam Cross (2)."
+    },
+    { 
+        name: "Ultra", 
+        color: "#e6e6f0", 
+        auraColor: "rgba(230, 230, 240, 0.7)",
+        auraStyle: "ethereal",
+        lightningColor: "#aaccff",
+        speedMultiplier: 3.5, 
+        damageMultiplier: 8.5,
+        m1Cooldown: 5,
+        m1Range: 300, // Insane teleport range
+        m1Dash: 150, 
+        kiCost: 1,
+        unlockWave: 6,
+        teleportM1: true,
+        specialType: "flurry", specialCost: 40,
+        flurryCount: 6, flurryInterval: 6, flurryDamage: 70, flurryKnockback: 12, flurryTeleports: true,
+        kiBlastType: "volley", kiBlastShots: 3,
+        desc: "Flawless instinct. Burst Volley (1) and the teleporting Instinct Flurry (2)."
+    },
+    { 
+        name: "Ego", 
+        color: "#aa00ff", 
+        energyColor: "#8800ff",
+        auraColor: "rgba(170, 0, 255, 0.6)",
+        auraStyle: "fire",
+        lightningColor: "#5500aa",
+        speedMultiplier: 2.2, 
+        damageMultiplier: 13.0,
+        m1Cooldown: 10,
+        m1Range: 90, 
+        m1Dash: 40, 
+        kiCost: 3,
+        unlockWave: 8,
+        specialType: "wave", specialCost: 50, waveSize: 500, waveDmg: 200, waveStyle: "hakai",
+        kiBlastType: "sphere", kiBlastSize: 70, kiBlastStyle: "hakai",
+        desc: "Raw destruction. Spheres of Ruin (1), Annihilation Wave (2)."
+    },
+    { 
+        name: "Beast", 
+        color: "#eeeeee", 
+        energyColor: "#ff0000",
+        auraColor: "rgba(255, 50, 50, 0.7)",
+        auraStyle: "lightning",
+        lightningColor: "#ff0000",
+        speedMultiplier: 3.0, 
+        damageMultiplier: 20.0,
+        m1Cooldown: 6,
+        m1Range: 120, 
+        m1Dash: 80, 
+        kiCost: 1,
+        unlockWave: 10,
+        specialType: "beam", specialCost: 80, beamWidth: 200, beamDmg: 30, beamWrap: "feral",
+        kiBlastType: "claw", kiBlastClawCount: 2,
+        desc: "Primal rage. Claw Wave strikes (1), Beast Cannon (2)."
+    },
+    {
+        name: "Overdrive",
+        color: "#ff6600",
+        energyColor: "#ffaa00",
+        auraColor: "rgba(255, 102, 0, 0.6)",
+        auraStyle: "fire",
+        speedMultiplier: 4.0,
+        damageMultiplier: 28.0,
+        m1Cooldown: 4,
+        m1Range: 140,
+        m1Dash: 100,
+        kiCost: 1,
+        unlockWave: 13,
+        specialType: "flurry", specialCost: 85,
+        flurryCount: 7, flurryInterval: 5, flurryDamage: 55, flurryKnockback: 10, flurryTeleports: false,
+        kiBlastType: "volley", kiBlastShots: 4,
+        desc: "Redlined past every limit. Redline Volley (1), the lunging Piston Barrage (2)."
+    },
+    {
+        name: "Godslayer",
+        color: "#ffd700",
+        energyColor: "#ffe066",
+        auraColor: "rgba(255, 215, 0, 0.5)",
+        auraStyle: "void",
+        sealColor: "#ffd700",
+        speedMultiplier: 2.0,
+        damageMultiplier: 42.0,
+        m1Cooldown: 11,
+        m1Range: 100,
+        m1Dash: 50,
+        kiCost: 2,
+        unlockWave: 16,
+        specialType: "execution", specialCost: 90, executionDamage: 550, executionRadius: 130, executionDelay: 35,
+        kiBlastType: "lance",
+        desc: "A power meant to end gods. Judgment Lance (1) pierces; marks the foe for a delayed Execution (2)."
+    },
+    {
+        name: "Singularity",
+        color: "#0044ff",
+        energyColor: "#66aaff",
+        auraColor: "rgba(0, 68, 255, 0.6)",
+        auraStyle: "ethereal",
+        speedMultiplier: 4.5,
+        damageMultiplier: 60.0,
+        m1Cooldown: 4,
+        m1Range: 350,
+        m1Dash: 200,
+        kiCost: 0.5,
+        unlockWave: 20,
+        teleportM1: true,
+        specialType: "beam", specialCost: 92, beamWidth: 260, beamDmg: 45, beamPulls: true, beamWrap: "gravity",
+        kiBlastType: "standard", kiBlastPulls: true,
+        desc: "Collapses distance itself. Collapsing Shots (1) drag enemies in; the gravity-well Event Horizon Beam (2)."
+    },
+    {
+        name: "Infinity",
+        color: "#ffffff",
+        energyColor: "#ffffff",
+        auraColor: "rgba(255, 255, 255, 0.85)",
+        auraStyle: "cosmic",
+        lightningColor: "#ffffff",
+        speedMultiplier: 4.2,
+        damageMultiplier: 100.0,
+        m1Cooldown: 3,
+        m1Range: 400,
+        m1Dash: 220,
+        kiCost: 0.5,
+        unlockWave: 25,
+        teleportM1: true,
+        specialType: "wave", specialCost: 95, waveSize: 850, waveDmg: 500, waveStyle: "explosive",
+        followupHoming: true, followupHomingCount: 5, followupHomingDamage: 40,
+        kiBlastType: "spread", kiBlastShots: 7,
+        desc: "Boundless. Infinity Spread (1); the Absolute Cannon (2) unleashes a wave and homing aftershocks."
+    }
+];
+
+// --- Enemy Roster: original DBZ-inspired rival tiers (Dragon Ball-style power escalation) ---
+const ENEMY_ROSTER = [
+    { name: "Scouter Grunt",       hp: 260,  dmg: 6,  speedMult: 1.0, color: "#66ff66", tier: 0 },
+    { name: "Saibaman Sprout",     hp: 420,  dmg: 9,  speedMult: 1.05,color: "#33cc55", tier: 1 },
+    { name: "Elite Soldier",       hp: 650,  dmg: 13, speedMult: 1.1, color: "#4477ff", tier: 2 },
+    { name: "Prince of Doom",      hp: 1000, dmg: 18, speedMult: 1.2, color: "#ffcc00", tier: 3 },
+    { name: "Tyrant Emperor",      hp: 1550, dmg: 25, speedMult: 1.3, color: "#dd66ff", tier: 4 },
+    { name: "Perfect Bio-Fighter", hp: 2400, dmg: 33, speedMult: 1.4, color: "#33eecc", tier: 5 },
+    { name: "Djinn of Ruin",       hp: 3600, dmg: 42, speedMult: 1.5, color: "#ff5577", tier: 6 },
+    { name: "God of Destruction",  hp: 5400, dmg: 55, speedMult: 1.65,color: "#aa55ff", tier: 7 },
+];
+
+// --- Game Loop State (Dragon Ball style: gauntlet + Zenkai growth + Dragon Ball wishes) ---
+const gameState = {
+    wave: 1,
+    lap: 1,          // increments every time the roster is exhausted, scaling enemies further
+    score: 0,        // "Power Level"
+    bestWave: 1,     // session high score
+    dbCount: 0,      // dragon balls collected toward the next Shenron summon
+    phase: 'fight',  // 'fight' | 'victory' | 'shenron' | 'gameover'
+    phaseTimer: 0
+};
+let dragonBalls = []; // world pickups: {x,y,vx,vy,star}
+const BASE_MAX_HP = 1000;
+
+// --- Math & Utils ---
+function distance(p1, p2) { return Math.hypot(p1.x - p2.x, p1.y - p2.y); }
+function angle(p1, p2) { return Math.atan2(p2.y - p1.y, p2.x - p1.x); }
+function random(min, max) { return Math.random() * (max - min) + min; }
+
+// --- Entity Classes ---
+class Entity {
+    constructor(x, y, radius) {
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.radius = radius;
+        this.hp = 1000;
+        this.maxHp = 1000;
+        this.angle = 0; // Top-down rotation
+        this.isStunned = 0;
+    }
+    
+    update(dt) {
+        if (this.isStunned > 0) this.isStunned -= dt;
+        
+        // Physics
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Friction
+        this.vx *= 0.85;
+        this.vy *= 0.85;
+        
+        // Floor/bounds
+        const arenaSize = 2000;
+        if (this.x < -arenaSize) this.x = -arenaSize;
+        if (this.x > arenaSize) this.x = arenaSize;
+        if (this.y < -arenaSize) this.y = -arenaSize;
+        if (this.y > arenaSize) this.y = arenaSize;
+    }
+    
+    takeDamage(amount, knockbackX, knockbackY, stunTime) {
+        if (this.hp <= 0) return; // already defeated — ignore stray hits until the next spawn/restart
+        if (this === player && godMode) return; // admin panel god mode — player takes no damage at all
+
+        this.hp -= amount;
+        this.vx += knockbackX;
+        this.vy += knockbackY;
+        this.isStunned = stunTime;
+        
+        // Hit effect: bright flash core + directional sparks flying outward
+        particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 1.4, "#ffffff", 8, "impactFlash"));
+        let kbAngle = Math.atan2(knockbackY, knockbackX);
+        for(let i=0; i<7; i++) {
+            let a = kbAngle + random(-1.1, 1.1);
+            let spd = random(4, 11);
+            particles.push(new Particle(this.x, this.y, Math.cos(a)*spd, Math.sin(a)*spd, random(2,4), "#fff8dd", random(12,18), "spark"));
+        }
+
+        // Dispatch to the game loop's victory/defeat handling exactly once, the frame HP crosses zero
+        if (this.hp <= 0 && gameState.phase === 'fight') {
+            this.hp = 0;
+            if (this === enemy) onEnemyDefeated();
+            else if (this === player) triggerGameOver();
+        }
+    }
+}
+
+class Player extends Entity {
+    constructor(x, y) {
+        super(x, y, 20);
+        this.ki = 0;
+        this.maxKi = 100;
+        this.formIndex = 0;
+
+        // Dragon Ball-style permanent growth from surviving tough fights
+        this.zenkaiHpMult = 1;
+        this.zenkaiDmgMult = 1;
+        this.maxHp = BASE_MAX_HP;
+        this.hp = this.maxHp;
+        this.lowestHpFrac = 1; // tracked per-encounter to calculate Zenkai Boosts
+        
+        // Combat state
+        this.m1Combo = 0;
+        this.m1Timer = 0;
+        this.lastHitTime = 0;
+        this.attackCooldown = 0;
+        this.dashCooldown = 0;
+        this.charging = false;
+        this.kiFlash = 0;
+        
+        // State actions
+        this.isBeaming = false;
+        this.beamTimer = 0;
+    }
+    
+    get form() { return FORMS[this.formIndex]; }
+    get energyColor() { return this.form.energyColor || this.form.color; }
+    
+    update(dt) {
+        super.update(dt);
+        
+        if (this.attackCooldown > 0) this.attackCooldown -= dt;
+        if (this.dashCooldown > 0) this.dashCooldown -= dt;
+        if (this.kiFlash > 0) this.kiFlash -= dt;
+        
+        if (this.m1Timer > 0) this.m1Timer -= dt;
+        else if (this.m1Combo > 0 && performance.now() - this.lastHitTime > 800) {
+            this.m1Combo = 0; // Reset combo if too slow
+            document.getElementById('combo-display').style.opacity = 0;
+        }
+        
+        // Top-Down Aiming at Mouse
+        if (this.isStunned <= 0 && !this.isBeaming) {
+            let mouseWorldX = mouseX + camera.x;
+            let mouseWorldY = mouseY + camera.y;
+            this.angle = Math.atan2(mouseWorldY - this.y, mouseWorldX - this.x);
+        }
+
+        if (this.isStunned > 0 || this.isBeaming) return; // Cannot act
+        
+        // Movement Input
+        let speed = 5 * this.form.speedMultiplier;
+        let moved = false;
+        
+        if (keys['w']) { this.vy -= speed * 0.15; moved = true; }
+        if (keys['s']) { this.vy += speed * 0.15; moved = true; }
+        if (keys['a']) { this.vx -= speed * 0.15; moved = true; }
+        if (keys['d']) { this.vx += speed * 0.15; moved = true; }
+        
+        // Dash trail effect if moving fast
+        if (moved && Math.hypot(this.vx, this.vy) > 8) {
+            if (Math.random() > 0.5) {
+                particles.push(new Particle(this.x, this.y, 0, 0, this.radius, this.form.color, 15, "ghost"));
+            }
+        }
+        
+        // Charge Ki
+        this.charging = keys['c'] && this.m1Combo === 0;
+        if (this.charging) {
+            this.ki = Math.min(this.maxKi, this.ki + 0.5);
+            screenShake(1 + this.formIndex);
+            
+            // Charging particles
+            let angle = random(0, Math.PI * 2);
+            let dist = random(30, 80);
+            particles.push(new Particle(
+                this.x + Math.cos(angle)*dist, 
+                this.y + Math.sin(angle)*dist, 
+                -Math.cos(angle)*5, 
+                -Math.sin(angle)*5, 
+                random(2, 6), 
+                this.form.color, 
+                15
+            ));
+        }
+        
+        // Passive Ki drain for high forms
+        if (!this.charging && this.formIndex > 0) {
+            this.ki -= (this.formIndex * 0.05);
+            if (this.ki <= 0) {
+                this.ki = 0;
+                this.transformDown();
+            }
+        }
+        
+        // Actions
+        if (keys['m1'] && this.attackCooldown <= 0) {
+            this.doM1();
+            keys['m1'] = false; // Consume click to require consecutive clicking for combos
+        }
+        if (keys['1'] && this.attackCooldown <= 0) {
+            if (this.ki < this.form.kiCost) {
+                this.kiFlash = 15;
+            } else {
+                this.doKiBlast();
+            }
+            keys['1'] = false;
+        }
+        if (keys['2'] && this.attackCooldown <= 0) {
+            let spCost = this.form.specialCost;
+            if (this.ki < spCost) {
+                this.kiFlash = 15;
+            } else {
+                this.doSpecial();
+            }
+            keys['2'] = false;
+        }
+        
+        // Dash Action
+        if (keys['q'] && this.dashCooldown <= 0) {
+            this.doDash();
+            keys['q'] = false; // Consume dash key
+        }
+        
+        // Transform
+        if (keys['t']) {
+            keys['t'] = false; 
+            if (this.ki >= this.maxKi * 0.95 && this.formIndex < FORMS.length - 1) {
+                let nextForm = FORMS[this.formIndex + 1];
+                if (gameState.wave < nextForm.unlockWave) {
+                    showLockedFormMessage(nextForm);
+                } else {
+                    this.transformUp();
+                }
+            }
+        }
+        
+        this.updateAura();
+    }
+    
+    transformUp() {
+        this.formIndex++;
+        this.ki = this.formIndex === FORMS.length - 1 ? this.maxKi : this.maxKi / 2; 
+        screenShake(30, 0.04);
+        triggerHitStop(10);
+        camera.targetZoom = 1.12;
+        
+        // Massive explosion effect: shockwave rings + chromatic burst + radiating debris
+        particles.push(new Particle(this.x, this.y, 0, 0, 30, this.form.color, 35, "chromaRing"));
+        particles.push(new Particle(this.x, this.y, 0, 0, 20, "#ffffff", 20, "impactLines", random(0, Math.PI*2)));
+        for(let i=0; i<50; i++) {
+            let a = random(0, Math.PI * 2);
+            let speed = random(5, 25);
+            particles.push(new Particle(this.x, this.y, Math.cos(a)*speed, Math.sin(a)*speed, random(5, 15), this.form.color, 40));
+        }
+        
+        // Update UI with a punchy pop-in animation
+        let formUI = document.getElementById('form-name');
+        formUI.innerText = this.form.name;
+        formUI.style.color = this.form.color;
+        formUI.style.textShadow = `0 0 15px ${this.form.color}`;
+        formUI.classList.remove('pop');
+        void formUI.offsetWidth; // restart animation
+        formUI.classList.add('pop');
+        
+        effects.push({ type: 'flash', color: this.form.color, life: 30, maxLife: 30 });
+    }
+    
+    transformDown() {
+        this.formIndex = 0;
+        document.getElementById('form-name').innerText = FORMS[0].name;
+        document.getElementById('form-name').style.color = FORMS[0].color;
+    }
+    
+    doDash() {
+        this.dashCooldown = 60; 
+        let dashSpeed = 30 * this.form.speedMultiplier;
+        
+        let dx = 0, dy = 0;
+        if (keys['w']) dy -= 1;
+        if (keys['s']) dy += 1;
+        if (keys['a']) dx -= 1;
+        if (keys['d']) dx += 1;
+        
+        // If standing still, dash towards the mouse pointer
+        if (dx === 0 && dy === 0) {
+            dx = Math.cos(this.angle);
+            dy = Math.sin(this.angle);
+        } else {
+            // Normalize the vector
+            let mag = Math.hypot(dx, dy);
+            dx /= mag; dy /= mag;
+        }
+        
+        this.vx = dx * dashSpeed;
+        this.vy = dy * dashSpeed;
+        
+        screenShake(5);
+        
+        // Leave a trail of ghost images
+        for(let i=0; i<8; i++) {
+            particles.push(new Particle(this.x - dx*(i*5), this.y - dy*(i*5), 0, 0, this.radius, this.energyColor, 20, "ghost"));
+        }
+    }
+    
+    doM1() {
+        if (this.m1Combo >= 4) this.m1Combo = 0; // Reset after finisher
+        
+        this.m1Combo++;
+        this.lastHitTime = performance.now();
+        this.attackCooldown = this.form.m1Cooldown;
+        this.m1Timer = this.form.m1Cooldown; // Set animation timer
+        
+        let isFinisher = this.m1Combo === 4;
+        let range = this.form.m1Range;
+        let damage = 10 * this.form.damageMultiplier * (isFinisher ? 3 : 1);
+        
+        let cos = Math.cos(this.angle);
+        let sin = Math.sin(this.angle);
+        
+        // Forms with instant-teleport strikes (Divine, Ultra, Singularity, Infinity...) close the gap to the enemy
+        if (this.form.teleportM1) {
+            let distToEnemy = distance(this, enemy);
+            if (distToEnemy < range * 2 && distToEnemy > 40) {
+                // Teleport
+                particles.push(new Particle(this.x, this.y, 0, 0, 40, this.energyColor, 10, "ring"));
+                let ang = angle(this, enemy);
+                this.x = enemy.x - Math.cos(ang) * 30;
+                this.y = enemy.y - Math.sin(ang) * 30;
+                // Instantly re-aim at enemy
+                this.angle = ang; 
+                cos = Math.cos(this.angle);
+                sin = Math.sin(this.angle);
+            }
+        }
+        
+        // Dash forward slightly based on angle
+        this.vx = cos * this.form.m1Dash;
+        this.vy = sin * this.form.m1Dash;
+        
+        // Create hitbox
+        let hx = this.x + (cos * (this.radius + range/2));
+        let hy = this.y + (sin * (this.radius + range/2));
+        
+        hitboxes.push({
+            x: hx, y: hy, w: range, h: range,
+            life: 5,
+            damage: damage,
+            knockback: isFinisher ? 25 : 5,
+            stun: isFinisher ? 30 : 10,
+            owner: this,
+            color: this.energyColor,
+            isFinisher: isFinisher,
+            isCircular: true,
+            angle: this.angle // Save angle to resolve knockback cleanly
+        });
+        
+        // Dynamic M1 Visuals (Slashing angles)
+        let effAngle = this.angle;
+        if (this.m1Combo === 1) effAngle -= Math.PI/4;
+        else if (this.m1Combo === 2) effAngle += Math.PI/4;
+        else if (this.m1Combo === 3) effAngle -= Math.PI/2;
+        
+        particles.push(new Particle(hx, hy, cos*2, sin*2, range, this.energyColor, 10, "slash", effAngle));
+        if (isFinisher) screenShake(5);
+        
+        // Update combo UI
+        let comboUI = document.getElementById('combo-display');
+        comboUI.innerText = `Combo ${this.m1Combo}`;
+        comboUI.style.opacity = 1;
+        comboUI.style.transform = `translateY(-50%) scale(${1 + this.m1Combo*0.2})`;
+        comboUI.style.color = isFinisher ? "#ff0000" : "#ffffff";
+    }
+    
+    doKiBlast() {
+        if (this.ki < this.form.kiCost) return;
+        this.ki -= this.form.kiCost;
+        this.attackCooldown = this.form.m1Cooldown;
+        this.m1Combo = 0; // Break combo
+        this.m1Timer = 10; // Trigger an arm animation
+        
+        let cos = Math.cos(this.angle);
+        let sin = Math.sin(this.angle);
+        
+        // Recoil
+        this.vx = -cos * 5;
+        this.vy = -sin * 5;
+        
+        let pSpeed = 15 + (this.formIndex * 5);
+        let pSize = 10 + (this.formIndex * 5);
+        let dmg = 15 * this.form.damageMultiplier;
+        
+        if (this.form.kiBlastType === "spread") {
+            // Multi-shot fan spread
+            let shots = this.form.kiBlastShots || 3;
+            for(let i = -Math.floor(shots/2); i <= Math.floor(shots/2); i++) {
+                let offAngle = this.angle + (i * 0.15);
+                projectiles.push(new Projectile(
+                    this.x + Math.cos(offAngle)*30, this.y + Math.sin(offAngle)*30, 
+                    Math.cos(offAngle)*pSpeed, Math.sin(offAngle)*pSpeed, 
+                    pSize*0.7, dmg*0.6, this.energyColor, this));
+            }
+        } else if (this.form.kiBlastType === "twin") {
+            // Two parallel bolts side-by-side, rather than a fan or a single shot
+            let perpX = -sin, perpY = cos;
+            let offset = 14;
+            for (const side of [-1, 1]) {
+                projectiles.push(new Projectile(
+                    this.x + cos*30 + perpX*offset*side, this.y + sin*30 + perpY*offset*side,
+                    cos*pSpeed, sin*pSpeed, pSize*0.75, dmg*0.75, this.energyColor, this));
+            }
+        } else if (this.form.kiBlastType === "volley") {
+            // A rapid straight-line burst — same heading, staggered speeds so they arrive in a burst rather than a fan
+            let shots = this.form.kiBlastShots || 3;
+            for (let i = 0; i < shots; i++) {
+                let spd = pSpeed * (0.75 + i * 0.18);
+                let startOffset = 30 - i * 8;
+                projectiles.push(new Projectile(
+                    this.x + cos*startOffset, this.y + sin*startOffset,
+                    cos*spd, sin*spd, pSize*0.65, dmg*0.55, this.energyColor, this));
+            }
+        } else if (this.form.kiBlastType === "claw") {
+            // Crescent slash(es) instead of round bolts
+            let count = this.form.kiBlastClawCount || 1;
+            for (let i = 0; i < count; i++) {
+                let offAngle = this.angle + (i - (count-1)/2) * 0.35;
+                projectiles.push(new Projectile(
+                    this.x + Math.cos(offAngle)*30, this.y + Math.sin(offAngle)*30,
+                    Math.cos(offAngle)*pSpeed*0.85, Math.sin(offAngle)*pSpeed*0.85,
+                    pSize*1.1, dmg*0.8, this.energyColor, this, false, "claw"));
+            }
+        } else if (this.form.kiBlastType === "sphere") {
+            // Massive slow sphere (size/style tuned per form; may home in or shatter on impact)
+            let mSize = this.form.kiBlastSize || 40;
+            let style = this.form.kiBlastStyle || "normal";
+            projectiles.push(new Projectile(this.x + cos*mSize, this.y + sin*mSize, cos*8, sin*8, mSize, dmg*3, this.energyColor, this, true, style, {
+                homing: !!this.form.kiBlastHoming, homingStrength: this.form.kiBlastHomingStrength || 0.04,
+                shatter: !!this.form.kiBlastShatter
+            }));
+        } else if (this.form.kiBlastType === "lance") {
+            // Fast, thin, piercing javelin — precise rather than a wide-area attack
+            projectiles.push(new Projectile(
+                this.x + cos*30, this.y + sin*30,
+                cos*pSpeed*1.6, sin*pSpeed*1.6,
+                pSize*0.6, dmg*1.4, this.energyColor, this, true, "lance"));
+        } else {
+            // Standard single shot (may drag the target toward the shooter on hit)
+            projectiles.push(new Projectile(this.x + cos*30, this.y + sin*30, cos*pSpeed, sin*pSpeed, pSize, dmg, this.energyColor, this, false, "normal", {
+                pulls: !!this.form.kiBlastPulls
+            }));
+        }
+    }
+    
+    doSpecial() {
+        let cost = this.form.specialCost;
+        if (this.ki < cost) return;
+        this.ki -= cost;
+        
+        let cos = Math.cos(this.angle);
+        let sin = Math.sin(this.angle);
+        
+        if (this.form.specialType === "punch") {
+            // Base: Just a strong dash punch
+            this.attackCooldown = 30;
+            this.m1Timer = 15;
+            this.vx = cos * 40;
+            this.vy = sin * 40;
+            hitboxes.push({
+                x: this.x + cos*50, y: this.y + sin*50, w: 80, h: 80,
+                life: 15, damage: 50, knockback: 30, stun: 40, owner: this, color: "#fff", isCircular: true, angle: this.angle
+            });
+        } 
+        else if (this.form.specialType === "beam") {
+            // Beam Attacks — some forms fire a paired "cross" beam, or one that drags the target in
+            this.isBeaming = true;
+            this.m1Timer = 10;
+            this.beamTimer = (this.formIndex >= 3) ? 60 : 40; // frames
+            
+            screenShake(this.formIndex >= 3 ? 20 : 10);
+            if (this.form.beamWidth >= 200) screenShake(35); // biggest cannons get a massive shake
+
+            let beamWidth = this.form.beamWidth;
+            let beamDmg = this.form.beamDmg;
+            let beamOptions = { pulls: !!this.form.beamPulls, wrapStyle: this.form.beamWrap || "none" };
+            
+            if (this.form.dualBeam) {
+                // Twin beams fired at a slight converging angle, crossing just in front of the caster
+                projectiles.push(new Beam(this, this.angle - 0.12, beamWidth, beamDmg, this.beamTimer, this.energyColor, beamOptions));
+                projectiles.push(new Beam(this, this.angle + 0.12, beamWidth, beamDmg, this.beamTimer, this.energyColor, beamOptions));
+            } else {
+                projectiles.push(new Beam(this, this.angle, beamWidth, beamDmg, this.beamTimer, this.energyColor, beamOptions));
+            }
+        }
+        else if (this.form.specialType === "wave") {
+            // Explosive / Annihilation / Cataclysm Wave — size & damage tuned per form
+            this.attackCooldown = 40;
+            this.m1Timer = 20;
+            let wSize = this.form.waveSize;
+            let wDmg = this.form.waveDmg;
+            let isHuge = wSize >= 500;
+            screenShake(isHuge ? 25 : 15, isHuge ? 0.035 : 0.02);
+            triggerHitStop(isHuge ? 9 : 6);
+            camera.targetZoom = isHuge ? 1.1 : 1.06;
+            
+            hitboxes.push({
+                x: this.x, y: this.y, w: wSize, h: wSize,
+                life: 20, damage: wDmg, knockback: 40, stun: 50, owner: this, color: this.energyColor, isCircular: true
+            });
+            
+            if (this.form.waveStyle === "hakai") {
+                // Hakai-style void sphere for the heaviest wave forms
+                particles.push(new Particle(this.x, this.y, 0, 0, wSize/2, this.energyColor, 30, "hakai"));
+                for(let i=0; i<15; i++) {
+                    let a = random(0, Math.PI*2);
+                    let spd = random(5, 15);
+                    particles.push(new Particle(this.x, this.y, Math.cos(a)*spd, Math.sin(a)*spd, random(10,30), "#000000", 25, "hakai-debris"));
+                }
+            } else {
+                // Lighter Explosive Wave with crackling arcs
+                particles.push(new Particle(this.x, this.y, 0, 0, wSize/2, this.energyColor, 25, "explosiveWave"));
+                for(let i=0; i<12; i++) {
+                    particles.push(new Particle(this.x + random(-50, 50), this.y + random(-50, 50), 0, 0, 2, this.form.lightningColor || this.energyColor, 15, "lightning", 0, this));
+                }
+            }
+
+            if (this.form.followupHoming) {
+                // A second wave: homing shards peel off and chase the target down after the initial pulse
+                let count = this.form.followupHomingCount || 5;
+                let shardDmg = this.form.followupHomingDamage || 30;
+                for (let i = 0; i < count; i++) {
+                    let a = (i / count) * Math.PI * 2;
+                    projectiles.push(new Projectile(
+                        this.x + Math.cos(a)*40, this.y + Math.sin(a)*40,
+                        Math.cos(a)*6, Math.sin(a)*6,
+                        14, shardDmg, this.energyColor, this, false, "normal",
+                        { homing: true, homingStrength: 0.09 }
+                    ));
+                }
+            }
+        }
+        else if (this.form.specialType === "barrage") {
+            // A sequence of tracking strikes that rain down on the target over roughly a second
+            this.attackCooldown = 30;
+            this.m1Timer = 15;
+            screenShake(8);
+            particles.push(new Particle(this.x, this.y, 0, 0, 25, this.energyColor, 15, "chromaRing"));
+            projectiles.push(new Barrage(
+                this, this.form.barrageCount, this.form.barrageInterval,
+                this.form.barrageDamage, this.form.barrageRadius, this.energyColor, this.form.lightningColor
+            ));
+        }
+        else if (this.form.specialType === "flurry") {
+            // A rapid string of melee strikes — teleporting blitz or a lunging combo depending on the form
+            this.attackCooldown = 30;
+            this.m1Timer = 15;
+            screenShake(6);
+            projectiles.push(new Flurry(
+                this, this.form.flurryCount, this.form.flurryInterval,
+                this.form.flurryDamage, this.form.flurryKnockback, !!this.form.flurryTeleports
+            ));
+        }
+        else if (this.form.specialType === "execution") {
+            // Marks the enemy's current position and strikes it after a telegraphed delay —
+            // a single devastating hit that rewards prediction rather than tracking the target live.
+            this.attackCooldown = 25;
+            this.m1Timer = 15;
+            let target = enemy;
+            particles.push(new Particle(this.x, this.y, 0, 0, 20, this.energyColor, 12, "chromaRing"));
+            projectiles.push(new Execution(
+                this, target.x, target.y,
+                this.form.executionDamage, this.form.executionRadius, this.form.executionDelay, this.energyColor
+            ));
+        }
+    }
+    
+    updateAura() {
+        if (this.formIndex === 0 && !this.charging) return; // Base form has no aura unless charging
+        
+        let freq = this.charging ? 2 : (this.formIndex > 1 ? 1 : 0.5);
+        let style = this.charging ? "soft" : this.form.auraStyle;
+
+        if (Math.random() < freq) {
+            let angle = random(0, Math.PI * 2);
+            let dist = random(0, this.radius * 1.5);
+            let px = this.x + Math.cos(angle)*dist;
+            let py = this.y + Math.sin(angle)*dist;
+
+            if (style === "fire") {
+                // Flickering flame licks rising off the body
+                let vx = Math.cos(angle) * random(0.1, 0.6);
+                let vy = Math.sin(angle) * random(0.1, 0.6) - random(0.5, 1.2);
+                let size = random(14, 26 + this.formIndex*4);
+                particles.push(new Particle(px, py, vx, vy, size, this.form.color, random(14, 24), "flameLick"));
+            } else if (style === "lightning") {
+                // Crackling arcs + tight sparks
+                let vx = Math.cos(angle) * random(0.2, 1);
+                let vy = Math.sin(angle) * random(0.2, 1);
+                particles.push(new Particle(px, py, vx, vy, random(2,4), "#ffffff", random(6, 12), "spark"));
+            } else if (style === "ethereal") {
+                // Expanding faint rings + drifting sparkles
+                let vx = Math.cos(angle) * random(0.2, 0.8);
+                let vy = Math.sin(angle) * random(0.2, 0.8);
+                let size = random(8, 16 + this.formIndex*3);
+                particles.push(new Particle(px, py, vx, vy, size, this.form.color, random(14, 22), "aura"));
+                if (Math.random() < 0.15) {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(5,15), this.form.color, 20, "etherRing"));
+                }
+            } else if (style === "cosmic") {
+                // A shifting blend of every style this fighter has mastered — rings, sparks, and drifting flame
+                let vx = Math.cos(angle) * random(0.2, 0.9);
+                let vy = Math.sin(angle) * random(0.2, 0.9);
+                let roll = Math.random();
+                if (roll < 0.4) {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(5,20), this.form.color, 22, "etherRing"));
+                } else if (roll < 0.7) {
+                    particles.push(new Particle(px, py, vx, vy, random(2,4), "#ffffff", random(6, 12), "spark"));
+                } else {
+                    particles.push(new Particle(px, py, vx, vy - random(0.3,0.8), random(12, 22), this.form.color, random(14, 22), "flameLick"));
+                }
+            } else if (style === "void") {
+                // Dark motes drawn inward like collapsing judgment, punctuated by golden seal-rings
+                let sealColor = this.form.sealColor || "#ffd700";
+                if (Math.random() < 0.55) {
+                    let startDist = this.radius + random(25, 60);
+                    let sx = this.x + Math.cos(angle) * startDist;
+                    let sy = this.y + Math.sin(angle) * startDist;
+                    let vx = -Math.cos(angle) * random(0.5, 1.1);
+                    let vy = -Math.sin(angle) * random(0.5, 1.1);
+                    particles.push(new Particle(sx, sy, vx, vy, random(5, 10), sealColor, random(16,22), "hakai-debris"));
+                } else {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(10,28), sealColor, 20, "etherRing"));
+                }
+            } else {
+                // Soft default glow wisps (base charging / Super)
+                let vx = Math.cos(angle) * random(0.2, 1);
+                let vy = Math.sin(angle) * random(0.2, 1);
+                let size = random(10, 20 + this.formIndex*10);
+                particles.push(new Particle(px, py, vx, vy, size, this.form.color, random(10, 20), "aura"));
+            }
+        }
+        
+        // Dynamic Lightning arcs (Ascended/Beast/high forms with lightningColor)
+        if (this.form.lightningColor && Math.random() < (style === "lightning" ? 0.45 : 0.3)) {
+            let startX = this.x + random(-30, 30);
+            let startY = this.y + random(-30, 30);
+            particles.push(new Particle(startX, startY, 0, 0, 2, this.form.lightningColor, 5, "lightning", 0, this));
+        }
+    }
+
+    // Persistent ambient glow drawn directly beneath the character each frame —
+    // smoother and cheaper than pure particle spam, gives the aura a "living" base layer.
+    drawAuraBase(ctx) {
+        if (this.formIndex === 0 && !this.charging) return;
+        let pulse = 0.75 + 0.25 * Math.sin(Date.now() * 0.006);
+        let baseSize = (this.radius * 2.2 + this.formIndex * 6) * pulse;
+        let color = this.charging ? this.form.color : this.form.color;
+
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, baseSize);
+        grad.addColorStop(0, color);
+        grad.addColorStop(0.5, color);
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalAlpha = 0.22 + (this.charging ? 0.15 : 0);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, baseSize, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    draw(ctx) {
+        // Ambient aura glow, drawn in world space beneath everything (unrotated)
+        this.drawAuraBase(ctx);
+
+        // Contact shadow (screen-aligned, not rotated with the character)
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y + 4, 15, 9, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        
+        // Rotate entire player to aim at mouse
+        ctx.rotate(this.angle);
+
+        // Subtle idle "breathing" pulse so the character never feels static
+        let breath = 1 + Math.sin(Date.now() * 0.004) * 0.015;
+        ctx.scale(breath, breath);
+        
+        // Aura glow under character
+        if (this.formIndex > 0) {
+            ctx.shadowBlur = 30 + (Math.sin(Date.now()*0.01)*10);
+            ctx.shadowColor = this.form.color;
+        }
+
+        // --- Animated Arms for M1 Combos ---
+        let leftArmX = 5, leftArmY = -18;
+        let rightArmX = 5, rightArmY = 18;
+        let punchDist = 0;
+        
+        if (this.m1Timer > 0) {
+            // Calculate a punch extension from 0 (fully retracted) to 1 (fully extended)
+            let extension = (this.form.m1Cooldown - this.m1Timer) / this.form.m1Cooldown;
+            punchDist = Math.sin(extension * Math.PI) * 20; 
+            
+            if (this.m1Combo === 1) leftArmX += punchDist;
+            else if (this.m1Combo === 2) rightArmX += punchDist;
+            else if (this.m1Combo === 3) {
+                leftArmX += punchDist;
+                leftArmY -= punchDist * 0.5; // Wide hook swing
+            } else if (this.m1Combo === 4 || this.m1Combo === 0) {
+                // Double fist for finisher / ki blasts
+                leftArmX += punchDist;
+                rightArmX += punchDist;
+            }
+
+            // Motion smear behind the extending fist(s), in world space
+            if (punchDist > 8 && Math.random() < 0.6) {
+                let cosA = Math.cos(this.angle), sinA = Math.sin(this.angle);
+                const emit = (lx, ly) => {
+                    let wx = this.x + cosA*lx - sinA*ly;
+                    let wy = this.y + sinA*lx + cosA*ly;
+                    particles.push(new Particle(wx, wy, -cosA*1.5, -sinA*1.5, random(2,4), this.energyColor, 8, "spark"));
+                };
+                if (leftArmX > 5) emit(leftArmX, leftArmY);
+                if (rightArmX > 5) emit(rightArmX, rightArmY);
+            }
+        }
+
+        // Draw Hands (Fists) with a soft gradient for a bit of volume
+        let fistGrad = ctx.createRadialGradient(-2,-2,0,0,0,7);
+        fistGrad.addColorStop(0, "#ffe0c2");
+        fistGrad.addColorStop(1, "#d99b6b");
+        ctx.fillStyle = fistGrad;
+        ctx.beginPath(); ctx.arc(leftArmX, leftArmY, 6, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(rightArmX, rightArmY, 6, 0, Math.PI*2); ctx.fill();
+
+        // Draw character body (Top-down Shoulders) with gradient shading for depth
+        let bodyBase = (this.formIndex === 5) ? "#331166" 
+                     : (this.formIndex === 8) ? "#0d0d0d"
+                     : (this.formIndex === 10) ? "#cccccc" 
+                     : "#ff6600";
+        let bodyGrad = ctx.createRadialGradient(-4, -8, 2, 0, 0, 26);
+        bodyGrad.addColorStop(0, shadeColor(bodyBase, 40));
+        bodyGrad.addColorStop(0.6, bodyBase);
+        bodyGrad.addColorStop(1, shadeColor(bodyBase, -35));
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 12, 22, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Head with gradient shading
+        let headGrad = ctx.createRadialGradient(0, -4, 1, 3, 0, 14);
+        headGrad.addColorStop(0, "#ffe3c4");
+        headGrad.addColorStop(1, "#d99b6b");
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.arc(3, 0, 12, 0, Math.PI*2); // Head sits slightly forward
+        ctx.fill();
+
+        // Eyes — glowing color reflects current form's intensity
+        if (this.formIndex > 0) {
+            ctx.fillStyle = this.energyColor;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = this.energyColor;
+        } else {
+            ctx.fillStyle = "#222";
+            ctx.shadowBlur = 0;
+        }
+        ctx.beginPath(); ctx.arc(9, -4, 1.8, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(9, 4, 1.8, 0, Math.PI*2); ctx.fill();
+        
+        // Hair (Flows backwards from the head) — subtle flicker/crackle wobble per aura style
+        let wobble = 0;
+        if (this.form.auraStyle === "fire") wobble = Math.sin(Date.now()*0.018) * 0.06;
+        else if (this.form.auraStyle === "lightning") wobble = (Math.random()-0.5) * 0.1;
+
+        ctx.save();
+        ctx.rotate(wobble);
+
+        let hairGrad;
+        if (this.formIndex === 0) {
+            hairGrad = ctx.createRadialGradient(0,0,0, 0,0,40);
+            hairGrad.addColorStop(0, "#333333");
+            hairGrad.addColorStop(1, "#0a0a0a");
+        } else {
+            hairGrad = ctx.createRadialGradient(0,0,0, 0,0,48);
+            hairGrad.addColorStop(0, "#ffffff");
+            hairGrad.addColorStop(0.35, this.form.color);
+            hairGrad.addColorStop(1, this.form.color);
+        }
+        ctx.fillStyle = hairGrad;
+        ctx.shadowBlur = this.formIndex > 0 ? 18 : 0;
+        ctx.shadowColor = this.form.color;
+        
+        ctx.beginPath();
+        if (this.formIndex === 0) { // Base
+            ctx.moveTo(3, -10);
+            ctx.lineTo(-12, -15); ctx.lineTo(-8, -5);
+            ctx.lineTo(-15, 0); ctx.lineTo(-8, 5);
+            ctx.lineTo(-12, 15); ctx.lineTo(3, 10);
+            ctx.fill();
+        } else if (this.formIndex === 1 || this.formIndex === 2 || this.formIndex === 5) { // Super / Ascended / Ego
+            ctx.moveTo(3, -12);
+            ctx.lineTo(-18, -25); ctx.lineTo(-10, -8);
+            ctx.lineTo(-25, 0); ctx.lineTo(-10, 8);
+            ctx.lineTo(-18, 25); ctx.lineTo(3, 12);
+            ctx.fill();
+            if (this.formIndex === 2 || this.formIndex === 5) { // Extra spikes
+                ctx.lineTo(-30, -15); ctx.lineTo(0, -10); ctx.fill();
+                ctx.lineTo(-30, 15); ctx.lineTo(0, 10); ctx.fill();
+            }
+        } else if (this.formIndex === 3 || this.formIndex === 4) { // Divine / Ultra
+            ctx.moveTo(5, -12);
+            ctx.quadraticCurveTo(-25, -20, -30, 0);
+            ctx.quadraticCurveTo(-25, 20, 5, 12);
+            ctx.fill();
+            if (this.formIndex === 4) { // Ultra has slightly more swept volume
+                ctx.moveTo(3, -10);
+                ctx.lineTo(-20, -15); ctx.lineTo(-10, 0); ctx.lineTo(-20, 15); ctx.lineTo(3, 10);
+                ctx.fill();
+            }
+        } else if (this.formIndex === 6) { // Beast (Massive Spikes)
+            ctx.moveTo(3, -12);
+            ctx.lineTo(-35, -35); ctx.lineTo(-10, -10);
+            ctx.lineTo(-45, 0); ctx.lineTo(-10, 10);
+            ctx.lineTo(-35, 35); ctx.lineTo(3, 12);
+            ctx.fill();
+        } else if (this.formIndex === 7) { // Overdrive (jagged, redlined spikes)
+            ctx.moveTo(3, -12);
+            ctx.lineTo(-25, -40); ctx.lineTo(-12, -12);
+            ctx.lineTo(-40, -5); ctx.lineTo(-15, 0);
+            ctx.lineTo(-40, 5); ctx.lineTo(-12, 12);
+            ctx.lineTo(-25, 40); ctx.lineTo(3, 12);
+            ctx.fill();
+        } else if (this.formIndex === 8) { // Godslayer (heavy, flowing double mane)
+            ctx.moveTo(5, -14);
+            ctx.quadraticCurveTo(-35, -30, -40, 0);
+            ctx.quadraticCurveTo(-35, 30, 5, 14);
+            ctx.fill();
+            ctx.moveTo(3, -10);
+            ctx.quadraticCurveTo(-22, -18, -26, 0);
+            ctx.quadraticCurveTo(-22, 18, 3, 10);
+            ctx.fill();
+        } else if (this.formIndex === 9) { // Singularity (sleek, aerodynamic point)
+            ctx.moveTo(3, -8);
+            ctx.lineTo(-20, -4);
+            ctx.lineTo(-30, 0);
+            ctx.lineTo(-20, 4);
+            ctx.lineTo(3, 8);
+            ctx.fill();
+        } else if (this.formIndex === 10) { // Infinity (boundless radiant halo)
+            ctx.moveTo(3, -12);
+            ctx.lineTo(-40, -45); ctx.lineTo(-12, -12);
+            ctx.lineTo(-50, 0); ctx.lineTo(-12, 12);
+            ctx.lineTo(-40, 45); ctx.lineTo(3, 12);
+            ctx.fill();
+            ctx.moveTo(-10, -20); ctx.lineTo(-58, -28); ctx.lineTo(-20, -6); ctx.fill();
+            ctx.moveTo(-10, 20); ctx.lineTo(-58, 28); ctx.lineTo(-20, 6); ctx.fill();
+        }
+        ctx.restore(); // end hair wobble
+
+        // Rim light: an additive outline that sells the "energy silhouette" look
+        if (this.formIndex > 0) {
+            ctx.save();
+            ctx.globalCompositeOperation = "lighter";
+            ctx.globalAlpha = 0.5 + Math.sin(Date.now()*0.01)*0.15;
+            ctx.strokeStyle = this.form.color;
+            ctx.lineWidth = 1.5;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.form.color;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 13, 23, 0, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        ctx.restore();
+    }
+}
+
+// Utility: lighten/darken a hex color by `percent` (-100..100)
+function shadeColor(hex, percent) {
+    let h = hex.replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    let num = parseInt(h, 16);
+    let r = (num >> 16) + Math.round(2.55 * percent);
+    let g = ((num >> 8) & 0x00FF) + Math.round(2.55 * percent);
+    let b = (num & 0x0000FF) + Math.round(2.55 * percent);
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return `rgb(${r},${g},${b})`;
+}
+
+class Enemy extends Entity {
+    constructor(x, y, rosterEntry, lap = 1) {
+        super(x, y, 20);
+        this.name = rosterEntry.name;
+        this.tier = rosterEntry.tier;
+        this.color = rosterEntry.color;
+        // Each full lap through the roster scales stats further, so the gauntlet never truly caps out
+        let lapMult = Math.pow(1.55, lap - 1);
+        this.maxHp = rosterEntry.hp * lapMult;
+        this.hp = this.maxHp;
+        this.baseDmg = rosterEntry.dmg * lapMult;
+        this.speedMult = rosterEntry.speedMult;
+        this.timer = 0;
+        this.rangedTimer = random(60, 150); // stagger first ranged shot
+    }
+    
+    update(dt) {
+        super.update(dt);
+        
+        if (this.hp <= 0) return; // defeated — sits still while the victory sequence plays out
+        if (this.isStunned > 0) return;
+        
+        // Top-down tracking
+        let dist = distance(this, player);
+        this.angle = angle(this, player);
+        
+        if (dist > 80 && dist < 600) {
+            this.vx += Math.cos(this.angle) * 0.5 * this.speedMult;
+            this.vy += Math.sin(this.angle) * 0.5 * this.speedMult;
+        } else if (dist <= 80 && Math.random() < (0.04 + this.tier*0.008) && this.timer <= 0) {
+            // Melee attack — higher tiers hit harder and recover faster
+            this.timer = Math.max(18, 60 - this.tier*5);
+            this.vx = Math.cos(this.angle) * 10;
+            this.vy = Math.sin(this.angle) * 10;
+            hitboxes.push({
+                x: this.x + Math.cos(this.angle)*30, 
+                y: this.y + Math.sin(this.angle)*30, 
+                w: 50, h: 50,
+                life: 10, damage: this.baseDmg, knockback: 5 + this.tier*0.5, stun: 10, owner: this, color: this.color, isCircular: true, angle: this.angle
+            });
+        }
+
+        // Ranged ki blasts unlock at higher tiers, adding pressure from a distance
+        if (this.tier >= 3 && dist > 130 && dist < 550 && this.rangedTimer <= 0 && Math.random() < 0.025) {
+            this.rangedTimer = Math.max(50, 110 - this.tier*8);
+            let pSpeed = 11 + this.tier;
+            projectiles.push(new Projectile(
+                this.x + Math.cos(this.angle)*30, this.y + Math.sin(this.angle)*30,
+                Math.cos(this.angle)*pSpeed, Math.sin(this.angle)*pSpeed,
+                8 + this.tier, this.baseDmg * 1.1, this.color, this
+            ));
+        }
+        if (this.rangedTimer > 0) this.rangedTimer -= dt;
+        
+        if (this.timer > 0) this.timer -= dt;
+    }
+    
+    draw(ctx) {
+        if (this.hp <= 0) return; // defeated enemies vanish immediately; the pickup/VFX carry the moment
+
+        // Contact shadow
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y + 4, 15, 9, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+
+        // Faint warning glow when low on health
+        let hpFrac = this.hp / this.maxHp;
+        if (hpFrac < 0.3) {
+            ctx.save();
+            ctx.globalCompositeOperation = "lighter";
+            let g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 40);
+            g.addColorStop(0, "rgba(255,40,40,0.25)");
+            g.addColorStop(1, "rgba(255,40,40,0)");
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 40, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        
+        // Shoulders with gradient shading tinted to this rival's tier color
+        let bodyDark = shadeColor(this.color, -55);
+        let bodyMid = shadeColor(this.color, -25);
+        let bodyGrad = ctx.createRadialGradient(-4, -8, 2, 0, 0, 26);
+        bodyGrad.addColorStop(0, shadeColor(this.color, -5));
+        bodyGrad.addColorStop(0.6, bodyMid);
+        bodyGrad.addColorStop(1, bodyDark);
+        ctx.fillStyle = bodyGrad;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = this.color;
+        ctx.beginPath(); ctx.ellipse(0, 0, 12, 22, 0, 0, Math.PI*2); ctx.fill();
+        // Hands
+        let handGrad = ctx.createRadialGradient(-2,-20,0,5,-18,7);
+        handGrad.addColorStop(0, shadeColor(this.color, 15));
+        handGrad.addColorStop(1, bodyMid);
+        ctx.fillStyle = handGrad;
+        ctx.shadowBlur = 0;
+        ctx.beginPath(); ctx.arc(5, -18, 6, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(5, 18, 6, 0, Math.PI*2); ctx.fill();
+        // Head
+        let headGrad = ctx.createRadialGradient(0,-4,1,3,0,14);
+        headGrad.addColorStop(0, shadeColor(this.color, 35));
+        headGrad.addColorStop(1, shadeColor(this.color, -10));
+        ctx.fillStyle = headGrad;
+        ctx.beginPath(); ctx.arc(3, 0, 12, 0, Math.PI*2); ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = "#ffee88";
+        ctx.beginPath(); ctx.arc(9, -4, 1.6, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(9, 4, 1.6, 0, Math.PI*2); ctx.fill();
+        
+        // Damage flash
+        if (this.isStunned > 0) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI*2); ctx.fill();
+        }
+        
+        ctx.restore();
+    }
+}
+
+// --- Effects & Projectiles ---
+class Particle {
+    constructor(x, y, vx, vy, size, color, life, type="normal", angle=0, parent=null) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.size = size; this.maxSize = size;
+        this.color = color;
+        this.life = life; this.maxLife = life;
+        this.type = type;
+        this.angle = angle;
+        this.parent = parent;
+        
+        if (type === "lightning") {
+            this.points = [{x:0, y:0}];
+            let currX = 0, currY = 0;
+            for(let i=0; i<4; i++) {
+                currX += random(-15, 15);
+                currY += random(-20, 20);
+                this.points.push({x: currX, y: currY});
+            }
+        }
+    }
+    
+    update(dt) {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= dt;
+        
+        if (this.type === "aura") {
+            this.size = (this.life / this.maxLife) * this.maxSize;
+        } else if (this.type === "ring" || this.type === "slash") {
+            this.size += 2; // Expand
+        } else if (this.type === "lightning" && this.parent) {
+            this.x = this.parent.x; // Follow parent
+            this.y = this.parent.y;
+        } else if (this.type === "spark") {
+            this.vx *= 0.92; this.vy *= 0.92; // quick drag
+        } else if (this.type === "impactFlash") {
+            this.size += 3.5;
+        } else if (this.type === "chromaRing" || this.type === "impactLines") {
+            this.size += 6;
+        } else if (this.type === "flameLick") {
+            this.vy -= 0.08; // rise
+            this.vx *= 0.96;
+            this.size = this.maxSize * (this.life / this.maxLife);
+        } else if (this.type === "etherRing") {
+            this.size += 1.6;
+        } else if (this.type === "groundCrack") {
+            // static, just fades
+        }
+    }
+    
+    draw(ctx) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        let alpha = Math.max(0, this.life / this.maxLife);
+        ctx.globalAlpha = alpha;
+        
+        if (this.type === "normal" || this.type === "aura" || this.type === "ghost") {
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = this.size;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+        } else if (this.type === "slash") {
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size, -Math.PI/3, Math.PI/3); // Wider angled slash
+            ctx.stroke();
+        } else if (this.type === "ring") {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = alpha * 10;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.stroke();
+        } else if (this.type === "lightning") {
+            ctx.translate(this.x, this.y);
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.moveTo(this.points[0].x, this.points[0].y);
+            for(let i=1; i<this.points.length; i++) {
+                ctx.lineTo(this.points[i].x, this.points[i].y);
+            }
+            ctx.stroke();
+        } else if (this.type === "explosiveWave") {
+            ctx.globalCompositeOperation = "lighter";
+            
+            let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+            grad.addColorStop(0, "#ffffff");
+            grad.addColorStop(0.2, this.color);
+            grad.addColorStop(1, "rgba(0,0,0,0)");
+            
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = alpha * 20;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size * 0.9, 0, Math.PI*2);
+            ctx.stroke();
+            
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = alpha * 5;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size * 0.95, 0, Math.PI*2);
+            ctx.stroke();
+        } else if (this.type === "hakai") {
+            ctx.globalCompositeOperation = "source-over"; // dark overrides
+            
+            let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+            grad.addColorStop(0, "#000000");
+            grad.addColorStop(0.6, "#1a0033");
+            grad.addColorStop(0.9, this.color);
+            grad.addColorStop(1, "rgba(0,0,0,0)");
+            
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.strokeStyle = "#aa00ff";
+            ctx.lineWidth = 15 * alpha;
+            ctx.setLineDash([random(10,30), random(10,30)]);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        } else if (this.type === "hakai-debris") {
+            ctx.globalCompositeOperation = "source-over";
+            ctx.fillStyle = "#000000";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "#aa00ff";
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+        } else if (this.type === "spark") {
+            // Elongated streak along velocity direction
+            ctx.translate(this.x, this.y);
+            let a = Math.atan2(this.vy, this.vx);
+            ctx.rotate(a);
+            let len = Math.max(4, Math.hypot(this.vx, this.vy) * 2.2);
+            let grad = ctx.createLinearGradient(-len, 0, len*0.3, 0);
+            grad.addColorStop(0, "rgba(255,255,255,0)");
+            grad.addColorStop(1, this.color);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = this.size;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.moveTo(-len, 0);
+            ctx.lineTo(len*0.3, 0);
+            ctx.stroke();
+        } else if (this.type === "impactFlash") {
+            let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+            grad.addColorStop(0, "rgba(255,255,255,0.95)");
+            grad.addColorStop(0.5, "rgba(255,255,255,0.3)");
+            grad.addColorStop(1, "rgba(255,255,255,0)");
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+        } else if (this.type === "chromaRing") {
+            // Three offset colored rings for a punchy chromatic-aberration burst
+            ctx.lineWidth = 3 * alpha;
+            const offs = [[-3,0,"#ff3355"],[0,0,"#ffffff"],[3,0,"#33ccff"]];
+            for (const [ox, oy, col] of offs) {
+                ctx.strokeStyle = col;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = col;
+                ctx.beginPath();
+                ctx.arc(this.x + ox, this.y + oy, this.size, 0, Math.PI*2);
+                ctx.stroke();
+            }
+        } else if (this.type === "impactLines") {
+            // Radiating speed-lines from the impact point (manga-style)
+            ctx.strokeStyle = this.color;
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = this.color;
+            ctx.lineWidth = 2 * alpha;
+            const count = 8;
+            for (let i=0; i<count; i++) {
+                let a = this.angle + (i / count) * Math.PI * 2;
+                let innerR = this.size * 0.6;
+                let outerR = this.size;
+                ctx.beginPath();
+                ctx.moveTo(this.x + Math.cos(a)*innerR, this.y + Math.sin(a)*innerR);
+                ctx.lineTo(this.x + Math.cos(a)*outerR, this.y + Math.sin(a)*outerR);
+                ctx.stroke();
+            }
+        } else if (this.type === "flameLick") {
+            let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+            grad.addColorStop(0, "#fff4cc");
+            grad.addColorStop(0.4, this.color);
+            grad.addColorStop(1, "rgba(255,60,0,0)");
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, Math.max(0,this.size), 0, Math.PI*2);
+            ctx.fill();
+        } else if (this.type === "etherRing") {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 2 * alpha;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    }
+}
+
+class Projectile {
+    constructor(x, y, vx, vy, size, damage, color, owner, isPiercing=false, style="normal", options={}) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.size = size;
+        this.damage = damage;
+        this.color = color;
+        this.owner = owner;
+        this.life = 150;
+        this.isPiercing = isPiercing;
+        this.active = true;
+        this.hasHit = false; // ensures even a piercing orb only lands its damage once
+        this.style = style;
+        this.spin = 0;
+        this.homing = options.homing || false;
+        this.homingStrength = options.homingStrength || 0.04;
+        this.pulls = options.pulls || false; // pulls the target toward the shooter instead of knocking it away
+        this.shatter = options.shatter || false; // bursts into shrapnel on impact
+    }
+    
+    update(dt) {
+        // Homing: gently steer toward the current target instead of flying dead straight
+        if (this.homing) {
+            let target = this.owner === player ? enemy : player;
+            if (target && target.hp > 0) {
+                let desired = angle(this, target);
+                let current = Math.atan2(this.vy, this.vx);
+                let diff = Math.atan2(Math.sin(desired - current), Math.cos(desired - current));
+                let turn = Math.max(-this.homingStrength, Math.min(this.homingStrength, diff));
+                let speed = Math.hypot(this.vx, this.vy);
+                let newAngle = current + turn;
+                this.vx = Math.cos(newAngle) * speed;
+                this.vy = Math.sin(newAngle) * speed;
+            }
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= dt;
+        this.spin += 0.25 * dt;
+        
+        // Trail (a touch smaller/dimmer than before to reduce visual clutter, plus a spark or two)
+        particles.push(new Particle(this.x, this.y, 0, 0, this.size*0.5, this.color, 8, "normal"));
+        if (Math.random() < 0.5) {
+            let a = Math.atan2(this.vy, this.vx) + Math.PI + random(-0.4, 0.4);
+            particles.push(new Particle(this.x, this.y, Math.cos(a)*2, Math.sin(a)*2, random(1.5,3), "#ffffff", 10, "spark"));
+        }
+        
+        // Collision with whichever fighter doesn't own this projectile
+        let target = this.owner === player ? enemy : player;
+        if (this.active && !this.hasHit && target.hp > 0 && distance(this, target) < this.size + target.radius) {
+            let dmgMult = (this.owner === player) ? player.zenkaiDmgMult : 1;
+            let kx, ky;
+            if (this.pulls) {
+                // Gravity-well effect: yank the target toward the shooter instead of pushing it away
+                let pullAngle = angle(target, this.owner);
+                let pullForce = Math.hypot(this.vx, this.vy) * 0.5;
+                kx = Math.cos(pullAngle) * pullForce;
+                ky = Math.sin(pullAngle) * pullForce;
+            } else {
+                kx = this.vx * 0.5; ky = this.vy * 0.5;
+            }
+            target.takeDamage(this.damage * dmgMult, kx, ky, 15);
+            this.hasHit = true; // a piercing orb keeps flying, but never hits the same target twice
+            
+            // Explosion
+            particles.push(new Particle(this.x, this.y, 0, 0, this.size*2, this.color, 15, this.style === "hakai" ? "hakai" : "ring"));
+            particles.push(new Particle(this.x, this.y, 0, 0, this.size*1.5, this.color, 10, "impactLines", random(0, Math.PI*2)));
+            screenShake(this.size * 0.2);
+
+            if (this.shatter) {
+                // Shrapnel burst — visual flourish, no bonus damage (keeps balance intact)
+                for (let i = 0; i < 8; i++) {
+                    let a = random(0, Math.PI*2);
+                    let spd = random(4, 10);
+                    particles.push(new Particle(this.x, this.y, Math.cos(a)*spd, Math.sin(a)*spd, random(3,7), this.color, random(14,22), "spark"));
+                }
+            }
+            
+            if (!this.isPiercing) this.active = false;
+        }
+    }
+    
+    draw(ctx) {
+        if (!this.active) return;
+        ctx.save();
+        
+        if (this.style === "hakai") {
+            ctx.globalCompositeOperation = "source-over";
+            ctx.fillStyle = "#000000";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+
+            // Rotating dark energy wisps orbiting the sphere
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.spin);
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.6;
+            for (let i=0; i<3; i++) {
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size * (0.6 + i*0.15), i * 0.9, i * 0.9 + 1.8);
+                ctx.stroke();
+            }
+            ctx.restore();
+            
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size*0.4, 0, Math.PI*2);
+            ctx.fill();
+        } else if (this.style === "claw") {
+            // Three parallel claw-rake slashes traveling forward, like a beast's claw marks
+            let ang = Math.atan2(this.vy, this.vx);
+            ctx.translate(this.x, this.y);
+            ctx.rotate(ang);
+            ctx.globalCompositeOperation = "lighter";
+            ctx.lineCap = "round";
+            for (let i = -1; i <= 1; i++) {
+                let perp = i * this.size * 0.55;
+                ctx.strokeStyle = i === 0 ? "#ffffff" : this.color;
+                ctx.lineWidth = this.size * 0.16;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.moveTo(-this.size * 0.9, perp - this.size * 0.55);
+                ctx.quadraticCurveTo(this.size * 0.1, perp, this.size * 1.1, perp + this.size * 0.55);
+                ctx.stroke();
+            }
+        } else if (this.style === "lance") {
+            // A tapered, piercing javelin shape — Godslayer's Judgment Lance
+            let ang = Math.atan2(this.vy, this.vx);
+            ctx.translate(this.x, this.y);
+            ctx.rotate(ang);
+            ctx.globalCompositeOperation = "lighter";
+            let len = this.size * 3.4;
+            let grad = ctx.createLinearGradient(-len*0.35, 0, len*0.65, 0);
+            grad.addColorStop(0, "rgba(0,0,0,0)");
+            grad.addColorStop(0.55, this.color);
+            grad.addColorStop(1, "#ffffff");
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.moveTo(len*0.65, 0);
+            ctx.lineTo(len*0.05, -this.size*0.32);
+            ctx.lineTo(-len*0.35, -this.size*0.08);
+            ctx.lineTo(-len*0.35, this.size*0.08);
+            ctx.lineTo(len*0.05, this.size*0.32);
+            ctx.closePath();
+            ctx.fill();
+            // Bright spine down the center
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(-len*0.3, 0);
+            ctx.lineTo(len*0.6, 0);
+            ctx.stroke();
+        } else {
+            ctx.globalCompositeOperation = "lighter";
+
+            // Outer soft glow
+            let outerGrad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 1.6);
+            outerGrad.addColorStop(0, this.color);
+            outerGrad.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = outerGrad;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size * 1.6, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.fillStyle = "#fff";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Inner core
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size*0.7, 0, Math.PI*2);
+            ctx.fill();
+
+            // White-hot center + spinning cross-flare for a bit of sparkle
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.spin);
+            ctx.strokeStyle = "#ffffff";
+            ctx.globalAlpha = 0.7;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-this.size*1.3, 0); ctx.lineTo(this.size*1.3, 0);
+            ctx.moveTo(0, -this.size*1.3); ctx.lineTo(0, this.size*1.3);
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        ctx.restore();
+    }
+}
+
+class Beam {
+    constructor(owner, angle, width, damagePerFrame, duration, color, options={}) {
+        this.owner = owner;
+        this.angle = angle; // Converted from 1/-1 to angle math
+        this.width = width;
+        this.damage = damagePerFrame;
+        this.duration = duration;
+        this.maxDuration = duration;
+        this.color = color;
+        this.active = true; 
+        this.life = duration; 
+        this.pulls = options.pulls || false; // gravity-well beam: drags the target toward the shooter
+        this.wrapStyle = options.wrapStyle || "none"; // per-form visual flourish wrapped around the beam core
+    }
+    
+    update(dt) {
+        this.duration -= dt;
+        this.life -= dt;
+        if (this.duration <= 0) {
+            this.owner.isBeaming = false; 
+            this.active = false; 
+            return;
+        }
+        
+        // Keep owner in place
+        this.owner.vx = 0;
+        this.owner.vy = 0;
+        
+        let cos = Math.cos(this.angle);
+        let sin = Math.sin(this.angle);
+        
+        // Hit detection via rotation mapping
+        let dx = enemy.x - this.owner.x;
+        let dy = enemy.y - this.owner.y;
+        
+        let rotatedX = dx * cos + dy * sin;
+        let rotatedY = -dx * sin + dy * cos;
+        
+        if (rotatedX > 0 && rotatedX < 2000 && Math.abs(rotatedY) < (this.width/2 + enemy.radius)) {
+            let kx, ky;
+            if (this.pulls) {
+                let pullAngle = angle(enemy, this.owner);
+                kx = Math.cos(pullAngle) * 6;
+                ky = Math.sin(pullAngle) * 6;
+            } else {
+                kx = cos * 5; ky = sin * 5;
+            }
+            enemy.takeDamage(this.damage * (this.owner.zenkaiDmgMult || 1), kx, ky, 5);
+            particles.push(new Particle(enemy.x - cos*10, enemy.y - sin*10, -cos*5, -sin*5, random(5,15), this.color, 10));
+            // Sparks scattering off the beam impact point
+            for (let i=0; i<2; i++) {
+                let a = random(0, Math.PI*2);
+                particles.push(new Particle(enemy.x, enemy.y, Math.cos(a)*random(3,8), Math.sin(a)*random(3,8), random(2,4), "#ffffff", 10, "spark"));
+            }
+        }
+        
+        // Beam charge particles at hand
+        let startX = this.owner.x + cos*30;
+        let startY = this.owner.y + sin*30;
+        particles.push(new Particle(startX + random(-this.width/4, this.width/4)*-sin, startY + random(-this.width/4, this.width/4)*cos, -cos*5, -sin*5, random(5,10), this.color, 5));
+
+        // Subtle screen-wide color tint while channeling a beam, refreshed each frame so it holds steady
+        effects.push({ type: 'beamGlow', color: this.color, life: 4, maxLife: 4 });
+    }
+    
+    draw(ctx) {
+        if (this.duration <= 0) return;
+        
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        let cos = Math.cos(this.angle);
+        let sin = Math.sin(this.angle);
+        
+        let startX = this.owner.x + cos*30;
+        let startY = this.owner.y + sin*30;
+        let endX = this.owner.x + cos*2000;
+        let endY = this.owner.y + sin*2000;
+        
+        // Pulsing width
+        let currentWidth = this.width * (0.8 + Math.random()*0.4);
+
+        // Flare burst at the origin point (muzzle flash)
+        let flareR = currentWidth * 1.3;
+        let flareGrad = ctx.createRadialGradient(startX, startY, 0, startX, startY, flareR);
+        flareGrad.addColorStop(0, "#ffffff");
+        flareGrad.addColorStop(0.4, this.color);
+        flareGrad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = flareGrad;
+        ctx.beginPath();
+        ctx.arc(startX, startY, flareR, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Outer glow
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = currentWidth;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        
+        // Inner core
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = currentWidth * (this.wrapStyle === "feral" ? 0.6 : 0.4);
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        if (this.wrapStyle === "feral") {
+            // Beast: savage black/red lightning wrapped around the core
+            ctx.globalCompositeOperation = "source-over";
+            ctx.strokeStyle = "#110000"; // Almost black
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "#ff0000";
+            ctx.lineWidth = currentWidth * 0.15;
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            let segments = 25;
+            let dist = 2000 / segments;
+            for(let i=1; i<=segments; i++) {
+                let perpX = -sin;
+                let perpY = cos;
+                let offset = random(-currentWidth * 0.4, currentWidth * 0.4);
+                ctx.lineTo(startX + (cos * dist * i) + (perpX * offset), 
+                           startY + (sin * dist * i) + (perpY * offset));
+            }
+            ctx.stroke();
+        } else if (this.wrapStyle === "overheat") {
+            // Overdrive: flickering afterimage streaks, like heat-shimmer off a redlined engine
+            ctx.globalCompositeOperation = "lighter";
+            let perpX = -sin, perpY = cos;
+            for (let i = 0; i < 3; i++) {
+                let t = (Date.now() * 0.02 + i * 2.1) % (Math.PI*2);
+                let wobble = Math.sin(t) * currentWidth * 0.6;
+                ctx.strokeStyle = i === 0 ? "#ffffff" : this.color;
+                ctx.globalAlpha = 0.35 - i*0.08;
+                ctx.lineWidth = currentWidth * 0.12;
+                ctx.beginPath();
+                ctx.moveTo(startX + perpX*wobble, startY + perpY*wobble);
+                ctx.lineTo(endX + perpX*wobble, endY + perpY*wobble);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        } else if (this.wrapStyle === "gravity") {
+            // Singularity: concentric rings sliding along the beam, collapsing inward like gravitational lensing
+            ctx.globalCompositeOperation = "lighter";
+            ctx.strokeStyle = this.color;
+            let ringCount = 6;
+            for (let i = 0; i < ringCount; i++) {
+                let t = ((Date.now() * 0.006 + i / ringCount) % 1);
+                let dist = 60 + t * 300;
+                let rx = startX + cos * dist;
+                let ry = startY + sin * dist;
+                let r = currentWidth * 0.55 * (1 - t * 0.7);
+                ctx.globalAlpha = (1 - t) * 0.8;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(rx, ry, Math.max(2, r), 0, Math.PI*2);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        } else if (this.wrapStyle === "holy") {
+            // Divine: gentle sparkle motes drifting along the beam
+            ctx.globalCompositeOperation = "lighter";
+            ctx.fillStyle = "#ffffff";
+            for (let i = 0; i < 8; i++) {
+                let t = ((Date.now() * 0.004 + i / 8) % 1);
+                let dist = t * 500;
+                let sx = startX + cos * dist + random(-8, 8);
+                let sy = startY + sin * dist + random(-8, 8);
+                ctx.globalAlpha = 1 - t;
+                ctx.beginPath();
+                ctx.arc(sx, sy, 2.5, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+        
+        ctx.restore();
+    }
+}
+
+// A sequence of strikes that land over time at the target's current position — used for
+// "barrage"-type specials (e.g. Ascended's Lightning Barrage) so the attack tracks a moving target
+// instead of resolving as one instant pulse like the AOE wave specials.
+class Barrage {
+    constructor(owner, count, interval, damage, radius, color, lightningColor) {
+        this.owner = owner;
+        this.count = count;
+        this.interval = interval; // frames between strikes
+        this.damage = damage;
+        this.radius = radius;
+        this.color = color;
+        this.lightningColor = lightningColor || color;
+        this.timer = interval * 0.4; // small delay before the first strike so it reads as a wind-up
+        this.struck = 0;
+        this.active = true;
+        this.life = count * interval + 20;
+    }
+
+    update(dt) {
+        this.life -= dt;
+        this.timer -= dt;
+        if (this.struck < this.count && this.timer <= 0) {
+            this.timer = this.interval;
+            this.struck++;
+
+            let target = this.owner === player ? enemy : player;
+            let tx = target.x + random(-25, 25);
+            let ty = target.y + random(-25, 25);
+
+            // Telegraph bolt from above, then the strike itself
+            for (let i = 0; i < 3; i++) {
+                particles.push(new Particle(tx + random(-10,10), ty - 70, 0, 4, 3, this.lightningColor, 8, "lightning", 0, null));
+            }
+            particles.push(new Particle(tx, ty, 0, 0, this.radius, this.color, 16, "ring"));
+            particles.push(new Particle(tx, ty, 0, 0, this.radius * 0.7, "#ffffff", 10, "impactFlash"));
+
+            hitboxes.push({
+                x: tx, y: ty, w: this.radius, h: this.radius,
+                life: 6, damage: this.damage, knockback: 12, stun: 15,
+                owner: this.owner, color: this.color, isCircular: true
+            });
+            screenShake(6);
+        }
+        if (this.struck >= this.count) this.active = false;
+    }
+
+    draw(ctx) {
+        // All visuals are spawned as particles/hitboxes in update(); nothing persistent to render here.
+    }
+}
+
+// A rapid string of melee strikes over a short window — used for "flurry"-type specials
+// (Ultra's Instinct Flurry teleport-blitzes; Overdrive's Piston Barrage lunges instead).
+class Flurry {
+    constructor(owner, count, interval, damage, knockback, teleports) {
+        this.owner = owner;
+        this.count = count;
+        this.interval = interval;
+        this.damage = damage;
+        this.knockback = knockback;
+        this.teleports = teleports;
+        this.timer = 0;
+        this.struck = 0;
+        this.active = true;
+        this.life = count * interval + 15;
+        owner.isBeaming = true; // reuse the existing "busy" lock so movement/other actions pause mid-combo
+    }
+
+    update(dt) {
+        this.life -= dt;
+        this.timer -= dt;
+        if (this.struck < this.count && this.timer <= 0) {
+            this.timer = this.interval;
+            this.struck++;
+
+            let target = this.owner === player ? enemy : player;
+            if (target && target.hp > 0) {
+                let ang = angle(this.owner, target);
+                let idealX = target.x - Math.cos(ang) * 35;
+                let idealY = target.y - Math.sin(ang) * 35;
+                if (this.teleports) {
+                    // Full instant teleport-strike
+                    particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, 30, this.owner.energyColor, 8, "ring"));
+                    this.owner.x = idealX;
+                    this.owner.y = idealY;
+                } else {
+                    // Rapid converging blink-rush: closes most of the remaining gap every strike,
+                    // so the combo reliably connects instead of drifting and whiffing on a distant target.
+                    this.owner.x += (idealX - this.owner.x) * 0.85;
+                    this.owner.y += (idealY - this.owner.y) * 0.85;
+                    this.owner.vx = 0; this.owner.vy = 0;
+                    particles.push(new Particle(this.owner.x - Math.cos(ang)*20, this.owner.y - Math.sin(ang)*20, 0, 0, 18, this.owner.energyColor, 6, "spark"));
+                }
+                this.owner.angle = ang;
+
+                let hx = this.owner.x + Math.cos(ang) * 40;
+                let hy = this.owner.y + Math.sin(ang) * 40;
+                hitboxes.push({
+                    x: hx, y: hy, w: 68, h: 68,
+                    life: 8, damage: this.damage, knockback: this.knockback, stun: 8,
+                    owner: this.owner, color: this.owner.energyColor, isCircular: true, angle: ang
+                });
+                particles.push(new Particle(hx, hy, Math.cos(ang)*2, Math.sin(ang)*2, 28, this.owner.energyColor, 8, "slash", ang));
+                screenShake(4);
+            }
+        }
+        if (this.struck >= this.count && this.active) {
+            this.active = false;
+            this.owner.isBeaming = false;
+        }
+    }
+
+    draw(ctx) {
+        // Strikes render via the hitbox/particle system spawned in update(); nothing persistent here.
+    }
+}
+
+// Marks the target's current position, telegraphs briefly with a rising golden light,
+// then delivers one devastating strike at that fixed point — Godslayer's Execution.
+// Unlike every other special, this doesn't track the enemy: it rewards reading where
+// they'll be, and can be juked, which is a deliberately different rhythm from the
+// self-centered waves, continuous beams, or homing/tracking attacks other forms use.
+class Execution {
+    constructor(owner, x, y, damage, radius, delay, color) {
+        this.owner = owner;
+        this.x = x; this.y = y;
+        this.damage = damage;
+        this.radius = radius;
+        this.delay = delay;
+        this.color = color;
+        this.timer = delay;
+        this.struck = false;
+        this.active = true;
+        this.life = delay + 20;
+    }
+
+    update(dt) {
+        this.life -= dt;
+        this.timer -= dt;
+
+        // Telegraph: rising motes of judgment light at the marked point
+        if (this.timer > 0 && Math.random() < 0.5) {
+            particles.push(new Particle(this.x + random(-18,18), this.y + random(-18,18), 0, -2.5, random(4,8), this.color, 12, "spark"));
+        }
+
+        if (!this.struck && this.timer <= 0) {
+            this.struck = true;
+            let dmgMult = (this.owner === player) ? player.zenkaiDmgMult : 1;
+            let target = this.owner === player ? enemy : player;
+            if (target && target.hp > 0 && distance(this, target) < this.radius) {
+                target.takeDamage(this.damage * dmgMult, 0, 0, 60);
+            }
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius*0.6, "#ffffff", 15, "impactFlash"));
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius*0.5, this.color, 20, "chromaRing"));
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius*0.7, this.color, 18, "impactLines", random(0, Math.PI*2)));
+            triggerHitStop(10);
+            screenShake(28, 0.04);
+            camera.targetZoom = 1.12;
+        }
+        if (this.struck) this.active = false;
+    }
+
+    draw(ctx) {
+        if (this.timer <= 0) return;
+        // Golden telegraph column growing at the marked point
+        let progress = 1 - Math.max(0, this.timer) / this.delay;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = 0.15 + progress * 0.45;
+        let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 0.7);
+        grad.addColorStop(0, this.color);
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 0.7 * progress, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.5 + progress * 0.4;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * progress, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// --- Init & Game Loop ---
+const player = new Player(0, 0);
+let enemy = null;
+
+function spawnEnemyForWave() {
+    // Pick roster entry for the current wave, looping (and scaling up) once exhausted
+    let idx = (gameState.wave - 1) % ENEMY_ROSTER.length;
+    let lap = Math.floor((gameState.wave - 1) / ENEMY_ROSTER.length) + 1;
+    gameState.lap = lap;
+    let entry = ENEMY_ROSTER[idx];
+
+    let spawnAngle = random(0, Math.PI * 2);
+    let sx = player.x + Math.cos(spawnAngle) * 340;
+    let sy = player.y + Math.sin(spawnAngle) * 340;
+    enemy = new Enemy(sx, sy, entry, lap);
+
+    player.lowestHpFrac = 1; // begin tracking survival for this encounter's Zenkai Boost
+
+    let nameLabel = document.getElementById('enemy-name-label');
+    nameLabel.innerText = lap > 1 ? `${entry.name} (Lap ${lap})` : entry.name;
+    nameLabel.style.color = entry.color;
+    nameLabel.style.textShadow = `0 0 10px ${entry.color}`;
+}
+
+function updateDragonBallTrackerUI() {
+    let tracker = document.getElementById('dragonball-tracker');
+    tracker.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+        let pip = document.createElement('div');
+        pip.className = 'db-pip' + (i < gameState.dbCount ? ' filled' : '');
+        tracker.appendChild(pip);
+    }
+}
+
+function spawnDragonBall(x, y) {
+    let a = random(0, Math.PI * 2);
+    dragonBalls.push({
+        x, y,
+        vx: Math.cos(a) * random(3, 6),
+        vy: Math.sin(a) * random(3, 6),
+        star: gameState.dbCount + 1
+    });
+}
+
+function showVictoryBanner(text, sub) {
+    let banner = document.getElementById('victory-banner');
+    banner.childNodes[0].nodeValue = text;
+    document.getElementById('victory-sub').innerText = sub || '';
+    banner.classList.add('show');
+    clearTimeout(showVictoryBanner._t);
+    showVictoryBanner._t = setTimeout(() => banner.classList.remove('show'), 1400);
+}
+
+function showZenkaiPopup(hpPct, dmgPct) {
+    let popup = document.getElementById('zenkai-popup');
+    popup.innerHTML = `ZENKAI BOOST!<br><span style="font-size:16px;color:#ffaa88;">+${hpPct}% Max HP &nbsp;•&nbsp; +${dmgPct}% Power</span>`;
+    popup.classList.add('show');
+    clearTimeout(showZenkaiPopup._t);
+    showZenkaiPopup._t = setTimeout(() => popup.classList.remove('show'), 1600);
+}
+
+function showLockedFormMessage(form) {
+    let popup = document.getElementById('locked-form-popup');
+    popup.innerHTML = `🔒 ${form.name} unlocks at Wave ${form.unlockWave}`;
+    popup.classList.add('show');
+    clearTimeout(showLockedFormMessage._t);
+    showLockedFormMessage._t = setTimeout(() => popup.classList.remove('show'), 1800);
+}
+
+function onEnemyDefeated() {
+    gameState.phase = 'victory';
+    gameState.phaseTimer = 100;
+    gameState.score += Math.round(enemy.maxHp);
+
+    // Zenkai Boost: the closer the player came to death this fight, the bigger the permanent payoff
+    let survivalFactor = 1 - player.lowestHpFrac;
+    if (survivalFactor > 0.05) {
+        let hpBoost = 0.03 + survivalFactor * 0.14;
+        let dmgBoost = 0.02 + survivalFactor * 0.09;
+        player.zenkaiHpMult *= (1 + hpBoost);
+        player.zenkaiDmgMult *= (1 + dmgBoost);
+        player.maxHp = BASE_MAX_HP * player.zenkaiHpMult;
+        player.hp = player.maxHp;
+        showZenkaiPopup(Math.round(hpBoost*100), Math.round(dmgBoost*100));
+        screenShake(8);
+    } else {
+        // Still reward the win with a partial heal even without a dramatic Zenkai swing
+        player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.3);
+    }
+
+    showVictoryBanner(`${enemy.name} DEFEATED`, `Wave ${gameState.wave} Clear — Power Level ${gameState.score}`);
+    spawnDragonBall(enemy.x, enemy.y);
+
+    gameState.wave += 1;
+}
+
+function collectDragonBall() {
+    gameState.dbCount += 1;
+    updateDragonBallTrackerUI();
+    particles.push(new Particle(player.x, player.y, 0, 0, 30, "#ffaa00", 20, "chromaRing"));
+}
+
+function triggerShenron() {
+    gameState.phase = 'shenron';
+    document.getElementById('shenron-modal').classList.add('active');
+}
+
+function applyWish(type) {
+    if (type === 'power') {
+        player.zenkaiDmgMult *= 1.25;
+        showVictoryBanner('POWER GRANTED', '+25% Damage, Forever');
+    } else if (type === 'vitality') {
+        player.zenkaiHpMult *= 1.25;
+        player.maxHp = BASE_MAX_HP * player.zenkaiHpMult;
+        player.hp = player.maxHp;
+        showVictoryBanner('VITALITY GRANTED', '+25% Max HP, Forever');
+    } else if (type === 'restore') {
+        player.hp = player.maxHp;
+        player.ki = player.maxKi;
+        showVictoryBanner('YOU FEEL RENEWED', 'Health & Ki Fully Restored');
+    }
+    gameState.dbCount = 0;
+    updateDragonBallTrackerUI();
+    document.getElementById('shenron-modal').classList.remove('active');
+    gameState.phase = 'victory';
+    gameState.phaseTimer = 40;
+}
+
+function triggerGameOver() {
+    gameState.phase = 'gameover';
+    gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
+    document.getElementById('gameover-stats').innerHTML =
+        `Wave Reached: ${gameState.wave}<br>Power Level: ${gameState.score}<br>Best Wave This Session: ${gameState.bestWave}`;
+    document.getElementById('gameover-modal').classList.add('active');
+}
+
+function restartGame() {
+    player.hp = BASE_MAX_HP;
+    player.maxHp = BASE_MAX_HP;
+    player.zenkaiHpMult = 1;
+    player.zenkaiDmgMult = 1;
+    player.ki = 0;
+    player.formIndex = 0;
+    player.x = 0; player.y = 0;
+    player.vx = 0; player.vy = 0;
+    player.lowestHpFrac = 1;
+
+    let formUI = document.getElementById('form-name');
+    formUI.innerText = FORMS[0].name;
+    formUI.style.color = FORMS[0].color;
+    formUI.style.textShadow = 'none';
+
+    gameState.wave = 1;
+    gameState.lap = 1;
+    gameState.score = 0;
+    gameState.dbCount = 0;
+    gameState.phase = 'fight';
+    dragonBalls = [];
+    particles = []; projectiles = []; hitboxes = []; effects = [];
+    updateDragonBallTrackerUI();
+    document.getElementById('gameover-modal').classList.remove('active');
+    spawnEnemyForWave();
+}
+
+document.querySelectorAll('.wish-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyWish(btn.dataset.wish));
+});
+document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+// --- Secret Admin/Testing Panel ---
+function toggleAdminPanel() {
+    let panel = document.getElementById('admin-panel');
+    panel.classList.toggle('active');
+    if (panel.classList.contains('active')) {
+        populateAdminFormSelect();
+        document.getElementById('admin-wave-input').value = gameState.wave;
+        document.getElementById('admin-zenkai-dmg').value = player.zenkaiDmgMult.toFixed(2);
+        document.getElementById('admin-zenkai-hp').value = player.zenkaiHpMult.toFixed(2);
+        document.getElementById('admin-god-mode').checked = godMode;
+    }
+}
+
+function populateAdminFormSelect() {
+    let select = document.getElementById('admin-form-select');
+    select.innerHTML = FORMS.map((f, i) => `<option value="${i}">${i}: ${f.name} (wave ${f.unlockWave}+)</option>`).join('');
+    select.value = player.formIndex;
+}
+
+// Force into a form immediately, bypassing the wave-unlock and Ki-cost gates (admin-only)
+function adminForceForm(index) {
+    player.formIndex = Math.max(0, Math.min(FORMS.length - 1, index));
+    player.ki = Math.max(player.ki, player.maxKi * 0.5);
+    let formUI = document.getElementById('form-name');
+    formUI.innerText = player.form.name;
+    formUI.style.color = player.form.color;
+    formUI.style.textShadow = `0 0 15px ${player.form.color}`;
+    formUI.classList.remove('pop');
+    void formUI.offsetWidth;
+    formUI.classList.add('pop');
+}
+
+document.getElementById('admin-close-btn').addEventListener('click', toggleAdminPanel);
+
+document.getElementById('admin-god-mode').addEventListener('change', e => {
+    godMode = e.target.checked;
+});
+
+document.getElementById('admin-panel').addEventListener('click', e => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+
+    if (action === 'set-wave') {
+        gameState.wave = Math.max(1, parseInt(document.getElementById('admin-wave-input').value) || 1);
+    } else if (action === 'wave+1' || action === 'wave+5') {
+        gameState.wave += (action === 'wave+1') ? 1 : 5;
+        document.getElementById('admin-wave-input').value = gameState.wave;
+    } else if (action === 'full-hp') {
+        player.hp = player.maxHp;
+    } else if (action === 'full-ki') {
+        player.ki = player.maxKi;
+    } else if (action === 'force-form') {
+        adminForceForm(parseInt(document.getElementById('admin-form-select').value));
+    } else if (action === 'kill-enemy') {
+        if (enemy && gameState.phase === 'fight') enemy.takeDamage(999999999, 0, 0, 10);
+    } else if (action === 'add-dball') {
+        collectDragonBall();
+    } else if (action === 'trigger-shenron') {
+        gameState.dbCount = 7;
+        updateDragonBallTrackerUI();
+        if (gameState.phase !== 'shenron' && gameState.phase !== 'gameover') {
+            triggerShenron();
+        }
+    } else if (action === 'apply-zenkai') {
+        player.zenkaiDmgMult = Math.max(0.1, parseFloat(document.getElementById('admin-zenkai-dmg').value) || 1);
+        player.zenkaiHpMult = Math.max(0.1, parseFloat(document.getElementById('admin-zenkai-hp').value) || 1);
+        player.maxHp = BASE_MAX_HP * player.zenkaiHpMult;
+        player.hp = Math.min(player.hp, player.maxHp);
+    } else if (action === 'force-gameover') {
+        if (gameState.phase === 'fight') player.takeDamage(999999999, 0, 0, 10);
+    } else if (action === 'restart') {
+        restartGame();
+    }
+});
+
+function updateAdminTelemetry() {
+    if (!document.getElementById('admin-panel').classList.contains('active')) return;
+    let t = document.getElementById('admin-telemetry');
+    t.innerText =
+`phase:      ${gameState.phase}
+wave/lap:   ${gameState.wave} / ${gameState.lap}
+score:      ${gameState.score}
+dragonballs:${gameState.dbCount}/7
+
+player hp:  ${Math.round(player.hp)}/${Math.round(player.maxHp)}
+player ki:  ${Math.round(player.ki)}/${player.maxKi}
+form:       ${player.formIndex} ${player.form.name}
+zenkai dmg: ${player.zenkaiDmgMult.toFixed(2)}x
+zenkai hp:  ${player.zenkaiHpMult.toFixed(2)}x
+god mode:   ${godMode}
+
+enemy:      ${enemy ? enemy.name : '-'}
+enemy hp:   ${enemy ? Math.round(enemy.hp) + '/' + Math.round(enemy.maxHp) : '-'}`;
+}
+
+spawnEnemyForWave();
+updateDragonBallTrackerUI();
+
+function hexToRgb(hex) {
+    if (!hex || hex[0] !== '#') return {r:255,g:255,b:255};
+    let h = hex.replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    const num = parseInt(h, 16);
+    return { r: (num>>16)&255, g: (num>>8)&255, b: num&255 };
+}
+
+function drawGrid(ctx, camX, camY, tintColor) {
+    const gridSize = 100;
+    let offsetX = camX % gridSize;
+    let offsetY = camY % gridSize;
+    const cx = width/2, cy = height/2;
+    const maxDist = Math.hypot(cx, cy);
+    const rgb = hexToRgb(tintColor);
+
+    ctx.lineWidth = 1;
+    // Draw grid lines with per-line radial-ish fade for a moody, spotlighted arena floor
+    for (let x = -offsetX; x < width; x += gridSize) {
+        let d = Math.abs(x - cx) / maxDist;
+        let a = Math.max(0, 0.09 - d * 0.06);
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    for (let y = -offsetY; y < height; y += gridSize) {
+        let d = Math.abs(y - cy) / maxDist;
+        let a = Math.max(0, 0.09 - d * 0.06);
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
+
+    // Soft ground spotlight beneath the action for depth
+    let spot = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxDist * 0.9);
+    spot.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.05)`);
+    spot.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = spot;
+    ctx.fillRect(0, 0, width, height);
+}
+
+function drawArenaBoundary(ctx, time) {
+    // Called within the world-space translated context — coordinates are world units.
+    const arenaSize = 2000;
+    const pulse = 0.5 + 0.5 * Math.sin(time * 0.002);
+
+    ctx.save();
+    ctx.strokeStyle = `rgba(120, 160, 255, ${0.15 + pulse * 0.1})`;
+    ctx.lineWidth = 6;
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "rgba(120,160,255,0.6)";
+    ctx.strokeRect(-arenaSize, -arenaSize, arenaSize*2, arenaSize*2);
+    ctx.restore();
+}
+
+let lastTime = performance.now();
+function gameLoop(time) {
+    let rawDt = (time - lastTime) / (1000/60); // Normalize to 60fps
+    lastTime = time;
+    if (rawDt > 3) rawDt = 3; // Prevent spiral of death on lag
+
+    // Hit-stop: briefly near-freeze the world on impactful hits for punchy game feel
+    let dt = rawDt;
+    if (hitStopTimer > 0) {
+        hitStopTimer -= 1;
+        dt = rawDt * 0.06;
+    }
+    
+    // Update logic — combat only advances while a fight is actively underway
+    if (gameState.phase === 'fight') {
+        player.update(dt);
+        if (enemy) enemy.update(dt);
+        player.lowestHpFrac = Math.min(player.lowestHpFrac, Math.max(0, player.hp / player.maxHp));
+    }
+
+    // Phase transitions: victory pause -> next wave, or Shenron if 7 Dragon Balls are in hand
+    if (gameState.phase === 'victory') {
+        gameState.phaseTimer -= dt;
+        if (gameState.phaseTimer <= 0) {
+            if (gameState.dbCount >= 7) {
+                triggerShenron();
+            } else {
+                gameState.phase = 'fight';
+                spawnEnemyForWave();
+            }
+        }
+    }
+
+    // Dragon Ball pickups: drift to a stop, auto-collect on proximity
+    for (let i = dragonBalls.length - 1; i >= 0; i--) {
+        let db = dragonBalls[i];
+        db.vx *= 0.9; db.vy *= 0.9;
+        db.x += db.vx; db.y += db.vy;
+        if (distance(db, player) < player.radius + 20) {
+            dragonBalls.splice(i, 1);
+            collectDragonBall();
+        }
+    }
+    
+    // Hitboxes (M1s, Specials)
+    for (let i = hitboxes.length - 1; i >= 0; i--) {
+        let hb = hitboxes[i];
+        hb.life -= dt;
+        
+        if (hb.life > 0) {
+            // Check collision
+            let target = hb.owner === player ? enemy : player;
+            
+            let hit = false;
+            if (hb.isCircular) {
+                hit = distance(hb, target) < hb.w/2 + target.radius;
+            } else {
+                hit = target.x > hb.x - hb.w/2 && target.x < hb.x + hb.w/2 &&
+                      target.y > hb.y - hb.h/2 && target.y < hb.y + hb.h/2;
+            }
+            
+            if (hit && target.isStunned <= 0 && target.hp > 0) { 
+                let kx = 0, ky = 0;
+                
+                // New logic safely computes knockback on arbitrary angles
+                if (hb.angle !== undefined) {
+                    kx = Math.cos(hb.angle) * hb.knockback;
+                    ky = Math.sin(hb.angle) * hb.knockback;
+                } else if (hb.isCircular) {
+                    let ang = angle(hb, target);
+                    kx = Math.cos(ang) * hb.knockback;
+                    ky = Math.sin(ang) * hb.knockback;
+                }
+                
+                let dmgMult = (hb.owner === player) ? player.zenkaiDmgMult : 1;
+                target.takeDamage(hb.damage * dmgMult, kx, ky, hb.stun);
+                hb.life = 0; // Consume hitbox
+                
+                // Visual Impact
+                let hx = (hb.owner.x + target.x)/2;
+                let hy = (hb.owner.y + target.y)/2;
+                particles.push(new Particle(hx, hy, 0, 0, hb.isFinisher ? 40 : 20, hb.color, 10, "ring"));
+
+                if (hb.isFinisher) {
+                    // Big hits get extra weight: hit-stop, chromatic burst, speed-lines, camera punch
+                    triggerHitStop(7);
+                    particles.push(new Particle(hx, hy, 0, 0, 15, hb.color, 22, "chromaRing"));
+                    particles.push(new Particle(hx, hy, 0, 0, 25, "#ffffff", 16, "impactLines", angle(hb.owner, target)));
+                    camera.targetZoom = 1.07;
+                    screenShake(15, 0.03);
+                } else {
+                    screenShake(3);
+                }
+            }
+        } else {
+            hitboxes.splice(i, 1);
+        }
+    }
+    
+    // Projectiles & Particles
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        projectiles[i].update(dt);
+        if (projectiles[i].life <= 0 || !projectiles[i].active) projectiles.splice(i, 1);
+    }
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update(dt);
+        if (particles[i].life <= 0) particles.splice(i, 1);
+    }
+    for (let i = effects.length - 1; i >= 0; i--) {
+        effects[i].life -= dt;
+        if (effects[i].life <= 0) effects.splice(i, 1);
+    }
+
+    // Safety valve: hard-cap array sizes so no pathological burst of activity can ever
+    // snowball into a performance death-spiral. Trims the oldest entries first.
+    if (particles.length > 350) particles.splice(0, particles.length - 350);
+    if (projectiles.length > 100) projectiles.splice(0, projectiles.length - 100);
+    if (hitboxes.length > 50) hitboxes.splice(0, hitboxes.length - 50);
+    
+    // Camera follow player
+    camera.x += (player.x - width/2 - camera.x) * 0.1;
+    camera.y += (player.y - height/2 - camera.y) * 0.1;
+
+    // Camera zoom punch, easing back to neutral
+    camera.targetZoom += (1 - camera.targetZoom) * 0.08;
+    camera.zoom += (camera.targetZoom - camera.zoom) * 0.3;
+    
+    // Screen Shake (positional + slight rotational punch on big hits)
+    let sx = 0, sy = 0, srot = 0;
+    if (camera.shakeAmount > 0) {
+        sx = random(-camera.shakeAmount, camera.shakeAmount);
+        sy = random(-camera.shakeAmount, camera.shakeAmount);
+        camera.shakeAmount *= 0.9;
+        if (camera.shakeAmount < 0.5) camera.shakeAmount = 0;
+    }
+    if (camera.shakeRot > 0) {
+        srot = random(-camera.shakeRot, camera.shakeRot);
+        camera.shakeRot *= 0.85;
+        if (camera.shakeRot < 0.002) camera.shakeRot = 0;
+    }
+    
+    // --- DRAWING ---
+    drawBackground(ctx, camera.x, camera.y, time);
+
+    let tintColor = player.formIndex > 0 ? player.form.color : "#3b82ff";
+    drawGrid(ctx, camera.x, camera.y, tintColor);
+    
+    ctx.save();
+    // Zoom + shake pivot around screen center, then pan to follow the camera
+    ctx.translate(width/2, height/2);
+    ctx.rotate(srot);
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-width/2, -height/2);
+    ctx.translate(-camera.x + sx, -camera.y + sy);
+
+    drawArenaBoundary(ctx, time);
+    
+    // Sort particles by type vaguely (auras behind)
+    particles.forEach(p => { if(p.type === "aura" || p.type === "ghost" || p.type === "flameLick") p.draw(ctx); });
+    
+    if (enemy) enemy.draw(ctx);
+    player.draw(ctx);
+    
+    particles.forEach(p => { if(p.type !== "aura" && p.type !== "ghost" && p.type !== "flameLick") p.draw(ctx); });
+    projectiles.forEach(p => p.draw(ctx));
+
+    // Dragon Ball pickups — glowing orb with its star count, DBZ-style
+    dragonBalls.forEach(db => {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        let glow = ctx.createRadialGradient(db.x, db.y, 0, db.x, db.y, 20);
+        glow.addColorStop(0, "#fff4c2");
+        glow.addColorStop(0.5, "#ffaa00");
+        glow.addColorStop(1, "rgba(255,150,0,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(db.x, db.y, 20, 0, Math.PI*2); ctx.fill();
+
+        ctx.globalCompositeOperation = "source-over";
+        let orbGrad = ctx.createRadialGradient(db.x-3, db.y-3, 0, db.x, db.y, 10);
+        orbGrad.addColorStop(0, "#fff0b0");
+        orbGrad.addColorStop(1, "#ff9900");
+        ctx.fillStyle = orbGrad;
+        ctx.beginPath(); ctx.arc(db.x, db.y, 9, 0, Math.PI*2); ctx.fill();
+
+        ctx.fillStyle = "#dd2222";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`★${db.star}`, db.x, db.y + 1);
+        ctx.restore();
+    });
+    
+    ctx.restore();
+    
+    // Screen UI Effects (Flashes / beam glow)
+    effects.forEach(e => {
+        if (e.type === 'flash') {
+            ctx.fillStyle = e.color;
+            ctx.globalAlpha = (e.life / e.maxLife) * 0.5;
+            ctx.fillRect(0, 0, width, height);
+            ctx.globalAlpha = 1.0;
+        } else if (e.type === 'beamGlow') {
+            ctx.save();
+            ctx.globalCompositeOperation = "lighter";
+            let g = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width,height) * 0.7);
+            g.addColorStop(0, "rgba(0,0,0,0)");
+            g.addColorStop(1, e.color);
+            ctx.globalAlpha = (e.life / e.maxLife) * 0.18;
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+        }
+    });
+    
+    // --- UPDATE DOM UI ---
+    let hpFrac = Math.max(0, player.hp / player.maxHp);
+    document.getElementById('health-bar').style.width = `${hpFrac * 100}%`;
+    document.getElementById('hp-text').innerText = `${Math.floor(Math.max(0, player.hp))}`;
+    document.getElementById('health-bar').classList.toggle('low-hp', hpFrac < 0.25);
+    document.getElementById('vignette-danger').classList.toggle('active', hpFrac < 0.25);
+    
+    let kiPct = (player.ki / player.maxKi) * 100;
+    let kiBar = document.getElementById('ki-bar');
+    kiBar.style.width = `${kiPct}%`;
+    document.getElementById('ki-text').innerText = `${Math.floor(kiPct)}%`;
+    
+    // Pulse Ki bar if max or flash if not enough
+    if (player.kiFlash > 0) {
+        kiBar.style.boxShadow = "0 0 15px #ff0000";
+        kiBar.style.background = "#ff0000";
+    } else if (kiPct >= 100) {
+        kiBar.style.boxShadow = `0 0 15px ${player.form.color}`;
+        kiBar.style.background = player.form.color;
+    } else {
+        kiBar.style.boxShadow = "inset 0 0 5px rgba(255,255,255,0.5)";
+        kiBar.style.background = "linear-gradient(90deg, #3b82ff, #3be0ff)";
+    }
+    
+    document.getElementById('enemy-health-bar').style.width = `${enemy ? Math.max(0, (enemy.hp / enemy.maxHp) * 100) : 0}%`;
+    document.getElementById('wave-count').innerText = gameState.wave;
+    document.getElementById('power-level').innerText = gameState.score;
+    updateAdminTelemetry();
+
+    // Next-form progression hint
+    let hintEl = document.getElementById('next-form-hint');
+    if (player.formIndex >= FORMS.length - 1) {
+        hintEl.innerHTML = `<span class="ready">★ Ultimate Form Achieved ★</span>`;
+    } else {
+        let nextForm = FORMS[player.formIndex + 1];
+        if (gameState.wave < nextForm.unlockWave) {
+            hintEl.innerHTML = `Next: ${nextForm.name} <span class="locked">(unlocks Wave ${nextForm.unlockWave})</span>`;
+        } else if (kiPct >= 95) {
+            hintEl.innerHTML = `<span class="ready">${nextForm.name} ready — press T!</span>`;
+        } else {
+            hintEl.innerHTML = `Next: ${nextForm.name} <span class="locked">(charge Ki to transform)</span>`;
+        }
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+// Start
+requestAnimationFrame(gameLoop);
+
+</script>
+</body>
+</html>

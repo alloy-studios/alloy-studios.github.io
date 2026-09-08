@@ -11,7 +11,15 @@ Alloy.boot(({ games }) => {
   }
 
   const featured = games.find(g => g.featured) || games[0];
-  const tags = [...new Set(games.flatMap(g => g.tags || []))].sort();
+
+  // Only tags that group something. A chip per one-off tag is a wall of
+  // chips that pushes the games below the fold - search still finds those.
+  const counts = {};
+  for (const g of games) for (const t of g.tags || []) counts[t] = (counts[t] || 0) + 1;
+  const tags = Object.keys(counts)
+    .filter(t => counts[t] > 1)
+    .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))
+    .slice(0, 12);
 
   main.innerHTML = `
     <div class="wrap">
