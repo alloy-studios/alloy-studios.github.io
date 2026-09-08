@@ -61,8 +61,7 @@ Alloy.boot(({ games, site }) => {
       <div class="loader" id="loader"><div class="spinner"></div></div>
       <iframe id="frame" src="/games/${Alloy.esc(game.id)}/"
               title="${Alloy.esc(game.title)}"
-              allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; xr-spatial-tracking"
-              allowfullscreen></iframe>
+              allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; xr-spatial-tracking"></iframe>
     </div>
 
     <div class="wrap">

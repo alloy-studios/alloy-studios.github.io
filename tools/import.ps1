@@ -47,7 +47,7 @@ if (-not $gameRoot) {
 
 # Copy, leaving repo plumbing behind.
 $dest = Join-Path $Root "games\$Id"
-robocopy $gameRoot $dest /E /XD .git .github .claude .vscode node_modules /XF .DS_Store /NFL /NDL /NJH /NJS /NP | Out-Null
+robocopy $gameRoot $dest /E /XD .git .github .claude .vscode node_modules /XF .DS_Store README.md LICENSE .gitignore /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed with code $LASTEXITCODE" }
 $global:LASTEXITCODE = 0
 Write-Host "Copied $gameRoot"

@@ -6,6 +6,27 @@
   },
   "games": [
     {
+      "id": "neon-survivor-legends",
+      "title": "Neon Survivor Legends",
+      "tagline": "Survive the swarm, fuse legendary powers.",
+      "description": "Level seven base weapons to max and fuse them in pairs. Hold exactly three Fusions at once to unlock a Super Fusion. Endless roguelite survival against a swarm that never stops growing.",
+      "tags": ["roguelite", "survival", "action"],
+      "accent": "#22d3ee",
+      "controls": "WASD or arrows to move, Space to dash, 1-3 to pick",
+      "added": "2026-09-08",
+      "featured": true
+    },
+    {
+      "id": "speed-simulator",
+      "title": "Neon Speed Simulator",
+      "tagline": "Gather speed, unlock skins and trails.",
+      "description": "Build up raw speed, spend it on upgrades, and unlock skins with trails in the hangar. Sign in to keep your progress across sessions, or jump straight in as a guest.",
+      "tags": ["idle", "upgrades", "sci-fi"],
+      "accent": "#f472b6",
+      "controls": "Mouse / touch",
+      "added": "2026-09-08"
+    },
+    {
       "id": "orbit-dash",
       "title": "Orbit Dash",
       "tagline": "One button. Infinite orbits.",
@@ -14,8 +35,7 @@
       "accent": "#7c5cff",
       "controls": "Click / Space to jump orbit",
       "aspect": "16/9",
-      "added": "2026-09-08",
-      "featured": true
+      "added": "2026-09-08"
     }
   ]
 }
