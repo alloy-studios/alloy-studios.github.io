@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found - Alloy Studios</title>
+<link rel="icon" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/assets/shell.css">
+</head>
+<body>
+<main></main>
+<script src="/assets/shell.js"></script>
+<script>
+Alloy.boot(({ games }) => {
+  // If the URL looks like a game name, offer the closest matches first.
+  const guess = decodeURIComponent(location.pathname.split('/').filter(Boolean)[0] || '')
+    .replace(/[-_]+/g, ' ');
+  const near = guess ? Alloy.search(guess) : [];
+  const list = near.length ? near : games;
+
+  document.querySelector('main').innerHTML = `
+    <div class="wrap">
+      <div class="empty">
+        <h2>We could not find that page</h2>
+        <p>${near.length ? 'Did you mean one of these?' : 'Here is everything we do have.'}</p>
+      </div>
+      <div class="grid">${list.map(Alloy.cardHTML).join('')}</div>
+    </div>`;
+});
+</script>
+</body>
+</html>

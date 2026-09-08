@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit Dash</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05060c; overflow: hidden;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/* Orbit Dash - demo game for the Alloy Studios shell.
+   Self-contained: no assets, no libraries, nothing outside this file. */
+
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, cx = 0, cy = 0, unit = 0;
+
+function resize() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx = W / 2; cy = H / 2;
+  unit = Math.min(W, H) / 100;
+}
+addEventListener('resize', resize);
+resize();
+
+const RING = [26, 40];              // orbit radii, in units
+const stars = Array.from({ length: 90 }, () => ({
+  x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + .3, a: Math.random() * .6 + .2
+}));
+
+let state, best = +(localStorage.getItem('orbitdash.best') || 0);
+
+function reset() {
+  state = {
+    ring: 0, r: RING[0], ang: -Math.PI / 2, spin: 1.5,
+    rocks: [], t: 0, score: 0, over: false, shake: 0, trail: []
+  };
+}
+reset();
+
+function swap() {
+  if (state.over) { reset(); return; }
+  state.ring = 1 - state.ring;
+}
+
+addEventListener('pointerdown', swap);
+addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+    e.preventDefault(); swap();
+  }
+});
+
+function spawn() {
+  const ring = Math.random() < .5 ? 0 : 1;
+  state.rocks.push({
+    ring,
+    ang: state.ang + Math.PI * (0.9 + Math.random() * 0.7),
+    size: 1.8 + Math.random() * 1.4,
+    hue: 200 + Math.random() * 60
+  });
+}
+
+let last = performance.now(), acc = 0;
+
+function step(dt) {
+  const s = state;
+  if (s.over) { s.shake *= 0.9; return; }
+
+  s.t += dt;
+  s.score += dt * 10;
+  s.spin = 1.5 + Math.min(s.t / 30, 1.4);          // speeds up over ~30s
+  s.ang += s.spin * dt;
+
+  const target = RING[s.ring];
+  s.r += (target - s.r) * Math.min(1, dt * 11);     // smooth orbit change
+
+  s.trail.unshift({ ang: s.ang, r: s.r });
+  if (s.trail.length > 22) s.trail.pop();
+
+  if (Math.random() < dt * (1.1 + s.t / 40)) spawn();
+
+  for (const rock of s.rocks) {
+    rock.ang -= s.spin * 0.55 * dt;                 // rocks drift the other way
+    const near = Math.abs(RING[rock.ring] - s.r) < 5;
+    let d = Math.abs(((rock.ang - s.ang + Math.PI) % (Math.PI * 2)) - Math.PI);
+    if (near && d < 0.11) {
+      s.over = true; s.shake = 14;
+      best = Math.max(best, Math.floor(s.score));
+      localStorage.setItem('orbitdash.best', best);
+    }
+  }
+  s.rocks = s.rocks.filter(r => Math.abs(r.ang - s.ang) < Math.PI * 3);
+}
+
+function pos(ang, r) {
+  return [cx + Math.cos(ang) * r * unit, cy + Math.sin(ang) * r * unit];
+}
+
+function draw() {
+  const s = state;
+  ctx.save();
+  if (s.shake > .2) ctx.translate((Math.random() - .5) * s.shake, (Math.random() - .5) * s.shake);
+
+  ctx.fillStyle = '#05060c';
+  ctx.fillRect(-20, -20, W + 40, H + 40);
+
+  for (const st of stars) {
+    ctx.globalAlpha = st.a;
+    ctx.fillStyle = '#9fb2ff';
+    ctx.fillRect(st.x * W, st.y * H, st.r, st.r);
+  }
+  ctx.globalAlpha = 1;
+
+  // orbit rings
+  RING.forEach((rr, i) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr * unit, 0, Math.PI * 2);
+    ctx.strokeStyle = i === s.ring ? 'rgba(124,92,255,.55)' : 'rgba(255,255,255,.09)';
+    ctx.lineWidth = i === s.ring ? 2 : 1;
+    ctx.stroke();
+  });
+
+  // planet
+  const grd = ctx.createRadialGradient(cx - unit * 4, cy - unit * 5, unit, cx, cy, unit * 15);
+  grd.addColorStop(0, '#3b2f8f');
+  grd.addColorStop(1, '#120f2c');
+  ctx.beginPath(); ctx.arc(cx, cy, unit * 14, 0, Math.PI * 2);
+  ctx.fillStyle = grd; ctx.fill();
+  ctx.strokeStyle = 'rgba(34,211,238,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // rocks
+  for (const rock of s.rocks) {
+    const [x, y] = pos(rock.ang, RING[rock.ring]);
+    ctx.beginPath(); ctx.arc(x, y, rock.size * unit * .5, 0, Math.PI * 2);
+    ctx.fillStyle = `hsl(${rock.hue} 80% 62%)`;
+    ctx.shadowColor = `hsl(${rock.hue} 90% 60%)`; ctx.shadowBlur = 14;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+
+  // player trail + ship
+  s.trail.forEach((p, i) => {
+    const [x, y] = pos(p.ang, p.r);
+    ctx.globalAlpha = (1 - i / s.trail.length) * .5;
+    ctx.beginPath(); ctx.arc(x, y, unit * 1.1 * (1 - i / s.trail.length), 0, Math.PI * 2);
+    ctx.fillStyle = '#22d3ee'; ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  const [px, py] = pos(s.ang, s.r);
+  ctx.beginPath(); ctx.arc(px, py, unit * 1.7, 0, Math.PI * 2);
+  ctx.fillStyle = s.over ? '#ff5c7c' : '#eef1f7';
+  ctx.shadowColor = s.over ? '#ff5c7c' : '#22d3ee'; ctx.shadowBlur = 20;
+  ctx.fill(); ctx.shadowBlur = 0;
+
+  // hud
+  ctx.fillStyle = '#eef1f7';
+  ctx.font = `700 ${unit * 5}px -apple-system, "Segoe UI", sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillText(Math.floor(s.score), unit * 4, unit * 9);
+  ctx.fillStyle = '#646d84';
+  ctx.font = `500 ${unit * 2.6}px -apple-system, "Segoe UI", sans-serif`;
+  ctx.fillText('BEST ' + best, unit * 4, unit * 13);
+
+  if (s.over) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#eef1f7';
+    ctx.font = `800 ${unit * 7}px -apple-system, "Segoe UI", sans-serif`;
+    ctx.fillText('CRASHED', cx, cy - unit * 24);
+    ctx.fillStyle = '#9aa3b8';
+    ctx.font = `500 ${unit * 3}px -apple-system, "Segoe UI", sans-serif`;
+    ctx.fillText('click or press space to fly again', cx, cy - unit * 19);
+  } else if (s.t < 3) {
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = Math.max(0, 1 - s.t / 3);
+    ctx.fillStyle = '#9aa3b8';
+    ctx.font = `500 ${unit * 3}px -apple-system, "Segoe UI", sans-serif`;
+    ctx.fillText('click or press space to switch orbit', cx, cy + unit * 25);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  step(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "site": {
+    "name": "Alloy Studios",
+    "tagline": "Games by 142436",
+    "origin": "https://142436.github.io"
+  },
+  "games": [
+    {
+      "id": "orbit-dash",
+      "title": "Orbit Dash",
+      "tagline": "One button. Infinite orbits.",
+      "description": "Hop between orbits, dodge the debris, chase the high score. A demo game that proves the shell works - replace or delete it once your real games are in.",
+      "tags": ["arcade", "one-button", "endless"],
+      "accent": "#7c5cff",
+      "controls": "Click / Space to jump orbit",
+      "aspect": "16/9",
+      "added": "2026-09-08",
+      "featured": true
+    }
+  ]
+}
