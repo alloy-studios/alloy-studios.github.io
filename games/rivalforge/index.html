@@ -4153,11 +4153,23 @@ var Post = (function () {
 
   var rt = null, mip = [], quad = null, qscene = null, qcam = null, ready = false;
 
-  function makeRT(w, h) {
+  /* `depth` MUST be true for the scene target and false for the bloom
+     mips.  The mips are full-screen blits and never need it; the scene
+     target needs it for the obvious reason, and getting this wrong is
+     silent and total.
+
+     With no depth attachment the depth test cannot fail, so the whole
+     frame — world and viewmodel alike — falls back to paint order.  It
+     does not look like "no depth", because three still sorts opaque
+     objects by distance, so most of a scene lands roughly right; what
+     you get instead is parts of a weapon stacking in the wrong order
+     against each other, a scope reading as a cursed jumble, and light
+     shafts drawing over things in front of them. */
+  function makeRT(w, h, depth) {
     var t = new THREE.WebGLRenderTarget(Math.max(2, w | 0), Math.max(2, h | 0), {
       minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat, type: THREE.HalfFloatType,
-      depthBuffer: false, stencilBuffer: false
+      depthBuffer: !!depth, stencilBuffer: false
     });
     t.texture.generateMipmaps = false;
     t.texture.wrapS = t.texture.wrapT = THREE.ClampToEdgeWrapping;
@@ -4302,7 +4314,7 @@ var Post = (function () {
     if (!ready || !(w > 1) || !(h > 1)) return;
     P.W = w; P.H = h;
     if (rt) rt.dispose();
-    rt = makeRT(w, h);
+    rt = makeRT(w, h, true);           // the scene target keeps its depth
     for (var i = 0; i < mip.length; i++) mip[i].dispose();
     mip = [];
     var mw = w, mh = h;
@@ -5976,7 +5988,9 @@ var Player = (function () {
       P.scopeEl.style.opacity = scoping.toFixed(3);
       P.scopeEl.style.setProperty('--ap', (33 - (1 - scoping) * 5).toFixed(2) + 'vh');
     }
-    var hideVm = scoping > .82;
+    // `terminal` is set by the UI: with the armory open the showcase is
+    // the subject, and the carried weapon drawn across it is just clutter
+    var hideVm = scoping > .82 || P.terminal;
     P.hideArms = hideVm;                 // posArms() re-shows them otherwise
     rig.sway.visible = !hideVm;
     if (window.HUD && HUD.setCrossVisible) HUD.setCrossVisible(scoping < .5);
@@ -6652,14 +6666,14 @@ var UI = (function () {
     var g = new THREE.Group();
     g.visible = false;
     // a small machined pedestal so the weapon is standing somewhere
-    var base = new THREE.Mesh(new THREE.CylinderGeometry(.30, .36, .045, 28),
+    var base = new THREE.Mesh(new THREE.CylinderGeometry(.21, .26, .038, 28),
       Stage.metal({ color: 0x39414e, roughness: .38, metalness: .95 }));
-    base.position.y = -.30; g.add(base);
-    var ring = new THREE.Mesh(new THREE.TorusGeometry(.31, .008, 6, 34),
+    base.position.y = -.185; g.add(base);
+    var ring = new THREE.Mesh(new THREE.TorusGeometry(.22, .007, 6, 34),
       Stage.metal({ color: 0x8792a3, roughness: .2, metalness: 1 }));
-    ring.rotation.x = Math.PI / 2; ring.position.y = -.276; g.add(ring);
-    var pool = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), Stage.glow(Tex.blob(128, 0, 2.2), 0xbcd4ff, .28));
-    pool.rotation.x = -Math.PI / 2; pool.position.y = -.277; pool.renderOrder = 4; g.add(pool);
+    ring.rotation.x = Math.PI / 2; ring.position.y = -.165; g.add(ring);
+    var pool = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), Stage.glow(Tex.blob(128, 0, 2.2), 0xbcd4ff, .28));
+    pool.position.y = -.166; pool.renderOrder = 4; g.add(pool);
 
     var mount = new THREE.Group();
     g.add(mount);
@@ -6679,7 +6693,17 @@ var UI = (function () {
     fill.color.copy(Stage.C(0x8fb0e0));
     fill.position.set(.35, -.55, 1.0); g.add(fill);
 
-    Stage.scene.add(g);
+    /* The showcase lives in the VIEWMODEL scene, not the world.
+
+       In the world it was placed relative to wherever the player
+       happened to be standing and looking, so it could land inside a
+       wall or the bench (parts missing, parts apparently stuck to
+       masonry), and it was read from the camera one frame before
+       Player.tick had updated it.  In the viewmodel scene the camera
+       is fixed at the origin, so the weapon sits at a constant place,
+       renders after the world's depth is cleared, and can never
+       intersect anything. */
+    Stage.vmScene.add(g);
     return { group: g, mount: mount, pool: pool, key: key, rim: rim, gun: null };
   }
 
@@ -6695,7 +6719,7 @@ var UI = (function () {
     var ctr = bb.getCenter(new THREE.Vector3());
     var size = bb.getSize(new THREE.Vector3());
     gun.position.sub(ctr);
-    var scale = .92 / Math.max(size.x, .3);
+    var scale = 1.08 / Math.max(size.x, .3);
     sc.mount.scale.setScalar(scale);
     sc.mount.add(gun);
     sc.gun = gun;
@@ -6706,18 +6730,12 @@ var UI = (function () {
   }
 
   function placeShowcase() {
-    var sc = U.showcase;
-    // Sits in the gap between the two rails, not at screen centre —
-    // the racks are 212 px and the grid 392 px, so the visible hole is
-    // about 90 px left of middle.  Raised so the inspector panel at the
-    // bottom does not cover the weapon.
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(Stage.cam.quaternion);
-    var right = new THREE.Vector3(1, 0, 0).applyQuaternion(Stage.cam.quaternion);
-    sc.group.position.copy(Stage.cam.position)
-      .addScaledVector(fwd, 1.42)
-      .addScaledVector(right, -.105);
-    sc.group.position.y = Stage.cam.position.y + .26;
-    sc.group.visible = true;
+    // Fixed, in viewmodel space.  Sits in the gap between the two rails
+    // rather than at screen centre — the racks are 212 px and the grid
+    // 392 px, so the visible hole is about 90 px left of middle — and
+    // rides high enough that the inspector panel does not cover it.
+    U.showcase.group.position.set(-.155, .045, -1.30);
+    U.showcase.group.visible = true;
   }
 
   /* ================================================================
@@ -6752,6 +6770,7 @@ var UI = (function () {
     $('#prompt').classList.remove('on');
     Player.releaseLock();
     Player.firing = false;
+    Player.terminal = true;
     refreshWallet();
     if (U.screen === 'armory') { openArmory(); }
     else { U.showcase.group.visible = false; }
@@ -6762,6 +6781,7 @@ var UI = (function () {
     U.open = false;
     $('#screens').classList.remove('on');
     U.showcase.group.visible = false;
+    Player.terminal = false;
     Game.state = Drill.running ? 'run' : 'idle';
     Player.refresh();
     Player.requestLock();
@@ -7069,9 +7089,9 @@ var UI = (function () {
     U.turn += dt * .5;
     U.showcase.mount.rotation.y = U.turn;
     U.showcase.mount.rotation.x = Math.sin(time * .5) * .07;
-    U.showcase.mount.position.y = Math.sin(time * .8) * .012;
-    U.showcase.pool.lookAt(Stage.cam.position);
-    U.showcase.pool.position.y = U.showcase.group.position.y - .277 + 0;
+    U.showcase.mount.position.y = -.012 + Math.sin(time * .8) * .012;
+    // the vm camera sits at the origin of this scene
+    U.showcase.pool.lookAt(0, 0, 0);
   };
 
   return U;
