@@ -17,7 +17,11 @@
       "title": "Neon Survivor Legends",
       "tagline": "Survive the swarm, fuse legendary powers.",
       "description": "Level seven base weapons to max and fuse them in pairs. Hold exactly three Fusions at once to unlock a Super Fusion. Endless roguelite survival against a swarm that never stops growing.",
-      "tags": ["roguelite", "survival", "action"],
+      "tags": [
+        "roguelite",
+        "survival",
+        "action"
+      ],
       "accent": "#22d3ee",
       "controls": "WASD or arrows to move, Space to dash, 1-3 to pick",
       "added": "2026-09-08",
@@ -28,7 +32,11 @@
       "title": "Rivalforge",
       "tagline": "Chain clean hits in the calibration bay.",
       "description": "Wave after wave in Calibration Bay 04. Every clean hit builds your chain multiplier and every miss resets it, so the score comes from accuracy rather than volume.",
-      "tags": ["action", "arena", "score-attack"],
+      "tags": [
+        "action",
+        "arena",
+        "score-attack"
+      ],
       "accent": "#f97316",
       "controls": "WASD to move, mouse to aim, Shift to dash, 1-3 to switch",
       "added": "2026-09-08"
@@ -38,7 +46,11 @@
       "title": "Port Vesper",
       "tagline": "Eighteen square blocks of bad decisions.",
       "description": "An open-city sandbox: drive, shoot, jack cars, rob shops and outrun the police. The law only knows what it sees, so break line of sight and they search your last known position instead of you.",
-      "tags": ["sandbox", "action", "driving"],
+      "tags": [
+        "sandbox",
+        "action",
+        "driving"
+      ],
       "accent": "#ef4444",
       "controls": "WASD to move or drive, mouse to aim, E to enter a car, R to rob, Space to handbrake",
       "added": "2026-09-08"
@@ -48,7 +60,11 @@
       "title": "Blox Fruits 2D",
       "tagline": "Pirate cay, ten fruits, four swords.",
       "description": "A 2D take on the pirate island grind. Take bounties from Hunter Marco, fight bandits along the cay, and swap between fruit and sword loadouts mid-fight. This is the beta build, so everything is unlocked for testing.",
-      "tags": ["action", "rpg", "adventure"],
+      "tags": [
+        "action",
+        "rpg",
+        "adventure"
+      ],
       "accent": "#84cc16",
       "controls": "WASD to move, mouse to aim, Z X C V F for moves, Shift to dash, Tab for inventory",
       "added": "2026-09-08"
@@ -58,7 +74,11 @@
       "title": "Blue Lock Rivals: Ego Arena",
       "tagline": "Three hundred strikers. One goal.",
       "description": "A single-file football game and fan tribute. Devour the ball, devour your rivals, and become the world's greatest egoist across two-minute matches. The pitch, the strikers, the cut-in cutscenes, the crowd and every sound effect are generated at runtime.",
-      "tags": ["sports", "football", "anime"],
+      "tags": [
+        "sports",
+        "football",
+        "anime"
+      ],
       "accent": "#3b82f6",
       "controls": "WASD to move, Shift to dash, J to shoot, K to pass, L to tackle",
       "added": "2026-09-08"
@@ -68,7 +88,11 @@
       "title": "Solo Leveling: Arise",
       "tagline": "Allocate your points. Clear the dungeon.",
       "description": "A System-driven progression RPG. Raise strength, agility, vitality, perception and intelligence, choose a class, kit out your inventory, and push deeper into the dungeons. Beta build, still changing.",
-      "tags": ["rpg", "progression", "anime"],
+      "tags": [
+        "rpg",
+        "progression",
+        "anime"
+      ],
       "accent": "#8b5cf6",
       "controls": "Mouse to navigate, Space and Esc",
       "added": "2026-09-08"
@@ -78,7 +102,11 @@
       "title": "Echoes",
       "tagline": "Recovered audio. Do not play alone.",
       "description": "A horror game in three recovered tracks, where sound carries the information rather than decorating it. Headphones strongly recommended, and the warning on the title screen is not decoration either.",
-      "tags": ["horror", "atmospheric", "audio"],
+      "tags": [
+        "horror",
+        "atmospheric",
+        "audio"
+      ],
       "accent": "#64748b",
       "controls": "Mouse. Headphones strongly recommended",
       "added": "2026-09-08"
@@ -88,7 +116,11 @@
       "title": "Anime Survivors",
       "tagline": "Awaken your weapons, then go further.",
       "description": "Bullet-heaven survival, visually remastered. Reach level 5 to awaken your weapons and level 10 to unleash their true ultimate forms, with anomaly bosses breaking in as you climb.",
-      "tags": ["roguelite", "survival", "anime"],
+      "tags": [
+        "roguelite",
+        "survival",
+        "anime"
+      ],
       "accent": "#ec4899",
       "controls": "WASD or arrows to move, touch and drag on mobile",
       "added": "2026-09-08"
@@ -98,7 +130,11 @@
       "title": "Aura Fighters",
       "tagline": "Charge your ki. Transform. Clear the wave.",
       "description": "Wave-based arena brawling with a power level that never stops climbing. Charge ki, fire blasts, trigger specials, and transform once the gauge fills, taking a Zenkai boost every time a wave falls.",
-      "tags": ["action", "fighting", "anime"],
+      "tags": [
+        "action",
+        "fighting",
+        "anime"
+      ],
       "accent": "#fbbf24",
       "controls": "WASD to move, mouse to aim, Q to dash, 1 ki blast, 2 special, hold C to charge, T to transform",
       "added": "2026-09-08"
@@ -108,7 +144,11 @@
       "title": "Neon Defense Grid",
       "tagline": "Six towers against the incursion.",
       "description": "Tower defense on a neon grid. Build pulse blasters, void spitters, arc emitters, artillery nodes, hive drones and rail-spires, then deconstruct and rebuild as the incursion escalates and your system integrity drains.",
-      "tags": ["tower-defense", "strategy", "sci-fi"],
+      "tags": [
+        "tower-defense",
+        "strategy",
+        "sci-fi"
+      ],
       "accent": "#10b981",
       "controls": "Mouse to place and upgrade towers",
       "added": "2026-09-08"
@@ -118,7 +158,11 @@
       "title": "Foil & Fortune",
       "tagline": "Run the card shop floor.",
       "description": "Card shop management. Order cartons from the wholesale catalog, shelve and price them, scan customers through the till, and keep reputation and cleanliness up as the queue grows. Better sets stay locked behind licences.",
-      "tags": ["simulation", "management", "cards"],
+      "tags": [
+        "simulation",
+        "management",
+        "cards"
+      ],
       "accent": "#d946ef",
       "controls": "WASD to move around the shop, click to interact",
       "added": "2026-09-08"
@@ -128,7 +172,11 @@
       "title": "Abyssal Dredging",
       "tagline": "Idle salvage from the trench.",
       "description": "Drop nets into the abyss, haul up specimens and scrap, then spend it on high-torque motors, phosphor lures and heavier nets to pull more per trip. Runs itself once the automation is assembled.",
-      "tags": ["idle", "incremental", "upgrades"],
+      "tags": [
+        "idle",
+        "incremental",
+        "upgrades"
+      ],
       "accent": "#0891b2",
       "controls": "Mouse / touch",
       "added": "2026-09-08"
@@ -138,7 +186,11 @@
       "title": "Neon Speed Simulator",
       "tagline": "Gather speed, unlock skins and trails.",
       "description": "Build up raw speed, spend it on upgrades, and unlock skins with trails in the hangar. Sign in to keep your progress across sessions, or jump straight in as a guest.",
-      "tags": ["idle", "upgrades", "sci-fi"],
+      "tags": [
+        "idle",
+        "upgrades",
+        "sci-fi"
+      ],
       "accent": "#f472b6",
       "controls": "Mouse / touch",
       "added": "2026-09-08"
@@ -148,7 +200,11 @@
       "title": "Cosmic Climb",
       "tagline": "3,000 metres to the centre of the universe.",
       "description": "Climb from the sky through the stratosphere, deep space and nebulas to reach the Center of the Universe, three thousand meters up, one jump at a time.",
-      "tags": ["arcade", "platformer", "vertical"],
+      "tags": [
+        "arcade",
+        "platformer",
+        "vertical"
+      ],
       "accent": "#a855f7",
       "controls": "A/D or arrows to move, W, Up or Space to jump",
       "added": "2026-09-08"
@@ -158,11 +214,27 @@
       "title": "Orbit Dash",
       "tagline": "One button. Infinite orbits.",
       "description": "One button, two orbits, and debris coming the other way. Tap to swap rings, thread the gaps, and watch the whole thing speed up under you. Your best run is saved locally.",
-      "tags": ["arcade", "one-button", "endless"],
+      "tags": [
+        "arcade",
+        "one-button",
+        "endless"
+      ],
       "accent": "#7c5cff",
       "controls": "Click / Space to jump orbit",
       "aspect": "16/9",
       "added": "2026-09-08"
+    },
+    {
+      "id": "alloymind",
+      "title": "Alloy Mind",
+      "tagline": "",
+      "description": "Play Alloy Mind free in your browser.",
+      "tags": [
+        "study",
+        "learning"
+      ],
+      "controls": "Make a set and choose between answer choices. If you have claude api, you can use it to make smarter responses.",
+      "added": "2026-09-09"
     }
   ]
 }
