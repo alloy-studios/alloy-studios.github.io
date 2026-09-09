@@ -1773,12 +1773,18 @@ var Arsenal = (function () {
   /* ---------------------------------------------- sights
 
      Three different instruments, because they are three different
-     instruments.  What they share is that every tube stays OPEN and
-     SINGLE-sided: a capped or lined tube means that on aiming you are
-     looking at the back of a disc, or at the tube's own inner wall,
-     and the clear aperture works out at about 5% of screen height.
-     Single-sided leaves the interior back-facing and culled, so the
-     bore is genuinely clear and the reticle floats over the world. */
+     instruments.
+
+     Every tube is OPEN and TWO-SIDED, with a matte black liner.
+     Open so it is not a solid disc you aim at the back of; two-sided
+     because single-sided culls the far wall and the tube renders as a
+     half-pipe you can see straight through from any outside angle;
+     lined so the bore is black rather than wearing the weapon's skin.
+
+     What makes each one aimable is then specific to the instrument:
+     the red dot's tube is 60 mm long, so its bore stays wide open at
+     eye distance, and the scope does not rely on its bore at all —
+     the Longbow raises the full-screen overlay and hides the weapon. */
 
   /* RED DOT — short, wide, unmagnified.  A boxy housing you look
      through rather than down.  Cinder. */
@@ -1786,7 +1792,8 @@ var Arsenal = (function () {
     return [
       { k: 'box', w: .072, h: .014, d: .030, x: x, y: y - r - .010, mat: 'accent', name: 'mount' },
       { k: 'box', w: .012, h: .022, d: .030, x: x, y: y - r + .004, mat: 'accent', name: 'stem' },
-      { k: 'cyl', r1: r, h: .060, seg: 20, ax: 'x', x: x, y: y, mat: 'metal', name: 'rd-tube', open: true },
+      { k: 'cyl', r1: r, h: .060, seg: 20, ax: 'x', x: x, y: y, mat: 'metal', name: 'rd-tube', open: true, two: true },
+      { k: 'cyl', r1: r * .86, h: .058, seg: 20, ax: 'x', x: x, y: y, mat: 'dark', name: 'rd-liner', open: true, two: true },
       { k: 'tor', r: r * 1.06, t: .0055, seg: 20, ax: 'x', x: x - .029, y: y, mat: 'accent', name: 'rd-ring' },
       { k: 'tor', r: r * 1.06, t: .0055, seg: 20, ax: 'x', x: x + .029, y: y, mat: 'accent', name: 'rd-ring' },
       // a hood over the top, the detail that says "red dot" in one glance
@@ -1815,9 +1822,10 @@ var Arsenal = (function () {
       { k: 'box', w: len * .5, h: .016, d: .03, x: x, y: y - r - .012, mat: 'accent', name: 'mount' },
       { k: 'box', w: .014, h: .028, d: .036, x: x - len * .3, y: y - r * .6, mat: 'accent', name: 'ring' },
       { k: 'box', w: .014, h: .028, d: .036, x: x + len * .3, y: y - r * .6, mat: 'accent', name: 'ring' },
-      { k: 'cyl', r1: r, h: len, seg: 24, ax: 'x', x: x, y: y, mat: 'metal', name: 'scope', open: true },
-      { k: 'cyl', r1: r * 1.22, h: .020, seg: 24, ax: 'x', x: x - len / 2 + .010, y: y, mat: 'accent', name: 'ocular', open: true },
-      { k: 'cyl', r1: r * 1.30, h: .034, seg: 24, ax: 'x', x: x + len / 2 - .017, y: y, mat: 'accent', name: 'bell', open: true },
+      { k: 'cyl', r1: r, h: len, seg: 24, ax: 'x', x: x, y: y, mat: 'metal', name: 'scope', open: true, two: true },
+      { k: 'cyl', r1: r * .90, h: len - .004, seg: 24, ax: 'x', x: x, y: y, mat: 'dark', name: 'liner', open: true, two: true },
+      { k: 'cyl', r1: r * 1.22, h: .020, seg: 24, ax: 'x', x: x - len / 2 + .010, y: y, mat: 'accent', name: 'ocular', open: true, two: true },
+      { k: 'cyl', r1: r * 1.30, h: .034, seg: 24, ax: 'x', x: x + len / 2 - .017, y: y, mat: 'accent', name: 'bell', open: true, two: true },
       { k: 'tor', r: r * 1.30, t: .006, seg: 24, ax: 'x', x: x + len / 2, y: y, mat: 'dark', name: 'objective' },
       // elevation turret
       { k: 'cyl', r1: .012, h: .020, seg: 14, x: x - len * .06, y: y + r + .008, mat: 'accent', name: 'turret' },
@@ -2190,30 +2198,62 @@ var Forge = (function () {
 
   /* Offset a polygon inward by d along the angle bisector.  Same vertex
      count and order, so a triangulation computed on the outer ring is
-     valid for the inner one too. */
+     valid for the inner one too.
+
+     CONCAVE PROFILES ARE THE HARD CASE and this used to shred them.
+     At a reflex corner the miter factor 1/cos runs away, and the offset
+     vertex shoots past the far side of the shape; the inner ring folds
+     through itself and the extrusion comes out as a fan of spikes.
+     The Longbow's stock and the karambit's blade — the two most
+     concave profiles in the arsenal — both did exactly that.
+
+     Two guards: cap the miter, and never let a vertex travel further
+     than a fraction of its own shorter edge, which is what actually
+     stops a corner from crossing the geometry opposite it. */
   function inset(pts, d) {
     var n = pts.length, out = new Array(n);
     for (var i = 0; i < n; i++) {
       var p = pts[i], a = pts[(i - 1 + n) % n], b = pts[(i + 1) % n];
-      var e1x = p[0] - a[0], e1y = p[1] - a[1], l1 = Math.hypot(e1x, e1y) || 1;
-      var e2x = b[0] - p[0], e2y = b[1] - p[1], l2 = Math.hypot(e2x, e2y) || 1;
+      var e1x = p[0] - a[0], e1y = p[1] - a[1], l1 = Math.hypot(e1x, e1y) || 1e-6;
+      var e2x = b[0] - p[0], e2y = b[1] - p[1], l2 = Math.hypot(e2x, e2y) || 1e-6;
       var n1x = -e1y / l1, n1y = e1x / l1;      // inward normal (CCW)
       var n2x = -e2y / l2, n2y = e2x / l2;
       var mx = n1x + n2x, my = n1y + n2y, ml = Math.hypot(mx, my);
       if (ml < 1e-6) { mx = n1x; my = n1y; ml = 1; }
       mx /= ml; my /= ml;
       var c = n1x * mx + n1y * my;
-      if (c < .3) c = .3;                        // clamp needle spikes
-      out[i] = [p[0] + mx * d / c, p[1] + my * d / c];
+      if (c < .35) c = .35;                      // cap the miter
+      var off = d / c;
+      var cap = Math.min(l1, l2) * .42;          // never overrun an edge
+      if (off > cap) off = cap;
+      out[i] = [p[0] + mx * off, p[1] + my * off];
     }
     return out;
+  }
+
+  /* Does the offset ring still describe the same shape?  A bevel that
+     has eaten the profile flips the winding or collapses the area, and
+     the only safe answer then is to give up the chamfer on that part
+     rather than emit a self-intersecting ring. */
+  function safeInset(prof, bev) {
+    var a0 = Math.abs(area(prof));
+    var inner = inset(prof, bev);
+    for (var i = 0; i < 5; i++) {
+      var ai = area(inner);
+      if (ai > 0 && ai > a0 * .30) return { pts: inner, bev: bev };
+      bev *= .45;
+      inner = inset(prof, bev);
+    }
+    return { pts: prof.slice(), bev: 0 };        // flat sides, but correct
   }
 
   /* ------------------------------------------------ the extruder */
   function extrudeFixed(profile, z0, z1, bev) {
     var prof = ccw(profile), n = prof.length;
     bev = Math.min(bev == null ? .006 : bev, Math.abs(z1 - z0) * .42);
-    var inner = inset(prof, bev);
+    var safe = safeInset(prof, bev);
+    var inner = safe.pts;
+    bev = safe.bev;
 
     var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, i;
     for (i = 0; i < n; i++) {
@@ -7538,6 +7578,33 @@ else Game.init();
       var minH = w.isKnife ? .015 : .09;
       ok('size ' + w.id, sz.x > .15 && sz.x < 1.4 && sz.y > minH && sz.y < .6,
          sz.x.toFixed(2) + ' x ' + sz.y.toFixed(2) + ' m');
+      /* No part may extend beyond its own authored profile.  A bevel
+         that folds through itself on a concave corner emits a fan of
+         spikes, and every other check passes while it does — the mesh
+         draws, the geometry is finite, the overall size is plausible.
+         Compare each extrusion against the polygon it came from. */
+      var spikes = [];
+      w.parts.forEach(function (p) {
+        if (p.k !== 'ext' || p.skip) return;
+        var mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+        p.prof.forEach(function (q) {
+          if (q[0] < mnx) mnx = q[0]; if (q[0] > mxx) mxx = q[0];
+          if (q[1] < mny) mny = q[1]; if (q[1] > mxy) mxy = q[1];
+        });
+        var tol = Math.max(mxx - mnx, mxy - mny) * .02 + .002;
+        var geo = Forge.extrude(p.prof, p.z0 == null ? -.018 : p.z0,
+                                p.z1 == null ? .018 : p.z1, p.bev);
+        var pos = geo.attributes.position.array;
+        for (var i = 0; i < pos.length; i += 3) {
+          if (pos[i] < mnx - tol || pos[i] > mxx + tol ||
+              pos[i + 1] < mny - tol || pos[i + 1] > mxy + tol) {
+            spikes.push(p.name || 'ext'); break;
+          }
+        }
+        geo.dispose();
+      });
+      ok('no spikes ' + w.id, spikes.length === 0, spikes.join(','));
+
       g.traverse(function (o) { if (o.isMesh) o.geometry.dispose(); });
     });
 
