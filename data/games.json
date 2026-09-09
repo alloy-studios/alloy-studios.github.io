@@ -148,20 +148,10 @@
       "added": "2026-09-08"
     },
     {
-      "id": "pip",
-      "title": "Pip: Across the Wilds",
-      "tagline": "A small traveler, a very long road.",
-      "description": "Carry the last fallen star beyond the old world, across green valleys, moonlit water, whispering woods and the mountain at the edge of dawn, all the way to the Star Sanctuary.",
-      "tags": ["adventure", "cozy", "platformer"],
-      "accent": "#34d399",
-      "controls": "WASD to move, arrow keys to hop, P to pause",
-      "added": "2026-09-08"
-    },
-    {
       "id": "orbit-dash",
       "title": "Orbit Dash",
       "tagline": "One button. Infinite orbits.",
-      "description": "Hop between orbits, dodge the debris, chase the high score. A demo game that proves the shell works - replace or delete it once your real games are in.",
+      "description": "One button, two orbits, and debris coming the other way. Tap to swap rings, thread the gaps, and watch the whole thing speed up under you. Your best run is saved locally.",
       "tags": ["arcade", "one-button", "endless"],
       "accent": "#7c5cff",
       "controls": "Click / Space to jump orbit",

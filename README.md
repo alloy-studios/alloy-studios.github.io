@@ -5,7 +5,8 @@ and you get:
 
 | URL | What it is |
 | --- | --- |
-| `alloy-studios.github.io/` | Homepage: featured game, tag filters, grid of everything |
+| `alloy-studios.github.io/` | Front page: featured game, a few short rows, news at the bottom |
+| `alloy-studios.github.io/all/` | The whole library with tag filters (`/all/?tag=anime` deep-links a filter) |
 | `alloy-studios.github.io/snake/` | Snake, inside the shared shell (logo, search, fullscreen) |
 | `alloy-studios.github.io/tetris/` | Tetris, inside the **same** shell |
 | anything else | `404.html`, which suggests the closest game |
@@ -19,15 +20,18 @@ once and all games change together.
 
 ```
 alloy-studios.github.io/
-├── index.html            homepage
+├── index.html            front page
+├── all/index.html        the full library
 ├── 404.html              not-found + suggestions
 ├── .nojekyll             stops GitHub eating folders that start with "_"
 ├── assets/
 │   ├── shell.css         ALL the site styling — the one file to restyle
-│   ├── shell.js          header, logo, search (shared by every page)
-│   ├── home.js           homepage rendering
+│   ├── shell.js          header, logo, search, nav (shared by every page)
+│   ├── home.js           front page: hero, rows, news
+│   ├── all.js            the full library grid + tag filters
 │   └── player.js         game page: frame, fullscreen, restart, about
 ├── data/games.json       the single source of truth: every game's metadata
+├── data/news.json        the posts listed at the bottom of the front page
 ├── games/
 │   └── orbit-dash/       the raw game, exactly as it was in its old repo
 │       └── index.html
@@ -154,6 +158,26 @@ Add `-Prune` to also delete wrapper folders for games you removed from the JSON.
 
 Games without a `thumb` get a generated gradient tile with their initials, which
 is deterministic per game — so you can ship first and screenshot later.
+
+---
+
+## Posting news
+
+The front page ends with a news list, read from `data/news.json`. Add a post to
+the **top** of the array — they render in file order, so newest goes first:
+
+```json
+{
+  "date":  "2026-09-14",          // YYYY-MM-DD, shown as "Sep 14, 2026"
+  "title": "Cosmic Climb update",
+  "body":  "One paragraph. Plain text, no HTML.",
+  "game":  "cosmic-climb"          // optional; adds a "Play ..." link. null for none
+}
+```
+
+No rebuild needed — the page fetches this file at load. Just commit and push.
+If `news.json` is missing or broken the front page still renders, minus the
+news section.
 
 ---
 

@@ -1,7 +1,46 @@
-/* Homepage: featured hero, tag filter chips, full game grid. */
+/* The main page: featured game, a few short rows, then news at the bottom.
+   The full A-Z grid lives on /all/ - this page is the front door. */
 
-Alloy.boot(({ games }) => {
+const NEWS_URL = '/data/news.json';
+
+function row(title, games, moreHref) {
+  if (!games.length) return '';
+  return `
+    <div class="section-head">
+      <h2>${Alloy.esc(title)}</h2>
+      ${moreHref ? `<a class="see-all" href="${moreHref}">See all &rarr;</a>` : ''}
+    </div>
+    <div class="grid">${games.map(Alloy.cardHTML).join('')}</div>`;
+}
+
+function newsHTML(posts, games) {
+  if (!posts.length) return '';
+  const byId = Object.fromEntries(games.map(g => [g.id, g]));
+
+  return `
+    <section class="news">
+      <div class="section-head"><h2>News</h2></div>
+      ${posts.map(p => {
+        const g = p.game ? byId[p.game] : null;
+        const when = new Date(p.date + 'T00:00:00');
+        const stamp = isNaN(when) ? p.date : when.toLocaleDateString(undefined,
+          { year: 'numeric', month: 'short', day: 'numeric' });
+        return `
+          <article class="post">
+            <time datetime="${Alloy.esc(p.date)}">${Alloy.esc(stamp)}</time>
+            <div>
+              <h3>${Alloy.esc(p.title)}</h3>
+              <p>${Alloy.esc(p.body)}</p>
+              ${g ? `<a class="post-link" href="/${Alloy.esc(g.id)}/">Play ${Alloy.esc(g.title)} &rarr;</a>` : ''}
+            </div>
+          </article>`;
+      }).join('')}
+    </section>`;
+}
+
+Alloy.boot(async ({ games }) => {
   const main = document.querySelector('main');
+
   if (!games.length) {
     main.innerHTML = `<div class="wrap"><div class="empty">
       <h2>No games yet</h2>
@@ -12,14 +51,25 @@ Alloy.boot(({ games }) => {
 
   const featured = games.find(g => g.featured) || games[0];
 
-  // Only tags that group something. A chip per one-off tag is a wall of
-  // chips that pushes the games below the fold - search still finds those.
+  // Newest first, by the date in the manifest. Ties keep manifest order.
+  const newest = [...games]
+    .sort((a, b) => String(b.added || '').localeCompare(String(a.added || '')))
+    .slice(0, 6);
+
+  // The two biggest categories, so the front page shows range rather than a
+  // single wall of everything.
   const counts = {};
   for (const g of games) for (const t of g.tags || []) counts[t] = (counts[t] || 0) + 1;
-  const tags = Object.keys(counts)
-    .filter(t => counts[t] > 1)
+  const topTags = Object.keys(counts)
     .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))
-    .slice(0, 12);
+    .slice(0, 2);
+
+  // News is optional - the page must still render if the file is missing.
+  let posts = [];
+  try {
+    const res = await fetch(NEWS_URL, { cache: 'no-cache' });
+    if (res.ok) posts = (await res.json()).posts || [];
+  } catch (_) {}
 
   main.innerHTML = `
     <div class="wrap">
@@ -33,32 +83,13 @@ Alloy.boot(({ games }) => {
         </div>
       </a>
 
-      <div class="chips" id="chips">
-        <button class="chip on" data-tag="">All</button>
-        ${tags.map(t => `<button class="chip" data-tag="${Alloy.esc(t)}">${Alloy.esc(t)}</button>`).join('')}
-      </div>
+      ${row('Newest', newest, '/all/')}
+      ${topTags.map(t => row(
+        t.charAt(0).toUpperCase() + t.slice(1),
+        games.filter(g => (g.tags || []).includes(t)).slice(0, 6),
+        '/all/?tag=' + encodeURIComponent(t)
+      )).join('')}
 
-      <div class="section-head">
-        <h2>All games</h2><span class="count" id="count"></span>
-      </div>
-      <div class="grid" id="grid"></div>
+      ${newsHTML(posts, games)}
     </div>`;
-
-  const grid = document.getElementById('grid');
-  const count = document.getElementById('count');
-
-  function paint(tag) {
-    const list = tag ? games.filter(g => (g.tags || []).includes(tag)) : games;
-    grid.innerHTML = list.map(Alloy.cardHTML).join('');
-    count.textContent = list.length + (list.length === 1 ? ' game' : ' games');
-  }
-
-  document.getElementById('chips').addEventListener('click', e => {
-    const btn = e.target.closest('.chip');
-    if (!btn) return;
-    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === btn));
-    paint(btn.dataset.tag);
-  });
-
-  paint('');
 });

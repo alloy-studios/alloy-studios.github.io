@@ -24,7 +24,7 @@ Alloy.boot(({ games, site }) => {
     main.innerHTML = `<div class="wrap"><div class="empty">
       <h2>That game is not here</h2>
       <p>No game with the id <code>${Alloy.esc(id)}</code>. Try the search box above.</p>
-      <p style="margin-top:22px"><a class="btn" href="/">Browse all games</a></p>
+      <p style="margin-top:22px"><a class="btn" href="/all/">Browse all games</a></p>
     </div></div>`;
     return;
   }

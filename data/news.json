@@ -1,0 +1,16 @@
+{
+  "posts": [
+    {
+      "date": "2026-09-09",
+      "title": "Rivalforge overhaul",
+      "body": "Rivalforge gets its biggest update yet in the calibration bay. Chain multipliers, optics calibration and a reworked scoring pass.",
+      "game": "rivalforge"
+    },
+    {
+      "date": "2026-09-08",
+      "title": "Alloy Studios is live",
+      "body": "Every game now lives at one address, with one shared player: fullscreen, restart, and search across the whole library. Old per-game links redirect to their new home.",
+      "game": null
+    }
+  ]
+}

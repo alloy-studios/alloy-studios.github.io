@@ -116,7 +116,17 @@ const Alloy = (() => {
         <div class="suggest" role="listbox"></div>
       </div>
       <div class="header-spacer"></div>
-      <a class="header-link" href="/">All games</a>`;
+      <nav class="header-nav">
+        <a class="header-link" href="/">Home</a>
+        <a class="header-link" href="/all/">All games</a>
+      </nav>`;
+
+    // Mark the tab you are on. Every game page counts as neither.
+    const path = location.pathname.replace(/index\.html$/, '');
+    for (const link of el.querySelectorAll('.header-nav a')) {
+      if (link.getAttribute('href') === path) link.classList.add('on');
+    }
+
     document.body.prepend(el);
     wireSearch(el);
   }
@@ -171,7 +181,8 @@ const Alloy = (() => {
     const f = document.createElement('footer');
     f.className = 'site-footer';
     f.innerHTML = `<span>&copy; ${new Date().getFullYear()} ${esc(state.site.name || 'Alloy Studios')}</span>
-      <span>&middot;</span><a href="/">All games</a>`;
+      <span>&middot;</span><a href="/">Home</a>
+      <span>&middot;</span><a href="/all/">All games</a>`;
     document.body.appendChild(f);
   }
 
