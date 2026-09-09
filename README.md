@@ -161,6 +161,28 @@ is deterministic per game — so you can ship first and screenshot later.
 
 ---
 
+## Editing the front page
+
+The front page is about the studio, not the catalogue: masthead, what Alloy
+Studios is, one spotlight game, contact, then news. Every word of it comes from
+the `site` block at the top of `data/games.json` — no code to touch:
+
+```json
+"site": {
+  "name":    "Alloy Studios",
+  "tagline": "the one line under the logo",
+  "intro":   "the paragraph under that",
+  "about":   ["first paragraph of About the studio", "second paragraph"],
+  "contact": "fatihturel12@gmail.com"
+}
+```
+
+`about` takes as many paragraphs as you put in the array. The **spotlight game**
+is whichever game has `"featured": true`, falling back to the most recently
+added one — so moving the spotlight means moving that one flag.
+
+---
+
 ## Posting news
 
 The front page ends with a news list, read from `data/news.json`. Add a post to

@@ -1,9 +1,15 @@
 {
   "site": {
     "name": "Alloy Studios",
-    "tagline": "Every Alloy Studios game in one place",
+    "tagline": "A one-person game studio, built in the browser.",
     "origin": "https://alloy-studios.github.io",
-    "github": "alloy-studios"
+    "github": "alloy-studios",
+    "contact": "fatihturel12@gmail.com",
+    "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab. No downloads, no installs, no accounts.",
+    "about": [
+      "Every game here is built as a single self-contained page. That is a deliberate constraint: no engine to load, no asset packs to download, no launcher. You click a link and you are playing inside a second or two, on a phone or a laptop, and it still works years later because there is nothing to rot.",
+      "The catalogue moves fast and openly. Games ship in beta, get rebuilt, and sometimes get pulled. Each one's source lives on GitHub, so what you play is exactly what is in the repo."
+    ]
   },
   "games": [
     {
