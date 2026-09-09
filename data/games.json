@@ -2,7 +2,8 @@
   "site": {
     "name": "Alloy Studios",
     "tagline": "Every Alloy Studios game in one place",
-    "origin": "https://alloy-studios.github.io"
+    "origin": "https://alloy-studios.github.io",
+    "github": "alloy-studios"
   },
   "games": [
     {

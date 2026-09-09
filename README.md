@@ -70,11 +70,13 @@ Do this one game at a time, so you can check each one.
 1. Import it:
 
    ```bash
-   powershell -ExecutionPolicy Bypass -File tools\import.ps1 -Path "C:\path\to\snake-repo" -Title "Snake" -Tags "arcade,classic" -Controls "Arrow keys to move"
+   powershell -ExecutionPolicy Bypass -File tools\import.ps1 -Repo snake -Title "Snake" -Tags "arcade,classic" -Controls "Arrow keys to move"
    ```
 
-   That copies the game into `games/snake/`, adds it to `data/games.json`,
-   creates `/snake/index.html`, and warns you about anything likely to break.
+   That clones `alloy-studios/snake` from GitHub, copies it into `games/snake/`,
+   adds it to `data/games.json`, creates `/snake/index.html`, and warns you about
+   anything likely to break. For a game that is not on GitHub, swap `-Repo snake`
+   for `-Path "C:\path\to\snake-folder"`.
 
 2. Preview it locally (see below) and play it for real.
 3. Push, then turn Pages off on the old `snake` repo.
@@ -95,6 +97,30 @@ Doing it by hand instead of the script is three steps: copy the folder to
 - **Godot 4 with threads.** Needs COOP/COEP headers that GitHub Pages cannot send.
   Export the single-threaded/compatibility build.
 - **Folders starting with `_`.** Handled — `.nojekyll` is already in this repo.
+
+---
+
+## Updating a game that is already on the site
+
+**This site keeps its own copy of every game.** Pushing a new version to the
+`rivalforge` repo does nothing to the site until you pull that version in here.
+Three commands, every time:
+
+```bash
+powershell -ExecutionPolicy Bypass -File tools\import.ps1 -Repo rivalforge
+```
+
+```bash
+git add -A && git commit -m "Update Rivalforge" && git push
+```
+
+The import clones the current state of the repo from GitHub, replaces
+`games/rivalforge/` with it, and **leaves your title, tagline, description and
+tags exactly as they are** — it only overwrites the game files. Anything you
+deleted upstream disappears here too, so no orphans build up.
+
+Same command for a brand-new game; the only difference is that a new one also
+gets an entry added to `data/games.json` for you to fill in.
 
 ---
 

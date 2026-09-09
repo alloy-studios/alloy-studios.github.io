@@ -312,8 +312,8 @@ h2.sec::after{ content:""; flex:1; height:1px; background:var(--edge); }
 #floatbar .band{ position:absolute; top:0; bottom:0; opacity:.5; }
 #floatbar .pin{ position:absolute; top:-4px; bottom:-4px; width:2px; background:#fff; box-shadow:0 0 8px #fff; }
 .bandkeys{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:9px; color:var(--faint); }
-#inspact{ padding:18px 24px 24px; display:flex; gap:10px; border-top:1px solid var(--edge); }
-#inspact .go{ flex:1; justify-content:center; padding:14px 10px; font-size:14px; letter-spacing:.2em; }
+#inspact{ padding:16px 24px 22px; display:flex; gap:8px; border-top:1px solid var(--edge); }
+#inspact .go{ flex:1; justify-content:center; padding:13px 8px; font-size:13px; letter-spacing:.13em; white-space:nowrap; }
 
 /* ---------------------------------------------------------- crates */
 #crates{ display:grid; grid-template-columns:repeat(auto-fill,minmax(258px,1fr)); gap:20px; }
@@ -411,6 +411,52 @@ h2.sec::after{ content:""; flex:1; height:1px; background:var(--edge); }
 #bgo{ opacity:0; pointer-events:none; transition:opacity .4s; }
 #bgo.on{ opacity:1; pointer-events:auto; }
 
+/* ---------------------------------------------------------- scope
+   Only the Longbow uses this.  Geometry alone cannot sell magnification
+   — a bare tube gives a clear aperture about 5% of screen height — so
+   the scoped weapon hides its viewmodel and the sight picture becomes
+   a full-screen instrument instead. */
+/* below #hud, so the ammo and run readouts stay legible on the surround */
+#scope{
+  position:fixed; inset:0; z-index:9; pointer-events:none; opacity:0;
+  --ap:33vh;                          /* aperture radius */
+}
+#scope .mask{
+  position:absolute; inset:0;
+  background:radial-gradient(circle at 50% 50%,
+    #0000 0, #0000 calc(var(--ap) - 1px),
+    #05070af2 calc(var(--ap) + 1px), #05070a 100%);
+}
+#scope .ring{
+  position:absolute; left:50%; top:50%; width:calc(var(--ap)*2); height:calc(var(--ap)*2);
+  transform:translate(-50%,-50%); border-radius:50%;
+  box-shadow:inset 0 0 0 2px #1b2330, inset 0 0 44px 14px #000a,
+             inset 0 14px 40px -8px #ffffff0f;
+}
+#scope .cross{ position:absolute; left:50%; top:50%; width:0; height:0; color:#ff8a2c; }
+#scope .cross i{ position:absolute; background:currentColor; display:block; opacity:.9; }
+/* the vertical and horizontal hairs, broken at the centre */
+#scope .cross .v{ width:1px; left:-.5px; top:calc(var(--ap)*-1); height:calc(var(--ap)*2); }
+#scope .cross .h{ height:1px; top:-.5px; left:calc(var(--ap)*-1); width:calc(var(--ap)*2); }
+#scope .cross b{ position:absolute; width:3px; height:3px; border-radius:50%; background:currentColor; opacity:.75; }
+#scope .cross .t1{ left:-1.5px; top:calc(var(--ap)*.22); }
+#scope .cross .t2{ left:-1.5px; top:calc(var(--ap)*.44); }
+#scope .cross .t3{ left:-1.5px; top:calc(var(--ap)*.66); }
+#scope .cross .l1{ top:-1.5px; left:calc(var(--ap)*-.28); }
+#scope .cross .l2{ top:-1.5px; left:calc(var(--ap)*-.56); }
+#scope .cross .r1{ top:-1.5px; left:calc(var(--ap)*.28); }
+#scope .cross .r2{ top:-1.5px; left:calc(var(--ap)*.56); }
+/* the elevation rail down the left of the glass */
+#scope .rail{
+  position:absolute; left:calc(50% - var(--ap)*.72); top:calc(50% - var(--ap)*.42);
+  width:2px; height:calc(var(--ap)*.84);
+  background:repeating-linear-gradient(#ff8a2c99 0 1px, #0000 1px 9px);
+}
+#scope .dist{
+  position:absolute; left:50%; top:calc(50% + var(--ap)*.74); transform:translateX(-50%);
+  font-family:var(--mono); font-size:12px; letter-spacing:.24em; color:#ff8a2ccc;
+}
+
 /* ---------------------------------------------------------- pause / prompt */
 #prompt{
   position:fixed; left:50%; bottom:12%; transform:translateX(-50%); z-index:12;
@@ -462,6 +508,20 @@ h2.sec::after{ content:""; flex:1; height:1px; background:var(--edge); }
   </div>
 
   <div id="toasts"></div>
+</div>
+
+<!-- Sniper scope. Only the Longbow raises this; a red dot and a reflex
+     get their sight picture from geometry alone. -->
+<div id="scope">
+  <div class="mask"></div>
+  <div class="ring"></div>
+  <div class="cross">
+    <i class="v"></i><i class="h"></i>
+    <b class="t1"></b><b class="t2"></b><b class="t3"></b>
+    <b class="l1"></b><b class="l2"></b><b class="r1"></b><b class="r2"></b>
+  </div>
+  <div class="rail"></div>
+  <div class="dist">38 M</div>
 </div>
 
 <div id="prompt"><b>Click</b> to take the line &nbsp;·&nbsp; <b>Tab</b> terminal</div>
@@ -1710,17 +1770,59 @@ var Arsenal = (function () {
       { k: 'tor', r: r * 1.02, t: .0035, seg: 16, ax: 'x', x: x + .024, y: y, mat: 'steel', name: 'crown' }
     ];
   }
-  /* A short tube optic.  The lens is a separate dark disc with a bright
-     rim so it catches the lamp row and reads as glass at 4 mm. */
-  function optic(x, y, len, r) {
+  /* ---------------------------------------------- sights
+
+     Three different instruments, because they are three different
+     instruments.  What they share is that every tube stays OPEN and
+     SINGLE-sided: a capped or lined tube means that on aiming you are
+     looking at the back of a disc, or at the tube's own inner wall,
+     and the clear aperture works out at about 5% of screen height.
+     Single-sided leaves the interior back-facing and culled, so the
+     bore is genuinely clear and the reticle floats over the world. */
+
+  /* RED DOT — short, wide, unmagnified.  A boxy housing you look
+     through rather than down.  Cinder. */
+  function reddot(x, y, r) {
     return [
-      { k: 'box', w: len * .5, h: .016, d: .03, x: x, y: y - .022, mat: 'accent', name: 'mount' },
-      { k: 'box', w: .012, h: .026, d: .034, x: x - len * .3, y: y - .012, mat: 'accent', name: 'ring' },
-      { k: 'box', w: .012, h: .026, d: .034, x: x + len * .3, y: y - .012, mat: 'accent', name: 'ring' },
-      { k: 'cyl', r1: r, h: len, seg: 18, ax: 'x', x: x, y: y, mat: 'metal', name: 'scope' },
-      { k: 'cyl', r1: r * 1.18, h: .014, seg: 18, ax: 'x', x: x - len / 2 + .008, y: y, mat: 'metal', name: 'bell' },
-      { k: 'cyl', r1: r * 1.18, h: .014, seg: 18, ax: 'x', x: x + len / 2 - .008, y: y, mat: 'metal', name: 'bell' },
-      { k: 'cyl', r1: r * .96, h: .004, seg: 18, ax: 'x', x: x - len / 2 + .003, y: y, mat: 'glass', name: 'lens' }
+      { k: 'box', w: .072, h: .014, d: .030, x: x, y: y - r - .010, mat: 'accent', name: 'mount' },
+      { k: 'box', w: .012, h: .022, d: .030, x: x, y: y - r + .004, mat: 'accent', name: 'stem' },
+      { k: 'cyl', r1: r, h: .060, seg: 20, ax: 'x', x: x, y: y, mat: 'metal', name: 'rd-tube', open: true },
+      { k: 'tor', r: r * 1.06, t: .0055, seg: 20, ax: 'x', x: x - .029, y: y, mat: 'accent', name: 'rd-ring' },
+      { k: 'tor', r: r * 1.06, t: .0055, seg: 20, ax: 'x', x: x + .029, y: y, mat: 'accent', name: 'rd-ring' },
+      // a hood over the top, the detail that says "red dot" in one glance
+      { k: 'box', w: .062, h: .006, d: r * 1.9, x: x + .006, y: y + r * .96, mat: 'accent', name: 'hood' },
+      { k: 'plane', w: r * 2.0, h: r * 2.0, x: x + .020, y: y, ry: -Math.PI / 2, mat: 'ret_dot', name: 'reticle', keepUV: true }
+    ];
+  }
+
+  /* REFLEX — a single open frame with a glass pane and a chevron.
+     Smallest of the three, and the only one with no tube at all. */
+  function reflex(x, y, r) {
+    return [
+      { k: 'box', w: .040, h: .012, d: .026, x: x, y: y - r - .008, mat: 'accent', name: 'mount' },
+      { k: 'box', w: .010, h: r * 1.5, d: .026, x: x - .018, y: y - r * .35, mat: 'accent', name: 'frame' },
+      { k: 'tor', r: r, t: .005, seg: 18, ax: 'x', x: x + .012, y: y, mat: 'accent', name: 'rx-ring' },
+      { k: 'plane', w: r * 1.9, h: r * 1.9, x: x + .012, y: y, ry: -Math.PI / 2, mat: 'glass', name: 'pane' },
+      { k: 'plane', w: r * 1.7, h: r * 1.7, x: x + .013, y: y, ry: -Math.PI / 2, mat: 'ret_chev', name: 'reticle', keepUV: true }
+    ];
+  }
+
+  /* SCOPE — long, magnified, with real rings and an objective bell.
+     On the Longbow this is backed by the full-screen scope overlay in
+     70_player, which is what actually sells magnification. */
+  function scope(x, y, len, r) {
+    return [
+      { k: 'box', w: len * .5, h: .016, d: .03, x: x, y: y - r - .012, mat: 'accent', name: 'mount' },
+      { k: 'box', w: .014, h: .028, d: .036, x: x - len * .3, y: y - r * .6, mat: 'accent', name: 'ring' },
+      { k: 'box', w: .014, h: .028, d: .036, x: x + len * .3, y: y - r * .6, mat: 'accent', name: 'ring' },
+      { k: 'cyl', r1: r, h: len, seg: 24, ax: 'x', x: x, y: y, mat: 'metal', name: 'scope', open: true },
+      { k: 'cyl', r1: r * 1.22, h: .020, seg: 24, ax: 'x', x: x - len / 2 + .010, y: y, mat: 'accent', name: 'ocular', open: true },
+      { k: 'cyl', r1: r * 1.30, h: .034, seg: 24, ax: 'x', x: x + len / 2 - .017, y: y, mat: 'accent', name: 'bell', open: true },
+      { k: 'tor', r: r * 1.30, t: .006, seg: 24, ax: 'x', x: x + len / 2, y: y, mat: 'dark', name: 'objective' },
+      // elevation turret
+      { k: 'cyl', r1: .012, h: .020, seg: 14, x: x - len * .06, y: y + r + .008, mat: 'accent', name: 'turret' },
+      { k: 'cyl', r1: .011, h: .018, seg: 14, ax: 'z', x: x - len * .06, y: y, z: r + .008, mat: 'accent', name: 'turret' },
+      { k: 'plane', w: r * 1.8, h: r * 1.8, x: x + len * .30, y: y, ry: -Math.PI / 2, mat: 'ret_cross', name: 'reticle', keepUV: true }
     ];
   }
 
@@ -1732,9 +1834,9 @@ var Arsenal = (function () {
     id: 'cinder', name: 'Cinder', cls: 'rifle', slot: 'primary',
     mag: 30, reserve: 150, rpm: 620, auto: true, dmg: 27, hs: 2.6,
     spread: .0022, adsSpread: .0006, recoil: { up: .028, side: .011, back: .038, rise: 1.0 },
-    reload: 2.35, adsFov: 52, weight: 1.0, moveMul: .92,
+    reload: 2.35, adsFov: 58, sight: 'reddot', weight: 1.0, moveMul: .92,
     audio: { vol: .95, bright: 1.0, body: 148, tail: .24 },
-    vm: { pos: [.098, -.100, -.300], rot: GUN_ROT, ads: [0, -.098, -.300] },
+    vm: { pos: [.098, -.100, -.300], rot: GUN_ROT, ads: [0, -.094, -.300] },
     pivots: { mag: [.042, -.10, 0], bolt: [-.02, .046, .021], trigger: [.006, -.03, 0] },
     parts: [].concat(
       [
@@ -1765,7 +1867,7 @@ var Arsenal = (function () {
       ],
       railTeeth(-.09, .23, .064),
       ventSlots(.278, 4, .022, .046, .034, .014),
-      optic(.10, .098, .17, .019),
+      reddot(.105, .094, .026),
       brake(.60, .022, .0165)
     )
   };
@@ -1775,9 +1877,9 @@ var Arsenal = (function () {
     id: 'hornet', name: 'Hornet', cls: 'smg', slot: 'primary',
     mag: 25, reserve: 150, rpm: 900, auto: true, dmg: 19, hs: 2.1,
     spread: .0034, adsSpread: .0013, recoil: { up: .019, side: .014, back: .028, rise: .8 },
-    reload: 1.95, adsFov: 58, weight: .8, moveMul: .98,
+    reload: 1.95, adsFov: 62, sight: 'reflex', weight: .8, moveMul: .98,
     audio: { vol: .8, bright: 1.25, body: 186, tail: .17 },
-    vm: { pos: [.092, -.096, -.285], rot: GUN_ROT, ads: [0, -.100, -.285] },
+    vm: { pos: [.092, -.096, -.285], rot: GUN_ROT, ads: [0, -.094, -.285] },
     pivots: { mag: [-.01, -.08, 0], bolt: [.04, .042, .019] },
     parts: [].concat(
       [
@@ -1805,7 +1907,7 @@ var Arsenal = (function () {
       [0, 1, 2, 3].map(function (i) {
         return { k: 'tor', r: .0175, t: .004, seg: 12, ax: 'x', x: .195 + i * .033, y: .018, mat: 'metal', name: 'ring' };
       }),
-      optic(.02, .1, .1, .016),
+      reflex(.03, .094, .020),
       brake(.365, .018, .0135)
     )
   };
@@ -1815,9 +1917,9 @@ var Arsenal = (function () {
     id: 'spur', name: 'Spur', cls: 'pistol', slot: 'sidearm',
     mag: 17, reserve: 85, rpm: 430, auto: false, dmg: 32, hs: 3.0,
     spread: .0025, adsSpread: .0009, recoil: { up: .034, side: .012, back: .03, rise: 1.2 },
-    reload: 1.6, adsFov: 60, weight: .5, moveMul: 1.0,
+    reload: 1.6, adsFov: 60, sight: 'irons', weight: .5, moveMul: 1.0,
     audio: { vol: .8, bright: 1.15, body: 168, tail: .19 },
-    vm: { pos: [.080, -.090, -.255], rot: GUN_ROT, ads: [0, -.067, -.255] },
+    vm: { pos: [.080, -.090, -.255], rot: GUN_ROT, ads: [0, -.074, -.300] },
     pivots: { mag: [-.006, -.055, 0], bolt: [.0, .046, 0] },
     parts: [].concat(
       [
@@ -1832,8 +1934,15 @@ var Arsenal = (function () {
         { k: 'box', w: .046, h: .022, d: .012, x: .05, y: .046, z: .021, mat: 'dark', name: 'port' },
         { k: 'ext', name: 'mag', mat: 'dark', pivot: 'mag', z0: -.014, z1: .014, bev: .004,
           prof: [[-.062, -.062], [.006, -.05], [.03, -.166], [-.038, -.178]] },
-        { k: 'box', w: .012, h: .01, d: .026, x: .138, y: .066, mat: 'steel', name: 'front-sight' },
-        { k: 'box', w: .016, h: .012, d: .03, x: -.05, y: .067, mat: 'steel', name: 'rear-sight' },
+        /* Iron sights, deliberately oversized.  True-scale sights are
+           about 12 mm and at arm's length they are two pixels — you end
+           up aiming at a dark slab with no sight picture at all.  The
+           front post carries a fibre-optic dot so there is something to
+           actually put on the target. */
+        { k: 'box', w: .013, h: .017, d: .010, x: .140, y: .071, mat: 'steel', name: 'front-sight' },
+        { k: 'plane', w: .010, h: .010, x: .147, y: .074, ry: -Math.PI / 2, mat: 'ret_dot', name: 'fo-dot', keepUV: true },
+        { k: 'box', w: .017, h: .018, d: .013, x: -.05, y: .071, z: .015, mat: 'steel', name: 'rear-sight' },
+        { k: 'box', w: .017, h: .018, d: .013, x: -.05, y: .071, z: -.015, mat: 'steel', name: 'rear-sight' },
         { k: 'ext', name: 'trigger', mat: 'steel', z0: -.004, z1: .004, bev: .0015,
           prof: [[.01, -.052], [.024, -.052], [.026, -.024], [.012, -.024]] }
       ],
@@ -1850,9 +1959,9 @@ var Arsenal = (function () {
     id: 'longbow', name: 'Longbow', cls: 'sniper', slot: 'primary',
     mag: 5, reserve: 35, rpm: 48, auto: false, dmg: 118, hs: 2.4, bolt: true,
     spread: .0035, adsSpread: .00008, recoil: { up: .085, side: .02, back: .095, rise: 1.5 },
-    reload: 3.1, adsFov: 22, weight: 1.5, moveMul: .84,
+    reload: 3.1, adsFov: 20, sight: 'scope', scoped: true, weight: 1.5, moveMul: .84,
     audio: { vol: 1.0, bright: .82, body: 96, tail: .5 },
-    vm: { pos: [.102, -.106, -.325], rot: GUN_ROT, ads: [0, -.108, -.330] },
+    vm: { pos: [.102, -.106, -.325], rot: GUN_ROT, ads: [0, -.112, -.330] },
     pivots: { mag: [.03, -.06, 0], bolt: [.055, .04, .026] },
     parts: [].concat(
       [
@@ -1881,7 +1990,7 @@ var Arsenal = (function () {
         { k: 'sph', r: .011, seg: 10, pivot: 'bolt', x: .055, y: .04, z: .072, mat: 'steel', name: 'bolt-knob' }
       ],
       railTeeth(-.01, .15, .058, .028),
-      optic(.075, .108, .30, .026),
+      scope(.075, .112, .30, .028),
       brake(.70, .012, .019)
     )
   };
@@ -1891,9 +2000,9 @@ var Arsenal = (function () {
     id: 'bulkhead', name: 'Bulkhead', cls: 'shotgun', slot: 'primary',
     mag: 7, reserve: 42, rpm: 78, auto: false, dmg: 17, pellets: 9, hs: 1.6,
     spread: .019, adsSpread: .013, recoil: { up: .07, side: .026, back: .085, rise: 1.3 },
-    reload: 3.0, shellReload: true, adsFov: 62, weight: 1.3, moveMul: .88,
+    reload: 3.0, shellReload: true, adsFov: 64, sight: 'bead', weight: 1.3, moveMul: .88,
     audio: { vol: 1.0, bright: .7, body: 108, tail: .42 },
-    vm: { pos: [.098, -.102, -.305], rot: GUN_ROT, ads: [0, -.049, -.305] },
+    vm: { pos: [.098, -.102, -.305], rot: GUN_ROT, ads: [0, -.057, -.280] },
     pivots: { pump: [.30, -.012, 0] },
     parts: [].concat(
       [
@@ -1914,7 +2023,8 @@ var Arsenal = (function () {
         { k: 'box', w: .006, h: .05, d: .056, x: .295, y: -.014, pivot: 'pump', mat: 'dark', name: 'rib' },
         { k: 'box', w: .006, h: .05, d: .056, x: .325, y: -.014, pivot: 'pump', mat: 'dark', name: 'rib' },
         { k: 'box', w: .006, h: .05, d: .056, x: .355, y: -.014, pivot: 'pump', mat: 'dark', name: 'rib' },
-        { k: 'box', w: .012, h: .014, d: .01, x: .60, y: .048, mat: 'steel', name: 'bead' },
+        { k: 'box', w: .013, h: .018, d: .011, x: .60, y: .052, mat: 'steel', name: 'bead' },
+        { k: 'plane', w: .011, h: .011, x: .607, y: .057, ry: -Math.PI / 2, mat: 'ret_dot', name: 'fo-dot', keepUV: true },
         { k: 'ext', name: 'shell-1', mat: 'lamp', z0: -.012, z1: .012, bev: .003,
           prof: [[.10, -.058], [.15, -.058], [.15, -.042], [.10, -.042]] }
       ],
@@ -2120,10 +2230,29 @@ var Forge = (function () {
     var pos = [], uvs = [];
     function push(p, z) { pos.push(p[0], p[1], z); uvs.push((p[0] - minX) * sx, (p[1] - minY) * sy); }
 
+    /* Which way round does the triangulator hand back its faces?
+       Earcut normalises its outer ring to CLOCKWISE, so the triangles
+       come out back-facing when viewed from +Z — the opposite of what
+       a CCW contour suggests.  Rather than encode that assumption,
+       measure it: sum the signed area of what actually came back.
+
+       Getting this wrong inverts the flat SIDE FACES of every part,
+       which are the largest surfaces on the weapon.  Back-face culling
+       then eats them and the whole left flank of the gun is missing
+       its planes — you see straight into the shell. */
+    var signed = 0;
+    for (var q0 = 0; q0 < tris.length; q0++) {
+      var fq = tris[q0];
+      var a = prof[fq[0]], b = prof[fq[1]], c = prof[fq[2]];
+      signed += (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    }
+    var capCW = signed < 0;      // true => flip to make the +Z cap face +Z
+
     for (var t = 0; t < tris.length; t++) {
       var f = tris[t];
-      push(inner[f[0]], z1); push(inner[f[1]], z1); push(inner[f[2]], z1);
-      push(inner[f[2]], z0); push(inner[f[1]], z0); push(inner[f[0]], z0);
+      var i0 = capCW ? f[2] : f[0], i1 = f[1], i2 = capCW ? f[0] : f[2];
+      push(inner[i0], z1); push(inner[i1], z1); push(inner[i2], z1);   // front, +Z
+      push(inner[i2], z0); push(inner[i1], z0); push(inner[i0], z0);   // back,  -Z
     }
     var lv = [[inner, z0], [prof, z0 + bev], [prof, z1 - bev], [inner, z1]];
     for (var L = 0; L < 3; L++) {
@@ -2159,10 +2288,90 @@ var Forge = (function () {
       accent: Stage.metal({ color: 0x2f3742, roughness: .34, metalness: .92, env: 1.0 }),
       glass:  new THREE.MeshPhysicalMaterial({
                 color: new THREE.Color(0x0a1418), roughness: .06, metalness: 0,
-                transparent: true, opacity: .42, envMapIntensity: 2.0 }),
-      lamp:   Stage.emissive(0xff7a2a, 1.4)
+                transparent: true, opacity: .16, envMapIntensity: 2.0 }),
+      lamp:   Stage.emissive(0xff7a2a, 1.4),
+      ret_dot:  reticleMat('dot'),
+      ret_chev: reticleMat('chev'),
+      ret_cross:reticleMat('cross')
     };
   };
+
+  /* ------------------------------------------------ reticles
+     One per sight type, because a red dot, a reflex chevron and a
+     magnified crosshair are not the same instrument and should not
+     look like each other.  Warm, because a lit reticle belongs to the
+     same family as muzzle heat — and it must never use a rarity hue. */
+  var _ret = {};
+  function reticleMat(style) {
+    if (_ret[style]) return _ret[style];
+    var s = 256, g = ctx2d(s, s), c = s / 2;
+    g.lineCap = 'round';
+
+    if (style === 'dot') {
+      // a red dot: a hot core with a soft bloom halo, nothing else
+      var rg = g.createRadialGradient(c, c, 0, c, c, s * .17);
+      rg.addColorStop(0, 'rgba(255,236,214,1)');
+      rg.addColorStop(.22, 'rgba(255,140,50,0.95)');
+      rg.addColorStop(1, 'rgba(255,110,30,0)');
+      g.fillStyle = rg; g.fillRect(0, 0, s, s);
+      g.fillStyle = 'rgba(255,248,236,1)';
+      g.beginPath(); g.arc(c, c, s * .028, 0, TAU); g.fill();
+
+    } else if (style === 'chev') {
+      // a reflex chevron: fast to pick up, does not hide the target
+      g.strokeStyle = 'rgba(255,150,60,0.98)';
+      g.lineWidth = 9;
+      g.beginPath();
+      g.moveTo(c - s * .17, c - s * .10);
+      g.lineTo(c, c + s * .10);
+      g.lineTo(c + s * .17, c - s * .10);
+      g.stroke();
+      g.strokeStyle = 'rgba(255,150,60,0.5)';
+      g.lineWidth = 4;
+      g.beginPath(); g.moveTo(c, c + s * .16); g.lineTo(c, c + s * .30); g.stroke();
+
+    } else {
+      // magnified crosshair: fine lines, broken centre, mil dots
+      g.strokeStyle = 'rgba(255,150,60,0.92)';
+      g.lineWidth = 3;
+      [[0, -1], [0, 1], [-1, 0], [1, 0]].forEach(function (d) {
+        g.beginPath();
+        g.moveTo(c + d[0] * s * .07, c + d[1] * s * .07);
+        g.lineTo(c + d[0] * s * .44, c + d[1] * s * .44);
+        g.stroke();
+      });
+      g.fillStyle = 'rgba(255,170,80,0.85)';
+      for (var m = 1; m <= 3; m++) {
+        [[0, 1], [-1, 0], [1, 0]].forEach(function (d) {
+          g.beginPath();
+          g.arc(c + d[0] * s * m * .105, c + d[1] * s * m * .105, 2.6, 0, TAU);
+          g.fill();
+        });
+      }
+      g.fillStyle = 'rgba(255,230,190,1)';
+      g.beginPath(); g.arc(c, c, 2.4, 0, TAU); g.fill();
+    }
+
+    var t = new THREE.CanvasTexture(g.canvas);
+    t.needsUpdate = true;
+    _ret[style] = new THREE.MeshBasicMaterial({
+      map: t, color: Stage.C(0xff8a2c).multiplyScalar(style === 'dot' ? 2.6 : 2.0),
+      transparent: true, depthWrite: false, depthTest: true, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, toneMapped: false, fog: false
+    });
+    return _ret[style];
+  }
+
+  /* Two-sided variants, cached per source material so an open tube can
+     show its own inner wall without doubling the material count. */
+  var twoCache = new WeakMap();
+  function twoSided(m) {
+    if (twoCache.has(m)) return twoCache.get(m);
+    var c = m.clone();
+    c.side = THREE.DoubleSide;
+    twoCache.set(m, c);
+    return c;
+  }
 
   /* ------------------------------------------------ part -> mesh */
   function mesh(p, mats) {
@@ -2189,6 +2398,9 @@ var Forge = (function () {
       default:
         g = new THREE.BoxGeometry(.02, .02, .02);
     }
+    // an open tube has to render its own inner wall, or you look
+    // straight through the far side of it
+    if (p.two) m = twoSided(m);
     var o = new THREE.Mesh(g, m);
     // 'cyl' and 'tor' are authored upright; ax says which way to lay them
     if (p.k === 'cyl') {
@@ -2203,6 +2415,10 @@ var Forge = (function () {
     o.castShadow = false; o.receiveShadow = false;
     o.userData.role = p.mat;
     o.userData.name = p.name || p.k;
+    // parts carrying their own artwork (the reticle) must keep the
+    // geometry's own UVs — the weapon-wide skin layout would resample
+    // them from somewhere arbitrary on the sheet and erase the image
+    if (p.keepUV) o.userData.keepUV = true;
     return o;
   }
 
@@ -2272,6 +2488,7 @@ var Forge = (function () {
     root.updateMatrixWorld(true);
     root.traverse(function (o) {
       if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+      if (o.userData.keepUV) return;
       var pos = o.geometry.attributes.position;
       var uv = new Float32Array(pos.count * 2);
       for (var i = 0; i < pos.count; i++) {
@@ -2683,7 +2900,15 @@ var Skins = (function () {
    ============================================================= */
 var Econ = (function () {
 
-  var E = { credits: 0, inv: [], equip: {}, keys: 0, stats: {}, version: 2 };
+  /* `equip` maps weaponId -> item uid (which finish that frame wears).
+     `loadout` maps slot -> weaponId (which frame you actually carry).
+     They are separate: picking a finish for the Longbow should not
+     silently take the Cinder out of your hands. */
+  var E = {
+    credits: 0, inv: [], equip: {}, keys: 0, stats: {}, version: 3,
+    loadout: { primary: 'cinder', sidearm: 'spur', melee: 'tang' }
+  };
+  var DEFAULT_LOADOUT = { primary: 'cinder', sidearm: 'spur', melee: 'tang' };
 
   /* ---------------------------------------------- rarity */
   E.RAR = {
@@ -2825,6 +3050,24 @@ var Econ = (function () {
     E.save();
   };
 
+  /* Put a frame in a slot.  Every weapon declares which slot it can
+     occupy, so a shotgun can never end up as your melee. */
+  E.setSlot = function (wid) {
+    var w = Arsenal.get(wid);
+    if (!w) return null;
+    E.loadout[w.slot] = wid;
+    E.save();
+    return w.slot;
+  };
+  E.slotOf = function (wid) {
+    var w = Arsenal.get(wid);
+    return w ? w.slot : null;
+  };
+  E.inLoadout = function (wid) {
+    var w = Arsenal.get(wid);
+    return !!w && E.loadout[w.slot] === wid;
+  };
+
   E.earn = function (n) { E.credits += n; E.save(); return E.credits; };
   E.spend = function (n) {
     if (E.credits < n) return false;
@@ -2907,7 +3150,7 @@ var Econ = (function () {
   E.save = function () {
     Store.write({
       v: E.version, cr: E.credits, inv: E.inv, eq: E.equip,
-      cr8: E.crates || {}, st: E.stats
+      lo: E.loadout, cr8: E.crates || {}, st: E.stats
     });
   };
   E.load = function () {
@@ -2916,6 +3159,12 @@ var Econ = (function () {
     E.credits = d.cr || 0;
     E.inv = Array.isArray(d.inv) ? d.inv : [];
     E.equip = d.eq || {};
+    E.loadout = d.lo || {};
+    // repair anything the catalogue no longer contains
+    Object.keys(DEFAULT_LOADOUT).forEach(function (s) {
+      var wid = E.loadout[s], w = wid && Arsenal.get(wid);
+      if (!w || w.slot !== s) E.loadout[s] = DEFAULT_LOADOUT[s];
+    });
     E.crates = d.cr8 || {};
     E.stats = d.st || {};
     // drop anything whose skin no longer exists
@@ -2926,6 +3175,7 @@ var Econ = (function () {
     E.credits = 900;
     E.inv = [];
     E.equip = {};
+    E.loadout = { primary: DEFAULT_LOADOUT.primary, sidearm: DEFAULT_LOADOUT.sidearm, melee: DEFAULT_LOADOUT.melee };
     E.crates = { foundry: 2 };
     E.stats = {};
     ['cinder', 'spur', 'tang'].forEach(function (wid) {
@@ -5668,6 +5918,9 @@ var Player = (function () {
     bindInput();
     P.sens = 1;
     P.kickPitch = 0; P.kickYaw = 0; P.speed = 0;
+    // the loadout lives in the save, so which frames you carry survives
+    // a reload the same way your finishes do
+    if (window.Econ && Econ.loadout) P.loadout = Econ.loadout;
     P.slot = 'primary';
     P.refresh();
     P.warp(0, 1.62, 1.75);
@@ -5704,11 +5957,29 @@ var Player = (function () {
 
     /* ---- ADS ---- */
     var canAds = !w.isKnife && P.state !== 'reload' && P.state !== 'melee';
-    P.ads = approach(P.ads, canAds ? P.adsWant : 0, 13, dt);
+    // a scoped weapon takes longer to get on target — that, plus the
+    // move penalty, is the whole cost of carrying one
+    P.ads = approach(P.ads, canAds ? P.adsWant : 0, w.scoped ? 8 : 13, dt);
     var fov = mix(74, w.adsFov, Ease.outCubic(P.ads));
     Stage.setFov(fov);
     Stage.vmCam.fov = mix(58, 48, P.ads);
     Stage.vmCam.updateProjectionMatrix();
+
+    /* ---- scope overlay ----
+       Only for weapons that declare `scoped`.  Past the threshold the
+       viewmodel is hidden entirely: a magnified sight picture with the
+       rifle still drawn across the bottom of it reads as two different
+       scales stacked on each other. */
+    if (P.scopeEl === undefined) P.scopeEl = $('#scope');
+    var scoping = w.scoped ? sat((P.ads - .45) / .35) : 0;
+    if (P.scopeEl) {
+      P.scopeEl.style.opacity = scoping.toFixed(3);
+      P.scopeEl.style.setProperty('--ap', (33 - (1 - scoping) * 5).toFixed(2) + 'vh');
+    }
+    var hideVm = scoping > .82;
+    P.hideArms = hideVm;                 // posArms() re-shows them otherwise
+    rig.sway.visible = !hideVm;
+    if (window.HUD && HUD.setCrossVisible) HUD.setCrossVisible(scoping < .5);
 
     /* ---- recoil recovery on the actual aim ---- */
     P.kickPitch = approach(P.kickPitch, 0, 5.5, dt);
@@ -5811,6 +6082,7 @@ var Player = (function () {
 
   function posArms(w) {
     var g = GRIP[w.cls] || GRIP.rifle;
+    if (P.hideArms) { arms.r.group.visible = false; arms.l.group.visible = false; return; }
     rig.gun.updateMatrixWorld(true);
     ['r', 'l'].forEach(function (side) {
       var a = arms[side], off = g[side];
@@ -5919,6 +6191,10 @@ var HUD = (function () {
     var pips = E.pips.children;
     for (var i = 0; i < pips.length; i++) pips[i].classList.toggle('spent', i >= mag);
   };
+
+  /* The scope carries its own crosshair, so the HUD's must get out of
+     the way rather than sit on top of it. */
+  H.setCrossVisible = function (on) { H.crossOK = on; };
 
   /* ---------------------------------------------- feedback */
   H.hitmark = function (big) {
@@ -6062,8 +6338,9 @@ var HUD = (function () {
     E.d.style.top = gap + 'px';
     E.l.style.left = (-gap - 7) + 'px';
     E.r.style.left = gap + 'px';
-    var adsHide = Player.ads > .82 ? '0' : '1';
-    E.cross.style.opacity = adsHide;
+    // hidden under a scope, and faded once the irons/dot take over
+    var crossOn = (H.crossOK === false) ? 0 : (Player.ads > .82 ? 0 : 1);
+    E.cross.style.opacity = String(crossOn);
 
     if (hitT > 0) {
       hitT -= dt;
@@ -6571,6 +6848,14 @@ var UI = (function () {
       can.style.cssText = 'width:58px;height:24px;';
       b.appendChild(can);
       b.appendChild(el('span', null, w.name));
+      // a mark for the frames actually in the loadout, so the rack shows
+      // what you are carrying and not just what you own
+      if (Econ.inLoadout(w.id)) {
+        var dot = el('i', null, w.slot === 'primary' ? '1' : w.slot === 'sidearm' ? '2' : '3');
+        dot.style.cssText = 'margin-left:auto;font-style:normal;font-family:var(--mono);' +
+          'font-size:10px;color:var(--ink);background:var(--ember);padding:1px 5px;letter-spacing:0;';
+        b.appendChild(dot);
+      }
       b.dataset.w = w.id;
       on(b, 'click', function () { Audio_.ui('click'); U.rack = w.id; openArmory(); });
       host.appendChild(b);
@@ -6626,10 +6911,33 @@ var UI = (function () {
     var body = $('#inspbody'), act = $('#inspact');
     body.innerHTML = ''; act.innerHTML = '';
     var w = Arsenal.get(U.rack);
+
+    /* Carrying the frame and painting the frame are separate actions.
+       Without this the only thing the armory could change was a skin,
+       and there was no way to take the Longbow out of the rack at all. */
+    function slotButton() {
+      var carried = Econ.inLoadout(w.id);
+      var b = el('button', 'go' + (carried ? ' ghost' : ''),
+        carried ? 'Carried · ' + w.slot : 'Carry as ' + w.slot);
+      if (carried) b.disabled = true;
+      else on(b, 'click', function () {
+        Audio_.ui('click');
+        Econ.setSlot(w.id);
+        HUD.toast('Loadout', w.name.toUpperCase() + ' · ' + w.slot.toUpperCase());
+        buildRacks();
+        $$('#racks .rack').forEach(function (r) { r.classList.toggle('on', r.dataset.w === U.rack); });
+        buildLoadout();
+        selectItem(U.sel);
+      });
+      return b;
+    }
+
     if (!it) {
       body.innerHTML = '<div class="rar" style="color:var(--faint)">Unpainted</div><h3>' + w.name + '</h3>' +
-                       '<div class="sub">Factory finish</div>';
+                       '<div class="sub">Factory finish · ' + w.slot + '</div>';
       body.style.setProperty('--r', '#7d8798');
+      $('#insp').style.setProperty('--r', '#7d8798');
+      act.appendChild(slotButton());
       return;
     }
     var skin = Skins.get(it.skin);
@@ -6671,16 +6979,22 @@ var UI = (function () {
     body.appendChild(keys);
 
     var isEq = Econ.equipped(it.weapon) && Econ.equipped(it.weapon).uid === it.uid;
-    var eqb = el('button', 'go' + (isEq ? ' ghost' : ''), isEq ? 'Equipped' : 'Equip');
+    var eqb = el('button', 'go' + (isEq ? ' ghost' : ''), isEq ? 'Applied' : 'Apply finish');
     on(eqb, 'click', function () {
       Audio_.ui('click');
       Econ.setEquipped(it.weapon, it.uid);
+      // applying a finish also picks the frame up — choosing a skin for
+      // a weapon you are not carrying and then not carrying it is not
+      // something anyone means to do
+      Econ.setSlot(it.weapon);
       buildGrid(Econ.forWeapon(U.rack));
       selectItem(it.uid);
       buildRacks();
       $$('#racks .rack').forEach(function (b) { b.classList.toggle('on', b.dataset.w === U.rack); });
+      buildLoadout();
       HUD.toast('Equipped', skin.name);
     });
+    act.appendChild(slotButton());
     var sellb = el('button', 'go ghost', 'Sell ' + fmt(Econ.valueOf(it)));
     on(sellb, 'click', function () {
       var v = Econ.sell(it.uid);
