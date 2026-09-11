@@ -4,7 +4,19 @@
     "tagline": "A one-person game studio, built in the browser.",
     "origin": "https://alloy-studios.github.io",
     "github": "alloy-studios",
-    "contact": "fatihturel12@gmail.com",
+    "contact": "alloystudiocontact@gmail.com",
+    "roadmap": [
+      {
+        "status": "In development",
+        "title": "Two more games",
+        "detail": "Two new titles are in the works. Same rules as everything else here: single page, no install, playable the second the link loads."
+      },
+      {
+        "status": "Planned",
+        "title": "A full rework of every game",
+        "detail": "Once those ship, every game in the catalogue gets rebuilt - better feel, better visuals, and a consistent standard across the whole library rather than sixteen different ones."
+      }
+    ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab. No downloads, no installs, no accounts.",
     "about": [
       "Every game here is built as a single self-contained page. That is a deliberate constraint: no engine to load, no asset packs to download, no launcher. You click a link and you are playing inside a second or two, on a phone or a laptop, and it still works years later because there is nothing to rot.",
@@ -227,14 +239,42 @@
     {
       "id": "alloymind",
       "title": "Alloy Mind",
-      "tagline": "",
-      "description": "Play Alloy Mind free in your browser.",
-      "tags": [
-        "study",
-        "learning"
-      ],
-      "controls": "Make a set and choose between answer choices. If you have claude api, you can use it to make smarter responses.",
+      "tagline": "Turn the boring PDF into a game.",
+      "description": "Feed it the PDF your teacher posted - or a Word doc, slides, a sheet, a link, or raw pasted text - and it comes back as questions. Five game modes, coins to earn, packs to pull, and fifty-five collectibles to chase. Bring your own Claude API key and the questions get noticeably smarter.",
+      "tags": ["study", "learning", "quiz"],
+      "accent": "#14b8a6",
+      "controls": "Mouse. Forge a set, then pick between answer choices",
       "added": "2026-09-09"
+    },
+    {
+      "id": "multiversefighters",
+      "title": "Multiverse Fighters",
+      "tagline": "Twelve fighters. Twelve realms. One ring.",
+      "description": "A 2D fighter with twelve characters pulled from twelve different realms - shinobi, soul reapers, machines, Olympians, cartoons - each with their own normals, specials and an ultimate. Learn a moveset in the training grounds, then take it into a fight.",
+      "tags": ["fighting", "action", "anime"],
+      "accent": "#a78bfa",
+      "controls": "A/D move, Space jump, W/S aim, Shift dash, J and K attack, L special, U ultimate",
+      "added": "2026-09-10"
+    },
+    {
+      "id": "flytale",
+      "title": "Flytale",
+      "tagline": "A short story, told by a fly.",
+      "description": "A chaptered story game where you play the fly - flying, dodging, and staying well clear of the flyswatter. Small, hand-made and over before it outstays its welcome.",
+      "tags": ["adventure", "story", "cozy"],
+      "accent": "#38bdf8",
+      "controls": "Arrows or WASD to fly, Z to confirm, X to cancel, M to mute",
+      "added": "2026-09-10"
+    },
+    {
+      "id": "madballs",
+      "title": "Madballs",
+      "tagline": "Physics, destruction, loot.",
+      "description": "Drag the slingshot, let go, and wreck the level. Fourteen stages, crates to crack open, and thirty-seven skins to hunt down - each with its own ability you trigger mid-flight for a second shot at the wreckage.",
+      "tags": ["physics", "arcade", "collectathon"],
+      "accent": "#fb923c",
+      "controls": "Drag from the slingshot to fire, Space or click mid-flight for your skin's ability",
+      "added": "2026-09-10"
     }
   ]
 }

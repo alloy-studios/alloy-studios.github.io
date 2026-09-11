@@ -228,6 +228,41 @@ main { flex: 1 1 auto; }
 .spotlight .hero { margin-top: 0; }
 .spotlight .hero h2 { margin: 0 0 8px; font-size: 30px; letter-spacing: -.03em; line-height: 1.1; }
 
+/* ---------- Front page: roadmap timeline ---------- */
+
+.timeline {
+  list-style: none; margin: 0; padding: 0 0 0 26px;
+  position: relative;
+}
+.timeline::before {
+  content: ""; position: absolute;
+  left: 5px; top: 8px; bottom: 8px; width: 2px;
+  background: linear-gradient(var(--accent), var(--accent-2), transparent);
+  border-radius: 2px;
+}
+.timeline li { position: relative; padding: 0 0 26px; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before {
+  content: ""; position: absolute;
+  left: -26px; top: 5px; width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--accent);
+}
+.timeline li:last-child::before { border-color: var(--text-faint); }
+.timeline .status {
+  display: inline-block; margin-bottom: 7px;
+  font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--accent-2);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 10px; background: var(--bg-elev);
+}
+.timeline li:last-child .status { color: var(--text-faint); }
+.timeline h3 { margin: 0 0 5px; font-size: 17px; letter-spacing: -.02em; }
+.timeline p {
+  margin: 0; color: var(--text-dim);
+  font-size: 14.5px; line-height: 1.65; max-width: 64ch;
+}
+
 .contact-body {
   border: 1px solid var(--line); border-radius: var(--radius);
   background: var(--bg-elev);

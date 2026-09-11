@@ -2051,7 +2051,23 @@ var Arsenal = (function () {
     spread: 0, adsSpread: 0, recoil: { up: 0, side: 0, back: 0, rise: 0 },
     reload: 0, adsFov: 68, weight: .3, moveMul: 1.12, range: 2.0,
     audio: { vol: .5, bright: 1.6, body: 320, tail: .1 },
-    vm: { pos: [.104, -.092, -.272], rot: [-.30, 1.15, -1.62] },
+    /* Blade FORWARD and slightly up, flat canted toward the eye.
+       The old grip had the handle up and the blade pointing at the
+       floor — an icepick hold, and everything downstream (where the
+       arm reached, where the trick orbited) was compensating for it. */
+    /* Solved against the viewmodel camera (fov 58) rather than eyeballed:
+       it puts the GRIP — pin + handleGrip, the same point the chain
+       holds — at NDC (0.41, -0.69), which is where a right hand belongs.
+       The old value held the knife 0.27 m from the eye, where a 0.28 m
+       blade subtends 50 degrees and only a slice of it is ever on
+       screen, with the hand a full quarter-frame below the bottom. */
+    vm: { pos: [.115, -.126, -.480], rot: [-1.521, .529, 1.875] },
+    anim: 'balisong',
+    // the tang pin: a balisong turns on this, not on the grip
+    spinPivot: [-.028, 0, 0],
+    // where the fist closes on a handle, in that handle's pivot frame
+    handleGrip: [-.078, 0, 0],
+    tangGrip: [-.036, 0, 0],
     pivots: { handleA: [-.028, 0, 0], handleB: [-.028, 0, 0] },
     parts: [
       { k: 'ext', name: 'blade', mat: 'steel', z0: -.0035, z1: .0035, bev: .0022,
@@ -2079,6 +2095,9 @@ var Arsenal = (function () {
     reload: 0, adsFov: 68, weight: .28, moveMul: 1.12, range: 1.9,
     audio: { vol: .5, bright: 1.7, body: 356, tail: .09 },
     vm: { pos: [.098, -.088, -.262], rot: [-.22, 1.05, -1.35] },
+    anim: 'karambit',
+    // the finger ring, which is what a karambit actually rotates on
+    spinPivot: [-.062, -.026, 0],
     pivots: { ring: [-.062, -.026, 0] },
     parts: [].concat(
       [
@@ -2463,7 +2482,14 @@ var Forge = (function () {
   }
 
   /* ------------------------------------------------ build */
-  F.build = function (w, mats) {
+  /* build(weapon, materials, skin)
+
+     A high tier is allowed to change the MODEL, not just the paint.
+     `skin.mods` can hide parts, add parts, run a build() hook for
+     bespoke geometry, and register a tick() for animated emissives.
+     Without that a covert is a recolour, and recolours are why the
+     old catalogue felt thin. */
+  F.build = function (w, mats, skin) {
     mats = mats || F.defaultMats();
     var root = new THREE.Group();
     root.name = w.id;
@@ -2486,9 +2512,16 @@ var Forge = (function () {
       return pivots[p.pivot];
     }
 
-    for (var i = 0; i < w.parts.length; i++) {
-      var p = w.parts[i];
-      if (p.skip) continue;
+    var mods = (skin && skin.mods) || null;
+    var hidden = {};
+    if (mods && mods.hide) mods.hide.forEach(function (n) { hidden[n] = 1; });
+
+    var parts = w.parts;
+    if (mods && mods.addParts) parts = parts.concat(mods.addParts);
+
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p.skip || hidden[p.name]) continue;
       var o = mesh(p, mats);
       var t = target(p);
       if (p.pivot) {
@@ -2508,6 +2541,10 @@ var Forge = (function () {
       if (p.mat === 'body' || p.mat === 'metal' || p.mat === 'poly') root.userData.paintable.push(o);
     }
     layoutUV(root, w);
+    // bespoke geometry runs AFTER the UV layout, so a skin's own
+    // additions keep whatever mapping they were built with
+    if (mods && mods.build) mods.build(root, mats, w);
+    if (mods && mods.tick) root.userData.tick = mods.tick;
     return root;
   };
 
@@ -2539,6 +2576,60 @@ var Forge = (function () {
       o.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     });
   }
+
+  /* ------------------------------------------------ overlay kit
+
+     What separates a top-tier finish from a recolour, taken from
+     studying how the good ones do it: the glow is not painted into
+     the diffuse map, it is SEPARATE GEOMETRY sitting on a matte body —
+     contour tracery along the receiver, dashed orbit rings, ring
+     collars, sparkle points.  Painted glow goes flat and washes red
+     toward pink under the ACES shoulder; real emissive geometry
+     blooms and reads as light. */
+  F.emit = function (color, i) {
+    return new THREE.MeshBasicMaterial({
+      color: Stage.C(color).multiplyScalar(i == null ? 2.0 : i),
+      toneMapped: false, fog: false
+    });
+  };
+  F.glowSprite = function (color, i, size) {
+    return new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(Tex.blob(size || 64, 0, 2.2)),
+      color: Stage.C(color).multiplyScalar(i == null ? 1 : i),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide, toneMapped: false, fog: false
+    });
+  };
+
+  /* A thin emissive bar. The workhorse of contour tracery: laid end to
+     end along an edge it reads as a lit seam. */
+  F.bar = function (root, color, inten, w, h, d, x, y, z) {
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), F.emit(color, inten));
+    m.position.set(x, y, z || 0);
+    m.userData.keepUV = true;
+    root.add(m);
+    return m;
+  };
+  /* A dashed ring around the barrel, with a travelling dot. */
+  F.ring = function (root, color, inten, r, tube, x, y, dashes) {
+    var g = new THREE.Group();
+    g.position.set(x, y, 0);
+    g.rotation.y = Math.PI / 2;          // torus axis onto the barrel
+    var spin = new THREE.Group();        // rotated by the skin's tick
+    g.add(spin);
+    var n = dashes || 8;
+    for (var i = 0; i < n; i++) {
+      var seg = new THREE.Mesh(
+        new THREE.TorusGeometry(r, tube, 4, 6, Math.PI / (n - 1)),
+        F.emit(color, inten));
+      seg.rotation.z = i / n * TAU;
+      seg.userData.keepUV = true;
+      spin.add(seg);
+    }
+    g.userData.spinner = spin;
+    root.add(g);
+    return g;
+  };
 
   F.extrude = extrudeFixed;
   F.inset = inset;
@@ -2860,6 +2951,167 @@ var Skins = (function () {
       mat: { rough: .22, metal: .92, env: 1.3 } });
   S({ id: 'cin_workhorse', name: 'Workhorse', weapon: 'cinder', rarity: 2, crate: 'crucible',
       floatMin: .06, floatMax: .74, paint: tiger('#333a45', '#7c6a2e', 18) });
+
+  /* ================================================================
+     signatures — what actually separates a top tier from a recolour
+
+     Three things, and a finish needs all three to feel like a real
+     skin rather than a repaint:
+
+       fx    its own tracer, muzzle and impact colour, so the weapon
+             is different to SHOOT and not only to look at
+       exo   an emissive exoskeleton: separate geometry on a matte
+             body — contour seams, dashed orbit rings — never glow
+             painted into the diffuse, which goes flat and washes red
+             toward pink under the ACES shoulder
+       tick  the exo breathes, and the rings travel
+     ================================================================ */
+
+  function exo(o) {
+    var col = o.col, inten = o.i == null ? 2.2 : o.i;
+    return {
+      hide: o.hide,
+      build: function (root) {
+        var g = new THREE.Group();
+        g.name = 'exo';
+        var spinners = [];
+        (o.bars || []).forEach(function (b) {
+          Forge.bar(g, col, inten, b[0], b[1], b[2], b[3], b[4], b[5]);
+          // mirrored to the far flank, so it reads from both sides
+          if (b[5]) Forge.bar(g, col, inten, b[0], b[1], b[2], b[3], b[4], -b[5]);
+        });
+        (o.rings || []).forEach(function (r) {
+          spinners.push(Forge.ring(g, col, inten, r[0], r[1], r[2], r[3], r[4]).userData.spinner);
+        });
+        g.userData.spinners = spinners;
+        root.add(g);
+        root.userData.exo = g;
+      },
+      tick: function (root, t) {
+        var g = root.userData.exo;
+        if (!g) return;
+        var p = 1 + Math.sin(t * (o.rate || 2.2)) * (o.pulse == null ? .28 : o.pulse);
+        var c = Stage.C(col);
+        g.traverse(function (m) {
+          if (m.isMesh && m.material) m.material.color.copy(c).multiplyScalar(inten * p);
+        });
+        var sp = g.userData.spinners;
+        for (var i = 0; i < sp.length; i++) sp[i].rotation.z = t * (o.spin || .9) * (i % 2 ? -1 : 1);
+      }
+    };
+  }
+
+  function sig(id, o) {
+    var s = BY[id];
+    if (!s) return;
+    if (o.fx) s.fx = o.fx;
+    if (o.mods) s.mods = o.mods;
+  }
+
+  /* ---- CINDER · Overtemp — a rifle running too hot ---- */
+  sig('cin_overtemp', {
+    fx: { tracer: 0xff5e14, tracerW: .011, muzzle: 0xff7a24, impact: 0xff6a1c },
+    mods: exo({
+      col: '#ff5e14', i: 2.6, rate: 3.0, pulse: .34, spin: 1.1,
+      bars: [
+        [.30, .004, .004, .09, .062, .022],   // seam along the upper receiver
+        [.19, .004, .004, .36, -.010, .025],  // and along the handguard
+        [.055, .003, .003, -.30, .050, .024]  // a tick on the stock
+      ],
+      rings: [[.020, .0022, .545, .022, 10]]  // hot collar behind the brake
+    })
+  });
+
+  /* ---- HORNET · Vapour Lock — coolant, so it reads cold ---- */
+  sig('hor_vaporlock', {
+    fx: { tracer: 0x39c6d6, tracerW: .009, muzzle: 0x7fe6f2, impact: 0x39c6d6 },
+    mods: exo({
+      col: '#39c6d6', i: 2.4, rate: 2.4, pulse: .30, spin: 1.6,
+      bars: [
+        [.26, .004, .004, .04, .058, .025],
+        [.10, .003, .003, .15, -.046, .025]
+      ],
+      rings: [[.024, .002, .215, .018, 12], [.024, .002, .300, .018, 12]]
+    })
+  });
+
+  /* ---- SPUR · Deep Field — starlight, so points not seams ---- */
+  sig('spu_deepfield', {
+    fx: { tracer: 0x8f6bff, tracerW: .0085, muzzle: 0xa98cff, impact: 0x7d3fd6 },
+    mods: exo({
+      col: '#8f6bff', i: 2.2, rate: 1.6, pulse: .40, spin: .7,
+      bars: [
+        [.16, .003, .003, .04, .060, .022],
+        [.05, .003, .003, -.055, -.090, .020]
+      ],
+      rings: [[.014, .0018, .155, .036, 6]]
+    })
+  });
+
+  /* ---- LONGBOW · Last Light — one long seam down a long rifle ---- */
+  sig('lon_lastlight', {
+    fx: { tracer: 0xff7a2a, tracerW: .017, muzzle: 0xffb066, impact: 0xff5e14 },
+    mods: exo({
+      col: '#ff7a2a', i: 2.5, rate: 1.9, pulse: .26, spin: .8,
+      bars: [
+        [.40, .004, .004, .30, .040, .026],   // full length of the forend
+        [.22, .004, .004, .06, .056, .026],
+        [.10, .003, .003, -.30, .046, .027]
+      ],
+      rings: [[.017, .002, .60, .012, 10], [.017, .002, .70, .012, 10]]
+    })
+  });
+
+  /* ---- BULKHEAD · Ingot — brass, warm, minimal ---- */
+  sig('bul_ingot', {
+    fx: { tracer: 0xffc24a, tracerW: .012, muzzle: 0xffd98a, impact: 0xffb020 },
+    mods: exo({
+      col: '#ffc24a', i: 2.0, rate: 1.4, pulse: .22, spin: .5,
+      bars: [[.20, .004, .004, .05, .052, .028], [.14, .003, .003, .30, -.044, .028]],
+      rings: [[.028, .0022, .565, .026, 8]]
+    })
+  });
+
+  /* ---- TANG · Damascene — the blade spine lit like a quench ---- */
+  sig('tan_damascene', {
+    fx: { tracer: 0xffb020, muzzle: 0xffd27a, impact: 0xffb020 },
+    mods: exo({
+      col: '#ffb020', i: 2.4, rate: 2.6, pulse: .34,
+      bars: [[.115, .0022, .0022, .048, .0125, .004]]
+    })
+  });
+
+  /* ---- TANG · Gold Pour — molten, so it pulses slower and hotter ---- */
+  sig('tan_goldpour', {
+    fx: { tracer: 0xffd27a, muzzle: 0xffe6b0, impact: 0xffb020 },
+    mods: exo({
+      col: '#ffcf6a', i: 2.8, rate: 1.5, pulse: .42,
+      bars: [
+        [.115, .0026, .0026, .048, .0125, .004],
+        [.100, .0018, .0018, -.100, .0005, .0105]   // a seam down the handle
+      ]
+    })
+  });
+
+  /* ---- HOOK · Event Horizon — an orbit ring on the finger ring ---- */
+  sig('hoo_eventhorizon', {
+    fx: { tracer: 0x5aa0ff, muzzle: 0x9fd6ff, impact: 0x39c6d6 },
+    mods: exo({
+      col: '#5aa0ff', i: 2.6, rate: 2.0, pulse: .36, spin: 2.2,
+      bars: [[.070, .0022, .0022, .045, .028, .004]],
+      rings: [[.024, .002, -.062, -.026, 10]]
+    })
+  });
+
+  /* ---- SPUR · Flashover ---- */
+  sig('spu_flashover', {
+    fx: { tracer: 0xffc24a, tracerW: .009, muzzle: 0xffd98a, impact: 0xff7a2a },
+    mods: exo({
+      col: '#ffc24a', i: 2.4, rate: 3.4, pulse: .38,
+      bars: [[.20, .003, .003, .04, .058, .022]],
+      rings: [[.013, .0018, .165, .036, 6]]
+    })
+  });
 
   /* ================================================================
      materials
@@ -4563,10 +4815,14 @@ var VFX = (function () {
 
   /* ------------------------------------------------ tracers */
   function initTracers() {
-    // unit tube down -Z, translated so it spans 0..-1 from the origin
-    var g = new THREE.CylinderGeometry(1, .28, 1, 7, 1, true);
+    /* lookAt() points +Z at the target, so the tube must span 0..+1,
+       not 0..-1 — with the sign flipped the tracer shoots backwards out
+       of the stock.  Fat end at the muzzle (-Z after the rotate),
+       tapering toward the impact, so it reads as a streak leaving the
+       barrel rather than a bolt arriving. */
+    var g = new THREE.CylinderGeometry(.34, 1, 1, 7, 1, true);
     g.rotateX(Math.PI / 2);
-    g.translate(0, 0, -0.5);
+    g.translate(0, 0, 0.5);
     T = [];
     for (var i = 0; i < MAXT; i++) {
       var mat = new THREE.MeshBasicMaterial({
@@ -4719,6 +4975,7 @@ var VFX = (function () {
     t.w = w || .008;
   };
 
+  /* colour is optional and comes from the equipped skin's fx block */
   V.muzzle = function (localPos, dir, scale, colour) {
     flash.visible = true;
     flash.position.copy(localPos);
@@ -5440,6 +5697,641 @@ var Drill = (function () {
 })();
 
 
+/* ===================== 69_anim.js ===================== */
+/* =============================================================
+   69_anim — viewmodel routines
+
+   Every routine is a keyframe track.  A frame is
+
+       { t, p:[x,y,z], r:[pitch,yaw,roll] }
+
+   `p` is an offset in CAMERA space added to the weapon's rest
+   position.  `r` is a delta rotation in VIEWMODEL space, and the
+   axis names are literal:
+
+       pitch  about X   wrist flexion,     ~70 deg   -> LIMIT.pitch
+       yaw    about Y   wrist deviation,   ~30 deg   -> LIMIT.yaw
+       roll   about Z   forearm supination, ~150 deg -> LIMIT.roll
+
+   THE DELTA IS PRE-MULTIPLIED: wrist = delta * baseQ.  Post-
+   multiplying applies it in the WEAPON's frame instead, where Z is
+   the weapon's thickness axis — so what reads in the source as
+   "roll the gun over" comes out as a 360-degree pitch flip through
+   the wrist, which is the anatomy break the old single shared
+   routine had.  Pre-multiplying puts the rotation on the actual
+   viewmodel axes, and then the limits above mean something.
+
+   Knives set `free` and are exempt: a balisong flip genuinely
+   leaves the wrist's envelope, and it spins about a real pin rather
+   than about the grip.
+
+   Every routine also gets an `fx(f, P)` hook for the parts that
+   move on their own — bolts, magazines, pumps, handles — and for
+   firing sounds at the right beat.
+   ============================================================= */
+var Anim = (function () {
+
+  var LIMIT = { pitch: 1.20, yaw: 0.52, roll: 2.60 };
+
+  /* ------------------------------------------------ sampling
+
+     Cubic Hermite with non-uniform Catmull-Rom tangents.
+
+     Easing each SEGMENT separately — which is the obvious way to write
+     this and what it used to do — drives velocity to zero at every
+     keyframe.  The weapon arrives at a pose, stops dead, then sets off
+     again, six times a routine, and the whole thing reads snappy and
+     blocky.  The knives never had it because they are driven by one
+     continuous curve, which is exactly the difference.
+
+     Tangents come from the NEIGHBOURS, scaled by real time spacing, so
+     velocity is continuous through a waypoint and the weapon arcs
+     between poses instead of walking between them.  The two endpoints
+     get zero tangents so a routine still eases out of rest and settles
+     back into it. */
+  /* Channels. `p`/`r` drive the weapon; `hp`/`hr`/`h` drive the HAND
+     independently, so a routine can choreograph both together instead
+     of bolting the hand to a point on the blade and hoping.  That is
+     how the reference actually looks: through a helix the hand is open
+     and nearly still while the knife travels around it.
+        hp  hand position, offset from the weapon's rest position
+        hr  hand rotation, viewmodel space
+        h   [curl, spread, thumbCurl] */
+  var _o = {
+    px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0,
+    hpx: 0, hpy: 0, hpz: 0, hrx: 0, hry: 0, hrz: 0, hc: 1, hs: 0, ht: 1,
+    ka: 0, kb: 0
+  };
+
+  function comp(kf, i, key, c) {
+    var a = kf[i][key];
+    return a ? a[c] : 0;
+  }
+
+  /* tangent at keyframe i, in units per unit of f */
+  function tangent(kf, i, key, c) {
+    var n = kf.length;
+    if (i <= 0 || i >= n - 1) return 0;            // rest at both ends
+    var dt = kf[i + 1].t - kf[i - 1].t;
+    if (dt < 1e-6) return 0;
+    return (comp(kf, i + 1, key, c) - comp(kf, i - 1, key, c)) / dt;
+  }
+
+  function hermite(kf, i, key, c, u, h) {
+    var p0 = comp(kf, i, key, c), p1 = comp(kf, i + 1, key, c);
+    var m0 = tangent(kf, i, key, c) * h, m1 = tangent(kf, i + 1, key, c) * h;
+    var u2 = u * u, u3 = u2 * u;
+    return (2 * u3 - 3 * u2 + 1) * p0 + (u3 - 2 * u2 + u) * m0 +
+           (-2 * u3 + 3 * u2) * p1 + (u3 - u2) * m1;
+  }
+
+  function sample(track, f, free) {
+    var kf = track.kf, n = kf.length, i;
+    if (!n) { _o.px = _o.py = _o.pz = _o.rx = _o.ry = _o.rz = 0; return _o; }
+    f = sat(f);
+    var seg = n - 2;
+    for (i = 0; i < n - 1; i++) {
+      if (f >= kf[i].t && f <= kf[i + 1].t) { seg = i; break; }
+    }
+    if (seg < 0) seg = 0;
+    var h = Math.max(1e-6, kf[seg + 1].t - kf[seg].t);
+    var u = sat((f - kf[seg].t) / h);
+
+    _o.px = hermite(kf, seg, 'p', 0, u, h);
+    _o.py = hermite(kf, seg, 'p', 1, u, h);
+    _o.pz = hermite(kf, seg, 'p', 2, u, h);
+    _o.rx = hermite(kf, seg, 'r', 0, u, h);
+    _o.ry = hermite(kf, seg, 'r', 1, u, h);
+    _o.rz = hermite(kf, seg, 'r', 2, u, h);
+
+    if (track.hand) {
+      _o.hpx = hermite(kf, seg, 'hp', 0, u, h);
+      _o.hpy = hermite(kf, seg, 'hp', 1, u, h);
+      _o.hpz = hermite(kf, seg, 'hp', 2, u, h);
+      _o.hrx = hermite(kf, seg, 'hr', 0, u, h);
+      _o.hry = hermite(kf, seg, 'hr', 1, u, h);
+      _o.hrz = hermite(kf, seg, 'hr', 2, u, h);
+      _o.hc = sat(hermite(kf, seg, 'h', 0, u, h));
+      _o.hs = sat(hermite(kf, seg, 'h', 1, u, h));
+      _o.ht = sat(hermite(kf, seg, 'h', 2, u, h));
+    }
+    if (track.chain) {
+      // k = [handle A angle, handle B angle] about the pins
+      _o.ka = hermite(kf, seg, 'k', 0, u, h);
+      _o.kb = hermite(kf, seg, 'k', 1, u, h);
+    }
+
+    if (!free) {
+      _o.rx = clamp(_o.rx, -LIMIT.pitch, LIMIT.pitch);
+      _o.ry = clamp(_o.ry, -LIMIT.yaw, LIMIT.yaw);
+      _o.rz = clamp(_o.rz, -LIMIT.roll, LIMIT.roll);
+    }
+    return _o;
+  }
+
+  /* scratch for the chain routines */
+  var _hp = new THREE.Vector3(), _he = new THREE.Euler(0, 0, 0, 'XYZ');
+  var _hqq = new THREE.Quaternion();
+
+  /* ------------------------------------------------ fx helpers */
+  function bolt(P, amt) { if (P.pivots.bolt) P.pivots.bolt.position.x = -amt; }
+  function pump(P, amt) { if (P.pivots.pump) P.pivots.pump.position.x = -amt; }
+  function magOut(P, a) {
+    var m = P.pivots.mag;
+    if (!m) return;
+    m.position.y = -a * .17;
+    m.rotation.z = a * .42;
+    m.visible = a < .96;
+  }
+  /* once-per-routine cue, so a sound fires on the beat and not every frame */
+  function cue(P, key, f, at, fn) {
+    if (f >= at && !P.cued[key]) { P.cued[key] = 1; fn(); }
+  }
+
+  /* ================================================================
+     INSPECT — one per class, and they are meant to look different
+     ================================================================ */
+  var inspect = {
+
+    /* rifle: bring it up, turn the left flank over, check the chamber */
+    rifle: {
+      dur: 1.95,
+      kf: [
+        { t: .00, p: [0, 0, 0],            r: [0, 0, 0] },
+        { t: .16, p: [-.030, .030, .075],  r: [.10, -.40, .55] },
+        { t: .40, p: [-.045, .020, .095],  r: [.26, -.30, 1.85] },
+        { t: .58, p: [-.040, .014, .085],  r: [.20, -.14, 1.35] },
+        { t: .80, p: [.018, .010, .045],   r: [-.08, .24, -.38] },
+        { t: 1.0, p: [0, 0, 0],            r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        bolt(P, f > .50 && f < .68 ? Ease.spike(inv(.50, .68, f)) * .048 : 0);
+        cue(P, 'a', f, .16, function () { Audio_.mag('in'); });
+        cue(P, 'b', f, .52, function () { Audio_.mag('charge'); });
+      }
+    },
+
+    /* smg: a fast flick, half the dwell of the rifle */
+    smg: {
+      dur: 1.45,
+      kf: [
+        { t: .00, p: [0, 0, 0],           r: [0, 0, 0] },
+        { t: .14, p: [-.030, .034, .070], r: [.06, -.48, .90] },
+        { t: .34, p: [-.038, .022, .088], r: [.34, -.22, 2.25] },
+        { t: .54, p: [-.030, .016, .070], r: [.30, -.12, 1.55] },
+        { t: .76, p: [.022, .008, .038],  r: [-.10, .30, -.50] },
+        { t: 1.0, p: [0, 0, 0],           r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        // a slap on the base of the magazine at the turnaround
+        if (P.pivots.mag) P.pivots.mag.position.y = -Ease.spike(inv(.50, .64, f)) * .012;
+        bolt(P, f > .30 && f < .44 ? Ease.spike(inv(.30, .44, f)) * .040 : 0);
+        cue(P, 'a', f, .52, function () { Audio_.mag('in'); });
+      }
+    },
+
+    /* pistol: turned over close to the eye, then the slide racked */
+    pistol: {
+      dur: 1.55,
+      kf: [
+        { t: .00, p: [0, 0, 0],           r: [0, 0, 0] },
+        { t: .18, p: [-.055, .050, .105], r: [.14, -.46, .70] },
+        { t: .40, p: [-.062, .040, .120], r: [.10, -.34, 2.45] },
+        { t: .62, p: [-.050, .034, .100], r: [.04, -.26, 2.05] },
+        { t: .84, p: [.020, .012, .040],  r: [-.08, .26, -.42] },
+        { t: 1.0, p: [0, 0, 0],           r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        bolt(P, f > .58 && f < .76 ? Ease.spike(inv(.58, .76, f)) * .036 : 0);
+        cue(P, 'a', f, .60, function () { Audio_.mag('charge'); });
+      }
+    },
+
+    /* sniper: slow and heavy, and the bolt is the whole point */
+    sniper: {
+      dur: 2.30,
+      kf: [
+        { t: .00, p: [0, 0, 0],           r: [0, 0, 0] },
+        { t: .18, p: [-.026, .026, .085], r: [.08, -.34, .42] },
+        { t: .42, p: [-.038, .018, .105], r: [.22, -.24, 1.30] },
+        { t: .64, p: [-.034, .014, .095], r: [.18, -.16, 1.05] },
+        { t: .86, p: [.016, .008, .040],  r: [-.06, .18, -.26] },
+        { t: 1.0, p: [0, 0, 0],           r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        var b = P.pivots.bolt;
+        if (b) {
+          // lift, draw, return — a real bolt throw, not a slide
+          var up = f > .46 && f < .60 ? Ease.spike(inv(.46, .60, f)) : 0;
+          var back = f > .52 && f < .74 ? smooth(inv(.52, .63, f)) * (1 - smooth(inv(.63, .74, f))) : 0;
+          b.rotation.z = -up * 1.15;
+          b.position.x = -back * .075;
+        }
+        cue(P, 'a', f, .50, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .66, function () { Audio_.mag('charge'); });
+      }
+    },
+
+    /* shotgun: cant it over to show the loading port, then cycle */
+    shotgun: {
+      dur: 2.00,
+      kf: [
+        { t: .00, p: [0, 0, 0],           r: [0, 0, 0] },
+        { t: .18, p: [-.030, .026, .070], r: [.34, -.40, .95] },
+        { t: .44, p: [-.036, .016, .082], r: [.30, -.28, .80] },
+        { t: .70, p: [-.010, .012, .050], r: [.10, -.12, .28] },
+        { t: .88, p: [.020, .006, .030],  r: [-.06, .18, -.22] },
+        { t: 1.0, p: [0, 0, 0],           r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        var c = f > .44 && f < .72 ? Math.sin(sat(inv(.44, .72, f)) * Math.PI) : 0;
+        pump(P, c * .085);
+        cue(P, 'a', f, .48, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .66, function () { Audio_.mag('charge'); });
+      }
+    },
+
+    /* ---- BALISONG ----------------------------------------------
+       Real flourishes, and they are all `free`: a flip is not a wrist
+       motion and must not be clamped to the wrist's envelope.
+
+       What separates a trick from a fan is that the knife travels a
+       PATH — it orbits the index finger, or loops behind the hand —
+       while flipping on its pin.  A knife rotating about its own
+       centre is a fan no matter how fast you spin it, and that is
+       what these all used to be. */
+
+    /* HELIX — the knife rolls around the index finger, staying
+       tangent to it.  Handles stay shut through the roll and snap
+       open on the catch. */
+    balisong_helix: {
+      dur: 2.30, free: true, hand: true, name: 'Helix',
+      finger: [-.028, -.046, 0],           // index finger, below the pin
+      // framing: bring the whole performance up and toward centre
+      origin: [-.030, .045, .025], handOrigin: [-.050, .062, .025],
+      /* Blocked off the reference.  The shape of the trick:
+
+           the hand OPENS FLAT and the fingers SPREAD, palm down
+           the knife rolls around the spread fingers, twice
+           it passes BETWEEN them rather than orbiting a fist
+           the wrist rolls with it
+           the hand closes and catches it, blade forward
+
+         What my first attempt got wrong was doing all of that against
+         a closed fist, which is why it read as a knife orbiting a
+         brick.  The hand is the other half of the performance.
+
+         Negative Z on the weapon: a flourish pushes AWAY from the eye.
+         A 0.28 m knife swings its tip through a 0.19 m radius and at
+         hip-fire distance that is most of the screen. */
+      kf: [
+        /* hr's Y is the important one.  The hand's fingers extend along
+           its local -Z, so at yaw 0 they point straight away from the
+           eye and the whole hand foreshortens into a featureless box.
+           Around 1.5 rad turns it side-on, fingers across the frame,
+           which is how the reference is shot and the only way a spread
+           hand reads at all. */
+        /* HELIX, read off the reference.
+
+           The hand holds the safe handle the whole way and barely
+           moves; the blade does the travelling.  Handle A stays in the
+           fist while the blade sweeps a full turn around its pin, then
+           a second turn, and the bite handle trails a quarter turn
+           behind it — which is what gives the propeller its two
+           different arms.  Both angles end a full turn from where they
+           started, so the pose is identical modulo 2*PI and it lands
+           without a snap.
+
+           hp/hr move the hand only slightly: in the video the hand is
+           near-still and it is the knife that flies. */
+        /* Angles start and end at 0 — the OPEN grip, which is the
+           weapon's idle state.  They end a whole turn from there, so
+           the last keyframe is the rest pose to the bit and there is
+           nothing for the landing reset to correct.  Authoring them
+           from PI (closed) snapped both handles 180 degrees on the
+           routine's first and last frame. */
+        /* The knife FANS OPEN before it flies.  A helix opens off the
+           bite handle alone — handle A is held at 0 across the first
+           three keys, so the spline's tangents there are zero and the
+           blade is genuinely motionless while B falls a full 180.
+           Without that beat both angles moved together from frame one
+           and the whole trick was a rigid spin wearing a fan. */
+        //          hand pos                 hand rot             A angle            B angle
+        { t: .00, hp: [0, 0, 0],            hr: [0, 0, 0],        k: [0, 0] },
+        { t: .13, hp: [-.007, .005, -.011], hr: [.08, .22, -.06], k: [0, 1.62] },
+        { t: .26, hp: [-.013, .012, -.020], hr: [.13, .34, .04],  k: [0, Math.PI - .05] },
+        { t: .40, hp: [-.019, .019, -.029], hr: [.18, .48, .16],  k: [-1.70, Math.PI + .75] },
+        { t: .55, hp: [-.022, .024, -.034], hr: [.20, .58, .22],  k: [-TAU + .30, TAU - .90] },
+        { t: .70, hp: [-.019, .019, -.029], hr: [.17, .48, .12],  k: [-TAU - 1.60, TAU + 1.15] },
+        { t: .84, hp: [-.013, .011, -.020], hr: [.11, .32, -.02], k: [-2 * TAU + 1.30, 2 * TAU - 1.25] },
+        { t: .93, hp: [-.006, .004, -.009], hr: [.06, .16, -.08], k: [-2 * TAU + .32, 2 * TAU - .28] },
+        { t: 1.0, hp: [0, 0, 0],            hr: [0, 0, 0],        k: [-2 * TAU, 2 * TAU] }
+      ],
+      chain: true, hold: 'A',
+      fx: function (f, P) {
+        var s = Anim.sample(this, f, true);
+        _hp.set(P.weapon.vm.pos[0] + s.hpx, P.weapon.vm.pos[1] + s.hpy, P.weapon.vm.pos[2] + s.hpz);
+        _he.set(s.hrx, s.hry, s.hrz);
+        _hqq.setFromEuler(_he);
+        P.knifeChain(this.hold, s.ka, s.kb, _hp, _hqq);
+        cue(P, 'a', f, .08, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .30, function () { Audio_.tick(.75); });
+        cue(P, 'c', f, .56, function () { Audio_.tick(.6); });
+        cue(P, 'd', f, .78, function () { Audio_.tick(.45); });
+        cue(P, 'e', f, .92, function () { Audio_.mag('charge'); });
+      }
+    },
+
+    /* BEHIND THE 8 BALL — a rollover that carries the knife around
+       the BACK of the hand.  One loop about a point behind the grip,
+       two flips on the pin inside it, fanning open at the apex. */
+    balisong_behind8: {
+      dur: 2.55, free: true, hand: true, name: 'Behind the 8',
+      finger: [-.058, -.026, 0],           // back of the hand
+      origin: [-.030, .045, .025], handOrigin: [-.050, .062, .025],
+      /* Off the reference:  closed in a fist, blade up ->  the hand
+         opens flat and the knife fans out across the fingers ->  it
+         rotates as a propeller balanced on them ->  it folds and
+         passes BEHIND the closing fist ->  it swings out to a grip,
+         blade forward.  The disappearance behind the hand is the
+         whole point of the trick, so the knife is driven well back
+         past the palm at the two-thirds mark. */
+      kf: [
+        /* BEHIND THE 8 BALL, read off the reference.
+
+           Beat for beat: open in the grip -> the BITE handle alone
+           falls shut and the knife closes into a V -> the blade comes
+           around into the propeller with both arms splayed -> the whole
+           thing rolls back over the hand -> it swings out to the grip
+           again, blade forward.
+
+           The opening is the giveaway that this is a chain and not a
+           rigid spin: for the first third ONLY handle B moves.  Blade
+           and held handle are held at 0 across four keyframes, so the
+           spline's tangents there are zero too and the blade really
+           does sit still while the bite handle falls 180 degrees on its
+           own pin.  Nothing rigid can do that.
+
+           Both angles land a whole turn from 0, which is the idle open
+           grip — the routine ends on the rest pose exactly. */
+        //          hand pos                 hand rot             A angle       B angle
+        { t: .00, hp: [0, 0, 0],            hr: [0, 0, 0],        k: [0, 0] },
+        // clear of the entry blend, still open — the beat starts here
+        { t: .09, hp: [-.003, .002, -.006], hr: [.05, .14, -.06], k: [0, .18] },
+        // ONLY B moves: the bite handle falls 180 on its own pin while
+        // the blade and the held handle sit dead still
+        { t: .27, hp: [-.009, .007, -.015], hr: [.10, .26, .00],  k: [0, Math.PI - .20] },
+        // held one more frame so the tangent out of the beat is zero too
+        { t: .34, hp: [-.013, .011, -.021], hr: [.14, .34, .08],  k: [0, Math.PI + .05] },
+        { t: .50, hp: [-.022, .022, -.034], hr: [.24, .58, .28],  k: [-1.70, Math.PI + .80] },
+        { t: .64, hp: [-.026, .028, -.039], hr: [.26, .68, .40],  k: [-3.45, Math.PI + 1.55] },
+        { t: .78, hp: [-.019, .019, -.030], hr: [.18, .48, .14],  k: [-5.10, Math.PI + 2.45] },
+        { t: .91, hp: [-.008, .006, -.013], hr: [.08, .22, -.06], k: [-TAU + .40, TAU - .50] },
+        { t: 1.0, hp: [0, 0, 0],            hr: [0, 0, 0],        k: [-TAU, TAU] }
+      ],
+      chain: true, hold: 'A',
+      fx: function (f, P) {
+        var s = Anim.sample(this, f, true);
+        _hp.set(P.weapon.vm.pos[0] + s.hpx, P.weapon.vm.pos[1] + s.hpy, P.weapon.vm.pos[2] + s.hpz);
+        _he.set(s.hrx, s.hry, s.hrz);
+        _hqq.setFromEuler(_he);
+        P.knifeChain(this.hold, s.ka, s.kb, _hp, _hqq);
+        cue(P, 'a', f, .06, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .20, function () { Audio_.tick(.85); });
+        cue(P, 'c', f, .44, function () { Audio_.tick(.65); });
+        cue(P, 'd', f, .70, function () { Audio_.tick(.45); });
+        cue(P, 'e', f, .90, function () { Audio_.mag('charge'); });
+      }
+    },
+
+    /* ---- KARAMBIT ----------------------------------------------
+       Its trick vocabulary is built on the finger ring, so both of
+       these turn on the ring rather than on the blade. */
+
+    /* FINGER SPIN — the knife orbits the index finger through the
+       ring, three turns, whipping through the middle. */
+    karambit_spin: {
+      dur: 1.95, free: true, name: 'Finger Spin',
+      finger: [-.062, -.026, 0],           // the ring itself
+      kf: [
+        { t: .00, p: [0, 0, 0],            r: [0, 0, 0] },
+        { t: .18, p: [-.026, .024, -.050], r: [.14, -.28, .22] },
+        { t: .50, p: [-.036, .040, -.082], r: [.22, -.12, -.10] },
+        { t: .80, p: [-.024, .022, -.052], r: [.10, .06, .14] },
+        { t: 1.0, p: [0, 0, 0],            r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        P.spinKnife(0, -Ease.inOutCubic(f) * TAU * 3, this.finger);
+        cue(P, 'a', f, .05, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .45, function () { Audio_.tick(.6); });
+        cue(P, 'c', f, .88, function () { Audio_.mag('in'); });
+      }
+    },
+
+    /* PIKAL ROLL — forward grip to reverse and back, the transition
+       a karambit actually exists for.  Half a turn out, a beat held
+       in reverse, half a turn home: a whole turn in total, so it
+       lands clean. */
+    karambit_pikal: {
+      dur: 2.10, free: true, name: 'Pikal Roll',
+      finger: [-.062, -.026, 0],
+      kf: [
+        { t: .00, p: [0, 0, 0],            r: [0, 0, 0] },
+        { t: .22, p: [-.032, .012, -.058], r: [.30, -.34, .55] },
+        { t: .42, p: [-.040, .028, -.080], r: [.12, -.20, 1.30] },
+        { t: .62, p: [-.040, .028, -.080], r: [.12, -.20, 1.30] },
+        { t: .84, p: [-.018, .014, -.040], r: [.16, .04, .30] },
+        { t: 1.0, p: [0, 0, 0],            r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        // half out, hold, half home
+        var a = smooth(inv(.06, .40, f)) * .5;
+        var b = smooth(inv(.60, .92, f)) * .5;
+        P.spinKnife(0, -(a + b) * TAU, this.finger);
+        cue(P, 'a', f, .05, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .38, function () { Audio_.tick(.75); });
+        cue(P, 'c', f, .64, function () { Audio_.tick(.5); });
+        cue(P, 'd', f, .90, function () { Audio_.mag('charge'); });
+      }
+    }
+  };
+
+  /* A knife plays a different flourish each time, the way a real one
+     would — one routine on repeat is what makes an inspect feel canned. */
+  var VARIANTS = {
+    balisong: ['balisong_helix', 'balisong_behind8'],
+    karambit: ['karambit_spin', 'karambit_pikal']
+  };
+
+  /* ================================================================
+     EQUIP — short, and weighted by the weapon
+     ================================================================ */
+  var equip = {
+    /* Yaw is the scarce axis — barely 30 degrees of wrist deviation —
+       so a draw buys its travel from ROLL and from dropping the weapon
+       further, both of which have range.  Reaching for yaw here is
+       what put the old poses outside the envelope. */
+    rifle:   { dur: .46, kf: [ { t: 0, p: [.11, -.30, .11], r: [-.55, .46, -.95] },
+                               { t: .72, p: [-.012, .022, -.012], r: [.06, -.07, .08] },
+                               { t: 1, p: [0, 0, 0], r: [0, 0, 0] } ],
+               fx: function (f, P) { bolt(P, f < .5 ? (1 - f * 2) * .045 : 0); } },
+    smg:     { dur: .34, kf: [ { t: 0, p: [.10, -.25, .10], r: [-.48, .48, -.80] },
+                               { t: .70, p: [-.014, .026, -.014], r: [.08, -.09, .10] },
+                               { t: 1, p: [0, 0, 0], r: [0, 0, 0] } ] },
+    pistol:  { dur: .30, kf: [ { t: 0, p: [.08, -.22, .08], r: [-.44, .45, -.70] },
+                               { t: .68, p: [-.012, .024, -.012], r: [.09, -.10, .11] },
+                               { t: 1, p: [0, 0, 0], r: [0, 0, 0] } ] },
+    /* heavier: further to travel, and it settles rather than snaps */
+    sniper:  { dur: .62, kf: [ { t: 0, p: [.14, -.36, .13], r: [-.62, .48, -1.10] },
+                               { t: .62, p: [-.016, .030, -.016], r: [.10, -.10, .12] },
+                               { t: .84, p: [.006, -.010, .006], r: [-.04, .04, -.05] },
+                               { t: 1, p: [0, 0, 0], r: [0, 0, 0] } ] },
+    shotgun: { dur: .55, kf: [ { t: 0, p: [.13, -.34, .12], r: [-.58, .47, -1.00] },
+                               { t: .60, p: [-.014, .028, -.014], r: [.09, -.09, .11] },
+                               { t: 1, p: [0, 0, 0], r: [0, 0, 0] } ],
+               // racked on the draw, which is the shotgun's signature
+               fx: function (f, P) {
+                 pump(P, f > .45 ? Math.sin(sat(inv(.45, 1, f)) * Math.PI) * .085 : 0);
+                 cue(P, 'a', f, .55, function () { Audio_.mag('charge'); });
+               } },
+    knife:   { dur: .42, free: true,
+               kf: [ { t: 0, p: [.08, -.22, .08], r: [-.40, .70, 0] },
+                     { t: .70, p: [-.012, .020, -.012], r: [.08, -.10, 0] },
+                     { t: 1, p: [0, 0, 0], r: [0, 0, 0] } ],
+               fx: function (f, P) {
+                 // flicks open on the way up, one whole turn
+                 P.spinKnife(Ease.outCubic(f) * TAU);
+                 var ang = mix(Math.PI, 0, Ease.outCubic(sat(f * 1.4)));
+                 if (P.pivots.handleA) P.pivots.handleA.rotation.z = ang;
+                 if (P.pivots.handleB) P.pivots.handleB.rotation.z = -ang;
+               } }
+  };
+
+  /* ================================================================
+     RELOAD — the beats differ per action type
+     ================================================================ */
+  var reload = {
+    /* box magazine: drop, seat, charge */
+    mag: {
+      kf: [
+        { t: .00, p: [0, 0, 0],            r: [0, 0, 0] },
+        { t: .22, p: [-.010, -.055, .020], r: [.42, -.26, .60] },
+        { t: .46, p: [-.014, -.075, .028], r: [.52, -.30, .74] },
+        { t: .70, p: [-.008, -.050, .020], r: [.38, -.22, .52] },
+        { t: .90, p: [.004, -.014, .006],  r: [.10, -.06, .14] },
+        { t: 1.0, p: [0, 0, 0],            r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        if (f < .34) magOut(P, Ease.outCubic(inv(0, .34, f)));
+        else if (f < .60) { if (P.pivots.mag) P.pivots.mag.visible = false; }
+        else if (f < .86) {
+          var b = Ease.outCubic(inv(.60, .86, f));
+          if (P.pivots.mag) {
+            P.pivots.mag.visible = true;
+            P.pivots.mag.position.y = -(1 - b) * .19;
+            P.pivots.mag.rotation.z = (1 - b) * .30;
+          }
+        } else magOut(P, 0);
+        bolt(P, f > .88 ? Ease.spike(inv(.88, 1, f)) * .05 : 0);
+        cue(P, 'a', f, .02, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .62, function () { Audio_.mag('in'); });
+        cue(P, 'c', f, .90, function () { Audio_.mag('charge'); });
+      }
+    },
+    /* bolt gun: same magazine, but the bolt is thrown afterwards */
+    bolt: {
+      kf: [
+        { t: .00, p: [0, 0, 0],            r: [0, 0, 0] },
+        { t: .20, p: [-.012, -.058, .022], r: [.38, -.24, .52] },
+        { t: .48, p: [-.016, -.072, .030], r: [.46, -.28, .66] },
+        { t: .72, p: [-.010, -.040, .018], r: [.30, -.30, 1.05] },
+        { t: .92, p: [.004, -.012, .006],  r: [.08, -.06, .12] },
+        { t: 1.0, p: [0, 0, 0],            r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        if (f < .32) magOut(P, Ease.outCubic(inv(0, .32, f)));
+        else if (f < .56) { if (P.pivots.mag) P.pivots.mag.visible = false; }
+        else if (f < .80) {
+          var b = Ease.outCubic(inv(.56, .80, f));
+          if (P.pivots.mag) {
+            P.pivots.mag.visible = true;
+            P.pivots.mag.position.y = -(1 - b) * .19;
+            P.pivots.mag.rotation.z = (1 - b) * .28;
+          }
+        } else magOut(P, 0);
+        var bp = P.pivots.bolt;
+        if (bp) {
+          var up = f > .80 && f < .90 ? Ease.spike(inv(.80, .90, f)) : 0;
+          var back = f > .82 ? smooth(inv(.82, .90, f)) * (1 - smooth(inv(.90, 1, f))) : 0;
+          bp.rotation.z = -up * 1.2;
+          bp.position.x = -back * .075;
+        }
+        cue(P, 'a', f, .02, function () { Audio_.mag('out'); });
+        cue(P, 'b', f, .58, function () { Audio_.mag('in'); });
+        cue(P, 'c', f, .84, function () { Audio_.mag('charge'); });
+      }
+    },
+    /* tube-fed: canted over, shells thumbed in, then racked */
+    shell: {
+      kf: [
+        { t: .00, p: [0, 0, 0],            r: [0, 0, 0] },
+        { t: .16, p: [-.020, -.045, .030], r: [.30, -.40, 1.05] },
+        { t: .70, p: [-.024, -.050, .034], r: [.34, -.42, 1.15] },
+        { t: .88, p: [-.006, -.020, .012], r: [.14, -.16, .40] },
+        { t: 1.0, p: [0, 0, 0],            r: [0, 0, 0] }
+      ],
+      fx: function (f, P) {
+        // four thumbed shells, then the pump
+        var n = 4;
+        for (var i = 0; i < n; i++) {
+          var at = .20 + i * .12;
+          cue(P, 's' + i, f, at, function () { Audio_.mag('in'); });
+        }
+        var feed = f > .18 && f < .70 ? Math.abs(Math.sin(inv(.18, .70, f) * Math.PI * n)) : 0;
+        if (P.pivots.pump) P.pivots.pump.position.x = -feed * .012;
+        var c = f > .74 && f < .94 ? Math.sin(sat(inv(.74, .94, f)) * Math.PI) : 0;
+        pump(P, c * .085);
+        cue(P, 'a', f, .02, function () { Audio_.mag('out'); });
+        cue(P, 'z', f, .78, function () { Audio_.mag('charge'); });
+      }
+    }
+  };
+
+  /* ------------------------------------------------ lookup */
+  /* every routine a weapon could play for `kind` — the selftest walks
+     all of them, since routineFor picks at random */
+  function allFor(kind, w) {
+    if (kind !== 'inspect') return [routineFor(kind, w)];
+    var k = w.anim || (w.isKnife ? (w.id === 'hook' ? 'karambit' : 'balisong') : w.cls);
+    var v = VARIANTS[k];
+    if (v) return v.map(function (n) { return inspect[n]; });
+    return [inspect[k] || inspect.rifle];
+  }
+
+  function routineFor(kind, w) {
+    if (kind === 'inspect') {
+      var k = w.anim || (w.isKnife ? (w.id === 'hook' ? 'karambit' : 'balisong') : w.cls);
+      var v = VARIANTS[k];
+      if (v) return inspect[v[(Math.random() * v.length) | 0]];
+      return inspect[k] || inspect.rifle;
+    }
+    if (kind === 'equip') return equip[w.isKnife ? 'knife' : w.cls] || equip.rifle;
+    return reload[w.reloadStyle || (w.bolt ? 'bolt' : w.shellReload ? 'shell' : 'mag')] || reload.mag;
+  }
+
+  return {
+    LIMIT: LIMIT,
+    sample: sample,
+    inspect: inspect,
+    equip: equip,
+    reload: reload,
+    routineFor: routineFor,
+    allFor: allFor,
+    variants: VARIANTS
+  };
+})();
+
+
 /* ===================== 70_player.js ===================== */
 /* =============================================================
    70_player — look, move, and the viewmodel rig
@@ -5490,7 +6382,8 @@ var Player = (function () {
   var ray = new THREE.Raycaster();
   var tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
   var baseQ = new THREE.Quaternion(), aimQ = new THREE.Quaternion();
-  var spinTarget = 0, spinNow = 0;
+  // a knife spins in the blade's own plane, i.e. about its local Z
+  var SPIN_AXIS = new THREE.Vector3(0, 0, 1);
 
   // zMin keeps the player BEHIND the firing bench (which stands at
   // z = 0.15) — both so they cannot walk through it and so the bench
@@ -5523,43 +6416,32 @@ var Player = (function () {
     buildArms();
   }
 
-  var ARM = { upper: .315, fore: .305 };
+  /* R6 arms: ONE rectangular prism per side, shoulder to grip.  No
+     elbow, no joint spheres, no fingers — the block is the arm and its
+     end is the hand.
+
+     This is where the project started and it should not have left.
+     A two-bone chain with an articulated hand needs finger-level
+     fidelity to pay off, and without it every added joint is another
+     thing to read as wrong; a plain block reads as stylised on
+     purpose. The block is deliberately chunky for the same reason. */
+  /* Sized against the knife, which is the one weapon the arm has to
+     share the frame with rather than hide behind.  At .068 the fist
+     alone covered a fifth of the screen and the blade read as an
+     accessory to it. */
+  var ARM_W = .052, HAND_L = .072, FORE_MAX = .20;
+  /* The glove used to be 0x121519 — near black, which at viewmodel
+     distance is a featureless brick with no form at all.  Values are
+     lifted and split across three tones so the knuckles, the finger
+     bank and the palm separate under the key light. */
   function armMat() {
     return {
-      sleeve: Stage.rough({ color: 0x1e232c, roughness: .86, metalness: .05, env: .45 }),
-      glove:  Stage.rough({ color: 0x121519, roughness: .70, metalness: .12, env: .55 }),
-      strap:  Stage.rough({ color: 0x2c3440, roughness: .62, metalness: .28, env: .6 })
+      sleeve: Stage.rough({ color: 0x232935, roughness: .86, metalness: .05, env: .5 }),
+      glove:  Stage.rough({ color: 0x2b313c, roughness: .70, metalness: .10, env: .6 }),
+      knuck:  Stage.rough({ color: 0x3a4250, roughness: .58, metalness: .16, env: .75 }),
+      dark:   Stage.rough({ color: 0x171b22, roughness: .82, metalness: .08, env: .4 }),
+      strap:  Stage.rough({ color: 0x4a5361, roughness: .5, metalness: .34, env: .8 })
     };
-  }
-  function limb(len, w0, w1, mat, seg) {
-    // a single tapered block, long axis on -Z so lookAt orients it
-    var g = new THREE.CylinderGeometry(w1, w0, len, seg || 10);
-    g.rotateX(Math.PI / 2);
-    g.translate(0, 0, -len / 2);
-    return new THREE.Mesh(g, mat);
-  }
-
-  /* The hand is built as one small group: back of hand, a curled
-     finger bank on the far side of the grip and a thumb on the near
-     side.  It is deliberately small — the weapon occludes most of it,
-     and an oversized glove parked in front of the receiver is worse
-     than no hand at all. */
-  function buildHand(M) {
-    var h = new THREE.Group();
-    var back = new THREE.Mesh(new THREE.BoxGeometry(.050, .036, .078), M.glove);
-    h.add(back);
-    var fingers = new THREE.Mesh(new THREE.BoxGeometry(.030, .050, .062), M.glove);
-    fingers.position.set(-.028, -.006, -.004);
-    h.add(fingers);
-    var thumb = new THREE.Mesh(new THREE.BoxGeometry(.020, .022, .046), M.glove);
-    thumb.position.set(.024, -.004, .012);
-    thumb.rotation.y = .3;
-    h.add(thumb);
-    // wrist strap, the one bit of contrast on an otherwise black glove
-    var strap = new THREE.Mesh(new THREE.BoxGeometry(.052, .040, .012), M.strap);
-    strap.position.set(0, 0, .042);
-    h.add(strap);
-    return h;
   }
 
   function buildArms() {
@@ -5567,11 +6449,13 @@ var Player = (function () {
     arms.mats = M;
     ['r', 'l'].forEach(function (side) {
       var a = {};
-      a.upper = limb(ARM.upper, .056, .044, M.sleeve);
-      a.fore  = limb(ARM.fore, .044, .030, M.sleeve);
-      a.hand  = buildHand(M);
+      /* Two boxes, but one limb: an R6 arm is a single part whose
+         shirt ends partway down, and that split is the only thing
+         giving the block any read at all. */
+      a.sleeve = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.sleeve);
+      a.hand   = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.glove);
       a.group = new THREE.Group();
-      a.group.add(a.upper); a.group.add(a.fore); a.group.add(a.hand);
+      a.group.add(a.sleeve); a.group.add(a.hand);
       // Shoulders sit low and slightly AHEAD of the eye.  Anatomically
       // they belong behind it, but then the support hand on a
       // handguard is ~0.8 m away and no real arm reaches it — the
@@ -5585,40 +6469,37 @@ var Player = (function () {
     });
   }
 
-  /* Two-bone IK.  The pole vector pushes the elbow down and out, which
-     is the only configuration that looks like a person holding a rifle
-     rather than a mannequin. */
-  function solveArm(a, target, pole) {
-    var S = a.shoulder, L1 = ARM.upper, L2 = ARM.fore;
-    tmpV.copy(target).sub(S);
-    var d = tmpV.length();
-    var reach = L1 + L2 - .004;
-    if (d > reach) { tmpV.multiplyScalar(reach / d); d = reach; }
-    if (d < .04) { tmpV.set(0, 0, -.04); d = .04; }
-    // The hand must land on the CLAMPED point, not the raw target —
-    // otherwise an out-of-reach grip leaves a fist floating in space
-    // with no arm attached to it.
-    var reached = S.clone().add(tmpV);
-
-    // elbow via the cosine rule, offset along the pole
-    var cos = clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1);
-    var along = L1 * cos;
-    var h = Math.sqrt(Math.max(0, L1 * L1 - along * along));
-    var dir = tmpV.clone().normalize();
-    var p = pole.clone().sub(dir.clone().multiplyScalar(pole.dot(dir)));
-    if (p.lengthSq() < 1e-6) p.set(0, -1, 0);
-    p.normalize();
-    var elbow = S.clone().addScaledVector(dir, along).addScaledVector(p, h);
-
-    a.upper.position.copy(S);
-    a.upper.lookAt(elbow);
-    a.fore.position.copy(elbow);
-    a.fore.lookAt(reached);
-    // the hand sits slightly short of the target so the grip passes
-    // through the fist rather than the fist floating on top of it
-    a.hand.position.copy(reached).lerp(elbow, .10);
-    a.hand.lookAt(elbow);
-    a.hand.rotateY(a.side === 'r' ? .0 : Math.PI);
+  /* Lay the block from the shoulder to the grip.  No solve, no pole
+     vector, no reach limit to violate — the block simply stretches,
+     which is exactly what an R6 arm does. */
+  var _dir = new THREE.Vector3();
+  function placeArm(a, target) {
+    var S = a.shoulder;
+    _dir.copy(target).sub(S);
+    var len = Math.max(.12, _dir.length());
+    /* The hand is a FIXED cap, not a fraction of the arm.  As a
+       fraction (it was 42%) a long reach grew the hand with it — the
+       0.7 m arm a knife grip needs produced a 0.29 m "hand", a block
+       bigger than the knife, and it swallowed the whole weapon. */
+    var hl = Math.min(HAND_L, len * .4);
+    /* Only ever draw a FOREARM's worth.  The shoulder sits at z = -0.02,
+       level with the eye, so a sleeve drawn all the way back from it
+       reaches within 7 mm of a near plane of 0.004 — and geometry that
+       close does not merely look big, it projects to NDC in the tens
+       and smears its near face across the entire viewport.  That single
+       number is what made the arm read as a grey wall over the knife.
+       Clipping the block to the last 0.3 m keeps every vertex two
+       orders of magnitude clear of the near plane, and the part cut off
+       was behind the camera anyway. */
+    var sl = Math.min(len - hl, FORE_MAX);
+    var back = (len - hl - sl) / len;
+    a.sleeve.position.copy(S).addScaledVector(_dir, back + sl * .5 / len);
+    a.sleeve.lookAt(target);
+    a.sleeve.scale.set(ARM_W, ARM_W, sl);
+    // the hand ENDS at the grip rather than straddling it
+    a.hand.position.copy(S).addScaledVector(_dir, (len - hl * .5) / len);
+    a.hand.lookAt(target);
+    a.hand.scale.set(ARM_W * 1.06, ARM_W * 1.06, hl);
   }
 
   /* ---------------------------------------------- equip */
@@ -5639,7 +6520,7 @@ var Player = (function () {
       rig.gun.traverse(function (o) { if (o.isMesh) o.geometry.dispose(); });
     }
     var mats = (window.Skins && skin) ? Skins.materials(w, skin, float_ || 0) : Forge.defaultMats();
-    var gun = Forge.build(w, mats);
+    var gun = Forge.build(w, mats, skin);
     rig.wrist.add(gun);
     rig.gun = gun;
     P.weapon = w;
@@ -5664,10 +6545,10 @@ var Player = (function () {
     muzzleLocal.copy(findMuzzle(gun, w));
     P.mag = w.mag;
     P.reserve = w.reserve;
-    spinTarget = spinNow = 0;
 
+    P.state = 'idle'; P.track = null; P.cued = {}; P.knifeSpin = null;
     if (!instant) {
-      P.state = 'draw'; P.stateT = 0; P.stateDur = .42;
+      startRoutine('equip');
       Audio_.mag('charge');
     }
     if (window.HUD) HUD.setWeapon(w, skin, P.mag, P.reserve);
@@ -5773,8 +6654,14 @@ var Player = (function () {
     var mzLocal = rig.gun.localToWorld(muzzleLocal.clone());
     var mzWorld = mzLocal.clone().applyQuaternion(Stage.cam.quaternion).add(Stage.cam.position);
 
+    // a skin may carry its own signature: tracer colour and width,
+    // muzzle colour, impact colour.  This is most of what makes a
+    // high tier feel different to shoot rather than just to look at.
+    var fx = (P.skin && P.skin.fx) || null;
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(Stage.cam.quaternion);
-    VFX.muzzle(mzLocal, fwd, w.cls === 'sniper' ? 1.5 : w.cls === 'shotgun' ? 1.6 : 1.0);
+    VFX.muzzle(mzLocal, fwd,
+      w.cls === 'sniper' ? 1.5 : w.cls === 'shotgun' ? 1.6 : 1.0,
+      fx && fx.muzzle);
 
     // ejected brass, out the right side
     var right = new THREE.Vector3(1, 0, 0).applyQuaternion(Stage.cam.quaternion);
@@ -5787,7 +6674,7 @@ var Player = (function () {
       dir.y += (Math.random() + Math.random() - 1) * spread * 2;
       dir.z += (Math.random() + Math.random() - 1) * spread * .4;
       dir.normalize();
-      traceShot(mzWorld, dir, w, p === 0);
+      traceShot(mzWorld, dir, w, p === 0, fx);
     }
     if (window.Drill && Drill.running) Drill.shot(1);
 
@@ -5806,7 +6693,7 @@ var Player = (function () {
     if (P.mag === 0 && !P.weapon.isKnife) setTimeout(startReload, 180);
   }
 
-  function traceShot(from, dir, w, primary) {
+  function traceShot(from, dir, w, primary, fx) {
     ray.set(from, dir);
     ray.far = 120;
     var hitsT = (window.Drill && Drill.hitMeshes.length) ? ray.intersectObjects(Drill.hitMeshes, false) : [];
@@ -5816,8 +6703,9 @@ var Player = (function () {
     var h = (hT && (!hW || hT.distance <= hW.distance)) ? hT : hW;
 
     var end = h ? h.point : from.clone().addScaledVector(dir, 60);
-    VFX.tracer(from, end, w.cls === 'sniper' ? .013 : .008,
-      w.cls === 'sniper' ? 0xffd08a : 0xffb04a);
+    VFX.tracer(from, end,
+      (fx && fx.tracerW) || (w.cls === 'sniper' ? .013 : .008),
+      (fx && fx.tracer) || (w.cls === 'sniper' ? 0xffd08a : 0xffb04a));
 
     if (!h) { if (primary && window.Drill) Drill.miss(); return; }
 
@@ -5832,58 +6720,266 @@ var Player = (function () {
     }
   }
 
+  /* ---------------------------------------------- routines
+     Everything that moves the weapon runs through one track player.
+     The old code had three near-identical hand-written tick functions
+     and every weapon shared them, which is why every inspect looked
+     the same. */
+  var _eul = new THREE.Euler(0, 0, 0, 'XYZ');
+  var _hEul = new THREE.Euler(0, 0, 0, 'XYZ');
+  var _spinQ = new THREE.Quaternion(), _R1 = new THREE.Quaternion();
+  var _R2 = new THREE.Quaternion(), _invQ = new THREE.Quaternion();
+  var _P1 = new THREE.Vector3(), _P2 = new THREE.Vector3();
+  var _vA = new THREE.Vector3(), _vB = new THREE.Vector3(), _vC = new THREE.Vector3();
+
+  var _entryP = new THREE.Vector3(), _entryQ = new THREE.Quaternion();
+  var _entryGunP = new THREE.Vector3(), _entryGunQ = new THREE.Quaternion();
+
+  function startRoutine(kind, dur) {
+    var w = P.weapon;
+    P.track = Anim.routineFor(kind, w);
+    P.state = kind;
+    P.stateT = 0;
+    P.stateDur = dur || P.track.dur || .5;
+    P.cued = {};
+    P.knifeSpin = null; P.knifeOrbit = 0; P.knifeFinger = null;
+    /* Remember the pose we are leaving.  A routine's first frame is
+       the rest pose, so starting one while aimed in — or mid-anything
+       — used to cut straight there.  Blended over the first sixth. */
+    _entryP.copy(rig.holder.position);
+    _entryQ.copy(rig.wrist.quaternion);
+    /* The chain drives rig.gun directly with holder/wrist stood down,
+       so its entry pose has to be the weapon's transform in SWAY space
+       — the composed holder*wrist*gun — not gun's local one.  Taking
+       the local transform blended the knife toward the viewmodel
+       origin on the first frame instead of toward the rest pose. */
+    rig.sway.updateMatrixWorld(true);
+    _mTmp.multiplyMatrices(rig.holder.matrix, rig.wrist.matrix).multiply(rig.gun.matrix);
+    _mTmp.decompose(_entryGunP, _entryGunQ, _scl);
+    _scl.set(1, 1, 1);
+  }
+
+  /* Knife trick primitive.
+
+     A real flourish is not a spin in place.  The knife ORBITS a point
+     outside itself — the index finger for a helix, the back of the
+     hand for a rollover — while also turning on its own pin.  Two
+     pivots, and the interplay between them is the whole trick; one
+     pivot only ever gives you a fan.
+
+       spin   turns about the pin (weapon.spinPivot)
+       orbit  turns about `finger`, a point in weapon-local space
+       finger omitted -> plain spin on the pin
+
+     Both rotations are about the blade's own plane (local Z), so the
+     composite rotation is just (spin + orbit) and only the position
+     offset needs solving.  Derivation, with R1 = orbit, R2 = spin,
+     P1 = finger, P2 = pin:
+
+       p  ->  R1( R2(p - P2) + P2 - P1 ) + P1
+       => quaternion  Q       = R1*R2
+       => gun offset  gunPos  = Q^-1 * [ R1(P2 - R2 P2) + P1 - R1 P1 ] */
+  P.spinKnife = function (spin, orbit, finger) {
+    P.knifeSpin = spin;
+    P.knifeOrbit = orbit || 0;
+    P.knifeFinger = finger || null;
+  };
+
+  /* ---------------------------------------------- balisong chain
+
+     A balisong is a KINEMATIC CHAIN and the hand holds a HANDLE:
+
+         hand -> held handle -> [pin] -> blade -> [pin] -> free handle
+
+     The model is rooted at the blade, so posing it that way means
+     solving for the root instead of driving it:
+
+         root = handMatrix * inverse( T(pin) * Rz(angle) * T(grip) )
+
+     Everything follows from that.  Sweep the held handle's angle and
+     the blade swings around the pin while the handle sits still in the
+     fist — which is what a flip actually is.  Sweep the other angle and
+     the free handle fans independently.  Rotating the whole knife
+     rigidly, which is what this used to do, cannot produce that at any
+     speed, and no amount of tuning was going to fix it.
+
+     Angles: 0 = open (handle back along the grip), PI = closed (folded
+     over the blade).  Any angle is equivalent modulo 2*PI, so a routine
+     may end a full turn from where it started and still land clean. */
+  var _mHold = new THREE.Matrix4(), _mHand = new THREE.Matrix4();
+  var _mRoot = new THREE.Matrix4(), _mTmp = new THREE.Matrix4();
+  var _mRest = new THREE.Matrix4();
+  var _scl = new THREE.Vector3(1, 1, 1), _hq = new THREE.Quaternion();
+  var _chainPt = new THREE.Vector3();
+
+  P.knifeChain = function (hold, angA, angB, handPos, handQuat) {
+    var w = P.weapon, piv = P.pivots;
+    if (piv.handleA) piv.handleA.rotation.z = angA;
+    if (piv.handleB) piv.handleB.rotation.z = angB;
+
+    var pin = w.spinPivot || [0, 0, 0];
+    var grip = w.handleGrip || [-.075, 0, 0];
+    var ang = hold === 'B' ? angB : angA;
+
+    if (hold === 'tang') {
+      var tg = w.tangGrip || [-.035, 0, 0];
+      _mHold.makeTranslation(tg[0], tg[1], tg[2]);
+      _mRest.copy(_mHold);
+    } else {
+      _mHold.makeTranslation(pin[0], pin[1], pin[2]);
+      _mTmp.makeRotationZ(ang);
+      _mHold.multiply(_mTmp);
+      _mTmp.makeTranslation(grip[0], grip[1], grip[2]);
+      _mHold.multiply(_mTmp);
+      /* The grip frame at the REST angle (0 = open).  Rz(0) drops out,
+         so it is a pure translation to pin+grip. */
+      _mRest.makeTranslation(pin[0] + grip[0], pin[1] + grip[1], pin[2] + grip[2]);
+    }
+
+    /* The hand frame is defined BY the rest pose, which is what makes a
+       routine land clean:  hand = T(vm.pos + hp) * R(hr * baseQ) * restGrip.
+       At hp = 0, hr = 0 and an angle a whole number of turns from 0 the
+       hold cancels the rest hold and the solved root comes out exactly
+       T(vm.pos) * R(baseQ) — the idle pose, to the bit.  handQuat is a
+       viewmodel-space delta, so like every other delta here it
+       PRE-multiplies baseQ. */
+    _mHand.compose(handPos, _hq.copy(handQuat).multiply(baseQ), _scl);
+    _mHand.multiply(_mRest);
+    _chainPt.setFromMatrixPosition(_mHand);
+    _mRoot.multiplyMatrices(_mHand, _mHold.invert());
+
+    // the chain owns the whole pose; the wrist/holder stand down
+    rig.holder.position.set(0, 0, 0);
+    rig.holder.rotation.set(0, 0, 0);
+    rig.wrist.quaternion.identity();
+    _mRoot.decompose(rig.gun.position, rig.gun.quaternion, _scl);
+    _scl.set(1, 1, 1);
+    rig.gun.scale.copy(_scl);
+    // the arm reaches for the GRIP, not for the routine's framing point
+    P.chainHand = _chainPt;
+  };
+
+  function runTrack(dt) {
+    var w = P.weapon, tr = P.track;
+    if (!tr) return;
+    // routines close at 0.93 so the tail is dead time to settle in
+    var f = sat(P.stateT / (P.stateDur * .93));
+
+    var s = Anim.sample(tr, f, tr.free);
+    P.knifeSpin = null;
+    P.chainHand = null;
+    if (tr.fx) tr.fx(f, P);
+
+    /* A chain routine has already placed everything, including the
+       hand it wants the arm to reach for.  Blend out of the pose the
+       weapon was actually holding so it does not cut on the first
+       frame, then leave it alone. */
+    if (P.chainHand) {
+      // short: a chain routine's frame 0 is already close to rest, and
+      // a long blend swallows the opening beat
+      if (f < .07) {
+        var cb = smoother(f / .07);
+        rig.gun.position.lerp(_entryGunP, 1 - cb);
+        rig.gun.quaternion.slerp(_entryGunQ, 1 - cb);
+      }
+      if (!P.handAuth) P.handAuth = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), curl: 1, spread: 0, thumb: 1 };
+      P.handAuth.pos.copy(P.chainHand);
+      return;
+    }
+
+    /* Routine-level framing offset.  Windowed to zero at both ends so
+       it never shifts the rest pose — the whole performance can be
+       moved around the screen with two numbers instead of retyping
+       every keyframe. */
+    var win = smooth(inv(0, .12, f)) * (1 - smooth(inv(.88, 1, f)));
+    var ro = tr.origin, ho = tr.handOrigin || tr.origin;
+
+    rig.holder.position.set(
+      w.vm.pos[0] + s.px + (ro ? ro[0] * win : 0),
+      w.vm.pos[1] + s.py + (ro ? ro[1] * win : 0),
+      w.vm.pos[2] + s.pz + (ro ? ro[2] * win : 0));
+    rig.holder.rotation.set(0, 0, 0);
+
+    // delta is in VIEWMODEL space, so it must PRE-multiply baseQ
+    _eul.set(s.rx, s.ry, s.rz);
+    tmpQ.setFromEuler(_eul);
+    rig.wrist.quaternion.copy(tmpQ).multiply(baseQ);
+
+    /* Authored hand.  When a routine drives the hand itself, the arm
+       IKs to a hand the animation placed rather than to a point stuck
+       on the weapon — which is the only way the hand can stay open and
+       still while the knife travels around it. */
+    if (tr.hand) {
+      if (!P.handAuth) P.handAuth = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), curl: 1, spread: 0, thumb: 1 };
+      P.handAuth.pos.set(
+        w.vm.pos[0] + s.hpx + (ho ? ho[0] * win : 0),
+        w.vm.pos[1] + s.hpy + (ho ? ho[1] * win : 0),
+        w.vm.pos[2] + s.hpz + (ho ? ho[2] * win : 0));
+      _hEul.set(s.hrx, s.hry, s.hrz);
+      P.handAuth.quat.setFromEuler(_hEul);
+      P.handAuth.curl = s.hc; P.handAuth.spread = s.hs; P.handAuth.thumb = s.ht;
+    } else P.handAuth = null;
+
+    // ease out of whatever pose the weapon was actually holding
+    if (f < .17) {
+      var bl = smoother(f / .17);
+      rig.holder.position.lerp(_entryP, 1 - bl);
+      rig.wrist.quaternion.slerp(_entryQ, 1 - bl);
+    }
+
+    if (P.knifeSpin != null) {
+      var pv = w.spinPivot || [0, 0, 0];
+      _P2.set(pv[0], pv[1], pv[2]);
+      var fg = P.knifeFinger;
+      _P1.set(fg ? fg[0] : pv[0], fg ? fg[1] : pv[1], fg ? fg[2] : pv[2]);
+
+      var th = P.knifeOrbit || 0, ph = P.knifeSpin;
+      _R1.setFromAxisAngle(SPIN_AXIS, th);
+      _R2.setFromAxisAngle(SPIN_AXIS, ph);
+      _spinQ.setFromAxisAngle(SPIN_AXIS, th + ph);
+
+      // C = R1*(P2 - R2*P2) + P1 - R1*P1
+      _vA.copy(_P2).sub(_vB.copy(_P2).applyQuaternion(_R2)).applyQuaternion(_R1);
+      _vB.copy(_P1).sub(_vC.copy(_P1).applyQuaternion(_R1));
+      _vA.add(_vB);
+
+      rig.wrist.quaternion.multiply(_spinQ);
+      rig.gun.position.copy(_vA).applyQuaternion(_invQ.copy(_spinQ).invert());
+
+      /* The hand belongs on the FINGER, not on the handle.  Leave the
+         grip target on the handle and the hand is dragged round the
+         orbit with the knife, so the arm flails and the forearm swings
+         across the camera as a black slab.  The finger is the fixed
+         point of the rotation by construction, so pinning the hand
+         there keeps it still and the knife turns around it — which is
+         also what actually happens when someone does this. */
+      P.gripOverride = fg || null;
+    } else {
+      P.gripOverride = null;
+      if (rig.gun.position.lengthSq() > 0) rig.gun.position.set(0, 0, 0);
+    }
+  }
+
   /* ---------------------------------------------- reload */
   function startReload() {
     var w = P.weapon;
     if (!w || w.isKnife) return;
     if (P.state === 'reload' || P.mag >= w.mag || P.reserve <= 0) return;
-    P.state = 'reload'; P.stateT = 0; P.stateDur = w.reload;
+    startRoutine('reload', w.reload);
     P.reloadStage = 0;
-    Audio_.mag('out');
   }
 
-  function reloadTick(dt) {
-    var w = P.weapon, f = P.stateT / P.stateDur;
-    var piv = P.pivots || {};
-    var mag = piv.mag;
-
-    // three beats: drop, seat, charge.  Poses cant the magwell toward
-    // the camera so all three are actually visible.
-    if (mag) {
-      if (f < .34) {
-        var a = Ease.outCubic(inv(0, .34, f));
-        mag.position.y = -a * .17;
-        mag.rotation.z = a * .45;
-        mag.visible = a < .96;
-      } else if (f < .62) {
-        mag.visible = false;
-      } else if (f < .86) {
-        var b = Ease.outCubic(inv(.62, .86, f));
-        mag.visible = true;
-        mag.position.y = -(1 - b) * .19;
-        mag.rotation.z = (1 - b) * .30;
-      } else {
-        mag.position.y = 0; mag.rotation.z = 0; mag.visible = true;
-      }
-    }
-    if (P.reloadStage === 0 && f > .60) { P.reloadStage = 1; Audio_.mag('in'); }
-    if (P.reloadStage === 1 && f > .88) {
-      P.reloadStage = 2; Audio_.mag('charge');
-      var need = w.mag - P.mag;
-      var take = Math.min(need, P.reserve);
+  /* The ammo actually lands mid-routine, on the beat where the fresh
+     magazine seats — not at the end, so the count matches what you see. */
+  function reloadAmmo() {
+    var w = P.weapon;
+    var f = sat(P.stateT / (P.stateDur * .93));
+    if (P.reloadStage === 0 && f > .80) {
+      P.reloadStage = 1;
+      var take = Math.min(w.mag - P.mag, P.reserve);
       P.mag += take; P.reserve -= take;
       if (window.HUD) HUD.setAmmo(P.mag, P.reserve);
     }
-    if (piv.bolt) {
-      var bf = f > .86 ? Ease.spike(inv(.86, 1, f)) : 0;
-      piv.bolt.position.x = -bf * .05;
-    }
-
-    // the whole weapon dips and cants while the hand works
-    var dip = Math.sin(sat(f) * Math.PI);
-    rig.holder.rotation.z = dip * .52;
-    rig.holder.rotation.x = dip * .30;
-    rig.holder.position.y = w.vm.pos[1] - dip * .075;
   }
 
   /* ---------------------------------------------- inspect
@@ -5892,54 +6988,14 @@ var Player = (function () {
      rotation on the same frame. */
   function startInspect() {
     if (P.state !== 'idle') return;
-    P.state = 'inspect'; P.stateT = 0;
-    P.stateDur = P.weapon.isKnife ? 1.85 : 1.5;
-    P.inspectTurns = P.weapon.isKnife ? 2 : 1;
-    P.inspectDone = 0;
-    spinTarget = 0; spinNow = 0;
-    if (P.weapon.isKnife) Audio_.mag('charge'); else Audio_.mag('in');
+    startRoutine('inspect');
   }
 
-  function inspectTick(dt) {
-    var f = sat(P.stateT / (P.stateDur * .93));
-    var w = P.weapon;
-
-    if (w.isKnife) {
-      // spin about the knife's own axis, at a real pivot: baseQ *
-      // angleAxis(localZ, spin), NOT a rotation of the view group,
-      // which after vm.rot turns about nothing meaningful
-      var turns = P.inspectTurns;
-      var e = Ease.inOutCubic(f);
-      spinNow = e * TAU * turns;
-      tmpQ.setFromAxisAngle(new THREE.Vector3(0, 0, 1), spinNow);
-      rig.wrist.quaternion.copy(baseQ).multiply(tmpQ);
-
-      // handles fan open and closed on the pin, in opposite directions
-      var fan = Math.sin(f * Math.PI * 2) * .5 + .5;
-      var ang = mix(Math.PI, 0, Ease.outCubic(sat(fan * 1.15)));
-      if (P.pivots.handleA) P.pivots.handleA.rotation.z = ang;
-      if (P.pivots.handleB) P.pivots.handleB.rotation.z = -ang;
-
-      rig.holder.position.set(w.vm.pos[0] + Math.sin(f * Math.PI) * .05,
-                              w.vm.pos[1] + Math.sin(f * Math.PI) * .06,
-                              w.vm.pos[2] + Math.sin(f * Math.PI) * .08);
-    } else {
-      var e2 = Ease.inOutCubic(f);
-      var roll = e2 * TAU * P.inspectTurns;
-      // roll about Z is forearm supination — the one axis with range
-      tmpQ.setFromAxisAngle(new THREE.Vector3(0, 0, 1), roll);
-      rig.wrist.quaternion.copy(baseQ).multiply(tmpQ);
-      var s = Math.sin(f * Math.PI);
-      rig.holder.position.set(w.vm.pos[0] - s * .05, w.vm.pos[1] + s * .045, w.vm.pos[2] + s * .12);
-      rig.holder.rotation.y = -s * .38;
-      if (P.pivots.bolt) P.pivots.bolt.position.x = -Ease.spike(inv(.45, .75, f)) * .04;
-    }
-  }
 
   /* ---------------------------------------------- melee */
   function startMelee() {
     if (P.state !== 'idle') return;
-    P.state = 'melee'; P.stateT = 0;
+    P.state = 'melee'; P.stateT = 0; P.cued = {}; P.track = null;
     P.stateDur = P.weapon.isKnife ? .42 : .55;
     P.meleeHit = false;
     Audio_.ui('back');
@@ -5970,6 +7026,7 @@ var Player = (function () {
     bindInput();
     P.sens = 1;
     P.kickPitch = 0; P.kickYaw = 0; P.speed = 0;
+    P.cued = {}; P.track = null; P.knifeSpin = null;
     // the loadout lives in the save, so which frames you carry survives
     // a reload the same way your finishes do
     if (window.Econ && Econ.loadout) P.loadout = Econ.loadout;
@@ -5999,8 +7056,16 @@ var Player = (function () {
     if (len > 0) { mx /= len; mz /= len; }
     var sprint = keys.ShiftLeft && P.ads < .3 && mz < 0 ? 1.55 : 1;
     var spd = 3.1 * w.moveMul * sprint * (P.ads > .5 ? .55 : 1);
+    /* Input -> world, rotated by the camera's yaw.
+       This was rotating by MINUS yaw: correct facing straight down the
+       lane (where sin is 0, so the error hides) and progressively more
+       wrong the further you turned, until at 90 degrees W walked you
+       sideways.  Derived rather than guessed:
+         forward = (-sin y, 0, -cos y)   right = (cos y, 0, -sin y)
+         want    = right*mx + forward*(-mz) */
     var cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
-    var wx = mx * cy - mz * sy, wz = mx * sy + mz * cy;
+    var wx = mx * cy + mz * sy;
+    var wz = mz * cy - mx * sy;
     P.vel.x = approach(P.vel.x, wx * spd, 14, dt);
     P.vel.z = approach(P.vel.z, wz * spd, 14, dt);
     P.pos.x = clamp(P.pos.x + P.vel.x * dt, -BOUND.x, BOUND.x);
@@ -6054,27 +7119,29 @@ var Player = (function () {
     /* ---- state machines ---- */
     P.stateT += dt;
     if (P.state !== 'idle') {
-      if (P.state === 'reload') reloadTick(dt);
-      else if (P.state === 'inspect') inspectTick(dt);
-      else if (P.state === 'melee') meleeTick(dt);
-      else if (P.state === 'draw') {
-        var df = sat(P.stateT / P.stateDur);
-        var e = 1 - Ease.outCubic(df);
-        rig.holder.position.set(w.vm.pos[0] + e * .10, w.vm.pos[1] - e * .30, w.vm.pos[2] + e * .10);
-        rig.holder.rotation.set(e * .5, e * .7, -e * .5);
-      }
+      if (P.state === 'melee') meleeTick(dt);
+      else { runTrack(dt); if (P.state === 'reload') reloadAmmo(); }
+
       if (P.stateT >= P.stateDur) {
-        // land the rig cleanly.  Whole turns come off BOTH the target
-        // and the live rotation on this same frame.
+        /* Land clean.  Every routine's last keyframe is already the
+           rest pose and every spin ends on a whole number of turns, so
+           this is a confirmation rather than a correction — but the
+           pivots still have to be put back, or a magazine left hidden
+           by an interrupted reload never comes back. */
         P.state = 'idle';
+        P.track = null;
+        P.knifeSpin = null;
         rig.wrist.quaternion.copy(baseQ);
-        spinNow = spinTarget = 0;
+        rig.gun.position.set(0, 0, 0);
+        rig.gun.quaternion.identity();      // the chain may have driven it
         rig.holder.rotation.set(0, 0, 0);
         rig.holder.position.set(w.vm.pos[0], w.vm.pos[1], w.vm.pos[2]);
-        if (P.pivots.mag) { P.pivots.mag.position.set(0, 0, 0); P.pivots.mag.rotation.set(0, 0, 0); P.pivots.mag.visible = true; }
-        if (P.pivots.bolt) P.pivots.bolt.position.x = 0;
-        if (P.pivots.handleA) P.pivots.handleA.rotation.z = 0;
-        if (P.pivots.handleB) P.pivots.handleB.rotation.z = 0;
+        var pv = P.pivots;
+        if (pv.mag) { pv.mag.position.set(0, 0, 0); pv.mag.rotation.set(0, 0, 0); pv.mag.visible = true; }
+        if (pv.bolt) { pv.bolt.position.x = 0; pv.bolt.rotation.z = 0; }
+        if (pv.pump) pv.pump.position.x = 0;
+        if (pv.handleA) pv.handleA.rotation.z = 0;
+        if (pv.handleB) pv.handleB.rotation.z = 0;
       }
     } else {
       // ADS pulls the weapon to the sight line
@@ -6115,6 +7182,9 @@ var Player = (function () {
     rig.recoil.position.set(recS.x * .01, recS.y * .01, recS.z * .01);
     rig.recoil.rotation.set(recR.x * .01, recR.y * .01, recR.z * .01);
 
+    /* ---- a skin's own animated emissives ---- */
+    if (rig.gun && rig.gun.userData.tick) rig.gun.userData.tick(rig.gun, time, P);
+
     /* ---- arms follow the gun ---- */
     posArms(w);
 
@@ -6138,17 +7208,33 @@ var Player = (function () {
     var g = GRIP[w.cls] || GRIP.rifle;
     if (P.hideArms) { arms.r.group.visible = false; arms.l.group.visible = false; return; }
     rig.gun.updateMatrixWorld(true);
+    var auth = P.handAuth;
     ['r', 'l'].forEach(function (side) {
-      var a = arms[side], off = g[side];
-      if (!off) { a.group.visible = false; return; }
+      var a = arms[side];
+      var authored = auth && side === 'r';
+      var off = (side === 'r' && P.gripOverride) ? P.gripOverride : g[side];
+      // the support hand comes off the weapon while the trick hand works
+      if (authored && side === 'l') { a.group.visible = false; return; }
+      if (!authored && !off) { a.group.visible = false; return; }
       a.group.visible = true;
-      tmpV2.set(off[0], off[1], off[2]);
-      rig.gun.localToWorld(tmpV2);
-      a.target.copy(tmpV2);
-      // pole: elbow down and out to the side
-      var pole = new THREE.Vector3(side === 'r' ? .7 : -.7, -1, .25).normalize();
-      solveArm(a, a.target, pole);
+
+      if (authored) a.target.copy(auth.pos);
+      else {
+        /* A knife derives its grip from the SAME pin + handleGrip the
+           chain solves against.  Authoring it twice let the idle grip
+           and the trick grip drift apart, which put the hand at the
+           bottom edge of the frame while the knife sat mid-screen. */
+        if (side === 'r' && w.handleGrip && !P.gripOverride) {
+          var pn = w.spinPivot || [0, 0, 0], gp = w.handleGrip;
+          tmpV2.set(pn[0] + gp[0], pn[1] + gp[1], pn[2] + gp[2]);
+        } else tmpV2.set(off[0], off[1], off[2]);
+        rig.gun.localToWorld(tmpV2);
+        a.target.copy(tmpV2);
+      }
+      placeArm(a, a.target);
     });
+    // a knife is one-handed anyway
+    if (auth && arms.l) arms.l.group.visible = false;
   }
 
   P.snapshot = function () {
@@ -6159,6 +7245,61 @@ var Player = (function () {
       pos: [+P.pos.x.toFixed(2), +P.pos.y.toFixed(2), +P.pos.z.toFixed(2)],
       yaw: +P.yaw.toFixed(3), pitch: +P.pitch.toFixed(3)
     };
+  };
+
+  /* Deterministic pose sampling.  Drives one named routine to an exact
+     fraction with the state machine out of the way — stepping the clock
+     can never land on a chosen f, which is what made every earlier
+     attempt to measure these tricks read as "nothing moved".  Used by
+     the admin panel's scrubber and by the selftest. */
+  P.poseAt = function (name, f) {
+    var tr = typeof name === 'string'
+      ? (Anim.inspect[name] || Anim.equip[name] || Anim.reload[name]) : name;
+    if (!tr || !P.weapon) return null;
+    if (P.state === 'idle' || P.track !== tr) startRoutine2(tr);
+    P.stateDur = tr.dur || .5;
+    P.stateT = sat(f) * P.stateDur * .93;
+    // pre-arm every cue so a scrub does not machine-gun the audio
+    P.cued = { a: 1, b: 1, c: 1, d: 1, e: 1, f: 1, g: 1, h: 1 };
+    runTrack(0);
+    rig.sway.updateMatrixWorld(true);
+    posArms(P.weapon);            // or the montage has no arm in it
+    rig.sway.updateMatrixWorld(true);
+    return tr;
+  };
+
+  // as startRoutine, but for an explicit track rather than a random variant
+  function startRoutine2(tr) {
+    P.track = tr;
+    P.state = 'inspect';
+    P.stateT = 0;
+    P.stateDur = tr.dur || .5;
+    P.knifeSpin = null; P.knifeOrbit = 0; P.knifeFinger = null;
+    _entryP.copy(rig.holder.position);
+    _entryQ.copy(rig.wrist.quaternion);
+    rig.sway.updateMatrixWorld(true);
+    _mTmp.multiplyMatrices(rig.holder.matrix, rig.wrist.matrix).multiply(rig.gun.matrix);
+    _mTmp.decompose(_entryGunP, _entryGunQ, _scl);
+    _scl.set(1, 1, 1);
+  }
+
+  /* World position of a named part, for probes.  A chain reads as a
+     chain only if you can show the held grip holding still while the
+     bite handle travels, and that needs real world-space numbers. */
+  P.probePoint = function (which) {
+    var piv = P.pivots, w = P.weapon, out = new THREE.Vector3();
+    rig.sway.updateMatrixWorld(true);
+    if (which === 'grip') return out.copy(P.chainHand || rig.gun.position);
+    if (which === 'tip') {
+      var pin = w.spinPivot || [0, 0, 0];
+      out.set(pin[0] + (w.bladeLen || .17), 0, 0);
+      return rig.gun.localToWorld(out);
+    }
+    var g = which === 'b' ? piv.handleB : piv.handleA;
+    if (!g) return out;
+    var grip = w.handleGrip || [-.075, 0, 0];
+    out.set(grip[0], grip[1], grip[2]);
+    return g.localToWorld(out);
   };
 
   P.rig = rig;
@@ -6753,7 +7894,7 @@ var UI = (function () {
     var w = Arsenal.get(wid);
     var skin = item ? Skins.get(item.skin) : null;
     var mats = skin ? Skins.materials(w, skin, item.float, 512) : Forge.defaultMats();
-    var gun = Forge.build(w, mats);
+    var gun = Forge.build(w, mats, skin);
     // centre it on the pedestal regardless of where its origin sits
     var bb = new THREE.Box3().setFromObject(gun);
     var ctr = bb.getCenter(new THREE.Vector3());
@@ -7123,10 +8264,20 @@ var UI = (function () {
   U.buildRacks = buildRacks;
   U.buildLoadout = buildLoadout;
 
+  /* Put an arbitrary skin+float on the turntable without it having to
+     exist in the inventory — the admin panel drives this. */
+  U.previewShowcase = function (wid, skin, float_) {
+    U.rack = wid;
+    showcaseFor(wid, skin ? { skin: skin.id, float: float_ } : null);
+  };
+
   /* ---------------------------------------------- per frame */
   U.tick = function (dt, time) {
     if (!U.open || U.screen !== 'armory' || !U.showcase.group.visible) return;
     U.turn += dt * .5;
+    if (U.showcase.gun && U.showcase.gun.userData.tick) {
+      U.showcase.gun.userData.tick(U.showcase.gun, time, Player);
+    }
     U.showcase.mount.rotation.y = U.turn;
     U.showcase.mount.rotation.x = Math.sin(time * .5) * .07;
     U.showcase.mount.position.y = -.012 + Math.sin(time * .8) * .012;
@@ -7311,6 +8462,300 @@ var Unbox = (function () {
 })();
 
 
+/* ===================== 88_admin.js ===================== */
+/* =============================================================
+   88_admin — testing panel
+
+   Backquote (`) toggles it.  Built entirely from JS, styles and all,
+   so it is one file to add or delete and touches nothing else.
+
+   Its whole reason to exist is that checking a skin used to mean
+   earning credits, buying the right crate and praying — 49 finishes
+   across 5 tiers is not something you can inspect by playing.  Here
+   you pick a weapon, pick a finish, drag the float, and the weapon in
+   your hands updates live.
+
+   Previewing does NOT touch the save.  Player.equip is called
+   directly with a skin and a float; the inventory only changes if you
+   press Give.  Closing the panel and reopening the terminal restores
+   whatever you actually own.
+   ============================================================= */
+var Admin = (function () {
+
+  var A = { open: false, wid: 'cinder', sid: null, float: 0.12, stat: false, el: null };
+
+  var CSS =
+    '#admin{position:fixed;left:0;top:0;bottom:0;width:340px;z-index:60;display:none;' +
+      'flex-direction:column;background:#070a0ff2;backdrop-filter:blur(14px);' +
+      'border-right:1px solid var(--edge);font-family:var(--display);color:var(--bone)}' +
+    '#admin.on{display:flex}' +
+    '#admin .ah{display:flex;align-items:center;gap:10px;padding:12px 14px;' +
+      'border-bottom:1px solid var(--edge);background:linear-gradient(#0f141c,#0b0f16)}' +
+    '#admin .ah b{font-size:14px;letter-spacing:.32em;text-transform:uppercase;font-weight:500}' +
+    '#admin .ah i{font-style:normal;color:var(--ember)}' +
+    '#admin .ah .x{margin-left:auto;font-size:11px;letter-spacing:.2em;color:var(--dim);cursor:pointer}' +
+    '#admin .sec{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--faint);' +
+      'padding:12px 14px 6px;display:flex;align-items:center;gap:8px}' +
+    '#admin .sec::after{content:"";flex:1;height:1px;background:var(--edge)}' +
+    '#admin .row{display:flex;flex-wrap:wrap;gap:4px;padding:0 14px}' +
+    '#admin button.b{font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;' +
+      'padding:6px 9px;background:#ffffff0d;color:var(--dim);border:1px solid var(--edge);cursor:pointer}' +
+    '#admin button.b:hover{background:#ffffff1a;color:var(--bone)}' +
+    '#admin button.b.on{background:var(--ember);color:#150802;border-color:var(--ember)}' +
+    '#admin .list{flex:1;min-height:0;overflow:auto;padding:4px 14px 10px}' +
+    '#admin .sk{display:flex;align-items:center;gap:8px;width:100%;padding:5px 7px;cursor:pointer;' +
+      'background:none;border:0;border-left:2px solid transparent;color:var(--dim);' +
+      'font:inherit;font-size:12px;letter-spacing:.08em;text-align:left}' +
+    '#admin .sk:hover{background:#ffffff0d;color:var(--bone)}' +
+    '#admin .sk.on{background:#ffffff14;color:var(--bone)}' +
+    '#admin .sk s{width:6px;height:6px;flex:0 0 6px;text-decoration:none}' +
+    '#admin .sk em{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:9px;color:var(--faint)}' +
+    '#admin .fl{padding:6px 14px 2px}' +
+    '#admin .fl input{width:100%;accent-color:var(--ember)}' +
+    '#admin .fl .rd{display:flex;justify-content:space-between;font-family:var(--mono);' +
+      'font-size:10px;color:var(--dim);margin-top:2px}' +
+    '#admin .foot{padding:10px 14px 14px;border-top:1px solid var(--edge);display:flex;flex-wrap:wrap;gap:4px}' +
+    '#admin .hint{padding:0 14px 10px;font-family:var(--mono);font-size:9px;color:var(--faint);line-height:1.5}';
+
+  function style() {
+    var s = document.createElement('style');
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  /* ---------------------------------------------- build */
+  function build() {
+    var p = el('div');
+    p.id = 'admin';
+
+    var h = el('div', 'ah');
+    h.appendChild(el('b', null, 'ADMIN<i>·</i>SKINS'));
+    var x = el('span', 'x', 'ESC');
+    on(x, 'click', close);
+    h.appendChild(x);
+    p.appendChild(h);
+
+    // weapons
+    p.appendChild(el('div', 'sec', 'Frame'));
+    var wrow = el('div', 'row');
+    wrow.id = 'adm-w';
+    Arsenal.list().forEach(function (w) {
+      var b = el('button', 'b', w.name);
+      b.dataset.w = w.id;
+      on(b, 'click', function () { A.wid = w.id; A.sid = null; refresh(); apply(); });
+      wrow.appendChild(b);
+    });
+    p.appendChild(wrow);
+
+    // wear presets
+    p.appendChild(el('div', 'sec', 'Wear'));
+    var frow = el('div', 'row');
+    Econ.WEAR.forEach(function (b) {
+      var t = el('button', 'b', b.k);
+      on(t, 'click', function () {
+        A.float = clamp((b.lo + b.hi) / 2, 0, 1);
+        refresh(); apply();
+      });
+      frow.appendChild(t);
+    });
+    var st = el('button', 'b', 'StatTrak');
+    st.id = 'adm-st';
+    on(st, 'click', function () { A.stat = !A.stat; refresh(); });
+    frow.appendChild(st);
+    p.appendChild(frow);
+
+    var fl = el('div', 'fl');
+    var sl = el('input');
+    sl.type = 'range'; sl.min = '0'; sl.max = '1000'; sl.step = '1';
+    sl.id = 'adm-fl';
+    on(sl, 'input', function () { A.float = sl.value / 1000; readout(); apply(); });
+    fl.appendChild(sl);
+    var rd = el('div', 'rd');
+    rd.id = 'adm-rd';
+    fl.appendChild(rd);
+    p.appendChild(fl);
+
+    // skins
+    p.appendChild(el('div', 'sec', 'Finish'));
+    var list = el('div', 'list');
+    list.id = 'adm-list';
+    p.appendChild(list);
+
+    // actions
+    var foot = el('div', 'foot');
+    function act(label, fn) {
+      var b = el('button', 'b', label);
+      on(b, 'click', fn);
+      foot.appendChild(b);
+      return b;
+    }
+    act('◀ Prev', function () { step(-1); });
+    act('Next ▶', function () { step(1); });
+    act('Give', give);
+    act('+10k CR', function () {
+      Econ.earn(10000);
+      if (window.UI) UI.refreshWallet();
+      HUD.toast('Admin', '+10,000 CR');
+    });
+    act('All crates', function () {
+      Econ.crates = Econ.crates || {};
+      Object.keys(Econ.CRATES).forEach(function (k) { Econ.crates[k] = (Econ.crates[k] || 0) + 5; });
+      Econ.save();
+      if (window.UI) UI.buildCrates();
+      HUD.toast('Admin', '5 of each crate');
+    });
+    act('Give all skins', giveAll);
+    act('Wipe save', function () {
+      Econ.wipe();
+      Player.refresh();
+      if (window.UI) { UI.buildRacks(); UI.buildLoadout(); UI.refreshWallet(); }
+      HUD.toast('Admin', 'save wiped');
+    });
+    p.appendChild(foot);
+
+    p.appendChild(el('div', 'hint',
+      '` toggles · click a finish to preview it live · Give adds it to the inventory'));
+
+    document.body.appendChild(p);
+    A.el = p;
+    return p;
+  }
+
+  /* ---------------------------------------------- state -> DOM */
+  /* The float the weapon is actually wearing: the slider clamped into
+     the selected skin's own band, because that is the only range the
+     crate could ever roll.  Report the clamped value, not the request. */
+  function effFloat() {
+    var s = A.sid ? Skins.get(A.sid) : null;
+    if (!s) return A.float;
+    return clamp(A.float, s.floatMin == null ? 0 : s.floatMin,
+                          s.floatMax == null ? 1 : s.floatMax);
+  }
+
+  function readout() {
+    var f = effFloat(), w = Econ.wearOf(f);
+    var rd = $('#adm-rd');
+    if (rd) {
+      rd.innerHTML = '<span>' + f.toFixed(4) +
+        (Math.abs(f - A.float) > 1e-6 ? ' <em style="color:var(--ember);font-style:normal">clamped</em>' : '') +
+        '</span><span>' + w.name + '</span>';
+    }
+    var sl = $('#adm-fl');
+    if (sl && +sl.value !== Math.round(A.float * 1000)) sl.value = Math.round(A.float * 1000);
+  }
+
+  function refresh() {
+    $$('#adm-w .b').forEach(function (b) { b.classList.toggle('on', b.dataset.w === A.wid); });
+    var stb = $('#adm-st');
+    if (stb) stb.classList.toggle('on', A.stat);
+
+    var list = $('#adm-list');
+    list.innerHTML = '';
+    var skins = Skins.forWeapon(A.wid);
+    if (!skins.length) {
+      list.appendChild(el('div', 'hint', 'no finishes authored for this frame'));
+    }
+    // unpainted first, so you can always get back to the factory look
+    var none = el('button', 'sk' + (A.sid === null ? ' on' : ''));
+    none.innerHTML = '<s style="background:#7d8798"></s>Unpainted<em>—</em>';
+    on(none, 'click', function () { A.sid = null; refresh(); apply(); });
+    list.appendChild(none);
+
+    skins.sort(function (a, b) { return a.rarity - b.rarity || (a.name < b.name ? -1 : 1); });
+    skins.forEach(function (s) {
+      var b = el('button', 'sk' + (A.sid === s.id ? ' on' : ''));
+      b.innerHTML = '<s style="background:' + Econ.RAR[s.rarity].col + '"></s>' + s.name +
+                    '<em>' + Econ.RAR[s.rarity].name.slice(0, 4).toUpperCase() + '</em>';
+      on(b, 'click', function () { A.sid = s.id; refresh(); apply(); });
+      list.appendChild(b);
+    });
+    readout();
+  }
+
+  /* ---------------------------------------------- preview */
+  function apply() {
+    var w = Arsenal.get(A.wid);
+    if (!w) return;
+    var s = A.sid ? Skins.get(A.sid) : null;
+    // clamp into the skin's own float band so the preview matches a
+    // roll you could actually get
+    var f = effFloat();
+    Player.equip(w, s, true, f);
+    // and update the armory turntable if it happens to be open
+    if (window.UI && UI.open && UI.screen === 'armory') {
+      UI.rack = A.wid;
+      if (UI.showcase) UI.previewShowcase(A.wid, s, f);
+    }
+  }
+
+  function step(dir) {
+    var skins = Skins.forWeapon(A.wid).slice()
+      .sort(function (a, b) { return a.rarity - b.rarity || (a.name < b.name ? -1 : 1); });
+    if (!skins.length) return;
+    var i = skins.findIndex(function (s) { return s.id === A.sid; });
+    i = (i + dir + skins.length + 1) % (skins.length + 1) - 1;
+    if (i < 0) i = dir > 0 ? 0 : skins.length - 1;
+    A.sid = skins[i] ? skins[i].id : null;
+    refresh(); apply();
+  }
+
+  /* ---------------------------------------------- inventory */
+  function uid() {
+    return 'adm' + Date.now().toString(36) + (Math.random() * 1e6 | 0).toString(36);
+  }
+  function make(s, f) {
+    return {
+      uid: uid(), skin: s.id, weapon: s.weapon, rarity: s.rarity,
+      float: clamp(f, s.floatMin == null ? 0 : s.floatMin, s.floatMax == null ? 1 : s.floatMax),
+      stat: A.stat, crate: s.crate, ts: Date.now()
+    };
+  }
+  function give() {
+    if (!A.sid) { HUD.toast('Admin', 'pick a finish'); return; }
+    var s = Skins.get(A.sid);
+    var it = make(s, A.float);
+    Econ.add(it);
+    Econ.setEquipped(it.weapon, it.uid);
+    Econ.setSlot(it.weapon);
+    Player.refresh();
+    if (window.UI) { UI.buildRacks(); UI.buildLoadout(); UI.refreshWallet(); }
+    HUD.toast('Given', s.name);
+  }
+  function giveAll() {
+    Skins.list().forEach(function (s) { Econ.add(make(s, A.float)); });
+    if (window.UI) { UI.buildRacks(); UI.buildLoadout(); }
+    HUD.toast('Admin', Skins.list().length + ' finishes');
+  }
+
+  /* ---------------------------------------------- open / close */
+  function open() {
+    A.open = true;
+    A.el.classList.add('on');
+    Player.releaseLock();     // so the panel is clickable
+    refresh();
+    apply();
+  }
+  function close() {
+    A.open = false;
+    A.el.classList.remove('on');
+    Player.refresh();         // back to whatever is actually equipped
+  }
+  A.toggle = function () { if (A.open) close(); else open(); };
+
+  A.init = function () {
+    style();
+    build();
+    document.addEventListener('keydown', function (e) {
+      if (e.code === 'Backquote') { e.preventDefault(); A.toggle(); }
+      else if (e.code === 'Escape' && A.open) { e.preventDefault(); e.stopPropagation(); close(); }
+    }, true);
+    return A;
+  };
+
+  return A;
+})();
+
+
 /* ===================== 90_main.js ===================== */
 /* =============================================================
    90_main — boot, the loop, quality fallback, test hook
@@ -7343,6 +8788,7 @@ var Game = (function () {
                                          if (window.VFX && VFX.init) VFX.init();
                                          if (window.HUD && HUD.init) HUD.init();
                                          if (window.UI && UI.init) UI.init();
+                                         if (window.Admin && Admin.init) Admin.init();
                                          // stand a few plates up, so walking into
                                          // the bay is not an empty hall
                                          if (window.Drill && Drill.idle) Drill.idle(); }]
@@ -7495,6 +8941,16 @@ var Game = (function () {
       G.bootSync();
       $('#boot').style.display = 'none';
       $('#hud').classList.add('on');
+    },
+    /* Pose one routine at an exact fraction and read world positions of
+       the parts.  The state machine advances in whole frames, so it can
+       never be asked for f = 0.27 — which is exactly the question a
+       chain has to answer. */
+    pose: function (name, f) {
+      if (!window.Player || !Player.poseAt(name, f)) return null;
+      var g = Player.probePoint('a'), b = Player.probePoint('b'), t = Player.probePoint('tip');
+      var r = function (v) { return [+v.x.toFixed(4), +v.y.toFixed(4), +v.z.toFixed(4)]; };
+      return { f: f, heldGrip: r(g), biteGrip: r(b), tip: r(t) };
     },
     get: function () {
       return {
@@ -7713,6 +9169,123 @@ else Game.init();
       ok('equip ' + w.id, Player.weapon === w && Player.rig.gun, Player.mag + ' rounds');
     });
     Player.refresh();
+
+    /* ---- 11a. routines stay inside the wrist's envelope ----
+       A non-free routine may not exceed the anatomical limits, and
+       every routine must start and end at the rest pose or the weapon
+       pops when it lands. */
+    ['inspect', 'equip', 'reload'].forEach(function (kind) {
+      Arsenal.list().forEach(function (w) {
+        // routineFor picks a variant at random, so walk them all
+        Anim.allFor(kind, w).forEach(function (tr, vi) {
+        if (!tr) return;
+        var bad = null, i;
+        for (i = 0; i <= 40; i++) {
+          var s = Anim.sample(tr, i / 40, true);   // sample RAW, unclamped
+          if (!tr.free) {
+            if (Math.abs(s.rx) > Anim.LIMIT.pitch + 1e-6) bad = 'pitch ' + s.rx.toFixed(2);
+            else if (Math.abs(s.ry) > Anim.LIMIT.yaw + 1e-6) bad = 'yaw ' + s.ry.toFixed(2);
+            else if (Math.abs(s.rz) > Anim.LIMIT.roll + 1e-6) bad = 'roll ' + s.rz.toFixed(2);
+          }
+          if (bad) break;
+        }
+        var tag = kind + ' ' + w.id + (vi ? '/' + vi : '');
+        ok('envelope ' + tag, !bad, bad || '');
+        var a = Anim.sample(tr, 0, true);
+        var rest0 = Math.abs(a.rx) + Math.abs(a.ry) + Math.abs(a.rz) + Math.abs(a.px) + Math.abs(a.py) + Math.abs(a.pz);
+        var b = Anim.sample(tr, 1, true);
+        var rest1 = Math.abs(b.rx) + Math.abs(b.ry) + Math.abs(b.rz) + Math.abs(b.px) + Math.abs(b.py) + Math.abs(b.pz);
+        // equip legitimately starts away from rest; it must still END there
+        ok('lands ' + tag, rest1 < 1e-6 && (kind === 'equip' || rest0 < 1e-6),
+           'start ' + rest0.toFixed(3) + ' end ' + rest1.toFixed(3));
+        });
+      });
+    });
+
+    /* ---- 11a2. knife tricks must close on whole turns ----
+       A flourish ending on a part turn leaves the knife rotated when
+       the routine hands back to idle, and it snaps straight. */
+    Arsenal.list().filter(function (w) { return w.isKnife; }).forEach(function (w) {
+      Anim.allFor('inspect', w).forEach(function (tr) {
+        var tag = tr.name || w.id;
+        if (tr.chain) {
+          /* A chain routine turns its HANDLES, not the whole weapon.
+             Both angles must start at the idle open grip (0) and end a
+             whole number of turns from it, or the landing reset — which
+             puts both pivots back to 0 — snaps them. */
+          /* Anim.sample returns a SHARED scratch object, so two samples
+             must be read out before the next call or both names end up
+             pointing at the same numbers. */
+          var q0 = Anim.sample(tr, 0, true), a0 = q0.ka, b0 = q0.kb;
+          var q1 = Anim.sample(tr, 1, true), a1 = q1.ka, b1 = q1.kb;
+          var ta = a1 / TAU, tb = b1 / TAU;
+          ok('whole turns ' + tag,
+             Math.abs(a0) < 1e-6 && Math.abs(b0) < 1e-6 &&
+             Math.abs(ta - Math.round(ta)) < .002 && Math.abs(tb - Math.round(tb)) < .002,
+             'start ' + a0.toFixed(3) + '/' + b0.toFixed(3) +
+             ' end ' + ta.toFixed(3) + '/' + tb.toFixed(3) + ' turns');
+
+          /* The signature of a chain, and the whole reason it exists:
+             somewhere in the routine one handle must travel while the
+             blade and the held handle stay put.  A rigid spin moves
+             every part together and cannot produce this. */
+          var stillA = 0, movedB = 0;
+          for (var q = 0; q <= 30; q++) {
+            var f0 = q / 30, f1 = f0 + 1 / 30;
+            if (f1 > 1) break;
+            var p0 = Anim.sample(tr, f0, true), pa = p0.ka, pb = p0.kb;
+            var p1 = Anim.sample(tr, f1, true);
+            var da = Math.abs(p1.ka - pa), db = Math.abs(p1.kb - pb);
+            if (da < .02 && db > .10) { stillA += da; movedB += db; }
+          }
+          ok('chain not rigid ' + tag, movedB > 1.5,
+             'bite handle travelled ' + movedB.toFixed(2) +
+             ' rad while the held handle moved ' + stillA.toFixed(3));
+        } else {
+          var probe = {
+            pivots: {}, cued: {}, weapon: w,
+            spinKnife: function (s, o) { this.spin = s || 0; this.orbit = o || 0; },
+            knifeChain: function () {}
+          };
+          tr.fx.call(tr, 1, probe);
+          var total = (probe.spin || 0) + (probe.orbit || 0);
+          var turns = total / TAU;
+          ok('whole turns ' + tag,
+             Math.abs(turns - Math.round(turns)) < .002, turns.toFixed(3) + ' turns');
+        }
+      });
+    });
+
+    /* ---- 11b. tracers travel toward the target, not out of the stock ---- */
+    (function () {
+      var from = new THREE.Vector3(0, 1.5, 0), to = new THREE.Vector3(0, 1.5, -10);
+      VFX.tracer(from, to, .01, 0xffffff);
+      var lit = Stage.scene.children.filter(function (c) {
+        return c.isMesh && c.visible && c.material && c.material.blending === THREE.AdditiveBlending &&
+               c.geometry && c.geometry.type === 'CylinderGeometry';
+      });
+      var m = lit[0];
+      if (!m) { ok('tracer direction', false, 'no tracer mesh'); return; }
+      m.updateMatrixWorld(true);
+      var tip = new THREE.Vector3(0, 0, 1).applyMatrix4(m.matrixWorld);
+      ok('tracer direction', tip.distanceTo(to) < 0.6,
+         'tip ' + tip.z.toFixed(2) + ' want ' + to.z.toFixed(2));
+      m.visible = false;
+    })();
+
+    /* ---- 11c. movement maps to the direction you are facing ---- */
+    (function () {
+      var cases = [[0, 0, -1, 0, -1], [Math.PI / 2, 0, -1, -1, 0],
+                   [Math.PI, 0, -1, 0, 1], [0, 1, 0, 1, 0]];
+      var bad = 0;
+      cases.forEach(function (c) {
+        var cy = Math.cos(c[0]), sy = Math.sin(c[0]);
+        var wx = c[1] * cy + c[2] * sy;
+        var wz = c[2] * cy - c[1] * sy;
+        if (Math.abs(wx - c[3]) > .02 || Math.abs(wz - c[4]) > .02) bad++;
+      });
+      ok('movement basis', bad === 0, bad + ' facings wrong');
+    })();
 
     /* ---- 11. the render loop is actually stepping ---- */
     var f0 = __t.get().frames;

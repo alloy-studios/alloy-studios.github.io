@@ -102,6 +102,19 @@ Alloy.boot(async ({ games, site }) => {
           </a>
         </section>` : ''}
 
+      ${(site.roadmap || []).length ? `
+        <section class="roadmap">
+          <div class="section-head"><h2>What's next</h2></div>
+          <ol class="timeline">
+            ${site.roadmap.map(step => `
+              <li>
+                <span class="status">${Alloy.esc(step.status || '')}</span>
+                <h3>${Alloy.esc(step.title || '')}</h3>
+                <p>${Alloy.esc(step.detail || '')}</p>
+              </li>`).join('')}
+          </ol>
+        </section>` : ''}
+
       ${mail ? `
         <section class="contact" id="contact">
           <div class="section-head"><h2>Contact</h2></div>
