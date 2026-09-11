@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SOLE &amp; CO. — Sneaker Shop Sim</title>
+<!--
+  DIRECTION
+  Thesis : Running a tiny sneaker boutique should feel like flipping through a
+           1990s Japanese sneaker lookbook - warm paper, hard ink rules, one hot
+           rust accent, and product shots that are the loudest thing on the page.
+  Anchor : Offset-printed sneaker catalogue / Shoes Master magazine spreads.
+           Everything is drawn as flat vector "product photography" on cream stock.
+  Palette: paper #EFE6D6, cream #FBF6EC, ink #17130F, rust #C2452A (accent/alert),
+           teal #2C6A61 (safe/profit), gold #B8860F (money), wood #8A5A34 (shelf).
+  Type   : Archivo Black (display mark), Barlow Condensed (labels/numbers, caps +
+           tracking, like a price tag), Inter (body copy).
+  Legible: The SHOE is always the biggest, most saturated object in any card.
+           Chrome is ink-on-cream and never competes. Money gold, danger rust,
+           profit teal. Rank by size: shoe > price > name > everything else.
+  Render : DOM + inline SVG. Flat vector print style - deliberately NO bloom,
+           NO glow, NO post FX. Grain is the only "material" layer, because the
+           anchor is a printing process, not a lit 3D scene.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFE6D6; --cream:#FBF6EC; --ink:#17130F; --ink2:#5B5046;
+  --rust:#C2452A; --teal:#2C6A61; --gold:#B8860F; --wood:#8A5A34; --wood2:#6B4423;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:900;opacity:.45;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E")}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:899;
+  background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(23,19,15,.16) 100%)}
+
+#app{max-width:1240px;margin:0 auto;padding:14px 16px 40px;position:relative;z-index:2}
+
+header{display:flex;align-items:flex-end;gap:18px;border-bottom:4px solid var(--ink);padding-bottom:8px}
+.mark{font-family:'Archivo Black',sans-serif;font-size:30px;letter-spacing:-.02em;line-height:.9}
+.mark i{font-style:normal;color:var(--rust)}
+.mark small{display:block;font:600 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.42em;color:var(--ink2);margin-top:6px}
+.stats{margin-left:auto;display:flex;gap:8px}
+.stat{border:2px solid var(--ink);background:var(--cream);padding:4px 11px 6px;min-width:84px;text-align:right;
+  box-shadow:3px 3px 0 rgba(23,19,15,.14)}
+.stat b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;line-height:1.05;font-variant-numeric:tabular-nums}
+.stat span{font:600 9px/1 'Barlow Condensed',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2)}
+.stat.cash b{color:var(--gold)} .stat.goal b{color:var(--teal)}
+
+#ticker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 12px;
+  border:2px solid var(--ink);background:var(--ink);color:var(--paper);padding:6px 10px}
+#ticker .tt{font:700 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:var(--rust)}
+#trendChips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1.5px solid rgba(239,230,214,.45);padding:3px 9px 4px;font:600 12px/1 'Barlow Condensed',sans-serif;
+  letter-spacing:.1em;text-transform:uppercase}
+.chip.hot{background:var(--rust);border-color:var(--rust)}
+.chip.cool{background:var(--teal);border-color:var(--teal)}
+
+nav{display:flex;margin-bottom:14px}
+.tab{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.16em;text-transform:uppercase;
+  padding:9px 20px 8px;border:2px solid var(--ink);border-right-width:0;background:var(--cream);cursor:pointer;position:relative}
+.tab:last-child{border-right-width:2px}
+.tab.on{background:var(--ink);color:var(--paper)}
+.tab .dot{position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;border-radius:9px;background:var(--rust);
+  color:#fff;font:700 10px/17px 'Barlow Condensed',sans-serif;text-align:center;border:1.5px solid var(--ink);letter-spacing:0}
+
+.cols{display:grid;grid-template-columns:1fr 372px;gap:16px;align-items:start}
+.panel{border:2.5px solid var(--ink);background:var(--cream);box-shadow:6px 6px 0 rgba(23,19,15,.13);margin-bottom:16px}
+.ph{background:var(--ink);color:var(--paper);padding:7px 12px 6px;display:flex;justify-content:space-between;align-items:center;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.18em;text-transform:uppercase}
+.ph em{font-style:normal;color:var(--gold);letter-spacing:.08em}
+.pb{padding:14px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(198px,1fr));gap:14px}
+.sc{border:2px solid var(--ink);background:var(--cream);position:relative;cursor:pointer;
+  transition:transform .1s ease,box-shadow .1s ease;box-shadow:3px 3px 0 rgba(23,19,15,.16)}
+.sc:hover{transform:translate(-2px,-3px);box-shadow:6px 7px 0 rgba(23,19,15,.22)}
+.sc.dead,.sc.dead:hover{cursor:default;opacity:.5;transform:none;box-shadow:3px 3px 0 rgba(23,19,15,.16)}
+.sc.pick{outline:3px solid var(--rust);outline-offset:2px}
+.sc .stage{position:relative;padding:8px 6px 0;
+  background:radial-gradient(78% 52% at 50% 82%,rgba(23,19,15,.15),transparent 72%),linear-gradient(#fff,#F1E9D9)}
+.sc .stage svg{display:block;width:100%;height:auto}
+.sc .shelf{height:9px;background:linear-gradient(var(--wood),var(--wood2));border-top:2px solid var(--ink);
+  box-shadow:0 3px 0 rgba(23,19,15,.22)}
+.sc .meta{padding:8px 9px 9px}
+.nm{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;line-height:1;letter-spacing:.04em;text-transform:uppercase}
+.cwn{font:500 11px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);margin-top:2px}
+.row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px}
+.price{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;line-height:.95;color:var(--gold);font-variant-numeric:tabular-nums}
+.price.t{color:var(--teal)} .price.r{color:var(--rust)}
+.sub{font:600 10px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2)}
+.bar{height:6px;background:#E2D7C3;border:1.5px solid var(--ink);margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--teal)}
+.bar.lo i{background:var(--rust)} .bar.mid i{background:var(--gold)}
+.tag{position:absolute;top:8px;left:-3px;background:var(--rust);color:#fff;padding:2px 8px 3px;
+  font:700 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;
+  box-shadow:2px 2px 0 rgba(23,19,15,.3);z-index:3}
+.tag.ds{background:var(--teal)} .tag.gold{background:var(--gold)} .tag.deal{background:var(--ink)}
+.szb{position:absolute;top:8px;right:7px;border:1.5px solid var(--ink);background:var(--cream);
+  font:700 11px/1 'Barlow Condensed',sans-serif;padding:3px 6px;z-index:3}
+
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;
+  background:var(--ink);color:var(--paper);border:2px solid var(--ink);padding:9px 16px 8px;cursor:pointer;
+  box-shadow:3px 3px 0 rgba(23,19,15,.25)}
+.btn:hover:not(:disabled){background:var(--rust);border-color:var(--rust)}
+.btn:active:not(:disabled){transform:translate(3px,3px);box-shadow:none}
+.btn:disabled{opacity:.32;cursor:not-allowed}
+.btn.g{background:transparent;color:var(--ink)}
+.btn.g:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+.btn.acc{background:var(--teal);border-color:var(--teal)}
+.btn.acc:hover:not(:disabled){background:#22534C;border-color:#22534C}
+.btn.big{width:100%;font-size:18px;padding:13px 10px 11px}
+.btn.sm{font-size:12px;padding:6px 10px 5px;box-shadow:2px 2px 0 rgba(23,19,15,.25)}
+
+#custWrap{position:relative;overflow:hidden;background:linear-gradient(#F3EADA 0 63%,#E0D2B8 63%)}
+#custWrap .street{position:absolute;left:0;right:0;top:0;height:63%;
+  background:repeating-linear-gradient(90deg,transparent 0 44px,rgba(23,19,15,.055) 44px 46px)}
+.person{display:flex;gap:10px;padding:14px 14px 6px;position:relative;z-index:2}
+.person svg{flex:0 0 98px;height:auto;filter:drop-shadow(3px 4px 0 rgba(23,19,15,.16))}
+.speech{flex:1;border:2px solid var(--ink);background:var(--cream);padding:9px 11px;position:relative;
+  box-shadow:3px 3px 0 rgba(23,19,15,.18);align-self:flex-start}
+.speech:after{content:'';position:absolute;left:-9px;top:16px;width:0;height:0;border:7px solid transparent;border-right-color:var(--ink)}
+.who{font:700 14px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.want{font:600 11px/1.35 'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--rust);margin:4px 0 6px}
+.speech p{font-size:12.5px;line-height:1.45}
+.patience{height:10px;border:2px solid var(--ink);background:#E2D7C3;margin:4px 14px 0}
+.patience i{display:block;height:100%;background:var(--teal);transition:width .15s linear}
+.patience.warn i{background:var(--gold)} .patience.bad i{background:var(--rust)}
+.offerbox{margin:12px 14px 14px;border:2.5px solid var(--ink);background:var(--cream);box-shadow:4px 4px 0 rgba(23,19,15,.18)}
+.offerbox .top{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:2px dashed rgba(23,19,15,.3)}
+.amt{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:34px;line-height:.9;color:var(--gold);font-variant-numeric:tabular-nums}
+.acts{display:flex;gap:7px;padding:10px 12px}
+.acts .btn{flex:1;padding:9px 4px 8px;letter-spacing:.08em}
+.hint{font:600 10px/1.4 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+
+#log{max-height:158px;overflow:auto;padding:8px 12px;font-size:12px;line-height:1.55}
+#log div{border-bottom:1px dotted rgba(23,19,15,.16);padding:3px 0}
+#log b{color:var(--rust)} #log em{font-style:normal;color:var(--teal);font-weight:700}
+#log i{font-style:normal;color:var(--gold);font-weight:700}
+
+.wrow{display:flex;gap:12px;align-items:center;border:2px solid var(--ink);background:var(--cream);padding:8px;
+  margin-bottom:10px;box-shadow:3px 3px 0 rgba(23,19,15,.13)}
+.wrow .mini{flex:0 0 130px;background:linear-gradient(#fff,#F1E9D9);border:1.5px solid var(--ink);position:relative}
+.wrow .mini svg{display:block;width:100%;height:auto}
+.wrow .info{flex:1;min-width:0}
+.wrow .wacts{display:flex;flex-direction:column;gap:5px;flex:0 0 auto}
+.emptyish{text-align:center;padding:30px 14px;color:var(--ink2);font:600 13px/1.7 'Barlow Condensed',sans-serif;
+  letter-spacing:.12em;text-transform:uppercase}
+
+.up{border:2px solid var(--ink);background:var(--cream);padding:11px 12px;margin-bottom:10px;display:flex;gap:12px;
+  align-items:center;box-shadow:3px 3px 0 rgba(23,19,15,.13)}
+.up .ic{flex:0 0 48px;height:48px;border:2px solid var(--ink);display:grid;place-items:center;background:var(--paper);font-size:24px}
+.up.owned{opacity:.5}
+.up h4{font:700 15px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.up p{font-size:11.5px;color:var(--ink2);margin-top:3px;line-height:1.4}
+
+#ov{position:fixed;inset:0;background:rgba(23,19,15,.74);z-index:950;display:none;place-items:center;padding:20px}
+#ov.on{display:grid}
+#ovc{max-width:580px;width:100%;border:3px solid var(--ink);background:var(--cream);box-shadow:10px 10px 0 rgba(0,0,0,.4);
+  max-height:92vh;overflow:auto}
+#ovc h2{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1.05;margin-bottom:10px}
+#ovc h2 i{font-style:normal;color:var(--rust)}
+#ovc p{line-height:1.6;margin-bottom:10px}
+.dayline{display:flex;justify-content:space-between;border-bottom:1px dotted rgba(23,19,15,.3);padding:6px 0;
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:15px}
+.dayline b{font-variant-numeric:tabular-nums}
+.stars{letter-spacing:1px;color:var(--gold)}
+kbd{font-family:'Barlow Condensed',sans-serif;border:1.5px solid var(--ink);padding:1px 6px;font-weight:700;background:var(--paper)}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="vig"></div><div id="grain"></div>
+<div id="app">
+  <header>
+    <div class="mark">SOLE&nbsp;<i>&amp;</i>&nbsp;CO.<small>DEADSTOCK / CUSTOMS / TRADE</small></div>
+    <div class="stats">
+      <div class="stat"><span>Day</span><b id="sDay">1</b></div>
+      <div class="stat cash"><span>Cash</span><b id="sCash">$0</b></div>
+      <div class="stat"><span>Rep</span><b id="sRep" class="stars">--</b></div>
+      <div class="stat goal"><span>Flagship</span><b id="sGoal">0%</b></div>
+    </div>
+  </header>
+  <div id="ticker"><span class="tt">TODAY'S HEAT</span><span id="trendChips"></span></div>
+  <nav>
+    <div class="tab on" data-t="floor">The Floor</div>
+    <div class="tab" data-t="market">Market<span class="dot" id="mktDot">6</span></div>
+    <div class="tab" data-t="shop">Workshop</div>
+    <div class="tab" data-t="upg">Upgrades</div>
+  </nav>
+  <div class="cols">
+    <div id="mainCol"></div>
+    <div id="sideCol"></div>
+  </div>
+</div>
+<div id="ov"><div id="ovc"></div></div>
+<script>
+/* ============================================================
+   1. SHOE RENDERER  -  flat vector "product shot", toe at left.
+
+   Proportions measured off a real Jordan 1 Mid lateral product shot:
+   length 240u, collar 116u above ground, midsole only ~20u thick, toe box
+   ~44u. The three things that make a drawing read as a real sneaker are
+   (a) a THIN midsole with a ribbed outsole, (b) a top line that climbs
+   continuously from toe to collar, (c) hard panel colour-blocking:
+   toe cap / eyestay / quarter / swoosh / collar / heel counter.
+
+   Every overlay is generated from the same named skeleton points and
+   clipped to the upper path, so no two layers can drift apart.
+   ============================================================ */
+var UID = 0, GY = 140;                 /* ground line */
+
+function lastGeom(P){
+  var tx=P.tx, hx=P.hx, sf=P.sf, sb=P.sb, toeY=P.toeY, vampY=P.vampY,
+      fx=P.fx, fy=P.fy, ax=P.ax, ay=P.ay, hy=P.hy, os=P.os, vx=P.vx||100;
+  var g={}; g.P=P;
+  g.p0=[tx+6, sf+2];        /* toe, at the midsole */
+  g.t1=[tx+40, toeY];       /* top of the toe box */
+  g.vp=[vx, vampY];         /* vamp */
+  g.f =[fx, fy];            /* last eyelet = front of the collar */
+  g.a =[ax, ay];            /* collar apex */
+  g.hB=[hx-3, sb+1];        /* back of the heel, at the midsole */
+
+  g.sole = 'M '+(tx+9)+','+(sf-2)+
+    ' C '+(tx+2)+','+(sf+4)+' '+(tx-2)+','+(sf+12)+' '+(tx-1)+','+(GY-8)+
+    ' C '+(tx+1)+','+(GY-2)+' '+(tx+9)+','+GY+' '+(tx+22)+','+GY+
+    ' L '+(hx-30)+','+GY+
+    ' C '+(hx-8)+','+GY+' '+(hx+2)+','+(GY-6)+' '+(hx+3)+','+(sb+6)+
+    ' C '+(hx+4)+','+(sb)+' '+(hx-5)+','+(sb-3)+' '+(hx-15)+','+(sb-2)+' Z';
+
+  /* outsole: forefoot pad + heel pad, waisted through the arch */
+  g.outsole = 'M '+(tx-1)+','+(GY-os-1)+
+    ' C '+(tx+1)+','+(GY-2)+' '+(tx+9)+','+GY+' '+(tx+22)+','+GY+
+    ' L '+(hx-30)+','+GY+
+    ' C '+(hx-8)+','+GY+' '+(hx+2)+','+(GY-6)+' '+(hx+3)+','+(GY-os-3)+
+    ' C '+(hx-30)+','+(GY-os-4)+' 168,'+(GY-os-2)+' 152,'+(GY-os+2)+
+    ' C 140,'+(GY-os+5)+' 126,'+(GY-os+5)+' 114,'+(GY-os+1)+
+    ' C 88,'+(GY-os-4)+' 40,'+(GY-os-4)+' '+(tx-1)+','+(GY-os-1)+' Z';
+
+  g.upper = 'M '+g.p0+
+    ' C '+(tx+1)+','+(sf-15)+' '+(tx+9)+','+(toeY+5)+' '+g.t1+
+    ' C '+(tx+76)+','+(toeY-6)+' '+(vx-26)+','+(vampY+7)+' '+g.vp+
+    ' C '+(vx+30)+','+(vampY-8)+' '+(fx-22)+','+(fy+10)+' '+g.f+
+    ' C '+(fx+17)+','+(fy-20)+' '+(ax-21)+','+(ay-3)+' '+g.a+
+    ' C '+(ax+15)+','+(ay+3)+' '+(hx-17)+','+(hy-9)+' '+(hx-8)+','+hy+
+    ' C '+(hx+3)+','+(hy+22)+' '+(hx+6)+','+(sb-15)+' '+g.hB+' Z';
+
+  g.rim = 'M '+g.f+' C '+(fx+17)+','+(fy-20)+' '+(ax-21)+','+(ay-3)+' '+g.a+
+          ' C '+(ax+14)+','+(ay+4)+' '+(hx-22)+','+(hy-5)+' '+(hx-15)+','+(hy+7);
+
+  /* toe cap - literally the same toe curve, closed back down to the midsole */
+  g.toecap = function(end){
+    return 'M '+g.p0+
+      ' C '+(tx+1)+','+(sf-15)+' '+(tx+9)+','+(toeY+5)+' '+g.t1+
+      ' C '+(tx+60)+','+(toeY-4)+' '+(end-18)+','+(toeY+1)+' '+end+','+(toeY+11)+
+      ' C '+(end+2)+','+(sf-14)+' '+(end-3)+','+(sf+1)+' '+(end-14)+','+(sf+3)+' Z';
+  };
+  return g;
+}
+
+/* ---------- shared part builders (all in real coordinates) ---------- */
+
+/* heel counter: collar apex -> down the back -> forward along the midsole */
+function heelPanel(g,fill,line,op){
+  var P=g.P;
+  return '<path d="M '+(P.ax-4)+','+(P.ay+5)+
+    ' C '+(P.ax+22)+','+(P.ay+8)+' '+(P.hx-8)+','+(P.hy+26)+' '+(P.hx-2)+','+(P.sb+6)+
+    ' L '+(P.hx-56)+','+(P.sb+8)+
+    ' C '+(P.hx-58)+','+(P.hy+30)+' '+(P.ax-30)+','+(P.ay+22)+' '+(P.ax-4)+','+(P.ay+5)+
+    ' Z" fill="'+fill+'" opacity="'+(op||1)+'"'+(line?' stroke="'+line+'" stroke-width="1.6"':'')+'/>';
+}
+/* the check: pointed at the vamp, thickening into the hook at the heel */
+function swoosh(g,C,sc){
+  var P=g.P, k=sc||1;
+  var x0=P.fx-42, y0=P.sf-6;            /* pointed tip, low on the vamp */
+  var x1=P.fx+38, y1=P.vampY+2;         /* where the hook starts to flare */
+  return '<path d="M '+x0+','+y0+
+    ' C '+(x0+24)+','+(y0-2)+' '+(x1-26)+','+(y1+14)+' '+(x1-6)+','+(y1+3)+
+    ' L '+(x1+9*k)+','+(y1-15*k)+
+    ' C '+(x1+11*k)+','+(y1-3)+' '+(x1+4)+','+(y1+9)+' '+(x1-4)+','+(y1+16)+
+    ' C '+(x1-26)+','+(y1+33)+' '+(x0+22)+','+(y0+11)+' '+(x0+4)+','+(y0+8)+
+    ' C '+(x0-4)+','+(y0+6)+' '+(x0-4)+','+(y0+1)+' '+x0+','+y0+
+    ' Z" fill="'+C.accent+'" stroke="'+C.line+'" stroke-width="1.6" stroke-linejoin="round"/>';
+}
+/* outsole tread ribs - straight off the reference photo */
+function tread(g,C){
+  var P=g.P, s='';
+  for(var x=P.tx+6; x<P.hx-4; x+=9)
+    s+='<line x1="'+x+'" y1="'+(GY-P.os+1)+'" x2="'+(x-3)+'" y2="'+(GY+1)+
+       '" stroke="'+C.line+'" stroke-width="1.3" opacity=".32"/>';
+  return s;
+}
+/* eyestay panel + eyelets + crossed laces, hung off the vamp->collar line */
+function eyestay(g,C,fill){
+  var a=[g.vp[0]+16, g.vp[1]-1], b=[g.f[0]-2, g.f[1]+2];
+  var dx=b[0]-a[0], dy=b[1]-a[1], L=Math.hypot(dx,dy)||1;
+  var ux=dx/L, uy=dy/L, nx=-uy, ny=ux, d=26, s='';
+  s+='<path d="M '+a+' L '+b+' L '+(b[0]+nx*d).toFixed(1)+','+(b[1]+ny*d).toFixed(1)+
+     ' L '+(a[0]+nx*d).toFixed(1)+','+(a[1]+ny*d).toFixed(1)+' Z" fill="'+(fill||C.panel)+
+     '" stroke="'+C.line+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  for(var i=0;i<5;i++){
+    var t=(i+0.5)/5.1, px=a[0]+ux*L*t+nx*6, py=a[1]+uy*L*t+ny*6;
+    s+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2" fill="#1a1512" opacity=".8"/>';
+    var qx=a[0]+ux*L*t, qy=a[1]+uy*L*t;
+    s+='<line x1="'+(qx+nx*5-ux*5).toFixed(1)+'" y1="'+(qy+ny*5-uy*5).toFixed(1)+
+       '" x2="'+(qx+nx*21+ux*6).toFixed(1)+'" y2="'+(qy+ny*21+uy*6).toFixed(1)+
+       '" stroke="'+C.lace+'" stroke-width="4" stroke-linecap="round"/>'+
+       '<line x1="'+(qx+nx*5+ux*5).toFixed(1)+'" y1="'+(qy+ny*5+uy*5).toFixed(1)+
+       '" x2="'+(qx+nx*21-ux*6).toFixed(1)+'" y2="'+(qy+ny*21-uy*6).toFixed(1)+
+       '" stroke="'+C.lace+'" stroke-width="4" stroke-linecap="round" opacity=".85"/>';
+  }
+  return s;
+}
+/* tongue - rises out of the collar front, leaning back */
+function tongue(g,C,h){
+  var f=g.f, H=h||14, w=13;
+  return '<path d="M '+(f[0]-6)+','+(f[1]+14)+
+    ' C '+(f[0]-4)+','+(f[1]-H*0.4)+' '+(f[0]+1)+','+(f[1]-H*0.82)+' '+(f[0]+6)+','+(f[1]-H)+
+    ' C '+(f[0]+11)+','+(f[1]-H-3)+' '+(f[0]+w+4)+','+(f[1]-H+2)+' '+(f[0]+w+3)+','+(f[1]-H*0.7)+
+    ' C '+(f[0]+w+2)+','+(f[1]-H*0.25)+' '+(f[0]+w-1)+','+(f[1]+4)+' '+(f[0]+w-2)+','+(f[1]+16)+
+    ' Z" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.7" stroke-linejoin="round"/>'+
+    '<path d="M '+(f[0]+1)+','+(f[1]-H*0.72)+' C '+(f[0]+5)+','+(f[1]-H*0.86)+' '+(f[0]+9)+','+(f[1]-H*0.84)+' '+(f[0]+w+1)+','+(f[1]-H*0.66)+
+    '" stroke="'+C.line+'" stroke-width="1.2" fill="none" opacity=".4"/>';
+}
+function dots(x,y,cols,rows,dx,dy,r,col,slope){
+  var s='';
+  for(var i=0;i<cols;i++) for(var j=0;j<rows;j++)
+    s+='<circle cx="'+(x+i*dx+j*(slope||0))+'" cy="'+(y+j*dy)+'" r="'+r+'" fill="'+col+'"/>';
+  return s;
+}
+var STITCH = 'stroke-dasharray="3.5 3.5" stroke-linecap="round" fill="none"';
+
+/* ---------- per-model decoration ---------- */
+var DECO = {};
+
+/* Jordan-1 style: black toe cap, contrast eyestay, big swoosh, wings panel */
+DECO.aj1 = function(g,C){
+  var P=g.P;
+  return {
+    eyestay:C.panel,
+    clip:
+      '<path d="'+g.toecap(96)+'" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.7"/>'+
+      dots(52,84,5,3,9,7,1.3,C.line,3)+
+      heelPanel(g,C.detail,C.line)+
+      '<path d="M '+(P.fx-4)+','+(P.fy+8)+' C '+(P.fx+10)+','+(P.fy+34)+' '+(P.fx+6)+','+(P.fy+56)+' '+(P.fx+2)+','+(P.sf+4)+
+        ' L '+(P.fx-34)+','+(P.sf+4)+' C '+(P.fx-28)+','+(P.fy+48)+' '+(P.fx-24)+','+(P.fy+26)+' '+(P.fx-22)+','+(P.fy+10)+
+        ' Z" fill="'+C.panel+'" opacity=".92"/>'+
+      swoosh(g,C)+
+      '<path d="M 104,'+(P.vampY+16)+' C 126,'+(P.vampY+30)+' 132,'+(P.sf-16)+' 130,'+(P.sf+2)+
+        '" stroke="'+C.line+'" stroke-width="1.3" '+STITCH+' opacity=".55"/>',
+    free:
+      /* wings mark on the heel panel */
+      '<g transform="translate('+(P.ax+14)+','+(P.ay+34)+') scale(.92)" opacity=".85">'+
+      '<path d="M -17,1 C -11,-8 11,-8 17,1 C 9,-3 -9,-3 -17,1 Z" fill="'+C.upper+'"/>'+
+      '<circle cx="0" cy="3.5" r="4.6" fill="none" stroke="'+C.upper+'" stroke-width="1.5"/>'+
+      '<path d="M -4.6,3.5 h 9.2 M 0,-1.1 v 9.2" stroke="'+C.upper+'" stroke-width="1.1"/>'+
+      '</g>'
+  };
+};
+
+DECO.force = function(g,C){
+  var P=g.P;
+  return {
+    clip:
+      '<path d="'+g.toecap(88)+'" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.6"/>'+
+      dots(50,88,4,3,10,7,1.4,C.line,3)+
+      heelPanel(g,C.panel,C.line,.95)+
+      swoosh(g,C)+
+      '<path d="M 118,'+(P.vampY+10)+' C 132,'+(P.vampY+30)+' 134,'+(P.sf-14)+' 132,'+(P.sf+2)+
+        '" stroke="'+C.line+'" stroke-width="1.3" '+STITCH+' opacity=".5"/>',
+    free:
+      '<rect x="'+(P.ax+6)+'" y="'+(P.ay+30)+'" width="28" height="12" rx="2" fill="'+C.accent+
+        '" stroke="'+C.line+'" stroke-width="1.5"/>'+
+      '<text x="'+(P.ax+20)+'" y="'+(P.ay+39.5)+'" font-family="Barlow Condensed,sans-serif" font-size="9" '+
+        'font-weight="700" text-anchor="middle" fill="'+C.detail+'">AF</text>'
+  };
+};
+
+DECO.maxair = function(g,C){
+  var P=g.P;
+  return {
+    clip:
+      '<path d="'+g.toecap(80)+'" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.5"/>'+
+      /* stacked mudguard panels */
+      '<path d="M 72,'+(P.sf-2)+' C 92,'+(P.toeY+2)+' 118,'+(P.vampY+4)+' 140,'+(P.vampY-2)+
+        ' L 146,'+(P.vampY+14)+' C 124,'+(P.vampY+22)+' 98,'+(P.sf-8)+' 82,'+(P.sf+4)+' Z" fill="'+C.accent+
+        '" stroke="'+C.line+'" stroke-width="1.4"/>'+
+      '<path d="M 148,'+(P.vampY-4)+' C 162,'+(P.fy+16)+' 174,'+(P.fy+8)+' 182,'+(P.fy+6)+
+        ' L 186,'+(P.fy+22)+' C 172,'+(P.fy+26)+' 162,'+(P.vampY+16)+' 154,'+(P.vampY+12)+' Z" fill="'+C.panel+
+        '" stroke="'+C.line+'" stroke-width="1.4"/>'+
+      heelPanel(g,C.accent,C.line,.9)+
+      swoosh(g,C,.8),
+    free:
+      /* visible air window in the heel midsole */
+      '<g><ellipse cx="'+(P.hx-36)+'" cy="'+(GY-P.os-6)+'" rx="21" ry="7.5" fill="'+C.accent+
+        '" stroke="'+C.line+'" stroke-width="1.8"/>'+
+      '<path d="M '+(P.hx-52)+','+(GY-P.os-9)+' C '+(P.hx-42)+','+(GY-P.os-13)+' '+(P.hx-24)+','+(GY-P.os-12)+' '+(P.hx-18)+','+(GY-P.os-8)+
+        '" stroke="#ffffff" stroke-opacity=".6" stroke-width="2" fill="none"/></g>'
+  };
+};
+
+DECO.shell = function(g,C){
+  var P=g.P, s='';
+  for(var i=0;i<3;i++){
+    var x=126+i*19;
+    s+='<path d="M '+x+','+(P.sf+4)+' l 13,0 l 19,-'+(P.sf-P.fy-6)+' l -13,0 Z" fill="'+C.accent+
+       '" stroke="'+C.line+'" stroke-width="1.4" stroke-linejoin="round"/>';
+  }
+  return {
+    clip:
+      /* the rubber shell toe: ribbed cap + punched holes */
+      '<path d="'+g.toecap(94)+'" fill="'+C.detail+'" stroke="'+C.line+'" stroke-width="1.9"/>'+
+      '<path d="M '+(P.tx+8)+','+(P.toeY+18)+' C 40,'+(P.toeY+6)+' 70,'+(P.toeY+2)+' 92,'+(P.toeY+8)+
+        '" stroke="'+C.line+'" stroke-width="1.3" fill="none" opacity=".45"/>'+
+      '<path d="M '+(P.tx+10)+','+(P.toeY+30)+' C 44,'+(P.toeY+18)+' 72,'+(P.toeY+14)+' 93,'+(P.toeY+19)+
+        '" stroke="'+C.line+'" stroke-width="1.3" fill="none" opacity=".45"/>'+
+      dots(46,82,4,2,13,10,2,C.line,4)+ s + heelPanel(g,C.panel,C.line),
+    free:
+      '<circle cx="'+(P.ax+12)+'" cy="'+(P.ay+34)+'" r="10" fill="'+C.detail+'" stroke="'+C.line+'" stroke-width="1.5"/>'+
+      '<circle cx="'+(P.ax+12)+'" cy="'+(P.ay+34)+'" r="4.6" fill="'+C.accent+'"/>'
+  };
+};
+
+DECO.skate = function(g,C){
+  var P=g.P;
+  return {
+    clip:
+      '<path d="'+g.toecap(72)+'" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.5"/>'+
+      /* jazz stripe */
+      '<path d="M 56,'+(P.sf-4)+' C 84,'+(P.vampY+16)+' 112,'+(P.vampY+8)+' 140,'+(P.vampY+12)+
+        ' C 160,'+(P.vampY+15)+' 178,'+(P.fy+12)+' 192,'+(P.fy-2)+
+        ' L 202,'+(P.fy+10)+' C 186,'+(P.fy+30)+' 162,'+(P.vampY+32)+' 138,'+(P.vampY+28)+
+        ' C 116,'+(P.vampY+24)+' 96,'+(P.sf-12)+' 74,'+(P.sf+6)+' Z" fill="'+C.accent+
+        '" stroke="'+C.line+'" stroke-width="1.5" stroke-linejoin="round"/>'+
+      heelPanel(g,C.panel,C.line,.9),
+    free:
+      /* foxing tape sidewall */
+      '<path d="M '+(P.tx-4)+','+(GY-P.os-3)+' C 40,'+(GY-P.os-8)+' 120,'+(GY-P.os-11)+' '+(P.hx+4)+','+(GY-P.os-5)+
+        ' L '+(P.hx+4)+','+(GY-P.os+3)+' C 120,'+(GY-P.os-3)+' 40,'+(GY-P.os)+' '+(P.tx-4)+','+(GY-P.os+5)+
+        ' Z" fill="'+C.detail+'" stroke="'+C.line+'" stroke-width="1.2" opacity=".95"/>'
+  };
+};
+
+DECO.hitop = function(g,C){
+  var P=g.P;
+  return {
+    clip:
+      '<path d="'+g.toecap(68)+'" fill="'+C.detail+'" stroke="'+C.line+'" stroke-width="1.8"/>'+
+      '<path d="M '+(P.tx+6)+','+(P.toeY+22)+' C 44,'+(P.toeY+10)+' 68,'+(P.toeY+6)+' 84,'+(P.toeY+10)+
+        '" stroke="'+C.line+'" stroke-width="1.3" fill="none" opacity=".4"/>'+
+      '<path d="M 92,'+(P.vampY+14)+' C 120,'+(P.vampY+4)+' 150,'+(P.fy+18)+' 176,'+(P.fy+4)+
+        '" stroke="'+C.line+'" stroke-width="1.2" '+STITCH+' opacity=".4"/>'+
+      heelPanel(g,C.panel,'',.45)+
+      '<circle cx="126" cy="'+(P.vampY+22)+'" r="2.3" fill="'+C.line+'" opacity=".4"/>'+
+      '<circle cx="150" cy="'+(P.vampY+14)+'" r="2.3" fill="'+C.line+'" opacity=".4"/>'+
+      /* rubber toe bumper */
+      '<path d="M '+(P.tx-2)+','+(GY-P.os-8)+' C '+(P.tx+4)+','+(P.sf-8)+' '+(P.tx+22)+','+(P.sf-13)+' '+(P.tx+46)+','+(P.sf-13)+
+        ' L '+(P.tx+46)+','+(P.sf-2)+' C '+(P.tx+24)+','+(P.sf-2)+' '+(P.tx+8)+','+(P.sf+4)+' '+(P.tx+2)+','+(GY-P.os+2)+
+        ' Z" fill="'+C.detail+'" stroke="'+C.line+'" stroke-width="1.4"/>',
+    free:
+      /* ankle patch on the high collar */
+      '<g transform="translate('+(P.ax+4)+','+(P.ay+40)+')">'+
+      '<circle r="16" fill="'+C.detail+'" stroke="'+C.line+'" stroke-width="1.8"/>'+
+      '<circle r="12.2" fill="none" stroke="'+C.accent+'" stroke-width="1.4"/>'+
+      '<path d="M 0,-8.4 L 2.4,-2.7 L 8.4,-2.7 L 3.6,1 L 5.4,6.9 L 0,3.3 L -5.4,6.9 L -3.6,1 L -8.4,-2.7 L -2.4,-2.7 Z" fill="'+C.accent+'"/>'+
+      '</g>'
+  };
+};
+
+DECO.retro = function(g,C){
+  var P=g.P;
+  return {
+    clip:
+      '<path d="'+g.toecap(78)+'" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.5"/>'+
+      '<path d="M 84,'+(P.vampY+12)+' C 106,'+(P.vampY-2)+' 130,'+(P.fy+18)+' 150,'+(P.fy+10)+
+        ' L 154,'+(P.fy+26)+' C 132,'+(P.fy+34)+' 108,'+(P.vampY+16)+' 90,'+(P.vampY+28)+' Z" fill="'+C.panel+
+        '" stroke="'+C.line+'" stroke-width="1.3" opacity=".9"/>'+
+      /* big N side panel */
+      '<path d="M 104,'+(P.sf+2)+' L 122,'+(P.vampY+6)+' L 135,'+(P.vampY+6)+' L 139,'+(P.vampY+30)+
+        ' L 152,'+(P.vampY+2)+' L 167,'+(P.vampY+2)+' L 149,'+(P.sf-2)+' L 136,'+(P.sf-2)+
+        ' L 131,'+(P.vampY+26)+' L 119,'+(P.sf+2)+' Z" fill="'+C.accent+'" stroke="'+C.line+
+        '" stroke-width="1.6" stroke-linejoin="round"/>'+
+      heelPanel(g,C.panel,C.line,.9),
+    free:
+      '<path d="M '+(P.tx-6)+','+(GY-P.os-4)+' C 40,'+(GY-P.os-9)+' 120,'+(GY-P.os-12)+' '+(P.hx+4)+','+(GY-P.os-6)+
+        '" stroke="'+C.line+'" stroke-width="1.5" fill="none" opacity=".4"/>'
+  };
+};
+
+DECO.knit = function(g,C){
+  var P=g.P, kn='';
+  for(var i=0;i<12;i++){
+    var y=P.ay+10+i*6;
+    kn+='<path d="M 14,'+(y+26)+' C 70,'+(y+11)+' 140,'+(y+3)+' 226,'+y+'" stroke="'+C.line+
+        '" stroke-width=".9" fill="none" opacity=".2"/>';
+  }
+  return {
+    clip: kn +
+      '<path d="M 58,'+(P.sf+4)+' C 104,'+(P.sf-14)+' 152,'+(P.vampY+8)+' 190,'+(P.fy-4)+
+        ' L 202,'+(P.fy+9)+' C 166,'+(P.vampY+26)+' 112,'+(P.sf+2)+' 62,'+(P.sf+12)+' Z" fill="'+C.accent+
+        '" stroke="'+C.line+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+      heelPanel(g,C.panel,'',.7),
+    free: dots(14,GY-P.os-4,18,2,13,7,1.1,'#6b6257',-4)
+  };
+};
+
+DECO.chunky = function(g,C){
+  var P=g.P;
+  return {
+    clip:
+      '<path d="'+g.toecap(84)+'" fill="'+C.panel+'" stroke="'+C.line+'" stroke-width="1.5"/>'+
+      '<path d="M 78,'+(P.sf-4)+' C 102,'+(P.toeY+4)+' 128,'+(P.vampY+6)+' 152,'+(P.vampY-2)+
+        ' L 158,'+(P.vampY+14)+' C 132,'+(P.vampY+22)+' 104,'+(P.sf-10)+' 86,'+(P.sf+4)+' Z" fill="'+C.accent+
+        '" stroke="'+C.line+'" stroke-width="1.4"/>'+
+      '<path d="M 158,'+(P.vampY-4)+' C 174,'+(P.fy+14)+' 188,'+(P.fy+6)+' 196,'+(P.fy+4)+
+        ' L 200,'+(P.fy+20)+' C 186,'+(P.fy+24)+' 174,'+(P.vampY+14)+' 164,'+(P.vampY+12)+' Z" fill="'+C.detail+
+        '" stroke="'+C.line+'" stroke-width="1.4"/>'+
+      heelPanel(g,C.detail,C.line,.7),
+    free:
+      '<path d="M '+(P.tx-6)+','+(GY-P.os-8)+' C 44,'+(GY-P.os-14)+' 130,'+(GY-P.os-16)+' '+(P.hx+5)+','+(GY-P.os-9)+
+        '" stroke="'+C.line+'" stroke-width="1.4" fill="none" opacity=".35"/>'+
+      '<path d="M '+(P.tx-5)+','+(GY-P.os+3)+' C 44,'+(GY-P.os-3)+' 130,'+(GY-P.os-5)+' '+(P.hx+5)+','+(GY-P.os+2)+
+        '" stroke="'+C.line+'" stroke-width="1.4" fill="none" opacity=".35"/>'
+  };
+};
+
+/* ---------- models ---------- */
+var MODELS = {
+  aj1   : {name:"AIR LEGEND 1 MID", cat:"court", base:420,
+           P:{tx:10,hx:250,sf:121,sb:117,toeY:99,vampY:84,fx:158,fy:62,ax:206,ay:24,hy:38,os:10,tng:30}},
+  force : {name:"AERO FORCE '82", cat:"court",  base:175,
+           P:{tx:10,hx:250,sf:118,sb:112,toeY:97,vampY:84,fx:160,fy:72,ax:204,ay:52,hy:62,os:12,tng:14}},
+  maxair: {name:"AERO MAX 90",    cat:"runner", base:215,
+           P:{tx:10,hx:250,sf:115,sb:107,toeY:95,vampY:82,fx:158,fy:70,ax:202,ay:54,hy:64,os:15,tng:14}},
+  shell : {name:"SHELLTOE PRO",   cat:"court",  base:145,
+           P:{tx:10,hx:250,sf:122,sb:117,toeY:100,vampY:88,fx:162,fy:76,ax:206,ay:58,hy:68,os:9,tng:12}},
+  skate : {name:"VAULT OLD SCHOOL",cat:"skate", base:100,
+           P:{tx:10,hx:250,sf:123,sb:119,toeY:101,vampY:89,fx:162,fy:78,ax:206,ay:62,hy:72,os:9,tng:10}},
+  hitop : {name:"STAR CANVAS HI", cat:"skate",  base:95,
+           P:{tx:10,hx:248,sf:123,sb:119,toeY:101,vampY:89,fx:156,fy:74,ax:200,ay:22,hy:34,os:8,tng:24,hi:1}},
+  retro : {name:"NEWBURY 574",    cat:"runner", base:180,
+           P:{tx:10,hx:250,sf:118,sb:111,toeY:96,vampY:84,fx:160,fy:72,ax:204,ay:54,hy:64,os:12,tng:14}},
+  knit  : {name:"STREAK 350 KNIT",cat:"runner", base:330,
+           P:{tx:12,hx:248,sf:116,sb:107,toeY:93,vampY:80,fx:156,fy:68,ax:200,ay:48,hy:60,os:13,tng:6}},
+  chunky: {name:"MONOLITH DAD",   cat:"chunky", base:250,
+           P:{tx:8, hx:252,sf:111,sb:100,toeY:91,vampY:78,fx:158,fy:64,ax:202,ay:44,hy:56,os:19,tng:14}}
+};
+
+/* ---------- colourways ---------- */
+function cw(name,mult,upper,panel,accent,sole,mid,lace,detail){
+  return {name:name,mult:mult,c:{upper:upper,panel:panel,accent:accent,sole:sole,mid:mid,
+          lace:lace,detail:detail,line:"#1D1815"}};
+}
+var CWS = [
+  cw("Triple White",  1.00,"#F8F5EF","#E8E2D5","#DCD5C6","#CFC8B9","#FCFAF6","#FBF8F2","#FFFFFF"),
+  cw("Panda",         1.18,"#F8F5EF","#23201E","#1B1715","#2A2522","#FCFAF6","#F6F2E8","#FFFFFF"),
+  cw("Bred",          1.42,"#26211D","#9A1A15","#C41F18","#1A1614","#2E2926","#E8E2D6","#B9B2A4"),
+  cw("Varsity Blue",  1.26,"#F3EFE7","#15408C","#2457B8","#1E2A3A","#FBF8F2","#FBF8F2","#FFFFFF"),
+  cw("Chicago",       1.58,"#F5F1E9","#B02A22","#D6372A","#2A2522","#FBF8F2","#F2EDE2","#FFFFFF"),
+  cw("Olive Cargo",   1.12,"#5E5F3E","#3C3E28","#8C7A3E","#2A2A22","#D8D2C0","#D2CBB4","#E4DFCE"),
+  cw("Cream Gum",     1.08,"#F0E4CD","#D7C4A0","#A8783F","#96682F","#F5EEDE","#EADCC0","#FFF7E8"),
+  cw("Pink Foam",     1.22,"#F3CBCE","#E2939C","#C5546A","#5C3038","#FDF4F2","#FBEDEB","#FFFFFF"),
+  cw("Volt Flash",    1.34,"#22251D","#CFE028","#B8CE18","#191A16","#EAEFDD","#CFE028","#F4F7E6"),
+  cw("Grey Suede",    1.02,"#9E998F","#6C6860","#464340","#332F2B","#EEE9DF","#E6E1D6","#F7F4ED"),
+  cw("Royal Navy",    1.16,"#1E2E52","#151F3A","#C9A227","#14182A","#F0EBDF","#E6E1D4","#F4F1E8"),
+  cw("Sail Orange",   1.20,"#F7F0E2","#DE5F24","#C44A18","#3A302A","#FBF8F0","#F4EDE0","#FFFFFF"),
+  cw("Ice Blue",      1.30,"#DCE9E7","#211E1C","#1B1715","#CFE0DC","#FCFAF6","#23201E","#F4FAF8"),
+  cw("Midnight Ink",  1.16,"#242B34","#141A21","#4E6C86","#111418","#DDD8CD","#D5CFC2","#EEEAE0"),
+  cw("Gold Standard", 1.98,"#2C261E","#C9A227","#E8C558","#1C1813","#F1E7CF","#E8C558","#FFF6DC")
+];
+var CUSTOM_CW = [
+  cw("1/1 Sunset Fade", 1.70,"#F5D7A7","#E07A4C","#C23B22","#2A231E","#FBF3E4","#F6E7CC","#FFF8EC"),
+  cw("1/1 Ink Splatter",1.65,"#F0EBE1","#2A2522","#C2452A","#1A1614","#FBF8F2","#EFEAE0","#FFFFFF"),
+  cw("1/1 Jade Marble", 1.72,"#DDECE3","#2C6A61","#1B4740","#17241F","#F2F7F3","#DCEBE2","#FFFFFF"),
+  cw("1/1 Ultraviolet", 1.78,"#2C2241","#6E4CC4","#C08CF0","#171225","#EDE7F6","#C08CF0","#FFFFFF")
+];
+
+/* ---------- main draw ---------- */
+function shoeSVG(sh, opts){
+  opts = opts || {};
+  var M = MODELS[sh.model], P = M.P, C = sh.cw.c, g = lastGeom(P), id = 'u'+(UID++);
+  var d = (DECO[sh.model] || DECO.force)(g, C);
+  var wear = '';
+  if(sh.cond < 72){
+    var n = sh.cond<45 ? 8 : 4;
+    for(var i=0;i<n;i++){
+      var wx = 40+((i*67)%160), wy = P.vampY+((i*37)%34);
+      wear += '<path d="M '+wx+','+wy+' q 6,'+(i%2?4:-4)+' 13,1" stroke="#8a7f70" stroke-width="1.6" fill="none" opacity=".5"/>';
+    }
+    wear += '<path d="M 24,'+(P.sf-2)+' q 34,8 76,3" stroke="#7a7062" stroke-width="2.2" fill="none" opacity=".38"/>';
+  }
+  var shadow = opts.noShadow ? '' :
+    '<ellipse cx="132" cy="142" rx="114" ry="4.5" fill="#17130F" opacity=".17"/>';
+
+  /* crop the frame to the actual silhouette so low-tops aren't swimming in space */
+  var vy = Math.max(0, Math.min(P.ay, P.fy-(P.tng||14)) - 10);
+  return '<svg viewBox="0 '+vy+' 262 '+(147-vy)+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+M.name+'">'+
+    '<defs><clipPath id="'+id+'"><path d="'+g.upper+'"/></clipPath>'+
+    '<clipPath id="o'+id+'"><path d="'+g.outsole+'"/></clipPath>'+
+    '<linearGradient id="l'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="#ffffff" stop-opacity=".20"/>'+
+      '<stop offset=".55" stop-color="#ffffff" stop-opacity="0"/>'+
+      '<stop offset="1" stop-color="#000000" stop-opacity=".14"/></linearGradient></defs>'+
+    shadow+
+    /* ---- sole unit: thin midsole + ribbed outsole ---- */
+    '<path d="'+g.sole+'" fill="'+C.mid+'" stroke="'+C.line+'" stroke-width="2"/>'+
+    '<path d="'+g.outsole+'" fill="'+C.sole+'"/>'+
+    '<g clip-path="url(#o'+id+')">'+ tread(g,C) +'</g>'+
+    '<path d="'+g.outsole+'" fill="none" stroke="'+C.line+'" stroke-width="1.7"/>'+
+    '<path d="'+g.sole+'" fill="url(#l'+id+')"/>'+
+    /* ---- upper ---- */
+    '<path d="'+g.upper+'" fill="'+C.upper+'"/>'+
+    '<g clip-path="url(#'+id+')">'+ d.clip + eyestay(g,C,d.eyestay) +
+      tongue(g,C,P.tng) +
+      /* padded collar band + the dark opening crescent, both off g.rim */
+      '<path d="'+g.rim+'" fill="none" stroke="'+C.panel+'" stroke-width="'+(P.hi?8:9)+
+        '" stroke-linecap="round" opacity=".97"/>'+
+      '<path d="'+g.rim+'" fill="none" stroke="'+C.line+'" stroke-width="1.3" opacity=".4"/>'+
+      '<g transform="translate(2,6)"><path d="'+g.rim+'" fill="none" stroke="#2b2520" stroke-width="5.5" stroke-linecap="round"/>'+
+      '<path d="'+g.rim+'" fill="none" stroke="#0d0b09" stroke-width="2.4" stroke-linecap="round" opacity=".5"/></g>'+
+      '<path d="'+g.upper+'" fill="url(#l'+id+')"/>'+ wear +
+    '</g>'+
+    '<path d="'+g.upper+'" fill="none" stroke="'+C.line+'" stroke-width="2.2" stroke-linejoin="round"/>'+
+    d.free +
+    '</svg>';
+}
+</script>
+<script>
+/* ============================================================
+   2. PEOPLE  -  flat vector shoppers, same ink-on-cream language
+   ============================================================ */
+var SKIN=["#F0C9A4","#D9A173","#B57B4E","#8A5A34","#6B4226","#F5DCC0"];
+var HAIRC=["#221A14","#4A2E1C","#8A5A34","#C2452A","#1B1B1B","#7A6E62","#2C6A61","#C98B22"];
+var SHIRT=["#2C6A61","#C2452A","#1E2E52","#B8860F","#5B5046","#8A5A34","#3E4029","#6E4CC4"];
+var NAMES=["Mina","Deshawn","Yuki","Priya","Marco","Tobi","Lena","Ruben","Ada","Kofi","Sasha","Elif",
+           "Jonas","Nadia","Oscar","Ivy","Rico","Hana","Baz","Coco","Milo","Zara","Finn","Remy"];
+
+function personSVG(p){
+  var sk=SKIN[p.a%SKIN.length], hr=HAIRC[p.b%HAIRC.length], sh=SHIRT[p.c%SHIRT.length], st=p.d%4;
+  var hair='';
+  if(st===0) hair='<path d="M 34,62 C 32,36 48,26 62,26 C 78,26 92,36 90,62 C 88,50 80,44 62,44 C 46,44 38,50 34,62 Z" fill="'+hr+'" stroke="#17130F" stroke-width="2" stroke-linejoin="round"/>';
+  if(st===1) hair='<path d="M 34,62 C 32,34 48,24 62,24 C 78,24 92,34 90,62 C 88,48 80,42 62,42 C 46,42 38,48 34,62 Z" fill="'+hr+'" stroke="#17130F" stroke-width="2"/>'+
+                  '<circle cx="62" cy="16" r="11" fill="'+hr+'" stroke="#17130F" stroke-width="2"/>';
+  if(st===2) hair='<path d="M 30,96 C 26,54 42,24 62,24 C 82,24 98,54 94,96 C 88,84 86,64 84,56 C 78,46 46,46 40,56 C 38,64 36,84 30,96 Z" fill="'+hr+'" stroke="#17130F" stroke-width="2" stroke-linejoin="round"/>';
+  if(st===3) hair='<path d="M 30,54 C 30,32 48,24 62,24 C 80,24 94,34 94,52 L 94,56 L 30,58 Z" fill="'+hr+'" stroke="#17130F" stroke-width="2" stroke-linejoin="round"/>'+
+                  '<path d="M 28,56 L 104,50 L 104,58 L 28,62 Z" fill="'+hr+'" stroke="#17130F" stroke-width="2" stroke-linejoin="round"/>';
+  return '<svg viewBox="0 0 124 156" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M 14,156 C 16,116 34,102 62,102 C 90,102 108,116 110,156 Z" fill="'+sh+'" stroke="#17130F" stroke-width="2.4" stroke-linejoin="round"/>'+
+    '<path d="M 50,96 L 74,96 L 74,110 L 50,110 Z" fill="'+sk+'" stroke="#17130F" stroke-width="2"/>'+
+    '<path d="M 48,104 C 54,114 70,114 76,104 C 76,112 70,118 62,118 C 54,118 48,112 48,104 Z" fill="#FBF6EC" stroke="#17130F" stroke-width="2" stroke-linejoin="round"/>'+
+    '<ellipse cx="62" cy="66" rx="27" ry="31" fill="'+sk+'" stroke="#17130F" stroke-width="2.4"/>'+
+    hair+
+    '<circle cx="52" cy="66" r="2.8" fill="#17130F"/><circle cx="74" cy="66" r="2.8" fill="#17130F"/>'+
+    '<path d="M 45,57 C 49,54 55,54 58,56" stroke="#17130F" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+    '<path d="M 68,56 C 71,54 77,54 81,57" stroke="#17130F" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+    '<path d="M 54,80 C 58,84 66,84 71,79" stroke="#17130F" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+
+    '<circle cx="40" cy="76" r="4" fill="#C2452A" opacity=".22"/><circle cx="86" cy="76" r="4" fill="#C2452A" opacity=".22"/>'+
+    '</svg>';
+}
+
+/* ============================================================
+   3. GAME STATE
+   ============================================================ */
+var SIZES=[7,8,9,9.5,10,10.5,11,12,13];
+var SIZEM={7:.88,8:.95,9:1,9.5:1.03,10:1.05,10.5:1.03,11:1,12:.93,13:.85};
+var CATS=["court","runner","skate","chunky"];
+var CATNAME={court:"COURT / BASKETBALL",runner:"RUNNERS",skate:"SKATE",chunky:"CHUNKY / DAD"};
+var MKEYS=Object.keys(MODELS);
+
+var S={
+  cash:1500, day:1, rep:2.0, inv:[], market:[], slots:8,
+  ups:{}, cust:null, queue:0, presents:0, haggled:false, jobs:2,
+  open:false, tab:"floor", pat:0, patMax:1, timer:null, log:[],
+  soldToday:0, earnedToday:0, spentToday:0, trend:null, nextId:1, over:false
+};
+var GOAL=20000;
+
+function rnd(a,b){return a+Math.random()*(b-a);}
+function ri(a,b){return Math.floor(rnd(a,b+1));}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function r5(n){return Math.max(5,Math.round(n/5)*5);}
+function $(s){return document.querySelector(s);}
+function money(n){var v=Math.round(n);return (v<0?"-$":"$")+Math.abs(v).toLocaleString();}
+
+function condName(c){return c>=95?"DEADSTOCK":c>=80?"VNDS":c>=60?"USED":c>=40?"BEATERS":"TRASHED";}
+function condCls(c){return c>=80?"":c>=55?"mid":"lo";}
+
+function newShoe(o){
+  o=o||{};
+  var m=o.model||pick(MKEYS);
+  var c=o.cw||pick(CWS);
+  var sh={id:S.nextId++, model:m, cw:c, size:o.size||pick(SIZES),
+          cond:o.cond!==undefined?o.cond:ri(45,100), paid:0, custom:!!o.custom};
+  return sh;
+}
+function baseValue(sh){
+  var M=MODELS[sh.model];
+  var cm=0.34+0.66*(sh.cond/100);
+  if(sh.cond>=95) cm*=1.12;
+  return M.base*cm*sh.cw.mult*(SIZEM[sh.size]||1);
+}
+function trendMult(sh){
+  var t=S.trend,m=1;
+  if(!t) return 1;
+  if(MODELS[sh.model].cat===t.cat) m*=t.catMult;
+  if(sh.cw.name===t.cwName) m*=t.cwMult;
+  return m;
+}
+function valueOf(sh){ return r5(baseValue(sh)*trendMult(sh)); }
+
+function rollTrend(){
+  var cat=pick(CATS), c=pick(CWS);
+  S.trend={cat:cat, catMult:rnd(1.22,1.55), cwName:c.name, cwMult:rnd(1.15,1.35),
+           cold:pick(CATS.filter(function(x){return x!==cat;})), coldMult:0.82};
+}
+
+/* ---------- market ---------- */
+function stockMarket(){
+  S.market=[];
+  var n=6+(S.ups.plug?2:0);
+  for(var i=0;i<n;i++){
+    var sh=newShoe({cond:ri(38,100)});
+    var v=valueOf(sh);
+    var swing=rnd(0.55,1.3);
+    if(Math.random()<0.14) swing=rnd(0.38,0.55);
+    sh.ask=r5(v*swing);
+    sh.src=pick(["Estate lot","Storage unit","Trade-in","Wholesale pallet","Consignment","Flea market","EBay snipe","Warehouse clearout"]);
+    S.market.push(sh);
+  }
+}
+
+/* ============================================================
+   4. RENDER
+   ============================================================ */
+function stars(r){
+  var full=Math.floor(r), half=(r-full)>=.5, s="";
+  for(var i=0;i<5;i++) s+= i<full?"★":(i===full&&half?"½":"☆");
+  return s;
+}
+function hud(){
+  $("#sDay").textContent=S.day;
+  $("#sCash").textContent=money(S.cash);
+  $("#sRep").textContent=stars(S.rep);
+  $("#sGoal").textContent=Math.min(100,Math.floor(S.cash/GOAL*100))+"%";
+  $("#mktDot").textContent=S.market.length;
+  var t=S.trend;
+  $("#trendChips").innerHTML=
+    '<span class="chip hot">'+CATNAME[t.cat]+' +'+Math.round((t.catMult-1)*100)+'%</span>'+
+    '<span class="chip hot">"'+t.cwName+'" +'+Math.round((t.cwMult-1)*100)+'%</span>'+
+    '<span class="chip cool">'+CATNAME[t.cold]+' is cold</span>'+
+    '<span class="chip">Rent tonight '+money(rentDue())+'</span>';
+}
+function rentDue(){ return 130+S.day*14; }
+
+function shoeCard(sh,mode,idx){
+  var M=MODELS[sh.model], v=valueOf(sh), tg=[];
+  if(mode==="market" && sh.ask < v*0.72) tg.push(['deal','Steal']);
+  if(sh.custom) tg.push(['gold','1 of 1']);
+  else if(sh.cond>=95) tg.push(['ds','Deadstock']);
+  if(M.cat===S.trend.cat || sh.cw.name===S.trend.cwName) tg.push(['','Hyped']);
+  var tags=tg.slice(0,2).map(function(t,i){
+    return '<span class="tag '+t[0]+'" style="top:'+(8+i*21)+'px">'+t[1]+'</span>';
+  }).join('');
+  var priceCls = mode==="market" ? (sh.ask<v*0.85?"t":(sh.ask>v*1.05?"r":"")) : "";
+  var price = mode==="market"? sh.ask : v;
+  var sub = mode==="market"? "Ask / worth "+money(v) : "Est. value";
+  return '<div class="sc'+(mode==="market"&&sh.ask>S.cash?" dead":"")+'" data-id="'+sh.id+'" data-mode="'+mode+'">'+
+    tags+'<span class="szb">US '+sh.size+'</span>'+
+    '<div class="stage">'+shoeSVG(sh)+'</div><div class="shelf"></div>'+
+    '<div class="meta"><div class="nm">'+M.name+'</div>'+
+    '<div class="cwn">'+sh.cw.name+' &middot; '+condName(sh.cond)+'</div>'+
+    '<div class="bar '+condCls(sh.cond)+'"><i style="width:'+sh.cond+'%"></i></div>'+
+    '<div class="row"><div class="price '+priceCls+'">'+money(price)+'</div>'+
+    '<div class="sub">'+sub+'</div></div></div></div>';
+}
+
+function renderMain(){
+  var m=$("#mainCol"), h="";
+  if(S.tab==="floor"){
+    h+='<div class="panel"><div class="ph"><span>The Floor &mdash; Display '+S.inv.length+'/'+S.slots+'</span>'+
+       '<em>'+(S.cust?"Click a shoe to show it":"Stock your shelves")+'</em></div><div class="pb">';
+    if(!S.inv.length) h+='<div class="emptyish">Your shelves are bare.<br>Head to the MARKET and buy some pairs.</div>';
+    else { h+='<div class="grid">';
+      S.inv.forEach(function(sh){h+=shoeCard(sh,"floor");});
+      h+='</div>'; }
+    h+='</div></div>';
+  }
+  if(S.tab==="market"){
+    h+='<div class="panel"><div class="ph"><span>Wholesale Market &mdash; Day '+S.day+'</span><em>Restocks nightly</em></div><div class="pb">';
+    if(!S.market.length) h+='<div class="emptyish">Market cleared out. Come back tomorrow.</div>';
+    else { h+='<div class="grid">';
+      S.market.forEach(function(sh){h+=shoeCard(sh,"market");});
+      h+='</div>'; }
+    h+='</div></div>';
+  }
+  if(S.tab==="shop"){
+    h+='<div class="panel"><div class="ph"><span>Restoration Workshop</span><em>Jobs left today: '+S.jobs+'</em></div><div class="pb">';
+    if(!S.inv.length) h+='<div class="emptyish">Nothing to work on.</div>';
+    S.inv.forEach(function(sh){
+      var v=valueOf(sh), full=sh.cond>=100;
+      h+='<div class="wrow"><div class="mini">'+shoeSVG(sh,{noShadow:true})+'</div>'+
+        '<div class="info"><div class="nm">'+MODELS[sh.model].name+'</div>'+
+        '<div class="cwn">'+sh.cw.name+' &middot; US '+sh.size+' &middot; '+condName(sh.cond)+' ('+Math.round(sh.cond)+'%)</div>'+
+        '<div class="bar '+condCls(sh.cond)+'" style="max-width:220px"><i style="width:'+sh.cond+'%"></i></div>'+
+        '<div class="row" style="max-width:220px"><div class="price">'+money(v)+'</div><div class="sub">paid '+money(sh.paid)+'</div></div></div>'+
+        '<div class="wacts">'+
+        '<button class="btn sm" data-job="clean" data-id="'+sh.id+'" '+((full||S.jobs<1||S.cash<25)?"disabled":"")+'>Clean $25</button>'+
+        '<button class="btn sm" data-job="restore" data-id="'+sh.id+'" '+((full||S.jobs<1||S.cash<90)?"disabled":"")+'>Restore $90</button>'+
+        '<button class="btn sm acc" data-job="custom" data-id="'+sh.id+'" '+((sh.custom||S.jobs<1||S.cash<170)?"disabled":"")+'>Custom $170</button>'+
+        '</div></div>';
+    });
+    h+='</div></div>';
+  }
+  if(S.tab==="upg"){
+    h+='<div class="panel"><div class="ph"><span>Shop Upgrades</span><em>One-time buys</em></div><div class="pb">';
+    UPGS.forEach(function(u){
+      var own=!!S.ups[u.k];
+      h+='<div class="up'+(own?" owned":"")+'"><div class="ic">'+u.ic+'</div>'+
+        '<div style="flex:1"><h4>'+u.n+'</h4><p>'+u.d+'</p></div>'+
+        '<button class="btn sm" data-up="'+u.k+'" '+((own||S.cash<u.p)?"disabled":"")+'>'+(own?"Owned":money(u.p))+'</button></div>';
+    });
+    h+='</div></div>';
+    h+='<div class="panel"><div class="ph"><span>How To Win</span></div><div class="pb" style="line-height:1.7;font-size:13px">'+
+      'Buy low from the <b>Market</b>, restore beaters in the <b>Workshop</b>, then sell to walk-ins on <b>The Floor</b>. '+
+      'Daily <b>HEAT</b> at the top moves prices &mdash; a hyped category or colourway is worth far more today than tomorrow. '+
+      'Reach <b>'+money(GOAL)+'</b> in cash to buy the flagship store and win.</div></div>';
+  }
+  m.innerHTML=h;
+}
+
+var UPGS=[
+  {k:"cases", n:"Glass Display Cases", p:900,  ic:"▤", d:"+4 display slots. More stock on the floor at once."},
+  {k:"neon",  n:"Neon Window Sign",    p:1200, ic:"✦", d:"+2 customers every day. The block finally notices you."},
+  {k:"coffee",n:"Espresso Counter",    p:800,  ic:"☕", d:"Shoppers browse 45% longer before walking out."},
+  {k:"social",n:"Social Campaign",     p:1500, ic:"↑",  d:"Every offer you receive is 12% higher."},
+  {k:"bench", n:"Restoration Bench",   p:1000, ic:"⚒", d:"+1 workshop job per day, and restores are stronger."},
+  {k:"plug",  n:"Warehouse Plug",      p:1400, ic:"☎", d:"+2 extra lots in the market every morning."}
+];
+
+/* ---------- side column ---------- */
+function renderSide(){
+  var s=$("#sideCol"), h="";
+  h+='<div class="panel"><div class="ph"><span>'+(S.open?"Shop Open":"Shop Closed")+'</span><em>'+S.soldToday+' sold today</em></div>';
+  h+='<div id="custWrap"><div class="street"></div>';
+  if(S.cust){
+    var c=S.cust, pct=Math.max(0,S.pat/S.patMax*100);
+    var pcls=pct<25?"bad":pct<55?"warn":"";
+    h+='<div class="person">'+personSVG(c.look)+
+       '<div class="speech"><div class="who">'+c.name+'</div>'+
+       '<div class="want">Wants: '+CATNAME[c.cat]+' &middot; up to '+money(c.budget)+'</div>'+
+       '<p>'+c.line+'</p></div></div>';
+    h+='<div class="patience '+pcls+'"><i style="width:'+pct+'%"></i></div>';
+    if(c.offer){
+      h+='<div class="offerbox"><div class="top"><div><div class="hint">Offers you</div><div class="amt">'+money(c.offer)+'</div></div>'+
+         '<div style="margin-left:auto;text-align:right"><div class="hint">'+MODELS[c.onShoe.model].name+'</div>'+
+         '<div class="hint" style="color:var(--teal)">worth '+money(valueOf(c.onShoe))+'</div>'+
+         '<div class="hint">you paid '+money(c.onShoe.paid)+'</div></div></div>'+
+         '<div class="acts"><button class="btn acc" data-act="accept">Sell</button>'+
+         '<button class="btn" data-act="haggle" '+(S.haggled?"disabled":"")+'>Haggle +</button>'+
+         '<button class="btn g" data-act="reject">Refuse</button></div></div>';
+    } else {
+      h+='<div class="offerbox"><div class="top"><div><div class="hint">Shows left</div>'+
+         '<div class="amt" style="color:var(--ink)">'+(3-S.presents)+'</div></div>'+
+         '<div style="margin-left:auto;text-align:right;max-width:190px"><div class="hint">Click a pair on THE FLOOR to show it to '+c.name+'</div></div></div></div>';
+    }
+  } else if(S.open){
+    h+='<div class="emptyish" style="padding:56px 14px">The street is quiet&hellip;<br>'+S.queue+' shoppers still coming.</div>';
+    h+='<div style="padding:0 14px 14px"><button class="btn big g" data-act="close">Close Up Early</button></div>';
+  } else {
+    h+='<div class="emptyish" style="padding:38px 14px">Doors are locked.<br>Stock the shelves, then open up.</div>';
+    h+='<div style="padding:0 14px 16px"><button class="btn big" data-act="open">Open The Doors</button>'+
+       '<div class="hint" style="text-align:center;margin-top:8px">'+custCount()+' shoppers expected &middot; rent tonight '+money(rentDue())+'</div></div>';
+  }
+  h+='</div></div>';
+  h+='<div class="panel"><div class="ph"><span>Ledger</span><em>Day '+S.day+'</em></div><div id="log"></div></div>';
+  s.innerHTML=h;
+  var lg=$("#log");
+  lg.innerHTML=S.log.slice(0,40).map(function(l){return "<div>"+l+"</div>";}).join("")||"<div style='color:var(--ink2)'>Nothing yet.</div>";
+}
+function render(){ hud(); renderMain(); renderSide(); }
+function say(t){ S.log.unshift(t); if(S.log.length>60)S.log.pop(); }
+
+/* ============================================================
+   5. CUSTOMERS / DAY LOOP
+   ============================================================ */
+function custCount(){ return 4+Math.floor(S.rep)+(S.ups.neon?2:0); }
+var OPENERS=[
+  "Anything good come in this week?",
+  "I've been hunting this pair for months.",
+  "Just browsing. Probably. Maybe.",
+  "My old ones finally blew out. Show me something.",
+  "Heard you get the good stuff before anyone else.",
+  "Don't show me anything boring.",
+  "I've got cash and twenty minutes."
+];
+function newCustomer(){
+  var cat = Math.random()<0.55 ? S.trend.cat : pick(CATS);
+  var budget = r5(rnd(90,180)*(1+S.rep*0.22)*(Math.random()<0.18?2.2:1));
+  var c={
+    name:pick(NAMES), cat:cat, budget:budget,
+    look:{a:ri(0,9),b:ri(0,9),c:ri(0,9),d:ri(0,9)},
+    line:pick(OPENERS), offer:0, onShoe:null
+  };
+  S.cust=c; S.presents=0; S.haggled=false;
+  S.patMax = (13+S.rep*1.4)*(S.ups.coffee?1.45:1);
+  S.pat = S.patMax;
+  render();
+}
+function tickPatience(){
+  if(!S.cust||S.over) return;
+  S.pat-=0.1;
+  if(S.pat<=0){ leave(S.cust.name+" got bored and walked out."); return; }
+  var w=$("#custWrap .patience");
+  if(w){
+    var pct=Math.max(0,S.pat/S.patMax*100);
+    w.className="patience "+(pct<25?"bad":pct<55?"warn":"");
+    w.firstChild.style.width=pct+"%";
+  }
+}
+function leave(msg){
+  say("<b>&rarr;</b> "+msg);
+  S.rep=Math.max(0,S.rep-0.05);
+  S.cust=null;
+  render();
+  setTimeout(nextCustomer,650);
+}
+function nextCustomer(){
+  if(S.over||!S.open) return;
+  if(S.queue<=0){ endDay(); return; }
+  S.queue--;
+  newCustomer();
+}
+function present(sh){
+  if(!S.cust||S.cust.offer) return;
+  var c=S.cust;
+  S.presents++;
+  var M=MODELS[sh.model], v=valueOf(sh), love=0;
+  if(M.cat===c.cat) love+=2;
+  if(sh.cw.name===S.trend.cwName) love+=1;
+  if(sh.custom) love+=1;
+  if(sh.cond>=95) love+=1;
+  if(sh.cond<45) love-=2;
+  var mult = love>=3?1.14 : love>=2?1.0 : love>=1?0.88 : 0.74;
+  var repM = 1+S.rep*0.035, socM=S.ups.social?1.12:1;
+  var offer = r5(v*mult*rnd(.95,1.08)*repM*socM);
+  var react;
+  if(offer>c.budget){
+    if(c.budget < v*0.55){
+      react="“Out of my league, sorry.”";
+      c.offer=0; c.onShoe=null;
+      say(c.name+" couldn't afford the "+M.name+".");
+    } else { offer=c.budget; react="“That's every dollar I have on me.”"; }
+  }
+  if(offer<=c.budget){
+    if(react){ /* keep the budget line */ }
+    else if(love>=3) react="“Okay. OKAY. That's the one.”";
+    else if(love>=2) react="“Yeah, I could rock these.”";
+    else if(love>=1) react="“Not really my thing, but…”";
+    else react="“Hmm. Lowballing you, no offence.”";
+    c.offer=offer; c.onShoe=sh;
+  }
+  c.line=react;
+  S.pat=Math.max(2,S.pat-1.4);
+  if(S.presents>=3 && !c.offer) { render(); leave(c.name+" left empty-handed."); return; }
+  render();
+}
+function sell(price){
+  var c=S.cust, sh=c.onShoe, prof=price-sh.paid;
+  S.cash+=price; S.earnedToday+=price; S.soldToday++;
+  S.inv=S.inv.filter(function(x){return x.id!==sh.id;});
+  S.rep=Math.min(5,S.rep+(prof>0?0.1:0.04));
+  say("<em>SOLD</em> "+MODELS[sh.model].name+" · "+sh.cw.name+" to "+c.name+" for <i>"+money(price)+
+      "</i> ("+(prof>=0?"+":"")+money(prof)+")");
+  S.cust=null; render();
+  if(S.cash>=GOAL){ win(); return; }
+  setTimeout(nextCustomer,700);
+}
+function haggle(){
+  var c=S.cust; if(!c||!c.offer||S.haggled) return;
+  S.haggled=true;
+  var chance=0.5+S.rep*0.06+(S.ups.social?0.08:0);
+  if(Math.random()<chance){
+    c.offer=r5(c.offer*rnd(1.12,1.22));
+    c.line="“Fine. Final offer, don't push it.”";
+    say(c.name+" caved &mdash; up to <i>"+money(c.offer)+"</i>.");
+  } else {
+    c.offer=r5(c.offer*0.94);
+    S.pat=Math.max(1.5,S.pat*0.5);
+    c.line="“Seriously? Then I'm going lower.”";
+    say("<b>Haggle failed.</b> "+c.name+" is annoyed.");
+  }
+  render();
+}
+
+/* ---------- day flow ---------- */
+function openShop(){
+  if(S.open) return;
+  if(!S.inv.length){ overlay("<h2>Empty <i>shelves</i></h2><p>You can open the doors, but nobody buys air. Grab a few pairs from the Market first.</p>",[["Fine",closeOverlay]]); return; }
+  S.open=true; S.queue=custCount();
+  say("<em>Day "+S.day+"</em> — doors open. "+S.queue+" shoppers expected.");
+  render();
+  setTimeout(nextCustomer,500);
+}
+function endDay(){
+  S.open=false; S.cust=null;
+  var rent=rentDue();
+  S.cash-=rent;
+  var net=S.earnedToday-S.spentToday-rent;
+  var lines='<div class="dayline"><span>Sales ('+S.soldToday+')</span><b style="color:var(--teal)">+'+money(S.earnedToday)+'</b></div>'+
+    '<div class="dayline"><span>Stock &amp; workshop</span><b style="color:var(--rust)">'+money(-S.spentToday)+'</b></div>'+
+    '<div class="dayline"><span>Rent</span><b style="color:var(--rust)">'+money(-rent)+'</b></div>'+
+    '<div class="dayline" style="border-bottom:none;font-size:18px"><span>Net</span><b style="color:'+(net>=0?"var(--teal)":"var(--rust)")+'">'+(net>=0?"+":"")+money(net)+'</b></div>'+
+    '<div class="dayline" style="border:none"><span>Reputation</span><b class="stars">'+stars(S.rep)+'</b></div>';
+  say("Day "+S.day+" closed. Rent "+money(-rent)+".");
+  render();
+  if(S.cash<0){ lose(); return; }
+  overlay('<h2>Day '+S.day+' <i>closed</i></h2>'+lines,[["Next Morning →",function(){closeOverlay();newDay();}]]);
+}
+function newDay(){
+  S.day++; S.soldToday=0; S.earnedToday=0; S.spentToday=0;
+  S.jobs=2+(S.ups.bench?1:0);
+  rollTrend(); stockMarket();
+  say('<b>Day '+S.day+'</b> — heat: '+CATNAME[S.trend.cat]+' &amp; "'+S.trend.cwName+'".');
+  S.tab="market"; syncTabs(); render();
+}
+function win(){
+  S.over=true; S.open=false;
+  overlay('<h2>You bought the <i>flagship</i></h2><p>Day '+S.day+'. '+money(S.cash)+' in the register, '+stars(S.rep)+
+    ' on the wall, and a lease on the corner unit with the big windows.</p><p>SOLE &amp; CO. is officially a real store.</p>',
+    [["Keep Trading",function(){closeOverlay();S.over=false;GOAL=GOAL*2;render();}]]);
+}
+function lose(){
+  S.over=true;
+  overlay('<h2>The bank <i>closed</i> you down</h2><p>You ran out of money on day '+S.day+'. The landlord took the shelves.</p>',
+    [["Start Over",function(){location.reload();}]]);
+}
+
+/* ---------- overlay ---------- */
+function overlay(html,btns){
+  var b=(btns||[]).map(function(x,i){return '<button class="btn big" data-ovb="'+i+'" style="margin-top:6px">'+x[0]+'</button>';}).join("");
+  $("#ovc").innerHTML='<div class="pb">'+html+b+'</div>';
+  $("#ov").classList.add("on");
+  $("#ovc").__b=btns||[];
+}
+function closeOverlay(){ $("#ov").classList.remove("on"); }
+
+function detail(sh,mode){
+  var M=MODELS[sh.model], v=valueOf(sh), t=trendMult(sh);
+  var h='<h2>'+M.name+'</h2>'+
+    '<div class="dayline"><span>Colourway</span><b>'+sh.cw.name+' (x'+sh.cw.mult.toFixed(2)+')</b></div>'+
+    '<div class="dayline"><span>Size / Category</span><b>US '+sh.size+' &middot; '+CATNAME[M.cat]+'</b></div>'+
+    '<div class="dayline"><span>Condition</span><b>'+condName(sh.cond)+' &middot; '+Math.round(sh.cond)+'%</b></div>'+
+    '<div class="dayline"><span>Today’s heat</span><b style="color:'+(t>1.01?"var(--teal)":"var(--ink2)")+'">x'+t.toFixed(2)+'</b></div>'+
+    '<div class="dayline" style="font-size:19px"><span>Market value</span><b style="color:var(--gold)">'+money(v)+'</b></div>';
+  if(mode==="market"){
+    h+='<div class="dayline" style="font-size:19px;border:none"><span>Asking</span><b style="color:'+(sh.ask<v?"var(--teal)":"var(--rust)")+'">'+money(sh.ask)+'</b></div>'+
+       '<div class="hint" style="margin:6px 0 10px">Source: '+sh.src+'</div>';
+  } else {
+    h+='<div class="dayline" style="border:none"><span>You paid</span><b>'+money(sh.paid)+'</b></div>';
+  }
+  var btns=[];
+  if(mode==="market" && S.cash>=sh.ask) btns.push(["Buy for "+money(sh.ask),function(){closeOverlay();buy(sh);}]);
+  btns.push(["Close",closeOverlay]);
+  var b=btns.map(function(x,i){return '<button class="btn big'+(i?" g":"")+'" data-ovb="'+i+'" style="margin-top:7px">'+x[0]+'</button>';}).join("");
+  $("#ovc").innerHTML='<div style="background:radial-gradient(70% 50% at 50% 82%,rgba(23,19,15,.14),transparent 72%),linear-gradient(#fff,#F1E9D9);border-bottom:3px solid var(--ink)">'+
+    shoeSVG(sh)+'</div><div class="pb">'+h+b+'</div>';
+  $("#ov").classList.add("on");
+  $("#ovc").__b=btns;
+}
+
+function buy(sh){
+  if(S.cash<sh.ask) return;
+  if(S.inv.length>=S.slots){ overlay('<h2>No <i>room</i></h2><p>Your display is full ('+S.slots+' pairs). Sell something, or buy the Glass Display Cases upgrade.</p>',[["OK",closeOverlay]]); return; }
+  S.cash-=sh.ask; S.spentToday+=sh.ask;
+  sh.paid=sh.ask; delete sh.ask;
+  S.market=S.market.filter(function(x){return x.id!==sh.id;});
+  S.inv.push(sh);
+  say("Bought "+MODELS[sh.model].name+" · "+sh.cw.name+" for <i>"+money(sh.paid)+"</i>.");
+  render();
+}
+function job(kind,sh){
+  if(S.jobs<1) return;
+  var cost={clean:25,restore:90,custom:170}[kind];
+  if(S.cash<cost) return;
+  S.cash-=cost; S.spentToday+=cost; S.jobs--; sh.paid+=cost;
+  if(kind==="clean") sh.cond=Math.min(100,sh.cond+ri(8,16));
+  if(kind==="restore") sh.cond=Math.min(100,sh.cond+ri(22,34)+(S.ups.bench?8:0));
+  if(kind==="custom"){ sh.cw=pick(CUSTOM_CW); sh.custom=true; sh.cond=Math.min(100,sh.cond+10); }
+  say("Workshop: "+kind+" on "+MODELS[sh.model].name+" (-"+money(cost)+").");
+  render();
+}
+
+/* ============================================================
+   6. EVENTS
+   ============================================================ */
+function syncTabs(){
+  document.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.dataset.t===S.tab); });
+}
+document.addEventListener("click",function(e){
+  var t=e.target;
+  var tab=t.closest(".tab");
+  if(tab){ S.tab=tab.dataset.t; syncTabs(); renderMain(); return; }
+
+  var ovb=t.closest("[data-ovb]");
+  if(ovb){ var f=$("#ovc").__b[+ovb.dataset.ovb]; if(f&&f[1]) f[1](); return; }
+
+  var jb=t.closest("[data-job]");
+  if(jb){ var s1=S.inv.find(function(x){return x.id==jb.dataset.id;}); if(s1) job(jb.dataset.job,s1); return; }
+
+  var ub=t.closest("[data-up]");
+  if(ub){
+    var u=UPGS.find(function(x){return x.k===ub.dataset.up;});
+    if(u&&!S.ups[u.k]&&S.cash>=u.p){
+      S.cash-=u.p; S.spentToday+=u.p; S.ups[u.k]=1;
+      if(u.k==="cases") S.slots+=4;
+      if(u.k==="bench") S.jobs++;
+      if(u.k==="plug") stockMarket();
+      say("<em>Upgrade</em> installed: "+u.n+".");
+      render();
+    }
+    return;
+  }
+
+  var ac=t.closest("[data-act]");
+  if(ac){
+    var a=ac.dataset.act;
+    if(a==="open") openShop();
+    if(a==="close"){ S.queue=0; if(!S.cust) endDay(); else leave("You ushered "+S.cust.name+" out."); }
+    if(a==="accept") sell(S.cust.offer);
+    if(a==="haggle") haggle();
+    if(a==="reject"){ var n=S.cust.name; S.cust.offer=0; S.cust.onShoe=null;
+      S.cust.line="“Your loss.”"; S.pat=Math.max(1.5,S.pat*0.6);
+      if(S.presents>=3){ render(); leave(n+" walked out."); } else render(); }
+    return;
+  }
+
+  var card=t.closest(".sc");
+  if(card){
+    var id=+card.dataset.id, mode=card.dataset.mode;
+    if(mode==="market"){ var mk=S.market.find(function(x){return x.id===id;}); if(mk) detail(mk,"market"); }
+    else {
+      var iv=S.inv.find(function(x){return x.id===id;});
+      if(!iv) return;
+      if(S.cust && !S.cust.offer) present(iv); else detail(iv,"inv");
+    }
+  }
+});
+
+/* ============================================================
+   7. BOOT
+   ============================================================ */
+function boot(){
+  rollTrend(); stockMarket();
+  for(var i=0;i<3;i++){
+    var sh=newShoe({cond:ri(60,100)});
+    sh.paid=r5(valueOf(sh)*0.7);
+    S.inv.push(sh);
+  }
+  say("Grandma left you the shop, three pairs and <i>"+money(S.cash)+"</i>. Don't blow it.");
+  syncTabs(); render();
+  S.timer=setInterval(tickPatience,100);
+  overlay('<h2>SOLE <i>&amp;</i> CO.</h2>'+
+    '<p>You inherited a two-metre-wide sneaker shop. Buy deadstock cheap in the <b>Market</b>, '+
+    'fix up beaters in the <b>Workshop</b>, and sell to whoever walks through the door.</p>'+
+    '<p>The <b>HEAT</b> bar at the top changes every morning &mdash; it decides which silhouettes and colourways '+
+    'are worth a fortune today. Buy against it, sell into it.</p>'+
+    '<p><b>Goal:</b> '+money(GOAL)+' in cash buys the flagship store.</p>',
+    [["Open Up Shop",closeOverlay]]);
+}
+boot();
+
+/* test hook for the screenshot loop */
+window.__t={
+  S:S, render:render, newCustomer:newCustomer, present:present,
+  give:function(n){ for(var i=0;i<(n||1);i++){ var s=newShoe({cond:ri(55,100)}); s.paid=r5(valueOf(s)*.7); S.inv.push(s);} render(); },
+  all:function(){ S.inv=[]; MKEYS.forEach(function(m,i){ var s=newShoe({model:m,cw:CWS[i%CWS.length],cond:96}); s.paid=100; S.inv.push(s); }); S.slots=20; render(); },
+  open:openShop, closeOv:closeOverlay,
+  get:function(){ return {day:S.day,cash:S.cash,inv:S.inv.length,cust:S.cust&&S.cust.name,offer:S.cust&&S.cust.offer,tab:S.tab,open:S.open}; }
+};
+</script>
+</body>
+</html>

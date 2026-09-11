@@ -28,7 +28,7 @@ Alloy.boot(({ games }) => {
     <div class="wrap">
       <div class="page-head">
         <h1>All games</h1>
-        <p>${games.length} games, no downloads, no sign-up.</p>
+        <p>${games.length} games, all free, all playable in the browser.</p>
       </div>
 
       <div class="chips" id="chips">

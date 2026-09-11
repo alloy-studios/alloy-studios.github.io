@@ -76,15 +76,7 @@ Alloy.boot(async ({ games, site }) => {
       ${about.length ? `
         <section class="studio">
           <div class="section-head"><h2>About the studio</h2></div>
-          <div class="studio-body">
-            <div class="prose">${about.map(p => `<p>${Alloy.esc(p)}</p>`).join('')}</div>
-            <dl class="facts">
-              <dt>Games</dt><dd>${games.length}</dd>
-              <dt>Price</dt><dd>Free</dd>
-              <dt>Install</dt><dd>None</dd>
-              <dt>Source</dt><dd><a href="https://github.com/${Alloy.esc(site.github || 'alloy-studios')}">GitHub</a></dd>
-            </dl>
-          </div>
+          <div class="prose">${about.map(p => `<p>${Alloy.esc(p)}</p>`).join('')}</div>
         </section>` : ''}
 
       ${spotlight ? `

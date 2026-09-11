@@ -1,6 +1,18 @@
 {
   "posts": [
     {
+      "date": "2026-09-11",
+      "title": "Elementalis and Sole & Co. are live",
+      "body": "Two new games. Elementalis is a spellcasting action-RPG across the Broken Wilds, with a Grimoire for mastering and fusing elements. Sole & Co. is a sneaker shop sim - you inherit a two-metre-wide shop, three pairs and $1,500, and have to make rent.",
+      "game": "elementalis"
+    },
+    {
+      "date": "2026-09-10",
+      "title": "Three games added, contact address changed",
+      "body": "Multiverse Fighters, Flytale and Madballs join the catalogue, Alloy Mind gets a proper write-up, and Rivalforge and Neon Survivor Legends are updated to their latest builds. The studio contact address is now alloystudiocontact@gmail.com.",
+      "game": "multiversefighters"
+    },
+    {
       "date": "2026-09-09",
       "title": "Rivalforge overhaul",
       "body": "Rivalforge gets its biggest update yet in the calibration bay. Chain multipliers, optics calibration and a reworked scoring pass.",
