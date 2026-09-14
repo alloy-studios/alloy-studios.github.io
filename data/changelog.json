@@ -1,0 +1,303 @@
+{
+  "entries": [
+    {
+      "game": "blox-fruits-2d",
+      "title": "Grand Line - Sea of Fruits",
+      "date": "2026-09-14",
+      "summary": "Rebuilt as a top-down pirate action-RPG, drawn like a woodblock adventure print.",
+      "sections": [
+        {
+          "heading": "Content",
+          "items": [
+            "Four Devil Fruits with three abilities each - Flame, Ice, Rumble and Quake. Swap freely; bosses drop theirs and wild fruits wash up on the islands.",
+            "Five islands to clear, from Dawn Shore to the Volcano Crown, each with its own enemies, a named boss and a recommended level.",
+            "Open sea sailing - walk into the water and you board your boat. Something lives out in the deep.",
+            "A running voyage objective, a compass that points the way, and a chart of the whole world."
+          ]
+        },
+        {
+          "heading": "Feel",
+          "items": [
+            "Cutlass combos, i-frame dashes, hitstop and screen shake.",
+            "Enemies telegraph, circle, and break off if you outrun them.",
+            "Levels, Beli, bounties, and a Quake ultimate that lands on hand-cut impact frames."
+          ]
+        },
+        {
+          "heading": "Art",
+          "items": [
+            "Flat inked shapes, carved waves and a parchment interface, with powers that detonate as bursts of raw pigment."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "leveling-the-system",
+      "title": "Rank Zero - Sovereign Protocol",
+      "date": "2026-09-14",
+      "summary": "Rebuilt from the ground up, with its own name and world.",
+      "sections": [
+        {
+          "heading": "Identity",
+          "items": [
+            "The System is now the Lattice, hunters are delvers, gates are rifts, and the nine Monarchs are the nine Sovereigns. Bosses, weapons and armour renamed to match.",
+            "Added a proper title screen."
+          ]
+        },
+        {
+          "heading": "A new look - The Gilded Ledger",
+          "items": [
+            "The arena is a book left open: a repeating codex page with ruled lines, columns of writing, margins, corner lozenges, folio numbers and your rift's grade illuminated under the floor.",
+            "Gold is the Lattice, red is anything that can hurt you, and every kill leaves a blot of ink that stays on the page.",
+            "New typeface, new palette, rebuilt HUD, and an illuminated ledger for the hub."
+          ]
+        },
+        {
+          "heading": "The live grade",
+          "items": [
+            "Every hit you land writes your grade up from E to S; every hit you take strikes it out; it fades if you stop swinging.",
+            "Higher grade means more damage, faster cooldowns and more gold.",
+            "Runs end on an after-action ledger - grade attained, time, kills, damage, drops."
+          ]
+        },
+        {
+          "heading": "Enemies",
+          "items": [
+            "Four enemy types plus elites, replacing the single one that walked at you: stalkers, swarms, wardens that telegraph a ground slam, and casters that lock a lane and fire down it.",
+            "Attacks are drawn on the floor before they land, and dashing through one as it resolves is a perfect parry - mana back, grade up, and the field slows."
+          ]
+        },
+        {
+          "heading": "Weapons and ultimates",
+          "items": [
+            "Sixteen weapons with sixteen mechanics nobody else has - venom stacks you detonate, frost brands that shatter into neighbours, a blade that anchors and snaps back, a shield stance that returns what it absorbs, chains, pins, gravity in both directions, ice walls, and squares of the world you simply delete.",
+            "Twelve ultimates that are now twelve different events rather than one move in twelve costumes."
+          ]
+        },
+        {
+          "heading": "Also",
+          "items": [
+            "Simulated fire that whips and sheds as you sweep it, and a new endgame S+ rift.",
+            "Stat points can be spent 5 or all at once. All 44 skill icons redrawn and now unique.",
+            "Channelled abilities no longer stall, and a crash on minimised windows is fixed."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "port-vesper",
+      "title": "Port Vesper - Night Shift",
+      "date": "2026-09-14",
+      "summary": "A full engine rewrite and a substantial expansion, from roughly 2,500 to 6,200 lines.",
+      "sections": [
+        {
+          "heading": "Visuals",
+          "items": [
+            "New layered renderer: cached ground chunks, a separate additive light buffer, and a post chain of grade, wet reflections, vignette and film grain. Everything used to be drawn in one flat pass.",
+            "Night-first art direction - sodium streetlight against cyan-black, with real pools of light and wet-road reflections.",
+            "Buildings have per-window lighting, roof furniture, parapets and neon signage; cars are tapered hulls with turning wheels, brake lights and visible crash damage; pedestrians have limbs and a walk cycle.",
+            "Weather, a day/night cycle, blood, scorch and skid decals, plus hitstop, trauma-based shake and muzzle light."
+          ]
+        },
+        {
+          "heading": "City",
+          "items": [
+            "The uniform grid is gone - avenues and side streets differ in width, and blocks vary in size.",
+            "Five districts with distinct palettes, building heights and props: Financial, Old Quarter, Port Authority, Foundry Row and Vesper Heights.",
+            "A working harbour with piers, cranes and water you can drown a car in."
+          ]
+        },
+        {
+          "heading": "Gameplay",
+          "items": [
+            "Four contacts with ordered job chains and unlockable perks, and six mission types: steal, deliver, wreck, wipe, escort and heist.",
+            "Three gangs with territory and hostility tracking.",
+            "Gunplay rebuilt with magazines, reloads, recoil and accuracy bloom, plus grenades and molotovs.",
+            "Vehicle upgrades and nitrous, chop-shop want lists, and buyable property with nightly income.",
+            "Police escalation: roadblocks at three stars, a helicopter with searchlight at four, SWAT at five. Dispatch broadcasts your car's description, so a respray breaks the match.",
+            "Rebuilt traffic AI, oriented vehicle collision, and save/continue support."
+          ]
+        },
+        {
+          "heading": "Interface",
+          "items": [
+            "Redesigned HUD, minimap and city map, plus a contacts phone, dispatch radio log and kill feed.",
+            "Expanded procedural audio."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "tcg-cardshop-simulator",
+      "title": "Foil & Fortune - Second Print",
+      "date": "2026-09-14",
+      "summary": "A full rewrite of Shop Floor. Same premise, almost everything else new.",
+      "sections": [
+        {
+          "heading": "Cards",
+          "items": [
+            "Cards are generated as SVG rather than drawn as flat panels, with procedural art seeded per card - sky, horizon, element sigil and foreground framing composed to fit whatever shape the frame gives them.",
+            "Five frame tiers: Standard, Retro, Extended Art, Borderless and Showcase.",
+            "Six Showcase frames, one per set, each with its own geometry rather than a recolour - Ember Seal, Tide Glass, Storybook, Constellation, Schematic and Deco.",
+            "Eight foil finishes built as reflectivity maps, so the pattern only appears where the light falls and tilting the card lights a different part of it.",
+            "Grading slabs, a five-step rarity ladder, and frame and finish rolled independently of rarity."
+          ]
+        },
+        {
+          "heading": "Gameplay",
+          "items": [
+            "A live meta - set values drift daily and shift hard every third day, so buying cold and selling hot is the core lever.",
+            "Three things to do with a carton: shelf it, rip it, or vault it sealed to appreciate.",
+            "Pricing is a real decision, with a fair-value gauge and customers who walk out if you gouge.",
+            "Five customer archetypes with their own budgets, patience and targets, now with proper A* pathfinding.",
+            "Checkout minigame, display case, card grading, walk-in trade offers, Friday Night tournaments, staff, upgrades and shop expansion.",
+            "Four-minute days with an end-of-day ledger - rent, wages, upkeep, and eviction if you stay underwater."
+          ]
+        },
+        {
+          "heading": "Presentation",
+          "items": [
+            "Rebuilt as a rain-lit night shop: warm lamp pools against a cold street, real lighting and depth sorting, and a living window with falling rain, traffic, pedestrians, lightning and droplets crawling down the glass.",
+            "New UI throughout, plus a nine-step tutorial."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "elementalis",
+      "title": "Elementalis - Update",
+      "date": "2026-09-14",
+      "summary": "Every element gets its own identity, the world is now randomly seeded, and a long list of fixes.",
+      "sections": [
+        {
+          "heading": "Visuals",
+          "items": [
+            "Every element has its own projectile art, flight trail and impact effect. All 21 used to share one glowing diamond with the colour swapped.",
+            "18 distinct particle textures replace the single glow sprite used for everything.",
+            "Ground effects are drawn as what they are - lava pools crust over with glowing cracks, vines grow outward, the void rift reads as an actual hole.",
+            "Enemies carry physical elemental features instead of just being tinted, and each element has its own icon in the spell bar and Grimoire.",
+            "Added critical hits, and rebalanced screen shake so small hits got more punch and big spells no longer white out the screen."
+          ]
+        },
+        {
+          "heading": "Sound",
+          "items": [
+            "All new and fully procedural, with no audio files: a distinct cast voice per element family plus hit, kill, hurt, blink, level-up and fusion sounds. Toggle in the top right."
+          ]
+        },
+        {
+          "heading": "Gameplay",
+          "items": [
+            "Enemies telegraph their attacks with a wind-up ring, so ranged shots and boss attacks can be read and dodged.",
+            "Wardens have less health and mana regenerates a little faster.",
+            "Fusions are easier to reach, so third-circle elements and Ascendant are attainable in a normal run.",
+            "Clearing an enemy camp pays an essence bonus, and the compass points to the nearest shrine of an element you have not attuned yet."
+          ]
+        },
+        {
+          "heading": "World generation",
+          "items": [
+            "The world is randomly seeded - every playthrough used to generate the identical map, shrines and starting position.",
+            "Shrine elements are evenly distributed rather than tied to biome, which had made Earth shrines overwhelmingly common and Fire and Arcane rare.",
+            "Shrines are guaranteed to be spaced apart, and your starting position varies between runs."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Fixed a hash overflow that was skewing terrain and site generation.",
+            "Boss attacks no longer continue firing while the Grimoire is open or after you die.",
+            "Holding Shift no longer chain-dashes, and the death screen no longer stacks on top of the Grimoire.",
+            "Fixed garbled characters in on-screen messages, and the HUD not updating live."
+          ]
+        },
+        {
+          "heading": "Performance",
+          "items": [
+            "Terrain generation is spread across frames, removing the stutter when moving into new areas - roughly a 12ms spike per chunk down to 3ms.",
+            "Faster particle handling, cached gradients, and less per-frame work throughout.",
+            "Quality scaling under load only thins background ambience; spell effects, enemies and lighting are never reduced."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "cosmic-climb",
+      "title": "Cosmic Climb v2.0",
+      "date": "2026-09-14",
+      "summary": "A complete rebuild. Same 3,000m climb, almost nothing else is the same.",
+      "sections": [
+        {
+          "heading": "New art direction",
+          "items": [
+            "Rebuilt the whole look as a risograph screenprint: flat spot inks, visible plate misregistration, halftone dot screens, paper grain and corner trim marks, replacing the old pastel gradients and frosted glass.",
+            "Each of the 8 altitude bands is its own print run with a distinct two-ink palette. The Void inverts entirely - black stock, cream ink.",
+            "New parallax backdrop: ringed gas giants, halftone nebula tints, a black hole, drifting registration marks and cirrus streaks.",
+            "Redesigned player with a tapered motion trail, squash-and-stretch and lean."
+          ]
+        },
+        {
+          "heading": "New gameplay",
+          "items": [
+            "Air dash - directional, refills on landing or stardust, and shatters debris you dash through.",
+            "The Collapse - a rising tide of black ink chases you up the page, replacing the old static death line. Standing still is fatal.",
+            "Stardust to Chain to Surge - collect dust to build a chain multiplier and charge Surge, a launch that shoves the ink back down the sheet.",
+            "Six platform types: solid slabs, drifting, crumbling, phasing, launch kickers and realm gates.",
+            "Hazards - tumbling debris and telegraphed pulsar sweeps in the upper realms.",
+            "Variable jump height, coyote time and input buffering."
+          ]
+        },
+        {
+          "heading": "New audio and interface",
+          "items": [
+            "Full procedural soundtrack and SFX via WebAudio, with no audio files. Per-realm drone bed and a low rumble that rises as the ink closes in.",
+            "Printed instrument panels for altitude, score, dust, flow meter, dash pips and chain, plus a vertical altimeter tape.",
+            "Redesigned title, pause and run-summary cards with full run stats, and rebuilt touch controls."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Falling fast no longer drops you straight through platforms.",
+            "Altitude is now resolution-independent - it used to scale with window height.",
+            "The launch field has an actual floor instead of a bottomless pit."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "speed-simulator",
+      "title": "Neon Speed Simulator - September update",
+      "date": "2026-09-14",
+      "summary": "Saving fixed, the Wraith made beatable, and a faster, better-looking world.",
+      "sections": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Fixed saving. Progress on signed-in accounts was not being stored at all - levels, cores, upgrades and unlocked chassis now persist properly.",
+            "Fixed the Crimson Wraith. It was impossible to genuinely outrun, which made the APEX challenge uncompletable. It can now be escaped by committing to your boost, and surviving a full chase finally counts.",
+            "Fixed the game failing to load after the move to the new site.",
+            "Removed the hazard rocks, so open space is clear again at any speed."
+          ]
+        },
+        {
+          "heading": "Balance",
+          "items": [
+            "Chassis unlock far sooner - the full roster tops out at 42 prestiges instead of 120, and the world-bending chassis arrive much earlier.",
+            "Boost lasts longer and recharges faster. It used to be unavailable for most of the early game.",
+            "Getting caught by the Wraith hurts less: a smaller core loss and a shorter penalty."
+          ]
+        },
+        {
+          "heading": "Visuals and performance",
+          "items": [
+            "The Classic Interceptor has a proper engine trail - a plume with shock cells and vortex rings that builds as you accelerate.",
+            "Redesigned energy orbs with clearer tiers, and real feedback on collection.",
+            "Added depth behind the world, with the simulation's lattice receding into the distance.",
+            "Orb rendering is roughly 4x faster with no loss in quality."
+          ]
+        }
+      ]
+    }
+  ]
+}

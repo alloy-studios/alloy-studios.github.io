@@ -7,14 +7,19 @@
     "contact": "alloystudiocontact@gmail.com",
     "roadmap": [
       {
+        "status": "Shipped",
+        "title": "Seven games fully reworked",
+        "detail": "Grand Line, Rank Zero, Port Vesper, Neon Speed Simulator, Foil & Fortune, Cosmic Climb and Elementalis have all been rebuilt. Full details are in the update log."
+      },
+      {
         "status": "In development",
-        "title": "Two more games",
-        "detail": "Two new titles are in the works. Same rules as everything else here: single page, no install, playable the second the link loads."
+        "title": "Reworking the rest of the catalogue",
+        "detail": "The same treatment for the remaining games - rebuilt feel, rebuilt visuals, and one consistent standard across the whole library instead of twenty-one different ones."
       },
       {
         "status": "Planned",
-        "title": "A full rework of every game",
-        "detail": "Once those ship, every game in the catalogue gets rebuilt - better feel, better visuals, and a consistent standard across the whole library rather than sixteen different ones."
+        "title": "New games after the reworks",
+        "detail": "Once the back catalogue is caught up, the focus goes back to new titles."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
@@ -70,16 +75,16 @@
     },
     {
       "id": "blox-fruits-2d",
-      "title": "Blox Fruits 2D",
-      "tagline": "Pirate cay, ten fruits, four swords.",
-      "description": "A 2D take on the pirate island grind. Take bounties from Hunter Marco, fight bandits along the cay, and swap between fruit and sword loadouts mid-fight. This is the beta build, so everything is unlocked for testing.",
+      "title": "Grand Line",
+      "tagline": "Sea of Fruits.",
+      "description": "A top-down pirate action-RPG drawn like a woodblock adventure print. Sail an open sea, make landfall on five islands, and fight your way up the Grand Line with a cutlass and a Devil Fruit. Four fruits with three abilities each - bosses drop theirs, and wild ones wash up on the islands.",
       "tags": [
         "action",
         "rpg",
         "adventure"
       ],
       "accent": "#84cc16",
-      "controls": "WASD to move, mouse to aim, Z X C V F for moves, Shift to dash, Tab for inventory",
+      "controls": "WASD move, mouse aim, click cutlass, Q E R Devil Fruit, Space dash, F talk, M chart",
       "added": "2026-09-08"
     },
     {
@@ -98,16 +103,16 @@
     },
     {
       "id": "leveling-the-system",
-      "title": "Solo Leveling: Arise",
-      "tagline": "Allocate your points. Clear the dungeon.",
-      "description": "A System-driven progression RPG. Raise strength, agility, vitality, perception and intelligence, choose a class, kit out your inventory, and push deeper into the dungeons. Beta build, still changing.",
+      "title": "Rank Zero: Sovereign Protocol",
+      "tagline": "Write your grade up from E to S.",
+      "description": "An action RPG fought on the page of an open book. Every hit you land writes your grade up from E to S and every hit you take strikes it out - and the grade drives your damage, cooldowns and gold. Sixteen weapons with sixteen mechanics, twelve ultimates, and nine Sovereigns waiting at the top.",
       "tags": [
         "rpg",
-        "progression",
-        "anime"
+        "action",
+        "progression"
       ],
       "accent": "#8b5cf6",
-      "controls": "Mouse to navigate, Space and Esc",
+      "controls": "WASD to move, mouse to aim, dash through a telegraph to parry",
       "added": "2026-09-08"
     },
     {

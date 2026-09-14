@@ -20,7 +20,9 @@ function newsHTML(posts, games) {
 
   return `
     <section class="news" id="news">
-      <div class="section-head"><h2>News</h2></div>
+      <div class="section-head"><h2>News</h2>
+        <button class="see-all" id="openLog" type="button">Full update log &rarr;</button>
+      </div>
       ${posts.map(p => {
         const g = p.game ? byId[p.game] : null;
         const when = new Date(p.date + 'T00:00:00');
@@ -127,4 +129,68 @@ Alloy.boot(async ({ games, site }) => {
     link.href = 'mailto:' + address;
     document.getElementById('addr').textContent = address;
   }
+
+  wireUpdateLog(games);
 });
+
+/* The per-game changelogs are long, so they live behind a button rather than
+   on the page. Loaded only when the dialog is first opened. */
+function wireUpdateLog(games) {
+  const open = document.getElementById('openLog');
+  if (!open) return;
+
+  const byId = Object.fromEntries(games.map(g => [g.id, g]));
+  let dialog = null;
+
+  open.addEventListener('click', async () => {
+    if (!dialog) {
+      let entries = [];
+      try {
+        const res = await fetch('/data/changelog.json', { cache: 'no-cache' });
+        if (res.ok) entries = (await res.json()).entries || [];
+      } catch (_) {}
+
+      dialog = document.createElement('div');
+      dialog.className = 'sheet';
+      dialog.innerHTML = `
+        <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Update log">
+          <header>
+            <h2>Update log</h2>
+            <button class="icon-btn" id="closeLog" aria-label="Close">
+              <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </header>
+          <div class="sheet-body">
+            ${entries.length ? entries.map(e => {
+              const g = byId[e.game];
+              return `
+                <article class="log-entry">
+                  <div class="log-head">
+                    <h3>${Alloy.esc(e.title)}</h3>
+                    <span class="log-date">${Alloy.esc(e.date || '')}</span>
+                  </div>
+                  ${e.summary ? `<p class="log-summary">${Alloy.esc(e.summary)}</p>` : ''}
+                  ${(e.sections || []).map(s => `
+                    <h4>${Alloy.esc(s.heading)}</h4>
+                    <ul>${(s.items || []).map(i => `<li>${Alloy.esc(i)}</li>`).join('')}</ul>
+                  `).join('')}
+                  ${g ? `<a class="post-link" href="/${Alloy.esc(g.id)}/">Play ${Alloy.esc(g.title)} &rarr;</a>` : ''}
+                </article>`;
+            }).join('') : '<p class="log-summary">No update log yet.</p>'}
+          </div>
+        </div>`;
+      document.body.appendChild(dialog);
+
+      const close = () => { dialog.classList.remove('on'); document.body.style.overflow = ''; };
+      dialog.querySelector('#closeLog').addEventListener('click', close);
+      dialog.addEventListener('click', e => { if (e.target === dialog) close(); });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && dialog.classList.contains('on')) close();
+      });
+    }
+
+    dialog.classList.add('on');
+    document.body.style.overflow = 'hidden';
+    dialog.querySelector('.sheet-body').scrollTop = 0;
+  });
+}

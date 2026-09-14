@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-09-14",
+      "title": "Seven games fully reworked",
+      "body": "Blox Fruits 2D is now Grand Line, a top-down pirate action-RPG, and Solo Leveling is now Rank Zero: Sovereign Protocol, fought on the page of an open book. Port Vesper, Neon Speed Simulator, Foil & Fortune, Cosmic Climb and Elementalis have all been rebuilt too. Open the full update log for what changed in each.",
+      "game": "blox-fruits-2d"
+    },
+    {
       "date": "2026-09-11",
       "title": "Elementalis and Sole & Co. are live",
       "body": "Two new games. Elementalis is a spellcasting action-RPG across the Broken Wilds, with a Grimoire for mastering and fusing elements. Sole & Co. is a sneaker shop sim - you inherit a two-metre-wide shop, three pairs and $1,500, and have to make rent.",
