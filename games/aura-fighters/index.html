@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aura Fighters</title>
+    <!-- Rajdhani: technical, squared-off — reads like a scouter readout, which is the
+         right voice for the HUD. Archivo Black carries the shouted display moments. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         body, html {
             margin: 0;
@@ -12,8 +17,18 @@
             height: 100%;
             background-color: #050505;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Rajdhani', 'Segoe UI', Tahoma, sans-serif;
             user-select: none;
+        }
+        /* Shared HUD tokens so every panel reads as one system */
+        :root {
+            --ink: #0a0c16;
+            --hud-edge: rgba(150, 190, 255, 0.30);
+            --hud-fill: rgba(8, 11, 22, 0.72);
+        }
+        /* Angular clipped corners — a rounded rectangle is the default nobody chose */
+        .hud-clip {
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
         }
         #gameCanvas {
             display: block;
@@ -35,23 +50,39 @@
         }
         .bar-container {
             width: 300px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 4px;
-            margin-bottom: 10px;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            background: var(--hud-fill);
+            border: 1px solid var(--hud-edge);
+            border-left: 3px solid var(--hud-edge);
+            border-radius: 0;
+            padding: 4px 6px 5px;
+            margin-bottom: 8px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 6px 22px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(0,0,0,0.6);
+            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
         }
         .bar {
-            height: 12px;
-            border-radius: 4px;
+            height: 10px;
+            border-radius: 0;
             width: 100%;
             transition: width 0.1s ease-out, background-color 0.3s;
-            box-shadow: inset 0 0 5px rgba(255,255,255,0.5);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -3px 6px rgba(0,0,0,0.5);
+            position: relative;
         }
-        #health-bar { background: linear-gradient(90deg, #ff3b3b, #ff8c3b); }
-        #ki-bar { background: linear-gradient(90deg, #3b82ff, #3be0ff); }
+        /* Segmented ticks: reads as a gauge, not a progress bar */
+        .bar-track {
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.75);
+        }
+        .bar-track::after {
+            content: "";
+            position: absolute; inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(90deg,
+                rgba(0,0,0,0) 0 14px, rgba(0,0,0,0.55) 14px 16px);
+        }
+        #health-bar { background: linear-gradient(180deg, #ff6b4a, #e01f1f 60%, #a30f12); }
+        #ki-bar { background: linear-gradient(180deg, #7fd4ff, #2b7dff 60%, #1440b8); }
         
         #enemy-ui {
             position: absolute;
@@ -61,15 +92,16 @@
         }
         
         .label {
-            color: white;
+            color: #cfe0f5;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 700;
             margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            text-shadow: 1px 1px 2px black;
+            letter-spacing: 2.5px;
+            text-shadow: 0 1px 2px #000;
             display: flex;
             justify-content: space-between;
+            font-variant-numeric: tabular-nums;
         }
         #controls {
             align-self: center;
@@ -93,12 +125,15 @@
             box-shadow: 0 2px 0 #111;
         }
         #form-name {
-            font-size: 24px;
-            font-weight: 900;
+            font-family: 'Archivo Black', 'Segoe UI', sans-serif;
+            font-size: 26px;
+            font-weight: 400;
             color: white;
-            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+            text-shadow: 0 0 10px rgba(255,255,255,0.8), 2px 3px 0 var(--ink);
             margin-bottom: 10px;
             font-style: italic;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
             transition: color 0.3s, text-shadow 0.3s;
             display: inline-block;
         }
@@ -111,14 +146,19 @@
 
         .combo-text {
             position: absolute;
-            top: 50%;
-            left: 20px;
+            top: 74%;
+            left: 28px;
             transform: translateY(-50%);
-            font-size: 48px;
-            font-weight: 900;
+            font-family: 'Archivo Black', 'Segoe UI', sans-serif;
+            /* Was 48px at mid-screen-left, which parked a wall of type straight over
+               the fight. Smaller and tucked lower so it reads as a counter, not a title. */
+            font-size: 30px;
+            font-weight: 400;
             color: white;
             font-style: italic;
-            text-shadow: 3px 3px 0 #000, 0 0 20px #ff0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            text-shadow: 3px 3px 0 var(--ink), 0 0 20px rgba(255,220,80,0.7);
             opacity: 0;
             transition: opacity 0.1s, transform 0.08s cubic-bezier(.3,1.8,.4,1);
         }
@@ -128,6 +168,41 @@
             50% { box-shadow: inset 0 0 5px rgba(255,255,255,0.5), 0 0 22px rgba(255,0,0,0.9); }
         }
         #health-bar.low-hp { animation: lowHpPulse 0.6s ease-in-out infinite; }
+
+        /* Status pips — one per stack, so quantity reads at a glance */
+        #enemy-status, #player-status {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            justify-content: flex-end;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        #player-status { justify-content: flex-start; margin-top: 6px; }
+        .status-chip {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            background: rgba(8, 11, 22, 0.8);
+            border: 1px solid currentColor;
+            clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+        }
+        .status-pips { display: flex; gap: 2px; }
+        .status-pips i {
+            width: 4px; height: 10px;
+            background: currentColor;
+            display: block;
+            box-shadow: 0 0 5px currentColor;
+        }
+        .status-meter {
+            width: 46px; height: 6px;
+            background: rgba(255,255,255,0.12);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.7);
+        }
+        .status-meter > span { display: block; height: 100%; background: currentColor; box-shadow: 0 0 6px currentColor; }
 
         #next-form-hint {
             margin-top: 6px;
@@ -288,6 +363,124 @@
         #locked-form-popup.show {
             opacity: 1;
             transform: translate(-50%, -50%) translateY(0);
+        }
+
+        /* ---------------- Title scene ---------------- */
+        #title-screen {
+            position: absolute; inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 22px;
+            pointer-events: auto;
+            z-index: 60;
+            /* Vignette only — the live arena stays visible behind the mark */
+            background: radial-gradient(ellipse at 50% 45%, rgba(3,5,12,0.35) 0%, rgba(2,3,8,0.86) 62%, rgba(0,0,0,0.96) 100%);
+            animation: titleIn 0.7s ease-out;
+        }
+        #title-screen.active { display: flex; }
+        /* Hide the combat HUD behind the title so the mark reads cleanly */
+        #title-screen.active ~ #ui-layer,
+        body:has(#title-screen.active) #ui-layer { opacity: 0; }
+        @keyframes titleIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* The title as a designed mark, not a text label */
+        #title-mark { position: relative; text-align: center; }
+        #title-kanji {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -54%);
+            font-size: 260px;
+            line-height: 1;
+            color: rgba(255, 221, 0, 0.07);
+            text-shadow: 0 0 60px rgba(255,170,0,0.18);
+            pointer-events: none;
+            user-select: none;
+        }
+        #title-mark h1 {
+            font-family: 'Archivo Black', sans-serif;
+            font-style: italic;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 0.84;
+            position: relative;
+        }
+        #title-line1 {
+            font-size: 78px;
+            letter-spacing: 12px;
+            color: #fff;
+            text-shadow: 4px 5px 0 var(--ink), 0 0 34px rgba(150,190,255,0.5);
+        }
+        #title-line2 {
+            font-size: 78px;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #fff6cc 8%, #ffcc22 46%, #ff7a18 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(4px 5px 0 #0a0c16) drop-shadow(0 0 26px rgba(255,170,0,0.55));
+        }
+        #title-rule {
+            width: 240px; height: 2px; margin: 16px auto 0;
+            background: linear-gradient(90deg, transparent, rgba(255,200,80,0.9), transparent);
+        }
+        #title-tag {
+            margin: 12px 0 0;
+            font-size: 14px; font-weight: 600;
+            letter-spacing: 4px; text-transform: uppercase;
+            color: #9fb4d4;
+        }
+
+        #title-start {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 19px; font-weight: 700;
+            letter-spacing: 3px;
+            padding: 13px 40px;
+            color: #08111f;
+            background: linear-gradient(180deg, #ffe37a, #ffb020);
+            border: none;
+            cursor: pointer;
+            clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+            box-shadow: 0 0 26px rgba(255,170,0,0.45);
+            animation: titlePulse 1.9s ease-in-out infinite;
+        }
+        #title-start:hover { background: linear-gradient(180deg, #fff3b0, #ffc44d); }
+        @keyframes titlePulse {
+            0%,100% { box-shadow: 0 0 20px rgba(255,170,0,0.35); }
+            50%     { box-shadow: 0 0 40px rgba(255,190,60,0.75); }
+        }
+
+        #title-controls {
+            display: grid;
+            grid-template-columns: repeat(4, auto);
+            gap: 9px 26px;
+            font-size: 13px; font-weight: 600;
+            letter-spacing: 1.4px; text-transform: uppercase;
+            color: #8fa3c0;
+            background: rgba(8,11,22,0.66);
+            border: 1px solid rgba(150,190,255,0.16);
+            padding: 15px 26px;
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        }
+        #title-controls .tk {
+            display: inline-block;
+            min-width: 30px; text-align: center;
+            margin-right: 8px; padding: 2px 7px;
+            background: #1b2233; color: #dbe7ff;
+            border: 1px solid rgba(150,190,255,0.28);
+            font-family: monospace; font-weight: 700;
+        }
+        #title-hint {
+            margin: 0; max-width: 520px; text-align: center;
+            font-size: 13px; letter-spacing: 0.6px; color: #6f81a0;
+        }
+        #title-hint b { color: #ffcc55; }
+
+        @media (max-height: 620px) {
+            #title-line1, #title-line2 { font-size: 52px; }
+            #title-kanji { font-size: 170px; }
+            #title-controls { grid-template-columns: repeat(4, auto); font-size: 11px; padding: 10px 16px; }
         }
 
         .modal-overlay {
@@ -474,20 +667,24 @@
             <div id="form-name">Base Form</div>
             <div class="bar-container">
                 <div class="label"><span>Health</span> <span id="hp-text">100%</span></div>
-                <div class="bar" id="health-bar"></div>
+                <div class="bar-track"><div class="bar" id="health-bar"></div></div>
             </div>
             <div class="bar-container">
                 <div class="label"><span>Ki</span> <span id="ki-text">0%</span></div>
-                <div class="bar" id="ki-bar" style="width: 0%;"></div>
+                <div class="bar-track"><div class="bar" id="ki-bar" style="width: 0%;"></div></div>
             </div>
+            <div id="player-status"></div>
             <div id="next-form-hint"></div>
         </div>
         
         <div id="enemy-ui">
             <div class="label" id="enemy-name-label" style="justify-content: flex-end; margin-bottom: 10px; font-size: 18px;">Scouter Grunt</div>
             <div class="bar-container" style="margin-left: auto;">
-                <div class="bar" id="enemy-health-bar" style="background: linear-gradient(90deg, #ff1111, #ff5555);"></div>
+                <div class="bar-track"><div class="bar" id="enemy-health-bar" style="background: linear-gradient(180deg, #ff6b6b, #d41111 60%, #7d0a0a);"></div></div>
             </div>
+            <!-- Status the player applies to the enemy. These systems were invisible,
+                 so nobody could learn them. -->
+            <div id="enemy-status"></div>
         </div>
         
         <div class="combo-text" id="combo-display">Combo 0</div>
@@ -513,6 +710,32 @@
             Charge: <span class="key">Hold C</span> &nbsp;|&nbsp;
             Transform: <span class="key">T</span>
         </div>
+    </div>
+
+    <!-- Title scene. Sits over the live canvas, which keeps rendering the arena and
+         a slowly turning fighter behind it as an attract shot. -->
+    <div id="title-screen" class="active">
+        <div id="title-mark">
+            <div id="title-kanji">氣</div>
+            <h1 id="title-line1">AURA</h1>
+            <h1 id="title-line2">FIGHTERS</h1>
+            <div id="title-rule"></div>
+            <p id="title-tag">Eleven forms. One gauntlet. No ceiling.</p>
+        </div>
+
+        <button id="title-start">BEGIN THE GAUNTLET</button>
+
+        <div id="title-controls">
+            <div><span class="tk">WASD</span> Move</div>
+            <div><span class="tk">Mouse</span> Aim</div>
+            <div><span class="tk">L-Click</span> Melee</div>
+            <div><span class="tk">1</span> Ki Blast</div>
+            <div><span class="tk">2</span> Special</div>
+            <div><span class="tk">Q</span> Dash</div>
+            <div><span class="tk">C</span> Charge Ki</div>
+            <div><span class="tk">T</span> Transform</div>
+        </div>
+        <p id="title-hint">Charge to full Ki, then <b>Transform</b>. Watch for the red ring &mdash; that's a telegraph. Dash through it.</p>
     </div>
 
     <div class="modal-overlay" id="shenron-modal">
@@ -690,14 +913,48 @@ for (let i = 0; i < 40; i++) {
     });
 }
 
+// Persistent scorch marks left by heavy impacts. The field accumulating evidence of
+// the fight is cheap to draw and does more for "this is a real place" than any
+// amount of ambient glow.
+let decals = [];
+function addDecal(x, y, r, color) {
+    decals.push({ x, y, r, color, life: 600, maxLife: 600, seed: Math.random() * 6.28 });
+    if (decals.length > 40) decals.shift();
+}
+
 function drawBackground(ctx, camX, camY, time) {
-    // Deep space gradient base
-    let bgGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height) * 0.75);
-    bgGrad.addColorStop(0, "#0b0b16");
-    bgGrad.addColorStop(0.6, "#07070d");
-    bgGrad.addColorStop(1, "#020203");
+    // Deep void. Cooler and darker at the rim than the old near-neutral grey, so the
+    // arena centre reads as lit and the edges genuinely fall away to black.
+    let bgGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height) * 0.8);
+    bgGrad.addColorStop(0, "#111426");
+    bgGrad.addColorStop(0.45, "#0a0c18");
+    bgGrad.addColorStop(0.78, "#05060d");
+    bgGrad.addColorStop(1, "#010103");
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
+
+    // Far nebula banks — large, slow, very low alpha. These give the void somewhere
+    // for the eye to go without lifting the black point into brown.
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const banks = [
+        { hue: "#2a3f8f", ox: 0.24, oy: 0.30, rs: 0.62, dep: 0.045, a: 0.09 },
+        { hue: "#5c2a7a", ox: 0.78, oy: 0.68, rs: 0.54, dep: 0.032, a: 0.07 },
+        { hue: "#1d5f78", ox: 0.58, oy: 0.14, rs: 0.44, dep: 0.060, a: 0.05 }
+    ];
+    for (const b of banks) {
+        let bx = b.ox * width - camX * b.dep + Math.sin(time * 0.00004 + b.oy * 9) * 40;
+        let by = b.oy * height - camY * b.dep + Math.cos(time * 0.00003 + b.ox * 7) * 30;
+        let rr = Math.max(width, height) * b.rs;
+        let g = ctx.createRadialGradient(bx, by, 0, bx, by, rr);
+        g.addColorStop(0, b.hue);
+        g.addColorStop(0.55, "rgba(0,0,0,0)");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalAlpha = b.a;
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, width, height);
+    }
+    ctx.restore();
 
     // Stars (parallax, twinkle)
     ctx.save();
@@ -736,6 +993,53 @@ function drawBackground(ctx, camX, camY, time) {
     ctx.restore();
 }
 
+/* =====================================================================
+   MOVE DESIGN DIRECTION  (added during the move rework)
+
+   Thesis:  Every transformation must HIT differently. You should be able to
+            name the form you're in from a single melee swing — from its
+            silhouette, its rhythm and what it does to the enemy — before you
+            ever glance at the HUD.
+
+   Anchor:  The impact language of Dragon Ball Z's TV animation — thick tapered
+            brush swipes, smear frames, and a one-frame white flash on contact —
+            crossed with the chunky hitstop of Street Fighter III. Impact is
+            carried by the PAUSE and the FLASH, not by the size of the glow.
+
+   Legibility rule:
+            Shape language encodes the form. Crescent = blade forms. Hammer arc
+            = heavy. Claw tracks = Beast. Inward motes = gravity. Ring = omni.
+            White is reserved for the contact instant; form colour does the rest,
+            so the eye reads "a hit landed" separately from "which form".
+
+   Rule applied throughout: every form owns a UNIQUE M1 style, ki blast and
+   special. No mechanic is reused with only its numbers changed — that
+   number-scaling was the thing that made the late game feel stale.
+   ===================================================================== */
+
+// Shared ink tone for every holdline in the game. Not pure black — a hair of blue
+// keeps it sitting in the scene instead of punching a hole in it.
+const INK = "#0a0c16";
+
+// Per-transformation outfit. The forms already differ by hair and aura; this makes
+// the BODY change too, so a transformation visibly re-dresses the fighter instead of
+// just recolouring the energy around an identical doll.
+//   gi    torso base       trim  collar/sash accent      under  undershirt wedge
+//   skin  exposed flesh    kit   'gi' | 'torn' | 'armor' | 'seam'
+const FORM_LOOK = [
+    { gi:"#ff6600", trim:"#2a3f8f", under:"#1b2a5e", kit:"gi"    }, // Base — plain orange gi
+    { gi:"#ff6600", trim:"#2a3f8f", under:"#1b2a5e", kit:"gi"    }, // Super — same gi, gold hair carries it
+    { gi:"#e35400", trim:"#123a7a", under:"#0e1f4d", kit:"torn"  }, // Ascended — battle-worn, sleeves gone
+    { gi:"#17386b", trim:"#7fe9ff", under:"#0a1b33", kit:"seam"  }, // Divine — blue gi, cyan seams
+    { gi:"#20242e", trim:"#dbe7ff", under:"#0c0e14", kit:"seam"  }, // Ultra — dark with silver piping
+    { gi:"#2a0d4d", trim:"#c07bff", under:"#150626", kit:"armor" }, // Ego — violet plate
+    { gi:"#3a2a24", trim:"#ff3a1a", under:"#1a0f0c", kit:"torn"  }, // Beast — shredded, feral
+    { gi:"#2b2b30", trim:"#ffaa00", under:"#141418", kit:"armor" }, // Overdrive — machine plating
+    { gi:"#0d0d0d", trim:"#ffd700", under:"#000000", kit:"armor" }, // Godslayer — black and gold
+    { gi:"#0a1230", trim:"#66aaff", under:"#050a1a", kit:"seam"  }, // Singularity — void weave
+    { gi:"#e8e8ef", trim:"#ffffff", under:"#c9c9d6", kit:"seam"  }  // Infinity — radiant white
+];
+
 // --- Forms Configuration ---
 const FORMS = [
     { 
@@ -750,9 +1054,10 @@ const FORMS = [
         m1Dash: 10,
         kiCost: 10,
         unlockWave: 1,
+        m1Style: "basic", m1ComboLength: 4,
         specialType: "punch", specialCost: 20,
         kiBlastType: "standard",
-        desc: "Basic strikes and ki blasts."
+        desc: "Four-hit combo (M1). Ki Bolt (1), Rush Straight (2)."
     },
     { 
         name: "Super", 
@@ -766,9 +1071,12 @@ const FORMS = [
         m1Dash: 20,
         kiCost: 8,
         unlockWave: 1,
-        specialType: "beam", specialCost: 40, beamWidth: 50, beamDmg: 5, beamWrap: "none",
+        m1Style: "heavy", m1ComboLength: 3,
+        // BEAM 1 of 3 — the signature. Clean, sustained, straight: the one you hold.
+        specialType: "beam", specialCost: 40, beamWidth: 64, beamDmg: 6, beamWrap: "none",
+        beamDuration: 46,
         kiBlastType: "twin",
-        desc: "Twin Blast ki attacks (1). Unlocks a channeled Beam Special (2)."
+        desc: "Heavy 3-hit; the third launches. Twin Bolts (1), the Signature Beam (2)."
     },
     { 
         name: "Ascended", 
@@ -784,10 +1092,11 @@ const FORMS = [
         m1Dash: 35,
         kiCost: 5,
         unlockWave: 2,
+        m1Style: "chain", m1ComboLength: 5,
         specialType: "barrage", specialCost: 50,
         barrageCount: 4, barrageInterval: 10, barrageRadius: 85, barrageDamage: 35,
         kiBlastType: "spread", kiBlastShots: 3,
-        desc: "Lightning M1s. Fan Spread (1) and the tracking Lightning Barrage (2)."
+        desc: "5-hit chain; every hit arcs lightning. Fan Spread (1), Lightning Barrage (2)."
     },
     { 
         name: "Divine", 
@@ -802,9 +1111,14 @@ const FORMS = [
         kiCost: 2,
         unlockWave: 4,
         teleportM1: true,
-        specialType: "beam", specialCost: 40, beamWidth: 80, beamDmg: 12, dualBeam: true, beamWrap: "holy",
+        m1Style: "afterimage", m1ComboLength: 4,
+        // BEAM 2 of 3 — twin beams fired on converging angles. Distinct to AIM, not
+        // just to look at: they cross at a point in front of you, and the crossing
+        // is where the real damage is, so positioning decides the payoff.
+        specialType: "beam", specialCost: 45, beamWidth: 52, beamDmg: 9,
+        dualBeam: true, beamWrap: "holy", beamDuration: 55, beamCrossAngle: 0.22,
         kiBlastType: "sphere", kiBlastSize: 40, kiBlastStyle: "normal", kiBlastHoming: true, kiBlastHomingStrength: 0.045,
-        desc: "Teleporting M1s. Homing Orb (1) and the twin Divine Beam Cross (2)."
+        desc: "Blink strikes that leave an echo hitting a beat later. Homing Orb (1), Divine Satellites (2)."
     },
     { 
         name: "Ultra", 
@@ -820,10 +1134,11 @@ const FORMS = [
         kiCost: 1,
         unlockWave: 6,
         teleportM1: true,
+        m1Style: "instinct", m1ComboLength: 4,
         specialType: "flurry", specialCost: 40,
         flurryCount: 6, flurryInterval: 6, flurryDamage: 70, flurryKnockback: 12, flurryTeleports: true,
         kiBlastType: "volley", kiBlastShots: 3,
-        desc: "Flawless instinct. Burst Volley (1) and the teleporting Instinct Flurry (2)."
+        desc: "Strikes carry i-frames — attacking IS dodging. Burst Volley (1), Instinct Flurry (2)."
     },
     { 
         name: "Ego", 
@@ -839,9 +1154,10 @@ const FORMS = [
         m1Dash: 40, 
         kiCost: 3,
         unlockWave: 8,
+        m1Style: "crush", m1ComboLength: 1,
         specialType: "wave", specialCost: 50, waveSize: 500, waveDmg: 200, waveStyle: "hakai",
-        kiBlastType: "sphere", kiBlastSize: 70, kiBlastStyle: "hakai",
-        desc: "Raw destruction. Spheres of Ruin (1), Annihilation Wave (2)."
+        kiBlastType: "hakai", kiBlastSize: 70, kiBlastStyle: "hakai",
+        desc: "No combo — every blow is a shockwave slam. Sphere of Ruin (1), Annihilation Wave (2)."
     },
     { 
         name: "Beast", 
@@ -857,9 +1173,15 @@ const FORMS = [
         m1Dash: 80, 
         kiCost: 1,
         unlockWave: 10,
-        specialType: "beam", specialCost: 80, beamWidth: 200, beamDmg: 30, beamWrap: "feral",
+        m1Style: "rend", m1ComboLength: 4,
+        // BEAM 3 of 3 — the opposite of Super's: a brief, enormous, unstable blast
+        // with torn edges. You don't hold this one, you unload it, and it loads Rend.
+        specialType: "beam", specialCost: 70, beamWidth: 165, beamDmg: 22, beamWrap: "feral",
+        // ~1.3s. At 22 frames it was over in a third of a second, which read as a
+        // flash rather than a cannon and threw away the whole wind-up.
+        beamDuration: 78, beamRend: true,
         kiBlastType: "claw", kiBlastClawCount: 2,
-        desc: "Primal rage. Claw Wave strikes (1), Beast Cannon (2)."
+        desc: "Claws stack Rend; the 4th detonates it. Claw Wave (1), the Feral Cannon (2)."
     },
     {
         name: "Overdrive",
@@ -874,10 +1196,10 @@ const FORMS = [
         m1Dash: 100,
         kiCost: 1,
         unlockWave: 13,
-        specialType: "flurry", specialCost: 85,
-        flurryCount: 7, flurryInterval: 5, flurryDamage: 55, flurryKnockback: 10, flurryTeleports: false,
-        kiBlastType: "volley", kiBlastShots: 4,
-        desc: "Redlined past every limit. Redline Volley (1), the lunging Piston Barrage (2)."
+        m1Style: "rush", m1ComboLength: 8,
+        specialType: "piledriver", specialCost: 85, piledriverSlams: 5, piledriverDamage: 150,
+        kiBlastType: "drill",
+        desc: "Heat builds with every connected hit — faster, hotter, then overheats. Drill Shot (1), Piledriver grab (2)."
     },
     {
         name: "Godslayer",
@@ -893,9 +1215,10 @@ const FORMS = [
         m1Dash: 50,
         kiCost: 2,
         unlockWave: 16,
+        m1Style: "judgment", m1ComboLength: 3,
         specialType: "execution", specialCost: 90, executionDamage: 550, executionRadius: 130, executionDelay: 35,
         kiBlastType: "lance",
-        desc: "A power meant to end gods. Judgment Lance (1) pierces; marks the foe for a delayed Execution (2)."
+        desc: "Every 3rd strike Seals the foe; Seals amplify the Execution. Judgment Lance (1), Execution (2)."
     },
     {
         name: "Singularity",
@@ -911,9 +1234,11 @@ const FORMS = [
         kiCost: 0.5,
         unlockWave: 20,
         teleportM1: true,
-        specialType: "beam", specialCost: 92, beamWidth: 260, beamDmg: 45, beamPulls: true, beamWrap: "gravity",
-        kiBlastType: "standard", kiBlastPulls: true,
-        desc: "Collapses distance itself. Collapsing Shots (1) drag enemies in; the gravity-well Event Horizon Beam (2)."
+        m1Style: "collapse", m1ComboLength: 4,
+        specialType: "singularity", specialCost: 92,
+        singularityDuration: 150, singularityRadius: 420, singularityDamage: 620,
+        kiBlastType: "collapseShot", kiBlastPulls: true,
+        desc: "Strikes drag the foe inward instead of away. Collapsing Shot (1), the Event Horizon well (2)."
     },
     {
         name: "Infinity",
@@ -930,23 +1255,32 @@ const FORMS = [
         kiCost: 0.5,
         unlockWave: 25,
         teleportM1: true,
-        specialType: "wave", specialCost: 95, waveSize: 850, waveDmg: 500, waveStyle: "explosive",
-        followupHoming: true, followupHomingCount: 5, followupHomingDamage: 40,
-        kiBlastType: "spread", kiBlastShots: 7,
-        desc: "Boundless. Infinity Spread (1); the Absolute Cannon (2) unleashes a wave and homing aftershocks."
+        m1Style: "omni", m1ComboLength: 4,
+        specialType: "finale", specialCost: 95,
+        finaleStrikes: 10, finaleInterval: 5, finaleDamage: 190, finaleBlastSize: 900, finaleBlastDamage: 700,
+        kiBlastType: "nova", kiBlastShots: 8,
+        desc: "Strikes land in every direction at once. Nova Ring (1), and the arena-ending Finale (2)."
     }
 ];
 
 // --- Enemy Roster: original DBZ-inspired rival tiers (Dragon Ball-style power escalation) ---
 const ENEMY_ROSTER = [
-    { name: "Scouter Grunt",       hp: 260,  dmg: 6,  speedMult: 1.0, color: "#66ff66", tier: 0 },
-    { name: "Saibaman Sprout",     hp: 420,  dmg: 9,  speedMult: 1.05,color: "#33cc55", tier: 1 },
-    { name: "Elite Soldier",       hp: 650,  dmg: 13, speedMult: 1.1, color: "#4477ff", tier: 2 },
-    { name: "Prince of Doom",      hp: 1000, dmg: 18, speedMult: 1.2, color: "#ffcc00", tier: 3 },
-    { name: "Tyrant Emperor",      hp: 1550, dmg: 25, speedMult: 1.3, color: "#dd66ff", tier: 4 },
-    { name: "Perfect Bio-Fighter", hp: 2400, dmg: 33, speedMult: 1.4, color: "#33eecc", tier: 5 },
-    { name: "Djinn of Ruin",       hp: 3600, dmg: 42, speedMult: 1.5, color: "#ff5577", tier: 6 },
-    { name: "God of Destruction",  hp: 5400, dmg: 55, speedMult: 1.65,color: "#aa55ff", tier: 7 },
+// `archetype` decides how a rival FIGHTS, not how hard it hits. Previously every
+// enemy ran one behaviour (walk straight in, punch at random) and tiers differed only
+// by stats, so the last rival played exactly like the first. Four archetypes mean the
+// player's eleven kits get to solve four different problems.
+//   rusher   commits to telegraphed lunges — punish the recovery
+//   zoner    holds mid-range and shoots — close the gap or get chipped down
+//   duelist  circles and COUNTERS whatever you just committed to
+//   warlord  blinks in, area slams, and enrages below 40% HP
+    { name: "Scouter Grunt",       hp: 260,  dmg: 6,  speedMult: 1.0, color: "#66ff66", tier: 0, archetype: "rusher"  },
+    { name: "Saibaman Sprout",     hp: 420,  dmg: 9,  speedMult: 1.05,color: "#33cc55", tier: 1, archetype: "rusher"  },
+    { name: "Elite Soldier",       hp: 650,  dmg: 13, speedMult: 1.1, color: "#4477ff", tier: 2, archetype: "zoner"   },
+    { name: "Prince of Doom",      hp: 1000, dmg: 18, speedMult: 1.2, color: "#ffcc00", tier: 3, archetype: "duelist" },
+    { name: "Tyrant Emperor",      hp: 1550, dmg: 25, speedMult: 1.3, color: "#dd66ff", tier: 4, archetype: "zoner"   },
+    { name: "Perfect Bio-Fighter", hp: 2400, dmg: 33, speedMult: 1.4, color: "#33eecc", tier: 5, archetype: "duelist" },
+    { name: "Djinn of Ruin",       hp: 3600, dmg: 42, speedMult: 1.5, color: "#ff5577", tier: 6, archetype: "warlord" },
+    { name: "God of Destruction",  hp: 5400, dmg: 55, speedMult: 1.65,color: "#aa55ff", tier: 7, archetype: "warlord" },
 ];
 
 // --- Game Loop State (Dragon Ball style: gauntlet + Zenkai growth + Dragon Ball wishes) ---
@@ -979,11 +1313,66 @@ class Entity {
         this.maxHp = 1000;
         this.angle = 0; // Top-down rotation
         this.isStunned = 0;
+
+        // --- Status layer shared by both fighters ---
+        this.iframes = 0;       // brief invulnerability (Ultra's Instinct strikes, dashes)
+        this.rend = 0;          // Beast bleed stacks: tick damage, detonated by the finisher
+        this.rendTimer = 0;
+        this.rendSource = null;
+        this.seals = 0;         // Godslayer brands: amplify the Execution, slow the target
+        this.heat = 0;          // Overdrive melee heat
+
+        // --- Poise / stun armour ---
+        // Without this, melee stun-locks completely: an M1 applies 10 frames of stun
+        // while fast forms swing every 3-5 frames, so a fighter under pressure NEVER
+        // acts again. Poise drains as you're staggered; when it breaks you get a
+        // window of armour to swing back, then it resets. Applies to both fighters.
+        this.poiseMax = 100;
+        this.poise = 100;
+        this.armor = 0;
     }
-    
+
+    // Damage-over-time and brand upkeep, run once per frame for whoever carries them.
+    updateStatus(dt) {
+        if (this.iframes > 0) this.iframes -= dt;
+
+        // Armour burns down; poise only refills once you're out of armour
+        if (this.armor > 0) this.armor -= dt;
+        else if (this.poise < this.poiseMax) this.poise = Math.min(this.poiseMax, this.poise + 0.45 * dt);
+
+        if (this.rend > 0) {
+            this.rendTimer -= dt;
+            if (this.rendTimer <= 0) {
+                this.rendTimer = 18;
+                // Scales with the form, but gently — at 0.7/stack a full 8 stacks is
+                // roughly one M1's worth of chip per tick, not an instant kill.
+                let tick = this.rend * 0.7 * (this.rendSource && this.rendSource.form ? this.rendSource.form.damageMultiplier : 1);
+                if (this.hp > 0) {
+                    this.hp -= tick;
+                    let a = random(0, Math.PI * 2);
+                    particles.push(new Particle(this.x + Math.cos(a) * this.radius, this.y + Math.sin(a) * this.radius,
+                        Math.cos(a) * 2, Math.sin(a) * 2, random(3, 6), "#ff2222", 18, "spark"));
+                    if (this.hp <= 0 && gameState.phase === 'fight') {
+                        this.hp = 0;
+                        if (this === enemy) onEnemyDefeated(); else if (this === player) triggerGameOver();
+                    }
+                }
+            }
+            // Stacks bleed off on their own if the attacker stops pressing
+            if (Math.random() < 0.006) this.rend = Math.max(0, this.rend - 1);
+        }
+
+        if (this.seals > 0 && Math.random() < 0.35) {
+            let a = random(0, Math.PI * 2);
+            particles.push(new Particle(this.x + Math.cos(a) * (this.radius + 14), this.y + Math.sin(a) * (this.radius + 14),
+                0, 0, 2.5, "#ffd700", 16, "spark"));
+        }
+    }
+
     update(dt) {
         if (this.isStunned > 0) this.isStunned -= dt;
-        
+        this.updateStatus(dt);
+
         // Physics
         this.x += this.vx;
         this.y += this.vy;
@@ -1003,11 +1392,41 @@ class Entity {
     takeDamage(amount, knockbackX, knockbackY, stunTime) {
         if (this.hp <= 0) return; // already defeated — ignore stray hits until the next spawn/restart
         if (this === player && godMode) return; // admin panel god mode — player takes no damage at all
+        if (this.iframes > 0) {
+            // Slipped it — Ultra's Instinct strikes and dashes grant these frames
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius + 18, "#ffffff", 12, "etherRing"));
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius, "#cfe4ff", 14, "ghost"));
+            return;
+        }
 
         this.hp -= amount;
-        this.vx += knockbackX;
-        this.vy += knockbackY;
-        this.isStunned = stunTime;
+
+        // Poise gate on stagger. Damage and knockback always land; only the STUN is
+        // resisted, so chip pressure still works but you can't freeze a fighter out
+        // of the match entirely.
+        let effStun = stunTime;
+        if (this.armor > 0) {
+            effStun = 0;
+        } else if (stunTime > 0) {
+            this.poise -= stunTime;
+            if (this.poise <= 0) {
+                // Poise break: a window of armour to swing back with
+                this.armor = 105;
+                this.poise = this.poiseMax;
+                effStun = 0;
+                particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 2.4, "#ffe9a0", 22, "shockRing"));
+                for (let i = 0; i < 10; i++) {
+                    let a = random(0, Math.PI * 2), sp = random(4, 11);
+                    particles.push(new Particle(this.x, this.y, Math.cos(a)*sp, Math.sin(a)*sp, random(2,4), "#ffe9a0", random(12,20), "spark"));
+                }
+                screenShake(6);
+            }
+        }
+        // Armour also resists being shoved around, or the break would be worthless
+        const kbScale = this.armor > 0 ? 0.25 : 1;
+        this.vx += knockbackX * kbScale;
+        this.vy += knockbackY * kbScale;
+        this.isStunned = effStun;
         
         // Hit effect: bright flash core + directional sparks flying outward
         particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 1.4, "#ffffff", 8, "impactFlash"));
@@ -1071,6 +1490,17 @@ class Player extends Entity {
             document.getElementById('combo-display').style.opacity = 0;
         }
         
+        // Failsafe on the busy-lock. `isBeaming` is owned by a projectile (Beam,
+        // Flurry, Piledriver, Finale) which clears it when it finishes. If that
+        // projectile is ever destroyed without running its cleanup — the array
+        // safety valve trims the OLDEST projectiles during a heavy barrage, and a
+        // channelled beam is usually the oldest — the flag would stay set forever,
+        // permanently locking the player out of every action and killing the aura.
+        // Release it whenever nothing owns it any more.
+        if (this.isBeaming && !projectiles.some(p => p.owner === this && p.active !== false)) {
+            this.isBeaming = false;
+        }
+
         // Top-Down Aiming at Mouse
         if (this.isStunned <= 0 && !this.isBeaming) {
             let mouseWorldX = mouseX + camera.x;
@@ -1116,6 +1546,11 @@ class Player extends Entity {
             ));
         }
         
+        // Overdrive heat cools off whenever the player stops pressing the attack,
+        // so the form rewards sustained aggression rather than button mashing in bursts.
+        if (this.heat > 0 && this.attackCooldown <= 0) this.heat = Math.max(0, this.heat - 0.9);
+        if (this.instinctCd > 0) this.instinctCd -= dt;
+
         // Passive Ki drain for high forms
         if (!this.charging && this.formIndex > 0) {
             this.ki -= (this.formIndex * 0.05);
@@ -1205,7 +1640,8 @@ class Player extends Entity {
     }
     
     doDash() {
-        this.dashCooldown = 60; 
+        this.dashCooldown = 60;
+        this.iframes = Math.max(this.iframes || 0, 12); // dashing through an attack now actually evades it
         let dashSpeed = 30 * this.form.speedMultiplier;
         
         let dx = 0, dy = 0;
@@ -1235,46 +1671,95 @@ class Player extends Entity {
         }
     }
     
+    // Spawns the visual signature of a single melee connect.
+    // Shape language is the point: the silhouette of the swing tells you which form
+    // you're in before you ever read the HUD. Every variant is built from a tapered
+    // crescent (thin tail -> belly -> thin head) rather than the old uniform arc.
+    m1Swing(hx, hy, ang, radius, sweep, thickness, color, opts = {}) {
+        // Keep the swing STRADDLING the direction the fighter actually faces. The
+        // per-hit angular offsets give the string its rhythm, but taken at full value
+        // they push the blade's belly off to one side so it sweeps past the target
+        // rather than through it. Halving the offset keeps the rhythm and the contact.
+        if (!opts.absolute) {
+            let d = Math.atan2(Math.sin(ang - this.angle), Math.cos(ang - this.angle));
+            ang = this.angle + d * 0.45;
+        }
+        particles.push(new Particle(hx, hy, 0, 0, radius, color, opts.life || 13, "arcSlash", ang, null, {
+            sweep: sweep,
+            thickness: thickness,
+            spin: opts.spin !== undefined ? opts.spin : 0.16,
+            inner: opts.inner || false
+        }));
+        // Contact flash sells the moment of impact — but it must be a FLICKER, not a
+        // sustained ball. Oversized, it simply erases the blade it is meant to punctuate.
+        particles.push(new Particle(hx, hy, 0, 0, radius * 0.13, "#ffffff", 4, "impactFlash"));
+        // Directional debris thrown along the swing tangent, not radially
+        let n = opts.sparks === undefined ? 5 : opts.sparks;
+        for (let i = 0; i < n; i++) {
+            let a = ang + random(-sweep / 2, sweep / 2) + Math.PI / 2;
+            let spd = random(5, 13);
+            particles.push(new Particle(hx, hy, Math.cos(a) * spd, Math.sin(a) * spd, random(2, 4), color, random(9, 16), "spark"));
+        }
+    }
+
     doM1() {
-        if (this.m1Combo >= 4) this.m1Combo = 0; // Reset after finisher
-        
+        const style = this.form.m1Style || "basic";
+        const comboLen = this.form.m1ComboLength || 4;
+
+        // Overdrive's heat: connected strikes stoke it, it decays in update(), and it
+        // shortens the recovery until it redlines. This replaces a fixed combo cap.
+        if (style === "rush") this.heat = Math.min(100, (this.heat || 0) + 13);
+
+        if (this.m1Combo >= comboLen) this.m1Combo = 0; // Reset after finisher
         this.m1Combo++;
         this.lastHitTime = performance.now();
-        this.attackCooldown = this.form.m1Cooldown;
-        this.m1Timer = this.form.m1Cooldown; // Set animation timer
-        
-        let isFinisher = this.m1Combo === 4;
+
+        let cd = this.form.m1Cooldown;
+        if (style === "rush") cd = Math.max(2, Math.round(cd - (this.heat / 100) * (cd - 2)));
+        if (style === "heavy") cd += 4;   // heavier swings, fewer of them
+        if (style === "crush") cd += 6;   // one enormous blow instead of a string
+        this.attackCooldown = cd;
+        this.m1Timer = cd; // Set animation timer
+
+        let isFinisher = this.m1Combo === comboLen;
         let range = this.form.m1Range;
         let damage = 10 * this.form.damageMultiplier * (isFinisher ? 3 : 1);
-        
+        if (style === "crush") damage *= 2.2;   // no combo to build, so each hit carries it
+        if (style === "heavy") damage *= 1.35;
+        if (style === "rush") damage *= 0.72 + (this.heat / 100) * 0.6;
+
         let cos = Math.cos(this.angle);
         let sin = Math.sin(this.angle);
-        
+
         // Forms with instant-teleport strikes (Divine, Ultra, Singularity, Infinity...) close the gap to the enemy
         if (this.form.teleportM1) {
             let distToEnemy = distance(this, enemy);
             if (distToEnemy < range * 2 && distToEnemy > 40) {
                 // Teleport
                 particles.push(new Particle(this.x, this.y, 0, 0, 40, this.energyColor, 10, "ring"));
+                for (let i = 0; i < 4; i++) {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius * (1 - i * 0.15), this.energyColor, 9 + i * 2, "ghost"));
+                }
                 let ang = angle(this, enemy);
                 this.x = enemy.x - Math.cos(ang) * 30;
                 this.y = enemy.y - Math.sin(ang) * 30;
                 // Instantly re-aim at enemy
-                this.angle = ang; 
+                this.angle = ang;
                 cos = Math.cos(this.angle);
                 sin = Math.sin(this.angle);
             }
         }
-        
+
         // Dash forward slightly based on angle
         this.vx = cos * this.form.m1Dash;
         this.vy = sin * this.form.m1Dash;
-        
-        // Create hitbox
-        let hx = this.x + (cos * (this.radius + range/2));
-        let hy = this.y + (sin * (this.radius + range/2));
-        
-        hitboxes.push({
+
+        let hx = this.x + (cos * (this.radius + range / 2));
+        let hy = this.y + (sin * (this.radius + range / 2));
+
+        // Alternating swing direction gives the string a rhythm instead of one repeated pose
+        let dir = (this.m1Combo % 2 === 0) ? -1 : 1;
+        let baseHit = {
             x: hx, y: hy, w: range, h: range,
             life: 5,
             damage: damage,
@@ -1285,22 +1770,199 @@ class Player extends Entity {
             isFinisher: isFinisher,
             isCircular: true,
             angle: this.angle // Save angle to resolve knockback cleanly
-        });
-        
-        // Dynamic M1 Visuals (Slashing angles)
-        let effAngle = this.angle;
-        if (this.m1Combo === 1) effAngle -= Math.PI/4;
-        else if (this.m1Combo === 2) effAngle += Math.PI/4;
-        else if (this.m1Combo === 3) effAngle -= Math.PI/2;
-        
-        particles.push(new Particle(hx, hy, cos*2, sin*2, range, this.energyColor, 10, "slash", effAngle));
-        if (isFinisher) screenShake(5);
-        
+        };
+
+        switch (style) {
+            // ---- Base: clean tapered crescent, alternating sides. The reference shape. ----
+            case "basic": {
+                hitboxes.push(baseHit);
+                this.m1Swing(hx, hy, this.angle + dir * 0.5, range * 0.85, 1.5, range * 0.16, this.energyColor, { spin: dir * 0.2 });
+                break;
+            }
+
+            // ---- Super: slow, weighty hammer blows; the 3rd launches the target. ----
+            case "heavy": {
+                baseHit.knockback = isFinisher ? 48 : 9;
+                baseHit.stun = isFinisher ? 45 : 14;
+                baseHit.w = baseHit.h = range * 1.25;
+                hitboxes.push(baseHit);
+                this.m1Swing(hx, hy, this.angle + dir * 0.7, range * 1.0, 2.1, range * 0.3, this.energyColor, { spin: dir * 0.26, sparks: 8 });
+                screenShake(isFinisher ? 14 : 5);
+                if (isFinisher) {
+                    triggerHitStop(8);
+                    particles.push(new Particle(hx, hy, 0, 0, range * 0.5, "#ffffff", 20, "shockRing"));
+                }
+                break;
+            }
+
+            // ---- Ascended: fast 5-hit chain, every hit throws a live arc at the target. ----
+            case "chain": {
+                hitboxes.push(baseHit);
+                this.m1Swing(hx, hy, this.angle + dir * 0.4, range * 0.8, 1.3, range * 0.12, this.energyColor, { spin: dir * 0.3, life: 10 });
+                let lc = this.form.lightningColor || this.energyColor;
+                if (enemy && enemy.hp > 0 && distance(this, enemy) < range * 3) {
+                    particles.push(new Particle(hx, hy, 0, 0, 3, lc, 8, "boltTo", 0, null, { tx: enemy.x, ty: enemy.y }));
+                    hitboxes.push({
+                        x: enemy.x, y: enemy.y, w: 70, h: 70, life: 3,
+                        damage: damage * 0.35, knockback: 2, stun: 4,
+                        owner: this, color: lc, isCircular: true, angle: this.angle
+                    });
+                }
+                break;
+            }
+
+            // ---- Divine: the blink strike lands, then an afterimage repeats it a beat later. ----
+            case "afterimage": {
+                hitboxes.push(baseHit);
+                this.m1Swing(hx, hy, this.angle + dir * 0.55, range * 0.75, 1.6, range * 0.13, this.energyColor, { spin: dir * 0.22 });
+                // The echo: same spot, delayed, dimmer — a second chance to catch a rolling target
+                projectiles.push(new DelayedStrike(this, hx, hy, damage * 0.55, range * 0.8, 9, this.energyColor, this.angle));
+                break;
+            }
+
+            // ---- Ultra: attacking IS dodging. The swing carries invulnerability frames. ----
+            case "instinct": {
+                hitboxes.push(baseHit);
+                // Gated. Ultra swings every 5 frames but the dodge lasted 11, so
+                // holding M1 made the form permanently invulnerable. A cooldown turns
+                // it into a periodic slip you can feel, instead of a free immunity.
+                if ((this.instinctCd || 0) <= 0) {
+                    this.iframes = Math.max(this.iframes || 0, 10);
+                    this.instinctCd = 34;
+                }
+                this.m1Swing(hx, hy, this.angle + dir * 0.6, range * 0.7, 1.8, range * 0.1, this.energyColor, { spin: dir * 0.34, life: 10 });
+                // A pale silhouette left where the body *was* — reads as "slipped the hit"
+                particles.push(new Particle(this.x - cos * 26, this.y - sin * 26, 0, 0, this.radius, "#ffffff", 14, "ghost"));
+                particles.push(new Particle(this.x, this.y, 0, 0, this.radius + 10, "#cfe4ff", 13, "etherRing"));
+                break;
+            }
+
+            // ---- Ego: no combo at all. One annihilating blow plus a ground shockwave. ----
+            case "crush": {
+                baseHit.isFinisher = true;
+                baseHit.knockback = 40;
+                baseHit.stun = 36;
+                baseHit.w = baseHit.h = range * 1.5;
+                hitboxes.push(baseHit);
+                // Trailing shockwave centred on the player catches anything that closed in
+                hitboxes.push({
+                    x: this.x, y: this.y, w: range * 2.4, h: range * 2.4, life: 6,
+                    damage: damage * 0.4, knockback: 22, stun: 16,
+                    owner: this, color: this.energyColor, isCircular: true
+                });
+                this.m1Swing(hx, hy, this.angle, range * 1.3, 2.6, range * 0.42, this.energyColor, { spin: dir * 0.1, sparks: 12 });
+                particles.push(new Particle(this.x, this.y, 0, 0, range * 1.2, this.energyColor, 24, "shockRing"));
+                particles.push(new Particle(hx, hy, 0, 0, 22, "#ffffff", 16, "impactLines", this.angle));
+                screenShake(18, 0.02);
+                triggerHitStop(7);
+                break;
+            }
+
+            // ---- Beast: claws stack Rend (a bleed); the finisher detonates every stack. ----
+            case "rend": {
+                baseHit.effect = isFinisher ? "rendDetonate" : "rend";
+                hitboxes.push(baseHit);
+                // Three parallel claw tracks instead of one blade arc
+                for (let i = -1; i <= 1; i++) {
+                    this.m1Swing(
+                        hx + Math.cos(this.angle + Math.PI / 2) * i * 15,
+                        hy + Math.sin(this.angle + Math.PI / 2) * i * 15,
+                        this.angle + dir * 0.45, range * (0.8 + i * 0.06), 1.1, range * 0.115,
+                        this.energyColor, { spin: dir * 0.28, sparks: i === 0 ? 5 : 0, life: 11 }
+                    );
+                }
+                break;
+            }
+
+            // ---- Overdrive: heat-driven. Gets visibly hotter and faster, then redlines. ----
+            case "rush": {
+                hitboxes.push(baseHit);
+                let heat01 = (this.heat || 0) / 100;
+                let hotColor = heat01 > 0.75 ? "#ffffff" : this.energyColor;
+                this.m1Swing(hx, hy, this.angle + dir * 0.35, range * (0.6 + heat01 * 0.4), 1.2,
+                    range * (0.07 + heat01 * 0.09), hotColor, { spin: dir * (0.3 + heat01 * 0.3), life: 8, sparks: 3 });
+                if (this.heat >= 100) {
+                    // Overheat: vents ki, stalls briefly, and dumps the meter
+                    this.heat = 0;
+                    this.ki = Math.max(0, this.ki - 12);
+                    this.attackCooldown = 26;
+                    screenShake(12, 0.02);
+                    particles.push(new Particle(this.x, this.y, 0, 0, 90, "#ffaa00", 22, "shockRing"));
+                    for (let i = 0; i < 14; i++) {
+                        let a = random(0, Math.PI * 2);
+                        particles.push(new Particle(this.x, this.y, Math.cos(a) * random(4, 12), Math.sin(a) * random(4, 12), random(3, 7), "#ff6600", 20, "spark"));
+                    }
+                }
+                break;
+            }
+
+            // ---- Godslayer: deliberate, heavy strikes; every 3rd brands the target. ----
+            case "judgment": {
+                baseHit.effect = isFinisher ? "seal" : null;
+                hitboxes.push(baseHit);
+                let seal = this.form.sealColor || "#ffd700";
+                this.m1Swing(hx, hy, this.angle + dir * 0.5, range * 0.9, 1.7, range * 0.2, isFinisher ? seal : this.energyColor, { spin: dir * 0.18, sparks: 6 });
+                if (isFinisher) {
+                    particles.push(new Particle(hx, hy, 0, 0, 55, seal, 34, "sealRing"));
+                    screenShake(9);
+                    triggerHitStop(5);
+                }
+                break;
+            }
+
+            // ---- Singularity: strikes drag the target inward rather than away. ----
+            case "collapse": {
+                baseHit.pull = true;
+                baseHit.knockback = isFinisher ? 34 : 16;
+                hitboxes.push(baseHit);
+                this.m1Swing(hx, hy, this.angle + dir * 0.5, range * 0.55, 1.9, range * 0.09, this.energyColor, { spin: -dir * 0.3, life: 12 });
+                // Motes rushing *inward* to the contact point read as gravity, not explosion
+                for (let i = 0; i < 7; i++) {
+                    let a = random(0, Math.PI * 2), d = random(45, 105);
+                    particles.push(new Particle(hx + Math.cos(a) * d, hy + Math.sin(a) * d,
+                        -Math.cos(a) * random(4, 9), -Math.sin(a) * random(4, 9), random(2, 4), this.energyColor, 13, "spark"));
+                }
+                break;
+            }
+
+            // ---- Infinity: the strike lands everywhere at once. Facing is irrelevant. ----
+            case "omni": {
+                let arms = 6;
+                for (let i = 0; i < arms; i++) {
+                    let a = this.angle + (i / arms) * Math.PI * 2;
+                    let ox = this.x + Math.cos(a) * (this.radius + range / 2);
+                    let oy = this.y + Math.sin(a) * (this.radius + range / 2);
+                    hitboxes.push({
+                        x: ox, y: oy, w: range * 0.8, h: range * 0.8, life: 5,
+                        damage: damage / 2.2, knockback: isFinisher ? 18 : 4, stun: isFinisher ? 26 : 8,
+                        owner: this, color: this.energyColor, isFinisher: isFinisher, isCircular: true, angle: a
+                    });
+                    // absolute: each arm points outward on its own axis, not the facing
+                    this.m1Swing(ox, oy, a + 0.4, range * 0.5, 1.2, range * 0.07, this.energyColor, { spin: 0.25, sparks: 1, life: 9, absolute: true });
+                }
+                particles.push(new Particle(this.x, this.y, 0, 0, range * 0.8, "#ffffff", 16, "shockRing"));
+                break;
+            }
+
+            default: {
+                hitboxes.push(baseHit);
+                this.m1Swing(hx, hy, this.angle + dir * 0.5, range * 0.85, 1.5, range * 0.16, this.energyColor, { spin: dir * 0.2 });
+            }
+        }
+
+        if (isFinisher && style !== "crush" && style !== "heavy") screenShake(5);
+
         // Update combo UI
         let comboUI = document.getElementById('combo-display');
-        comboUI.innerText = `Combo ${this.m1Combo}`;
+        if (style === "crush") {
+            comboUI.innerText = "CRUSH";
+        } else if (style === "rush") {
+            comboUI.innerText = `Heat ${Math.round(this.heat || 0)}%`;
+        } else {
+            comboUI.innerText = `Combo ${this.m1Combo}`;
+        }
         comboUI.style.opacity = 1;
-        comboUI.style.transform = `translateY(-50%) scale(${1 + this.m1Combo*0.2})`;
+        comboUI.style.transform = `translateY(-50%) scale(${1 + this.m1Combo * 0.11})`;
         comboUI.style.color = isFinisher ? "#ff0000" : "#ffffff";
     }
     
@@ -1369,6 +2031,38 @@ class Player extends Entity {
                 homing: !!this.form.kiBlastHoming, homingStrength: this.form.kiBlastHomingStrength || 0.04,
                 shatter: !!this.form.kiBlastShatter
             }));
+        } else if (this.form.kiBlastType === "hakai") {
+            // Ego: a slow erasure sphere that shatters into void shards on contact
+            let mSize = this.form.kiBlastSize || 70;
+            projectiles.push(new Projectile(this.x + cos*mSize, this.y + sin*mSize, cos*7, sin*7, mSize, dmg*3.2, this.energyColor, this, true, "hakai", {
+                shatter: true
+            }));
+        } else if (this.form.kiBlastType === "drill") {
+            // Overdrive: one fast spinning bolt that bores THROUGH the target, ticking
+            // damage as it passes rather than popping on the first contact.
+            projectiles.push(new Projectile(
+                this.x + cos*30, this.y + sin*30,
+                cos*pSpeed*1.4, sin*pSpeed*1.4,
+                pSize*0.8, dmg*0.5, this.energyColor, this, true, "drill", { multiHit: true, hitInterval: 5 }));
+        } else if (this.form.kiBlastType === "collapseShot") {
+            // Singularity: a slow orb that drags the target toward the shooter on impact
+            projectiles.push(new Projectile(
+                this.x + cos*30, this.y + sin*30,
+                cos*pSpeed*0.6, sin*pSpeed*0.6,
+                pSize*1.3, dmg*1.6, this.energyColor, this, false, "collapse", { pulls: true }));
+        } else if (this.form.kiBlastType === "nova") {
+            // Infinity: a full ring fired outward in every direction, which then curves
+            // back onto the target — covers the whole field instead of one aim line.
+            let shots = this.form.kiBlastShots || 8;
+            for (let i = 0; i < shots; i++) {
+                let a = (i / shots) * Math.PI * 2;
+                projectiles.push(new Projectile(
+                    this.x + Math.cos(a)*34, this.y + Math.sin(a)*34,
+                    Math.cos(a)*pSpeed*0.75, Math.sin(a)*pSpeed*0.75,
+                    pSize*0.6, dmg*0.5, this.energyColor, this, false, "normal",
+                    { homing: true, homingStrength: 0.075 }));
+            }
+            particles.push(new Particle(this.x, this.y, 0, 0, 50, this.energyColor, 16, "shockRing"));
         } else if (this.form.kiBlastType === "lance") {
             // Fast, thin, piercing javelin — precise rather than a wide-area attack
             projectiles.push(new Projectile(
@@ -1406,19 +2100,31 @@ class Player extends Entity {
             // Beam Attacks — some forms fire a paired "cross" beam, or one that drags the target in
             this.isBeaming = true;
             this.m1Timer = 10;
-            this.beamTimer = (this.formIndex >= 3) ? 60 : 40; // frames
-            
+            // Duration is per-form now: Beast's cannon is a short unloaded burst,
+            // Super's is a held channel. That timing difference is most of what makes
+            // the three beams feel like three different moves rather than one.
+            this.beamTimer = this.form.beamDuration || ((this.formIndex >= 3) ? 60 : 40);
+
             screenShake(this.formIndex >= 3 ? 20 : 10);
             if (this.form.beamWidth >= 200) screenShake(35); // biggest cannons get a massive shake
 
             let beamWidth = this.form.beamWidth;
             let beamDmg = this.form.beamDmg;
-            let beamOptions = { pulls: !!this.form.beamPulls, wrapStyle: this.form.beamWrap || "none" };
-            
+            let beamOptions = {
+                pulls: !!this.form.beamPulls,
+                wrapStyle: this.form.beamWrap || "none",
+                rend: !!this.form.beamRend
+            };
+
             if (this.form.dualBeam) {
-                // Twin beams fired at a slight converging angle, crossing just in front of the caster
-                projectiles.push(new Beam(this, this.angle - 0.12, beamWidth, beamDmg, this.beamTimer, this.energyColor, beamOptions));
-                projectiles.push(new Beam(this, this.angle + 0.12, beamWidth, beamDmg, this.beamTimer, this.energyColor, beamOptions));
+                // Twin beams leaving each hand and angled INWARD so they genuinely
+                // cross in front of the caster. The crossing point is the sweet spot.
+                let ca = this.form.beamCrossAngle || 0.12;
+                let off = this.form.beamHandOffset || 34;
+                projectiles.push(new Beam(this, this.angle + ca, beamWidth, beamDmg, this.beamTimer, this.energyColor,
+                    Object.assign({}, beamOptions, { lateral: -off })));
+                projectiles.push(new Beam(this, this.angle - ca, beamWidth, beamDmg, this.beamTimer, this.energyColor,
+                    Object.assign({}, beamOptions, { lateral: off })));
             } else {
                 projectiles.push(new Beam(this, this.angle, beamWidth, beamDmg, this.beamTimer, this.energyColor, beamOptions));
             }
@@ -1498,106 +2204,383 @@ class Player extends Entity {
             this.m1Timer = 15;
             let target = enemy;
             particles.push(new Particle(this.x, this.y, 0, 0, 20, this.energyColor, 12, "chromaRing"));
+            // Seals stacked by the M1 string pay out here: this is the loop that makes
+            // Godslayer's melee and special feed each other instead of being separate buttons.
+            let sealBonus = 1 + (target.seals || 0) * 0.55;
+            let execRadius = this.form.executionRadius * (1 + (target.seals || 0) * 0.12);
+            if (target.seals > 0) {
+                particles.push(new Particle(target.x, target.y, 0, 0, 70, this.form.sealColor || "#ffd700", 30, "sealRing"));
+                target.seals = 0;
+            }
             projectiles.push(new Execution(
                 this, target.x, target.y,
-                this.form.executionDamage, this.form.executionRadius, this.form.executionDelay, this.energyColor
+                this.form.executionDamage * sealBonus, execRadius, this.form.executionDelay, this.energyColor
+            ));
+        }
+        else if (this.form.specialType === "orbital") {
+            // Divine: deploy satellites. Short recovery — the power is in positioning after.
+            this.attackCooldown = 20;
+            this.m1Timer = 12;
+            screenShake(8);
+            particles.push(new Particle(this.x, this.y, 0, 0, this.form.orbitalRadius, this.energyColor, 24, "shockRing"));
+            projectiles.push(new Orbital(
+                this, this.form.orbitalCount, this.form.orbitalDuration,
+                this.form.orbitalRadius, this.form.orbitalDamage, this.energyColor
+            ));
+        }
+        else if (this.form.specialType === "roar") {
+            // Beast: instant forward cone, heavy commitment, loads Rend
+            this.attackCooldown = 38;
+            this.m1Timer = 20;
+            this.vx -= cos * 14; this.vy -= sin * 14; // recoil braces the roar
+            projectiles.push(new Roar(this, this.form.roarRange, this.form.roarArc, this.form.roarDamage, this.energyColor));
+        }
+        else if (this.form.specialType === "piledriver") {
+            // Overdrive: command grab
+            this.attackCooldown = 40;
+            this.m1Timer = 18;
+            screenShake(10);
+            projectiles.push(new Piledriver(this, this.form.piledriverSlams, this.form.piledriverDamage, this.energyColor));
+        }
+        else if (this.form.specialType === "singularity") {
+            // Singularity: place the well on the enemy's position, then fight around it
+            this.attackCooldown = 34;
+            this.m1Timer = 16;
+            screenShake(14, 0.02);
+            let tx = enemy ? enemy.x : this.x + cos * 260;
+            let ty = enemy ? enemy.y : this.y + sin * 260;
+            particles.push(new Particle(tx, ty, 0, 0, 60, this.energyColor, 20, "chromaRing"));
+            projectiles.push(new SingularityWell(
+                this, tx, ty, this.form.singularityDuration,
+                this.form.singularityRadius, this.form.singularityDamage, this.energyColor
+            ));
+        }
+        else if (this.form.specialType === "finale") {
+            // Infinity: the set-piece
+            this.attackCooldown = 50;
+            this.m1Timer = 24;
+            screenShake(16, 0.03);
+            triggerHitStop(10);
+            effects.push({ type: 'flash', color: this.form.color, life: 18, maxLife: 18 });
+            projectiles.push(new Finale(
+                this, this.form.finaleStrikes, this.form.finaleInterval, this.form.finaleDamage,
+                this.form.finaleBlastSize, this.form.finaleBlastDamage, this.energyColor
             ));
         }
     }
     
+    // ------------------------------------------------------------------
+    // AURA = VFX, not geometry.
+    // Earlier versions drew the aura as a canvas shape (tongues, then a lobed
+    // envelope). Both read as a drawn flower/blob because a single hard polygon
+    // can't behave like fire. The aura is now a PARTICLE SYSTEM: many small soft
+    // wisps born at the body, pushed outward, accelerated along a per-form flow
+    // axis, shrinking and fading. Form identity comes from emission behaviour —
+    // rate, direction, speed, lifetime, colour ramp — not from an outline.
+    // ------------------------------------------------------------------
+    emitWisp(o) {
+        particles.push(new Particle(
+            o.x, o.y, o.vx, o.vy, o.size, o.color, o.life, "wisp", 0, null,
+            { rise: o.rise || 0, riseX: o.riseX || 0, drag: o.drag, core: o.core }
+        ));
+    }
+
     updateAura() {
-        if (this.formIndex === 0 && !this.charging) return; // Base form has no aura unless charging
-        
-        let freq = this.charging ? 2 : (this.formIndex > 1 ? 1 : 0.5);
-        let style = this.charging ? "soft" : this.form.auraStyle;
+        if (this.formIndex === 0 && !this.charging) return;
 
-        if (Math.random() < freq) {
-            let angle = random(0, Math.PI * 2);
-            let dist = random(0, this.radius * 1.5);
-            let px = this.x + Math.cos(angle)*dist;
-            let py = this.y + Math.sin(angle)*dist;
+        const color = this.energyColor || this.form.color;
+        const hot = shadeColor(color, 65);
+        const chg = this.charging ? 1 : 0;
+        const idx = this.formIndex;
+        const boost = 1 + chg * 0.9;            // charging emits harder, never less
+        const back = this.angle + Math.PI;
+        const bodyR = this.radius * 0.75;
 
-            if (style === "fire") {
-                // Flickering flame licks rising off the body
-                let vx = Math.cos(angle) * random(0.1, 0.6);
-                let vy = Math.sin(angle) * random(0.1, 0.6) - random(0.5, 1.2);
-                let size = random(14, 26 + this.formIndex*4);
-                particles.push(new Particle(px, py, vx, vy, size, this.form.color, random(14, 24), "flameLick"));
-            } else if (style === "lightning") {
-                // Crackling arcs + tight sparks
-                let vx = Math.cos(angle) * random(0.2, 1);
-                let vy = Math.sin(angle) * random(0.2, 1);
-                particles.push(new Particle(px, py, vx, vy, random(2,4), "#ffffff", random(6, 12), "spark"));
-            } else if (style === "ethereal") {
-                // Expanding faint rings + drifting sparkles
-                let vx = Math.cos(angle) * random(0.2, 0.8);
-                let vy = Math.sin(angle) * random(0.2, 0.8);
-                let size = random(8, 16 + this.formIndex*3);
-                particles.push(new Particle(px, py, vx, vy, size, this.form.color, random(14, 22), "aura"));
-                if (Math.random() < 0.15) {
-                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(5,15), this.form.color, 20, "etherRing"));
+        // Spawn a ring position around the body
+        const ringPos = (spread) => {
+            const a = random(0, Math.PI * 2);
+            const d = bodyR * random(0.35, 1.0 + (spread || 0));
+            return { a, x: this.x + Math.cos(a) * d, y: this.y + Math.sin(a) * d };
+        };
+        // Single knob for total aura density. Large additive blobs are fill-rate
+        // bound, so halving emission roughly halves the aura's frame cost. Raise it
+        // for a thicker aura on a stronger machine.
+        const n = (base) => {
+            let c = base * boost * AURA_DENSITY;
+            let whole = Math.floor(c);
+            if (Math.random() < c - whole) whole++;
+            return whole;
+        };
+
+        switch (idx) {
+            case 1: { // SUPER — tall golden fire climbing off the body
+                for (let i = 0; i < n(9); i++) {
+                    const p = ringPos(0.9);   // wider base so the flame wraps the body
+                    this.emitWisp({
+                        x: p.x, y: p.y,
+                        vx: Math.cos(p.a) * random(0.6, 2.0),
+                        vy: Math.sin(p.a) * random(0.3, 1.1) - random(1.5, 3.8),
+                        size: random(20, 42), color: color, core: "#fffbe0",
+                        life: random(26, 42), rise: 0.42, drag: 0.95
+                    });
                 }
-            } else if (style === "cosmic") {
-                // A shifting blend of every style this fighter has mastered — rings, sparks, and drifting flame
-                let vx = Math.cos(angle) * random(0.2, 0.9);
-                let vy = Math.sin(angle) * random(0.2, 0.9);
-                let roll = Math.random();
-                if (roll < 0.4) {
-                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(5,20), this.form.color, 22, "etherRing"));
-                } else if (roll < 0.7) {
-                    particles.push(new Particle(px, py, vx, vy, random(2,4), "#ffffff", random(6, 12), "spark"));
-                } else {
-                    particles.push(new Particle(px, py, vx, vy - random(0.3,0.8), random(12, 22), this.form.color, random(14, 22), "flameLick"));
+                for (let i = 0; i < n(1.2); i++) {   // embers streaking well past the flame
+                    const p = ringPos(0.1);
+                    particles.push(new Particle(p.x, p.y, random(-1, 1), -random(3.5, 6.5),
+                        random(2, 4), "#fff2b0", random(26, 44), "spark"));
                 }
-            } else if (style === "void") {
-                // Dark motes drawn inward like collapsing judgment, punctuated by golden seal-rings
-                let sealColor = this.form.sealColor || "#ffd700";
-                if (Math.random() < 0.55) {
-                    let startDist = this.radius + random(25, 60);
-                    let sx = this.x + Math.cos(angle) * startDist;
-                    let sy = this.y + Math.sin(angle) * startDist;
-                    let vx = -Math.cos(angle) * random(0.5, 1.1);
-                    let vy = -Math.sin(angle) * random(0.5, 1.1);
-                    particles.push(new Particle(sx, sy, vx, vy, random(5, 10), sealColor, random(16,22), "hakai-debris"));
-                } else {
-                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(10,28), sealColor, 20, "etherRing"));
+                break;
+            }
+            case 2: { // ASCENDED — low, wide, electric wash + constant arc crackle
+                // Ascended sits a tier above Super, so its aura has to read BIGGER,
+                // not just different: longer-lived, larger wisps and less drag.
+                for (let i = 0; i < n(7); i++) {
+                    const p = ringPos(0.7);
+                    this.emitWisp({
+                        x: p.x, y: p.y,
+                        vx: Math.cos(p.a) * random(1.4, 3.0),
+                        vy: Math.sin(p.a) * random(1.0, 2.2) - random(1.2, 2.6),
+                        size: random(16, 32), color: color, core: "#ffffff",
+                        life: random(20, 32), rise: 0.24, drag: 0.92
+                    });
                 }
-            } else {
-                // Soft default glow wisps (base charging / Super)
-                let vx = Math.cos(angle) * random(0.2, 1);
-                let vy = Math.sin(angle) * random(0.2, 1);
-                let size = random(10, 20 + this.formIndex*10);
-                particles.push(new Particle(px, py, vx, vy, size, this.form.color, random(10, 20), "aura"));
+                for (let i = 0; i < n(3); i++) {
+                    const p = ringPos(0.5);
+                    particles.push(new Particle(p.x, p.y, random(-4, 4), random(-5, 2),
+                        random(1.5, 3.5), this.form.lightningColor || "#ffffff", random(10, 20), "spark"));
+                }
+                if (Math.random() < 0.9 * boost) {
+                    particles.push(new Particle(this.x + random(-26, 26), this.y + random(-26, 26),
+                        0, 0, 2, this.form.lightningColor || color, 5, "lightning", 0, this));
+                }
+                break;
+            }
+            case 5: { // EGO — heavy violet smoke pulled INWARD, barely rising
+                for (let i = 0; i < n(5); i++) {
+                    const a = random(0, Math.PI * 2);
+                    const d = bodyR * random(1.5, 2.6);
+                    this.emitWisp({
+                        x: this.x + Math.cos(a) * d, y: this.y + Math.sin(a) * d,
+                        vx: -Math.cos(a) * random(0.8, 1.7),
+                        vy: -Math.sin(a) * random(0.8, 1.7),
+                        size: random(18, 34), color: color, core: hot,
+                        life: random(20, 32), rise: 0, drag: 0.95
+                    });
+                }
+                break;
+            }
+            case 6: { // BEAST — violent red burst, fast and erratic
+                // Violent and LARGE. The short-lived, heavily-dragged version kept the
+                // aura pinned to the body, which made a tier-6 form look weaker than
+                // Super. Fast erratic motion carries the ferocity; size carries the rank.
+                for (let i = 0; i < n(8); i++) {
+                    const p = ringPos(0.6);
+                    this.emitWisp({
+                        x: p.x, y: p.y,
+                        vx: Math.cos(p.a) * random(1.8, 4.0),
+                        vy: Math.sin(p.a) * random(1.5, 3.2) - random(1.2, 2.8),
+                        size: random(20, 38), color: color, core: "#fff0e0",
+                        life: random(18, 30), rise: 0.26, drag: 0.92
+                    });
+                }
+                for (let i = 0; i < n(2); i++) {
+                    const p = ringPos(0.2);
+                    particles.push(new Particle(p.x, p.y, random(-5, 5), random(-6, 2),
+                        random(2, 5), "#ffd0b0", random(10, 20), "spark"));
+                }
+                break;
+            }
+            case 7: { // OVERDRIVE — exhaust venting BACKWARD, not upward
+                const px = -Math.sin(back), py = Math.cos(back);
+                for (let i = 0; i < n(6); i++) {
+                    const off = random(-bodyR * 1.3, bodyR * 1.3);
+                    this.emitWisp({
+                        x: this.x + px * off + Math.cos(back) * bodyR * 0.5,
+                        y: this.y + py * off + Math.sin(back) * bodyR * 0.5,
+                        vx: Math.cos(back) * random(2.5, 5.5),
+                        vy: Math.sin(back) * random(2.5, 5.5),
+                        size: random(10, 22), color: color, core: "#fff3d0",
+                        life: random(12, 22),
+                        riseX: 0, rise: 0, drag: 0.93
+                    });
+                }
+                for (let i = 0; i < n(1.5); i++) {
+                    particles.push(new Particle(this.x, this.y,
+                        Math.cos(back) * random(4, 9) + random(-1, 1),
+                        Math.sin(back) * random(4, 9) + random(-1, 1),
+                        random(2, 4), "#ffcc66", random(12, 22), "spark"));
+                }
+                break;
+            }
+            case 8: { // GODSLAYER — motes falling inward, plus gold seal flecks
+                for (let i = 0; i < n(4); i++) {
+                    const a = random(0, Math.PI * 2);
+                    const d = bodyR * random(2.0, 3.4);
+                    this.emitWisp({
+                        x: this.x + Math.cos(a) * d, y: this.y + Math.sin(a) * d,
+                        vx: -Math.cos(a) * random(1.0, 2.0),
+                        vy: -Math.sin(a) * random(1.0, 2.0),
+                        size: random(9, 18), color: color, core: this.form.sealColor || "#ffd700",
+                        life: random(16, 26), rise: 0, drag: 0.97
+                    });
+                }
+                break;
+            }
+            case 9: { // SINGULARITY — everything spiralling in toward a collapse
+                for (let i = 0; i < n(5); i++) {
+                    const a = random(0, Math.PI * 2);
+                    const d = bodyR * random(2.2, 3.6);
+                    // Tangential component gives the infall a visible spiral
+                    const tanA = a + Math.PI / 2;
+                    this.emitWisp({
+                        x: this.x + Math.cos(a) * d, y: this.y + Math.sin(a) * d,
+                        vx: -Math.cos(a) * random(1.4, 2.6) + Math.cos(tanA) * 1.5,
+                        vy: -Math.sin(a) * random(1.4, 2.6) + Math.sin(tanA) * 1.5,
+                        size: random(7, 15), color: color, core: "#dbeaff",
+                        life: random(14, 24), rise: 0, drag: 0.96
+                    });
+                }
+                break;
+            }
+            case 10: { // INFINITY — bright motes orbiting outward in all directions
+                for (let i = 0; i < n(6); i++) {
+                    const p = ringPos(0.5);
+                    this.emitWisp({
+                        x: p.x, y: p.y,
+                        vx: Math.cos(p.a) * random(0.8, 2.2),
+                        vy: Math.sin(p.a) * random(0.8, 2.2),
+                        size: random(10, 22), color: color, core: "#ffffff",
+                        life: random(18, 30), rise: 0, drag: 0.94
+                    });
+                }
+                for (let i = 0; i < n(2); i++) {
+                    const p = ringPos(0.8);
+                    particles.push(new Particle(p.x, p.y, random(-2, 2), random(-2, 2),
+                        random(1.5, 3), "#ffffff", random(16, 30), "spark"));
+                }
+                break;
+            }
+            case 3: { // DIVINE — calm, slow, buoyant motes
+                for (let i = 0; i < n(4); i++) {
+                    const p = ringPos(0.5);
+                    this.emitWisp({
+                        x: p.x, y: p.y,
+                        vx: Math.cos(p.a) * random(0.2, 0.7),
+                        vy: Math.sin(p.a) * random(0.2, 0.7) - random(0.3, 0.9),
+                        size: random(12, 24), color: color, core: "#e8ffff",
+                        life: random(24, 38), rise: 0.06, drag: 0.97
+                    });
+                }
+                if (Math.random() < 0.25 * boost) {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(6, 18), color, 22, "etherRing"));
+                }
+                break;
+            }
+            case 4: { // ULTRA — sparse, sharp, silver. Restraint reads as control.
+                // Restrained in CHARACTER — smooth, silver, no flicker — but it still
+                // has to be visibly there. The sparser earlier version read as a
+                // missing aura rather than a controlled one.
+                for (let i = 0; i < n(5.5); i++) {
+                    const p = ringPos(0.55);
+                    this.emitWisp({
+                        x: p.x, y: p.y,
+                        vx: Math.cos(p.a) * random(0.4, 1.2),
+                        vy: Math.sin(p.a) * random(0.4, 1.2) - random(0.8, 1.8),
+                        size: random(16, 30), color: color, core: "#ffffff",
+                        life: random(24, 36), rise: 0.16, drag: 0.96
+                    });
+                }
+                for (let i = 0; i < n(2.2); i++) {
+                    const p = ringPos(0.7);
+                    particles.push(new Particle(p.x, p.y, random(-1.5, 1.5), random(-3, 0.5),
+                        random(1.6, 3), "#ffffff", random(20, 34), "spark"));
+                }
+                if (Math.random() < 0.3 * boost) {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius + random(8, 20), "#dbeaff", 20, "etherRing"));
+                }
+                break;
+            }
+            default: { // BASE (charging only) — gentle gathering swell
+                for (let i = 0; i < n(3); i++) {
+                    const a = random(0, Math.PI * 2);
+                    const d = bodyR * random(2.0, 3.2);
+                    this.emitWisp({
+                        x: this.x + Math.cos(a) * d, y: this.y + Math.sin(a) * d,
+                        vx: -Math.cos(a) * random(0.8, 1.6),
+                        vy: -Math.sin(a) * random(0.8, 1.6),
+                        size: random(8, 16), color: color, core: "#ffffff",
+                        life: random(14, 22), rise: 0, drag: 0.95
+                    });
+                }
             }
         }
-        
-        // Dynamic Lightning arcs (Ascended/Beast/high forms with lightningColor)
-        if (this.form.lightningColor && Math.random() < (style === "lightning" ? 0.45 : 0.3)) {
-            let startX = this.x + random(-30, 30);
-            let startY = this.y + random(-30, 30);
-            particles.push(new Particle(startX, startY, 0, 0, 2, this.form.lightningColor, 5, "lightning", 0, this));
+
+        // Charging adds gathering inrush on top of whatever the form already emits
+        if (chg) {
+            for (let i = 0; i < n(2); i++) {
+                const a = random(0, Math.PI * 2);
+                const d = bodyR * random(3.0, 5.0);
+                particles.push(new Particle(
+                    this.x + Math.cos(a) * d, this.y + Math.sin(a) * d,
+                    -Math.cos(a) * random(2.5, 4.5), -Math.sin(a) * random(2.5, 4.5),
+                    random(2, 4), hot, random(10, 18), "spark"));
+            }
         }
     }
 
-    // Persistent ambient glow drawn directly beneath the character each frame —
-    // smoother and cheaper than pure particle spam, gives the aura a "living" base layer.
+    // Only a soft under-glow remains in drawn form — the light the aura casts on the
+    // floor. Everything with shape is particles now.
     drawAuraBase(ctx) {
         if (this.formIndex === 0 && !this.charging) return;
-        let pulse = 0.75 + 0.25 * Math.sin(Date.now() * 0.006);
-        let baseSize = (this.radius * 2.2 + this.formIndex * 6) * pulse;
-        let color = this.charging ? this.form.color : this.form.color;
+        const color = this.energyColor || this.form.color;
+        const chg = this.charging ? 1 : 0;
+        const R = this.radius * (2.0 + this.formIndex * 0.12) * (1 + chg * 0.4);
+        const pulse = 0.9 + 0.1 * Math.sin(Date.now() * 0.006);
 
         ctx.save();
+
+        // Two forms are defined by ABSENCE of light, which particles can't express —
+        // an additive system can only ever add. These are drawn once per frame (not
+        // per particle), so they cost nothing measurable.
+        if (this.formIndex === 8 || this.formIndex === 9) {
+            ctx.globalCompositeOperation = "source-over";
+            const vr = R * 1.3;
+            const vg = ctx.createRadialGradient(this.x, this.y, R * 0.18, this.x, this.y, vr);
+            vg.addColorStop(0, "rgba(2,0,8,0.78)");
+            vg.addColorStop(0.6, "rgba(3,0,10,0.40)");
+            vg.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = vg;
+            ctx.beginPath(); ctx.arc(this.x, this.y, vr, 0, Math.PI * 2); ctx.fill();
+        }
+
         ctx.globalCompositeOperation = "lighter";
-        let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, baseSize);
-        grad.addColorStop(0, color);
-        grad.addColorStop(0.5, color);
-        grad.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.globalAlpha = 0.22 + (this.charging ? 0.15 : 0);
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, baseSize, 0, Math.PI*2);
-        ctx.fill();
+
+        // Godslayer's brand: a turning seal ring with radial ticks over the shroud.
+        if (this.formIndex === 8) {
+            const t2 = Date.now() * 0.001;
+            const seal = this.form.sealColor || "#ffd700";
+            const sr = R * (0.92 + 0.04 * Math.sin(t2 * 4));
+            ctx.strokeStyle = seal;
+            ctx.globalAlpha = 0.9;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(this.x, this.y, sr, 0, Math.PI * 2); ctx.stroke();
+            ctx.globalAlpha = 0.55;
+            for (let i = 0; i < 10; i++) {
+                const a = (i / 10) * Math.PI * 2 - t2 * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(this.x + Math.cos(a) * sr * 0.88, this.y + Math.sin(a) * sr * 0.88);
+                ctx.lineTo(this.x + Math.cos(a) * sr * 1.10, this.y + Math.sin(a) * sr * 1.10);
+                ctx.stroke();
+            }
+        }
+
+        ctx.globalAlpha = 0.16 + chg * 0.12;
+        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, R * pulse);
+        g.addColorStop(0, color);
+        g.addColorStop(0.45, color);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(this.x, this.y, R * pulse, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     }
     
@@ -1622,13 +2605,15 @@ class Player extends Entity {
 
         // Subtle idle "breathing" pulse so the character never feels static
         let breath = 1 + Math.sin(Date.now() * 0.004) * 0.015;
-        ctx.scale(breath, breath);
+        // Fighters were drawn far smaller than their effects, which left them as
+        // specks inside their own aura. Collision radius is unchanged — this is purely
+        // how large the character READS on screen.
+        ctx.scale(breath * 1.4, breath * 1.4);
         
-        // Aura glow under character
-        if (this.formIndex > 0) {
-            ctx.shadowBlur = 30 + (Math.sin(Date.now()*0.01)*10);
-            ctx.shadowColor = this.form.color;
-        }
+        // Deliberately NO body-wide coloured shadow here. The aura layer already
+        // supplies the glow; blooming the character itself on top of it dissolves the
+        // silhouette, which is the one thing that must stay readable at all times.
+        ctx.shadowBlur = 0;
 
         // --- Animated Arms for M1 Combos ---
         let leftArmX = 5, leftArmY = -18;
@@ -1673,10 +2658,8 @@ class Player extends Entity {
         ctx.beginPath(); ctx.arc(rightArmX, rightArmY, 6, 0, Math.PI*2); ctx.fill();
 
         // Draw character body (Top-down Shoulders) with gradient shading for depth
-        let bodyBase = (this.formIndex === 5) ? "#331166" 
-                     : (this.formIndex === 8) ? "#0d0d0d"
-                     : (this.formIndex === 10) ? "#cccccc" 
-                     : "#ff6600";
+        const look = FORM_LOOK[this.formIndex] || FORM_LOOK[0];
+        let bodyBase = look.gi;
         let bodyGrad = ctx.createRadialGradient(-4, -8, 2, 0, 0, 26);
         bodyGrad.addColorStop(0, shadeColor(bodyBase, 40));
         bodyGrad.addColorStop(0.6, bodyBase);
@@ -1685,7 +2668,92 @@ class Player extends Entity {
         ctx.beginPath();
         ctx.ellipse(0, 0, 12, 22, 0, 0, Math.PI*2);
         ctx.fill();
-        
+        // Ink holdline. Without this the fighter dissolves into its own aura the moment
+        // the form gets bright — the character must always be the hardest edge on screen.
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
+
+        // --- Per-transformation outfit -----------------------------------------
+        // Clipped to the torso so nothing spills past the holdline. Each kit changes
+        // the SHAPE of what's on the body, not just its colour, so a transformation
+        // reads as the fighter being re-dressed.
+        ctx.save();
+        ctx.beginPath(); ctx.ellipse(0, 0, 12, 22, 0, 0, Math.PI*2); ctx.clip();
+
+        // Undershirt wedge at the collar — common to every kit
+        ctx.fillStyle = look.under;
+        ctx.beginPath();
+        ctx.moveTo(11, -7); ctx.lineTo(11, 7); ctx.lineTo(3, 0);
+        ctx.closePath(); ctx.fill();
+
+        if (look.kit === "gi") {
+            // Classic: sash across the waist, plain shoulders
+            ctx.fillStyle = look.trim;
+            ctx.beginPath(); ctx.rect(-8, -22, 5, 44); ctx.fill();
+            ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.stroke();
+        } else if (look.kit === "torn") {
+            // Battle damage: the gi is shredded, flesh showing through the rips
+            ctx.fillStyle = look.trim;
+            ctx.beginPath(); ctx.rect(-8, -22, 4, 44); ctx.fill();
+            ctx.fillStyle = "#e0a97c";
+            for (let i = 0; i < 3; i++) {
+                const ry = -12 + i * 12;
+                ctx.beginPath();
+                ctx.moveTo(-2, ry);
+                ctx.lineTo(6, ry + 3);
+                ctx.lineTo(1, ry + 7);
+                ctx.closePath(); ctx.fill();
+            }
+            // Ragged hem along the trailing edge
+            ctx.strokeStyle = INK; ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.moveTo(-11, -16);
+            for (let i = 0; i < 6; i++) ctx.lineTo(-11 + (i % 2 ? 4 : 0), -16 + i * 6);
+            ctx.stroke();
+        } else if (look.kit === "armor") {
+            // Hard plating: chest plate plus a shoulder guard, both trimmed
+            ctx.fillStyle = shadeColor(look.gi, 22);
+            ctx.beginPath();
+            ctx.moveTo(9, -10); ctx.lineTo(9, 10); ctx.lineTo(-3, 13); ctx.lineTo(-3, -13);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = look.trim; ctx.lineWidth = 1.8; ctx.stroke();
+            // Pauldron over the leading shoulder
+            ctx.fillStyle = shadeColor(look.gi, -18);
+            ctx.beginPath(); ctx.ellipse(2, -15, 7, 8, -0.3, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = look.trim; ctx.lineWidth = 1.5; ctx.stroke();
+        } else if (look.kit === "seam") {
+            // Bodysuit: glowing energy piping running the length of the torso
+            ctx.strokeStyle = look.trim;
+            ctx.lineWidth = 1.7;
+            ctx.globalAlpha = 0.95;
+            ctx.beginPath(); ctx.moveTo(6, -18); ctx.lineTo(1, 0); ctx.lineTo(6, 18); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-5, -18); ctx.lineTo(-5, 18); ctx.stroke();
+            ctx.globalAlpha = 0.35;
+            ctx.lineWidth = 4.5;
+            ctx.beginPath(); ctx.moveTo(6, -18); ctx.lineTo(1, 0); ctx.lineTo(6, 18); ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        // Shoulder highlight catching light from the front — every kit gets it
+        ctx.fillStyle = shadeColor(bodyBase, 32);
+        ctx.globalAlpha = look.kit === "armor" ? 0.35 : 1;
+        ctx.beginPath();
+        ctx.ellipse(4, -13, 5, 7, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Collar V, opening toward the front — the clearest facing cue on the body
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(2, -12); ctx.lineTo(10, 0); ctx.lineTo(2, 12);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.restore();
+
         // Head with gradient shading
         let headGrad = ctx.createRadialGradient(0, -4, 1, 3, 0, 14);
         headGrad.addColorStop(0, "#ffe3c4");
@@ -1694,6 +2762,19 @@ class Player extends Entity {
         ctx.beginPath();
         ctx.arc(3, 0, 12, 0, Math.PI*2); // Head sits slightly forward
         ctx.fill();
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+        // Rim light along the leading edge, tinted by the current form
+        ctx.strokeStyle = this.formIndex > 0 ? this.energyColor : "#8fa8c8";
+        ctx.lineWidth = 1.8;
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(3, 0, 11, -1.15, 0.75);
+        ctx.stroke();
+        ctx.restore();
 
         // Eyes — glowing color reflects current form's intensity
         if (this.formIndex > 0) {
@@ -1706,7 +2787,7 @@ class Player extends Entity {
         }
         ctx.beginPath(); ctx.arc(9, -4, 1.8, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(9, 4, 1.8, 0, Math.PI*2); ctx.fill();
-        
+
         // Hair (Flows backwards from the head) — subtle flicker/crackle wobble per aura style
         let wobble = 0;
         if (this.form.auraStyle === "fire") wobble = Math.sin(Date.now()*0.018) * 0.06;
@@ -1715,21 +2796,30 @@ class Player extends Entity {
         ctx.save();
         ctx.rotate(wobble);
 
+        // Cel-shaded hair: two hard-ish bands instead of a soft radial wash, and NO
+        // coloured shadow. The old 18px bloom fused the hair into the aura behind it,
+        // which is what made the player read as a shapeless bright smear.
         let hairGrad;
         if (this.formIndex === 0) {
-            hairGrad = ctx.createRadialGradient(0,0,0, 0,0,40);
-            hairGrad.addColorStop(0, "#333333");
-            hairGrad.addColorStop(1, "#0a0a0a");
+            hairGrad = ctx.createLinearGradient(6, -20, -20, 20);
+            hairGrad.addColorStop(0, "#3a3f4d");
+            hairGrad.addColorStop(0.5, "#23262f");
+            hairGrad.addColorStop(0.51, "#15171d");
+            hairGrad.addColorStop(1, "#0c0d12");
         } else {
-            hairGrad = ctx.createRadialGradient(0,0,0, 0,0,48);
+            const hi = shadeColor(this.form.color, 60);
+            const lo = shadeColor(this.form.color, -22);
+            hairGrad = ctx.createLinearGradient(8, -24, -26, 24);
             hairGrad.addColorStop(0, "#ffffff");
-            hairGrad.addColorStop(0.35, this.form.color);
-            hairGrad.addColorStop(1, this.form.color);
+            hairGrad.addColorStop(0.32, hi);
+            hairGrad.addColorStop(0.33, this.form.color);
+            hairGrad.addColorStop(0.72, this.form.color);
+            hairGrad.addColorStop(0.73, lo);
+            hairGrad.addColorStop(1, lo);
         }
         ctx.fillStyle = hairGrad;
-        ctx.shadowBlur = this.formIndex > 0 ? 18 : 0;
-        ctx.shadowColor = this.form.color;
-        
+        ctx.shadowBlur = 0;
+
         ctx.beginPath();
         if (this.formIndex === 0) { // Base
             ctx.moveTo(3, -10);
@@ -1795,6 +2885,13 @@ class Player extends Entity {
             ctx.moveTo(-10, -20); ctx.lineTo(-58, -28); ctx.lineTo(-20, -6); ctx.fill();
             ctx.moveTo(-10, 20); ctx.lineTo(-58, 28); ctx.lineTo(-20, 6); ctx.fill();
         }
+        // One stroke over the whole accumulated hair path. Every sub-path above was
+        // added after a single beginPath(), so this outlines all of them at once and
+        // gives the spikes the hard drawn edge the rest of the character now has.
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.2;
+        ctx.lineJoin = "round";
+        ctx.stroke();
         ctx.restore(); // end hair wobble
 
         // Rim light: an additive outline that sells the "energy silhouette" look
@@ -1836,59 +2933,279 @@ class Enemy extends Entity {
         this.name = rosterEntry.name;
         this.tier = rosterEntry.tier;
         this.color = rosterEntry.color;
-        // Each full lap through the roster scales stats further, so the gauntlet never truly caps out
-        let lapMult = Math.pow(1.55, lap - 1);
+        // Each full lap through the roster scales stats further.
+        // 1.55x per lap was unwinnable in the long run: enemy HP compounds forever
+        // while the player's form multiplier CAPS at 100x once Infinity unlocks, so
+        // only Zenkai kept growing. 1.32x is pitched to sit just under what a player
+        // earns per lap from Zenkai, so the gauntlet tightens without running away.
+        let lapMult = Math.pow(1.32, lap - 1);
         this.maxHp = rosterEntry.hp * lapMult;
         this.hp = this.maxHp;
         this.baseDmg = rosterEntry.dmg * lapMult;
         this.speedMult = rosterEntry.speedMult;
         this.timer = 0;
         this.rangedTimer = random(60, 150); // stagger first ranged shot
+
+        // --- AI state ---
+        this.archetype = rosterEntry.archetype || "rusher";
+        this.state = 'chase';
+        this.stateT = 0;
+        this.windupMax = 1;
+        this.windupKind = 'lunge';
+        this.lockAngle = 0;
+        this.recoverFrames = 22;
+        this.attackCd = random(30, 80);   // stagger the opening attack
+        this.blinkCd = random(90, 160);
+        this.burstCd = 120;
+        this.strafeDir = Math.random() < 0.5 ? -1 : 1;
+        this.strafeT = random(30, 80);
     }
     
+    // ---- AI helpers -------------------------------------------------------
+    accel(ang, mult) {
+        this.vx += Math.cos(ang) * 0.5 * this.speedMult * mult;
+        this.vy += Math.sin(ang) * 0.5 * this.speedMult * mult;
+    }
+    // Enter a telegraphed wind-up. The telegraph is the whole point: a committed
+    // attack the player can SEE coming is what makes dashing and i-frames matter.
+    beginWindup(frames, kind) {
+        this.state = 'windup';
+        this.stateT = frames;
+        this.windupMax = frames;
+        this.windupKind = kind;
+        this.lockAngle = angle(this, player);
+    }
+    swingAt(ang, reach, size, dmgMult, knock) {
+        hitboxes.push({
+            x: this.x + Math.cos(ang) * reach, y: this.y + Math.sin(ang) * reach,
+            w: size, h: size, life: 9,
+            damage: this.baseDmg * dmgMult, knockback: knock, stun: 12,
+            owner: this, color: this.color, isCircular: true, angle: ang
+        });
+        particles.push(new Particle(this.x + Math.cos(ang) * reach, this.y + Math.sin(ang) * reach,
+            0, 0, size * 0.45, this.color, 10, "arcSlash", ang, null,
+            { sweep: 1.5, thickness: size * 0.14, spin: 0.2 }));
+    }
+    shootAt(ang, speed, sizeMul, dmgMult) {
+        projectiles.push(new Projectile(
+            this.x + Math.cos(ang) * 30, this.y + Math.sin(ang) * 30,
+            Math.cos(ang) * speed, Math.sin(ang) * speed,
+            (8 + this.tier) * sizeMul, this.baseDmg * dmgMult, this.color, this));
+    }
+
     update(dt) {
         super.update(dt);
-        
+
         if (this.hp <= 0) return; // defeated — sits still while the victory sequence plays out
-        if (this.isStunned > 0) return;
-        
-        // Top-down tracking
-        let dist = distance(this, player);
-        this.angle = angle(this, player);
-        
-        if (dist > 80 && dist < 600) {
-            this.vx += Math.cos(this.angle) * 0.5 * this.speedMult;
-            this.vy += Math.sin(this.angle) * 0.5 * this.speedMult;
-        } else if (dist <= 80 && Math.random() < (0.04 + this.tier*0.008) && this.timer <= 0) {
-            // Melee attack — higher tiers hit harder and recover faster
-            this.timer = Math.max(18, 60 - this.tier*5);
-            this.vx = Math.cos(this.angle) * 10;
-            this.vy = Math.sin(this.angle) * 10;
-            hitboxes.push({
-                x: this.x + Math.cos(this.angle)*30, 
-                y: this.y + Math.sin(this.angle)*30, 
-                w: 50, h: 50,
-                life: 10, damage: this.baseDmg, knockback: 5 + this.tier*0.5, stun: 10, owner: this, color: this.color, isCircular: true, angle: this.angle
-            });
+        if (this.isStunned > 0 && this.state !== 'windup') return;
+        // A committed wind-up has ARMOUR: chip hits no longer erase it. Letting any
+        // hit cancel meant a fast form simply mashed every telegraph away and never
+        // had to dodge anything — the tell existed but never became a threat.
+        // Only a combo finisher breaks it (see the finisher branch in hit resolution),
+        // so interrupting a big attack is a deliberate play rather than a side effect.
+
+        const dist = distance(this, player);
+        const toPlayer = angle(this, player);
+        if (this.state !== 'strike') this.angle = toPlayer;
+
+        if (this.stateT > 0) this.stateT -= dt;
+        if (this.attackCd > 0) this.attackCd -= dt;
+        if (this.blinkCd > 0) this.blinkCd -= dt;
+        if (this.burstCd > 0) this.burstCd -= dt;
+        this.strafeT -= dt;
+        if (this.strafeT <= 0) { this.strafeT = random(40, 90); this.strafeDir *= -1; }
+
+        // --- LEASH ------------------------------------------------------------
+        // Nothing is ever safe. The old AI simply stopped caring past 600 units,
+        // which let the player retreat, charge ki to full unopposed, transform and
+        // walk back — quietly defeating the whole ki economy. Now disengaging is
+        // chased down, and hard.
+        // A committed wind-up is never cancelled by range — it plays out and whiffs.
+        // Cancelling here meant high-mobility forms (whose M1 dash carries the player
+        // hundreds of units per swing) blew past the leash every swing and erased
+        // every telegraph before it could land.
+        if (dist > 480 && this.state !== 'windup') {
+            this.accel(toPlayer, 2.2);
+            if (Math.random() < 0.4) {
+                particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 0.8, this.color, 9, "ghost"));
+            }
+            return;
         }
 
-        // Ranged ki blasts unlock at higher tiers, adding pressure from a distance
-        if (this.tier >= 3 && dist > 130 && dist < 550 && this.rangedTimer <= 0 && Math.random() < 0.025) {
-            this.rangedTimer = Math.max(50, 110 - this.tier*8);
-            let pSpeed = 11 + this.tier;
-            projectiles.push(new Projectile(
-                this.x + Math.cos(this.angle)*30, this.y + Math.sin(this.angle)*30,
-                Math.cos(this.angle)*pSpeed, Math.sin(this.angle)*pSpeed,
-                8 + this.tier, this.baseDmg * 1.1, this.color, this
-            ));
+        const ARCH = this.archetype || "rusher";
+
+        // --- Shared state exits -------------------------------------------------
+        if (this.state === 'strike') {
+            if (this.stateT <= 0) { this.state = 'recover'; this.stateT = this.recoverFrames || 22; }
+            return;
+        }
+        if (this.state === 'recover') {
+            // Vulnerable window — this is the player's turn
+            if (this.stateT <= 0) this.state = 'chase';
+            return;
+        }
+        if (this.state === 'windup') {
+            this.vx *= 0.82; this.vy *= 0.82;      // plant feet while charging
+            if (this.stateT <= 0) this.executeAttack(ARCH, dist);
+            return;
+        }
+
+        // --- Per-archetype movement and attack selection -------------------------
+        if (ARCH === "rusher") {
+            // Straight-line pressure, big committed lunges
+            this.accel(toPlayer, 1.15);
+            if (dist < 150 && this.attackCd <= 0) {
+                this.beginWindup(22, 'lunge');
+                this.attackCd = 72;
+            }
+        } else if (ARCH === "zoner") {
+            // Wants to live at mid range and chip
+            if (dist < 210) this.accel(toPlayer + Math.PI, 1.25);
+            else if (dist > 370) this.accel(toPlayer, 0.95);
+            else this.accel(toPlayer + Math.PI / 2 * this.strafeDir, 0.8);
+
+            if (dist > 170 && this.attackCd <= 0) {
+                this.beginWindup(26, 'volley');
+                this.attackCd = 84;
+            }
+            // Panic burst: shove the player off when they get inside its range
+            if (dist < 120 && this.burstCd <= 0) {
+                this.burstCd = 170;
+                hitboxes.push({
+                    x: this.x, y: this.y, w: 210, h: 210, life: 8,
+                    damage: this.baseDmg * 0.7, knockback: 26, stun: 14,
+                    owner: this, color: this.color, isCircular: true
+                });
+                particles.push(new Particle(this.x, this.y, 0, 0, 105, this.color, 20, "shockRing"));
+                this.accel(toPlayer + Math.PI, 5);
+            }
+        } else if (ARCH === "duelist") {
+            // Circles, keeps its spacing, and punishes commitment
+            if (dist > 250) this.accel(toPlayer, 1.0);
+            else if (dist < 150) this.accel(toPlayer + Math.PI, 0.7);
+            else this.accel(toPlayer + Math.PI / 2 * this.strafeDir, 1.15);
+
+            // The counter: the player is mid-attack or locked into a channel
+            const committed = player.attackCooldown > 3 || player.isBeaming;
+            if (dist < 320 && this.attackCd <= 0 && (committed || Math.random() < 0.012)) {
+                this.beginWindup(committed ? 14 : 20, 'dashStrike');
+                this.attackCd = 78;
+            }
+        } else { // warlord
+            const enraged = this.hp / this.maxHp < 0.4;
+            this.accel(toPlayer, enraged ? 1.5 : 1.05);
+
+            if (dist > 260 && this.blinkCd <= 0) {
+                // Blink in — you cannot simply walk away from these
+                this.blinkCd = enraged ? 150 : 240;
+                for (let i = 0; i < 5; i++) {
+                    particles.push(new Particle(this.x, this.y, 0, 0, this.radius * (1 - i * 0.14), this.color, 8 + i * 2, "ghost"));
+                }
+                const a = angle(this, player);
+                this.x = player.x - Math.cos(a) * 95;
+                this.y = player.y - Math.sin(a) * 95;
+                particles.push(new Particle(this.x, this.y, 0, 0, 60, this.color, 14, "shockRing"));
+                this.beginWindup(enraged ? 17 : 24, 'slam');
+                this.attackCd = 70;
+            } else if (dist < 170 && this.attackCd <= 0) {
+                this.beginWindup(enraged ? 16 : 24, 'slam');
+                this.attackCd = enraged ? 58 : 88;
+            }
+        }
+
+        // Soft separation. Without it the aggressive archetypes settle exactly on top
+        // of the player, which makes melee spacing unreadable and looks broken.
+        if (dist < 48) this.accel(toPlayer + Math.PI, 1.6);
+
+        // Ranged harassment stays available to the upper tiers as a secondary threat
+        if (this.tier >= 3 && dist > 200 && dist < 470 && this.rangedTimer <= 0 && Math.random() < 0.02) {
+            this.rangedTimer = Math.max(50, 110 - this.tier * 8);
+            this.shootAt(toPlayer, 11 + this.tier, 1, 1.1);
         }
         if (this.rangedTimer > 0) this.rangedTimer -= dt;
-        
         if (this.timer > 0) this.timer -= dt;
+    }
+
+    // Resolve whatever the wind-up was charging.
+    executeAttack(ARCH, dist) {
+        const a = angle(this, player);
+        this.state = 'strike';
+        this.stateT = 12;
+
+        if (this.windupKind === 'lunge') {
+            this.recoverFrames = 26;               // long recovery = the player's opening
+            this.vx = Math.cos(a) * 24 * this.speedMult;
+            this.vy = Math.sin(a) * 24 * this.speedMult;
+            this.swingAt(a, 42, 78, 1.0, 14);
+            screenShake(4);
+        } else if (this.windupKind === 'volley') {
+            this.recoverFrames = 20;
+            const shots = 3;
+            for (let i = 0; i < shots; i++) {
+                this.shootAt(a + (i - 1) * 0.16, 12 + this.tier, 0.9, 0.62);
+            }
+        } else if (this.windupKind === 'dashStrike') {
+            this.recoverFrames = 18;               // short — duelists are hard to punish
+            const d = Math.min(dist, 260);
+            this.x += Math.cos(a) * d * 0.72;
+            this.y += Math.sin(a) * d * 0.72;
+            for (let i = 0; i < 4; i++) {
+                particles.push(new Particle(this.x - Math.cos(a) * i * 22, this.y - Math.sin(a) * i * 22,
+                    0, 0, this.radius * 0.9, this.color, 9, "ghost"));
+            }
+            this.swingAt(a, 38, 70, 0.85, 10);
+        } else { // slam
+            this.recoverFrames = 30;               // the biggest opening in the game
+            hitboxes.push({
+                x: this.x, y: this.y, w: 260, h: 260, life: 12,
+                damage: this.baseDmg * 1.35, knockback: 34, stun: 26,
+                owner: this, color: this.color, isCircular: true
+            });
+            particles.push(new Particle(this.x, this.y, 0, 0, 130, this.color, 24, "shockRing"));
+            particles.push(new Particle(this.x, this.y, 0, 0, 40, "#ffffff", 16, "impactLines", a));
+            screenShake(14, 0.02);
+        }
+    }
+
+    // The tell. Drawn in world space so it scales with the camera and is impossible
+    // to miss: a closing ring plus a cone showing where the hit will land.
+    drawTelegraph(ctx) {
+        if (this.state !== 'windup') return;
+        const p = 1 - Math.max(0, this.stateT) / this.windupMax;   // 0 -> 1 as it charges
+        const a = this.lockAngle;
+        const isBig = this.windupKind === 'slam';
+        const reach = isBig ? 130 : 96;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.globalCompositeOperation = "lighter";
+
+        // Threat cone in the committed direction
+        ctx.rotate(a);
+        ctx.globalAlpha = 0.14 + p * 0.3;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, reach, -0.55, 0.55);
+        ctx.closePath();
+        ctx.fill();
+        ctx.rotate(-a);
+
+        // Closing ring — when it reaches the body, the hit lands
+        ctx.globalAlpha = 0.5 + p * 0.5;
+        ctx.strokeStyle = isBig ? "#ff4444" : "#ffffff";
+        ctx.lineWidth = 2 + p * 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + 70 * (1 - p), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
     }
     
     draw(ctx) {
         if (this.hp <= 0) return; // defeated enemies vanish immediately; the pickup/VFX carry the moment
+
+        // Attack tell, under the body so it never hides the fighter
+        this.drawTelegraph(ctx);
 
         // Contact shadow
         ctx.save();
@@ -1915,7 +3232,8 @@ class Enemy extends Entity {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-        
+        ctx.scale(1.4, 1.4); // match the player's on-screen scale; collision radius unchanged
+
         // Shoulders with gradient shading tinted to this rival's tier color
         let bodyDark = shadeColor(this.color, -55);
         let bodyMid = shadeColor(this.color, -25);
@@ -1927,6 +3245,18 @@ class Enemy extends Entity {
         ctx.shadowBlur = 14;
         ctx.shadowColor = this.color;
         ctx.beginPath(); ctx.ellipse(0, 0, 12, 22, 0, 0, Math.PI*2); ctx.fill();
+        // Same ink holdline + rim light as the player, so both fighters read as
+        // belonging to one drawn world rather than two different rendering styles.
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
+        ctx.strokeStyle = shadeColor(this.color, 45);
+        ctx.lineWidth = 1.6;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath(); ctx.ellipse(0, 0, 11.2, 21, 0, -1.25, 0.85); ctx.stroke();
+        ctx.restore();
         // Hands
         let handGrad = ctx.createRadialGradient(-2,-20,0,5,-18,7);
         handGrad.addColorStop(0, shadeColor(this.color, 15));
@@ -1934,18 +3264,44 @@ class Enemy extends Entity {
         ctx.fillStyle = handGrad;
         ctx.shadowBlur = 0;
         ctx.beginPath(); ctx.arc(5, -18, 6, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.8; ctx.stroke();
         ctx.beginPath(); ctx.arc(5, 18, 6, 0, Math.PI*2); ctx.fill();
-        // Head
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.8; ctx.stroke();
+
+        // Tier crest: higher-ranked rivals grow a spikier silhouette, so the threat
+        // level is readable from the shape alone before the name plate registers.
+        if (this.tier > 0) {
+            const spikes = Math.min(5, 1 + Math.floor(this.tier / 1.6));
+            ctx.fillStyle = shadeColor(this.color, -40);
+            ctx.strokeStyle = INK;
+            ctx.lineWidth = 1.6;
+            for (let s = 0; s < spikes; s++) {
+                const sa = -0.85 + (s / Math.max(1, spikes - 1)) * 1.7;
+                const len2 = 12 + this.tier * 1.6;
+                ctx.beginPath();
+                ctx.moveTo(-2 + Math.cos(sa) * 4, Math.sin(sa) * 9);
+                ctx.lineTo(-6 - Math.cos(sa) * len2, Math.sin(sa) * (len2 * 0.85));
+                ctx.lineTo(-2 + Math.cos(sa) * 4, Math.sin(sa) * 9 + 5);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+            }
+        }
+
+        // Head — lifted well clear of the body tone so the two don't merge into
+        // one featureless lozenge at combat distance.
         let headGrad = ctx.createRadialGradient(0,-4,1,3,0,14);
-        headGrad.addColorStop(0, shadeColor(this.color, 35));
-        headGrad.addColorStop(1, shadeColor(this.color, -10));
+        headGrad.addColorStop(0, shadeColor(this.color, 55));
+        headGrad.addColorStop(1, shadeColor(this.color, 5));
         ctx.fillStyle = headGrad;
         ctx.beginPath(); ctx.arc(3, 0, 12, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = 2.2; ctx.stroke();
 
-        // Eyes
-        ctx.fillStyle = "#ffee88";
-        ctx.beginPath(); ctx.arc(9, -4, 1.6, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(9, 4, 1.6, 0, Math.PI*2); ctx.fill();
+        // Eyes — hot and glowing; the one place the enemy gets to be bright
+        ctx.fillStyle = "#fff3b0";
+        ctx.shadowBlur = 10; ctx.shadowColor = "#ffcc33";
+        ctx.beginPath(); ctx.arc(9, -4, 1.9, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(9, 4, 1.9, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
         
         // Damage flash
         if (this.isStunned > 0) {
@@ -1958,8 +3314,36 @@ class Enemy extends Entity {
 }
 
 // --- Effects & Projectiles ---
+/* Soft-sprite cache.
+   Radial-gradient blobs are the most-drawn thing in the game, and both building a
+   gradient and using shadowBlur are per-call rasterisation work. Rendering each
+   unique blob ONCE into a small offscreen canvas and blitting it thereafter turns
+   that into a plain texture copy. Keyed by colour pair + core stop. */
+// Global aura emission scale — see updateAura(). 1.0 was fill-rate bound on the
+// bigger flame forms; 0.55 keeps the look while roughly halving the per-frame cost.
+let AURA_DENSITY = 0.55;
+
+const _softSprites = new Map();
+function getSoftSprite(color, core, coreStop) {
+    const key = color + "|" + core + "|" + coreStop;
+    let spr = _softSprites.get(key);
+    if (spr) return spr;
+    const S = 64;
+    spr = document.createElement('canvas');
+    spr.width = spr.height = S;
+    const g = spr.getContext('2d');
+    const grad = g.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+    grad.addColorStop(0, core);
+    grad.addColorStop(coreStop, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, S, S);
+    _softSprites.set(key, spr);
+    return spr;
+}
+
 class Particle {
-    constructor(x, y, vx, vy, size, color, life, type="normal", angle=0, parent=null) {
+    constructor(x, y, vx, vy, size, color, life, type="normal", angle=0, parent=null, opts=null) {
         this.x = x; this.y = y;
         this.vx = vx; this.vy = vy;
         this.size = size; this.maxSize = size;
@@ -1968,7 +3352,20 @@ class Particle {
         this.type = type;
         this.angle = angle;
         this.parent = parent;
-        
+
+        if (opts) {
+            // Swing geometry for tapered melee arcs, plus endpoints for arcing bolts
+            this.sweep = opts.sweep;
+            this.thickness = opts.thickness;
+            this.spinRate = opts.spin;
+            this.inner = opts.inner;
+            this.tx = opts.tx; this.ty = opts.ty;
+            // VFX aura wisps: `rise` accelerates them along -Y (or any axis via riseX),
+            // `drag` bleeds off the initial outward push.
+            this.rise = opts.rise; this.riseX = opts.riseX;
+            this.drag = opts.drag; this.core = opts.core;
+        }
+
         if (type === "lightning") {
             this.points = [{x:0, y:0}];
             let currX = 0, currY = 0;
@@ -1998,12 +3395,32 @@ class Particle {
             this.size += 3.5;
         } else if (this.type === "chromaRing" || this.type === "impactLines") {
             this.size += 6;
+        } else if (this.type === "wisp") {
+            // The aura's workhorse. Outward push bleeds off via drag while a steady
+            // acceleration carries it along the form's flow axis; size tracks life so
+            // wisps taper away instead of popping out of existence.
+            this.vx += (this.riseX || 0);
+            this.vy -= (this.rise || 0);
+            const d = this.drag === undefined ? 0.93 : this.drag;
+            this.vx *= d; this.vy *= d;
+            const k = this.life / this.maxLife;
+            this.size = this.maxSize * (0.35 + 0.65 * k);
         } else if (this.type === "flameLick") {
             this.vy -= 0.08; // rise
             this.vx *= 0.96;
             this.size = this.maxSize * (this.life / this.maxLife);
         } else if (this.type === "etherRing") {
             this.size += 1.6;
+        } else if (this.type === "arcSlash") {
+            // A swing SWEEPS — it must not balloon outward like a ring, which is exactly
+            // what made the old uniform-width arc read as a shockwave instead of a strike.
+            this.angle += (this.spinRate || 0);
+            this.size *= 0.985;
+        } else if (this.type === "shockRing") {
+            this.size += 9;
+        } else if (this.type === "sealRing") {
+            this.size += 0.8;
+            this.angle += 0.05;
         } else if (this.type === "groundCrack") {
             // static, just fades
         }
@@ -2016,12 +3433,111 @@ class Particle {
         ctx.globalAlpha = alpha;
         
         if (this.type === "normal" || this.type === "aura" || this.type === "ghost") {
-            ctx.fillStyle = this.color;
-            ctx.shadowBlur = this.size;
+            // Cached sprite instead of shadowBlur. shadowBlur is re-rasterised per
+            // draw call and was costing more than everything else combined.
+            const r = Math.max(0.5, this.size) * 1.6;
+            ctx.drawImage(getSoftSprite(this.color, this.color, 0.55), this.x - r, this.y - r, r*2, r*2);
+        } else if (this.type === "arcSlash") {
+            // A blade swipe drawn as a filled crescent whose thickness swells to a belly
+            // ~40% along and tapers to nothing at both ends, like a loaded brush stroke.
+            // The old version was a constant-width stroked arc, which has no direction
+            // and no energy — this is the single biggest fix to how melee reads.
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            let sweep = this.sweep || 1.5;
+            let r = this.size;
+            let maxT = this.thickness || r * 0.16;
+            const STEPS = 20;
+            // Sharpen the leading edge as the swing dissipates
+            let fade = alpha * alpha;
+
+            ctx.beginPath();
+            for (let i = 0; i <= STEPS; i++) {            // outer edge, tail -> head
+                let t = i / STEPS;
+                let a = -sweep / 2 + t * sweep;
+                let w = Math.sin(Math.pow(t, 0.7) * Math.PI) * maxT;
+                let rr = r + w * 0.5;
+                let px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            for (let i = STEPS; i >= 0; i--) {            // inner edge, head -> tail
+                let t = i / STEPS;
+                let a = -sweep / 2 + t * sweep;
+                let w = Math.sin(Math.pow(t, 0.7) * Math.PI) * maxT;
+                let rr = r - w * 0.5;
+                ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+            }
+            ctx.closePath();
+
+            // The crescent runs along Y in this rotated frame (x stays ~r), so the
+            // tip->belly->tip gradient must run vertically. Shading it along X instead
+            // just lit the inner edge and read as a blob.
+            let span = Math.sin(sweep / 2) * r;
+            // White is reserved for a NARROW hot core at the belly. Spread wide it
+            // bleaches the whole blade and every form's swing looks identical.
+            let grad = ctx.createLinearGradient(0, -span, 0, span);
+            grad.addColorStop(0, this.color);
+            grad.addColorStop(0.34, this.color);
+            grad.addColorStop(0.45, "#ffffff");
+            grad.addColorStop(0.57, this.color);
+            grad.addColorStop(1, this.color);
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 22 * alpha;
+            ctx.shadowColor = this.color;
+            ctx.globalAlpha = fade;
+            ctx.fill();
+
+            // A thin hot filament along the cutting edge keeps it crisp against the bloom
+            ctx.globalAlpha = fade * 0.9;
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = Math.max(1, maxT * 0.12);
+            ctx.beginPath();
+            ctx.arc(0, 0, r + maxT * 0.35, -sweep / 2, sweep / 2);
+            ctx.stroke();
+        } else if (this.type === "shockRing") {
+            // Flat, fast, thinning ground ring — weight without a colour wash
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = Math.max(1, 16 * alpha * alpha);
+            ctx.shadowBlur = 25 * alpha;
             ctx.shadowColor = this.color;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-            ctx.fill();
+            ctx.stroke();
+        } else if (this.type === "sealRing") {
+            // Godslayer's brand: a slowly turning double ring with radial ticks
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.strokeStyle = this.color;
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = this.color;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(0, 0, this.size, 0, Math.PI*2); ctx.stroke();
+            ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.arc(0, 0, this.size * 0.74, 0, Math.PI*2); ctx.stroke();
+            for (let i = 0; i < 8; i++) {
+                let a = (i / 8) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(a) * this.size * 0.74, Math.sin(a) * this.size * 0.74);
+                ctx.lineTo(Math.cos(a) * this.size, Math.sin(a) * this.size);
+                ctx.stroke();
+            }
+        } else if (this.type === "boltTo") {
+            // A jagged arc from this point to a target point (Ascended's chain lightning)
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            let segs = 6;
+            for (let i = 1; i <= segs; i++) {
+                let t = i / segs;
+                let bx = this.x + (this.tx - this.x) * t;
+                let by = this.y + (this.ty - this.y) * t;
+                if (i < segs) { bx += random(-18, 18); by += random(-18, 18); }
+                ctx.lineTo(bx, by);
+            }
+            ctx.stroke();
         } else if (this.type === "slash") {
             ctx.translate(this.x, this.y);
             ctx.rotate(this.angle);
@@ -2159,6 +3675,16 @@ class Particle {
                 ctx.lineTo(this.x + Math.cos(a)*outerR, this.y + Math.sin(a)*outerR);
                 ctx.stroke();
             }
+        } else if (this.type === "wisp") {
+            // Hot core fading to the form colour and out. Soft-edged on purpose —
+            // the aura is built from many overlapping wisps, not from one drawn shape.
+            // One cached sprite per (core,colour) pair, blitted with drawImage.
+            // Building a fresh radial gradient per particle per frame was the single
+            // biggest cost in the frame — hundreds of gradient objects every tick.
+            let r = Math.max(0.5, this.size);
+            ctx.globalAlpha = Math.pow(alpha, 1.2); // hold presence, then fall away
+            ctx.drawImage(getSoftSprite(this.color, this.core || "#ffffff", 0.35),
+                          this.x - r, this.y - r, r*2, r*2);
         } else if (this.type === "flameLick") {
             let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
             grad.addColorStop(0, "#fff4cc");
@@ -2200,6 +3726,9 @@ class Projectile {
         this.homingStrength = options.homingStrength || 0.04;
         this.pulls = options.pulls || false; // pulls the target toward the shooter instead of knocking it away
         this.shatter = options.shatter || false; // bursts into shrapnel on impact
+        this.multiHit = options.multiHit || false; // grinds through the target, re-hitting on a timer
+        this.hitInterval = options.hitInterval || 7;
+        this.hitCooldown = 0;
     }
     
     update(dt) {
@@ -2232,6 +3761,12 @@ class Projectile {
         
         // Collision with whichever fighter doesn't own this projectile
         let target = this.owner === player ? enemy : player;
+        // A boring/drilling shot re-arms on a timer so it grinds through the target
+        // over several frames instead of detonating on first contact.
+        if (this.multiHit) {
+            if (this.hitCooldown > 0) this.hitCooldown -= dt;
+            if (this.hasHit && this.hitCooldown <= 0) this.hasHit = false;
+        }
         if (this.active && !this.hasHit && target.hp > 0 && distance(this, target) < this.size + target.radius) {
             let dmgMult = (this.owner === player) ? player.zenkaiDmgMult : 1;
             let kx, ky;
@@ -2246,6 +3781,16 @@ class Projectile {
             }
             target.takeDamage(this.damage * dmgMult, kx, ky, 15);
             this.hasHit = true; // a piercing orb keeps flying, but never hits the same target twice
+            if (this.multiHit) {
+                this.hitCooldown = this.hitInterval;
+                this.hits = (this.hits || 0) + 1;
+                // Hard cap: a target pinned against the arena wall can't drift clear,
+                // which would otherwise let one shot tick for its whole lifetime.
+                if (this.hits >= 8) { this.active = false; }
+                // Bite in: a drill that keeps its full speed crosses the target in a
+                // single frame and only ever lands one tick. Biting in is the whole point.
+                this.vx *= 0.42; this.vy *= 0.42;
+            }
             
             // Explosion
             particles.push(new Particle(this.x, this.y, 0, 0, this.size*2, this.color, 15, this.style === "hakai" ? "hakai" : "ring"));
@@ -2268,7 +3813,8 @@ class Projectile {
     draw(ctx) {
         if (!this.active) return;
         ctx.save();
-        
+        let alpha = Math.max(0, Math.min(1, this.life / 30)); // fade out over the last half-second
+
         if (this.style === "hakai") {
             ctx.globalCompositeOperation = "source-over";
             ctx.fillStyle = "#000000";
@@ -2296,6 +3842,60 @@ class Projectile {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size*0.4, 0, Math.PI*2);
             ctx.fill();
+        } else if (this.style === "drill") {
+            // A spinning auger: stacked chevrons that rotate around the travel axis, so
+            // it reads as boring forward rather than simply flying forward.
+            let ang = Math.atan2(this.vy, this.vx);
+            ctx.translate(this.x, this.y);
+            ctx.rotate(ang);
+            ctx.globalCompositeOperation = "lighter";
+            ctx.shadowBlur = 20; ctx.shadowColor = this.color;
+            let L = this.size * 3.2;
+            // Hot core shaft
+            let g = ctx.createLinearGradient(-L * 0.5, 0, L * 0.6, 0);
+            g.addColorStop(0, "rgba(0,0,0,0)");
+            g.addColorStop(0.4, this.color);
+            g.addColorStop(1, "#ffffff");
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(L * 0.6, 0);
+            ctx.lineTo(-L * 0.5, -this.size * 0.5);
+            ctx.lineTo(-L * 0.5, this.size * 0.5);
+            ctx.closePath();
+            ctx.fill();
+            // Helical flutes
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                let t = i / 5;
+                let px = L * 0.6 - t * L * 1.05;
+                let amp = this.size * 0.62 * Math.sin(this.spin * 1.6 + i * 1.25);
+                ctx.globalAlpha = alpha * 0.75;
+                ctx.beginPath();
+                ctx.moveTo(px, -amp);
+                ctx.lineTo(px - this.size * 0.4, amp);
+                ctx.stroke();
+            }
+        } else if (this.style === "collapse") {
+            // An inverted orb: dark core ringed by light being drawn into it
+            ctx.translate(this.x, this.y);
+            let dg = ctx.createRadialGradient(0, 0, this.size * 0.15, 0, 0, this.size * 1.3);
+            dg.addColorStop(0, "#000000");
+            dg.addColorStop(0.6, "rgba(0,0,0,0.7)");
+            dg.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = dg;
+            ctx.beginPath(); ctx.arc(0, 0, this.size * 1.3, 0, Math.PI * 2); ctx.fill();
+            ctx.globalCompositeOperation = "lighter";
+            ctx.rotate(this.spin);
+            ctx.strokeStyle = this.color;
+            ctx.shadowBlur = 25; ctx.shadowColor = this.color;
+            for (let i = 0; i < 3; i++) {
+                ctx.globalAlpha = alpha * (0.7 - i * 0.18);
+                ctx.lineWidth = 2.5 - i * 0.6;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size * (0.9 + i * 0.3), this.size * (0.32 + i * 0.14), i * 0.8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
         } else if (this.style === "claw") {
             // Three parallel claw-rake slashes traveling forward, like a beast's claw marks
             let ang = Math.atan2(this.vy, this.vx);
@@ -2386,6 +3986,160 @@ class Projectile {
         ctx.restore();
     }
 }
+/* ---------------------------------------------------------------------------
+   SHARED ENERGY-BEAM RENDERER
+
+   A beam is LIGHT. The governing rule here, learned the hard way: the ink
+   holdline that makes the characters read is exactly wrong on energy — a dark
+   line running through a beam reads as dirt, and a stepped corona reads as mud.
+   Ink is for matter. Light gets a hot white core and a clean saturated falloff.
+
+   Layer order, dim -> hot, all sharing ONE silhouette so the edges agree:
+     outer halo -> saturated body -> bright inner -> white core -> striations
+
+   Detail is kept longitudinal (flow lines down the barrel) rather than
+   decorative (helixes, ring artifacts), so the eye reads speed and power
+   instead of clutter.
+--------------------------------------------------------------------------- */
+// How far along the barrel we are, shaped so edge decorations widen with the flare.
+function flare01(f) { return f * f; }
+
+function drawEnergyBeam(ctx, ox, oy, ang, len, width, color, opts = {}) {
+    const t       = opts.time !== undefined ? opts.time : Date.now() * 0.001;
+    const grow    = opts.grow !== undefined ? opts.grow : 1;
+    const flare   = opts.flare !== undefined ? opts.flare : 0.22;
+    const ragged  = opts.ragged || 0;     // Beast: torn, unstable edges
+    const coreCol = opts.coreColor || "#ffffff";
+    const hot     = shadeColor(color, 55);
+
+    // Width along the barrel. A little life in the edge, but never so much that
+    // the silhouette stops being a clean shaft of light.
+    const wAt = f => {
+        let w = width * grow * (0.70 + flare * f);
+        w *= 0.97 + 0.03 * Math.sin(t * 19 + f * 7);
+        if (ragged) w *= 1 + ragged * 0.28 * Math.sin(f * 31 + t * 26);
+        return w;
+    };
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.rotate(ang);
+    ctx.globalCompositeOperation = "lighter";
+
+    const STEPS = 30;
+    const edge = [];
+    for (let i = 0; i <= STEPS; i++) {
+        const f = i / STEPS;
+        edge.push({ x: f * len, w: wAt(f) * 0.5 });
+    }
+    // taper closes the far end so the beam never terminates in a hard vertical cut
+    const tracePath = (scale, taper) => {
+        const wOf = i => {
+            const f = i / STEPS;
+            let w = edge[i].w * scale;
+            if (taper > 0 && f > 1 - taper) w *= Math.max(0, 1 - (f - (1 - taper)) / taper);
+            return w;
+        };
+        ctx.beginPath();
+        ctx.moveTo(edge[0].x, -wOf(0));
+        for (let i = 1; i <= STEPS; i++) ctx.lineTo(edge[i].x, -wOf(i));
+        for (let i = STEPS; i >= 0; i--) ctx.lineTo(edge[i].x, wOf(i));
+        ctx.closePath();
+    };
+
+    // dim -> hot. Each layer is a plain fill of the same shape, so they line up
+    // exactly; brightness alone carries the falloff.
+    const layers = [
+        { s: 2.15, a: 0.13, c: color,   taper: 0.26, blur: width * 0.9 },
+        { s: 1.45, a: 0.26, c: color,   taper: 0.18, blur: width * 0.5 },
+        { s: 1.00, a: 0.92, c: color,   taper: 0.10, blur: width * 0.3 },
+        { s: 0.62, a: 0.95, c: hot,     taper: 0.07, blur: width * 0.2 },
+        { s: 0.28, a: 1.00, c: coreCol, taper: 0.05, blur: width * 0.15 }
+    ];
+    for (const L of layers) {
+        ctx.globalAlpha = L.a;
+        ctx.fillStyle = L.c;
+        ctx.shadowColor = L.c;
+        ctx.shadowBlur = L.blur;
+        tracePath(L.s, L.taper);
+        ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    // Striations: thin bright lines flowing down the barrel. These give the beam
+    // motion without the busy squiggle a helix produces.
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = coreCol;
+    ctx.lineWidth = Math.max(1, width * 0.025);
+    for (let s = 0; s < 4; s++) {
+        const off = (s - 1.5) / 1.5;                 // -1..1 across the barrel
+        const slide = ((t * 2.2 + s * 0.37) % 1);
+        const x0 = slide * len * 0.55;
+        const x1 = Math.min(len, x0 + len * 0.42);
+        ctx.beginPath();
+        for (let i = 0; i <= 12; i++) {
+            const x = x0 + (x1 - x0) * (i / 12);
+            const f = x / len;
+            const y = off * wAt(f) * 0.32;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
+
+// The charged sphere sitting in the fighter's hands at the base of a beam.
+function drawBeamMuzzle(ctx, x, y, r, color, t, coreCol = "#ffffff") {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, coreCol);
+    g.addColorStop(0.38, coreCol);
+    g.addColorStop(0.58, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+
+    // A tight flicker ring reads as contained pressure at the muzzle
+    ctx.strokeStyle = coreCol;
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t * 24);
+    ctx.lineWidth = Math.max(1, r * 0.07);
+    ctx.beginPath(); ctx.arc(x, y, r * 0.62, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+}
+
+// Where a beam terminates on something solid.
+function drawBeamImpact(ctx, x, y, ang, r, color, t, coreCol = "#ffffff") {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.globalCompositeOperation = "lighter";
+
+    const pulse = r * (0.92 + 0.1 * Math.sin(t * 28));
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, pulse * 1.5);
+    g.addColorStop(0, coreCol);
+    g.addColorStop(0.26, coreCol);
+    g.addColorStop(0.46, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, pulse * 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // Back-spray licking back along the beam toward the shooter
+    ctx.rotate(ang + Math.PI);
+    ctx.strokeStyle = color;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 7; i++) {
+        const a = (i / 6 - 0.5) * 1.5;
+        const l = pulse * (1.2 + 0.8 * Math.abs(Math.sin(t * 14 + i * 2.1)));
+        ctx.globalAlpha = 0.5 * (1 - Math.abs(a) / 1.05);
+        ctx.lineWidth = Math.max(1.5, r * 0.1);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * pulse * 0.6, Math.sin(a) * pulse * 0.6);
+        ctx.lineTo(Math.cos(a) * l, Math.sin(a) * l);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
 
 class Beam {
     constructor(owner, angle, width, damagePerFrame, duration, color, options={}) {
@@ -2400,6 +4154,20 @@ class Beam {
         this.life = duration; 
         this.pulls = options.pulls || false; // gravity-well beam: drags the target toward the shooter
         this.wrapStyle = options.wrapStyle || "none"; // per-form visual flourish wrapped around the beam core
+        this.rend = options.rend || false;   // Beast's cannon loads bleed stacks while it burns
+        this.rendTick = 0;
+        // Lateral muzzle offset: twin beams leave from each HAND and angle inward, so
+        // they genuinely cross. Firing both from one point just makes a V.
+        this.lateral = options.lateral || 0;
+    }
+
+    // Muzzle position, accounting for the lateral hand offset.
+    origin() {
+        const cos = Math.cos(this.angle), sin = Math.sin(this.angle);
+        return {
+            x: this.owner.x + cos * 34 + (-sin) * this.lateral,
+            y: this.owner.y + sin * 34 + (cos) * this.lateral
+        };
     }
     
     update(dt) {
@@ -2418,9 +4186,10 @@ class Beam {
         let cos = Math.cos(this.angle);
         let sin = Math.sin(this.angle);
         
-        // Hit detection via rotation mapping
-        let dx = enemy.x - this.owner.x;
-        let dy = enemy.y - this.owner.y;
+        // Hit detection via rotation mapping, measured from this beam's own muzzle
+        let org = this.origin();
+        let dx = enemy.x - org.x;
+        let dy = enemy.y - org.y;
         
         let rotatedX = dx * cos + dy * sin;
         let rotatedY = -dx * sin + dy * cos;
@@ -2433,6 +4202,17 @@ class Beam {
                 ky = Math.sin(pullAngle) * 6;
             } else {
                 kx = cos * 5; ky = sin * 5;
+            }
+            if (this.rend) {
+                // Stacks build while the cannon burns, capped so a single blast can't
+                // apply the whole bleed by itself — the M1 claws still matter.
+                this.rendTick -= dt;
+                if (this.rendTick <= 0) {
+                    this.rendTick = 6;
+                    enemy.rend = Math.min(8, enemy.rend + 1);
+                    enemy.rendSource = this.owner;
+                    if (enemy.rendTimer <= 0) enemy.rendTimer = 18;
+                }
             }
             enemy.takeDamage(this.damage * (this.owner.zenkaiDmgMult || 1), kx, ky, 5);
             particles.push(new Particle(enemy.x - cos*10, enemy.y - sin*10, -cos*5, -sin*5, random(5,15), this.color, 10));
@@ -2448,128 +4228,123 @@ class Beam {
         let startY = this.owner.y + sin*30;
         particles.push(new Particle(startX + random(-this.width/4, this.width/4)*-sin, startY + random(-this.width/4, this.width/4)*cos, -cos*5, -sin*5, random(5,10), this.color, 5));
 
-        // Subtle screen-wide color tint while channeling a beam, refreshed each frame so it holds steady
-        effects.push({ type: 'beamGlow', color: this.color, life: 4, maxLife: 4 });
+        // NOTE: deliberately NO screen-wide tint. An additive full-screen wash toward
+        // the beam colour destroys the black point and turns the whole frame olive.
+        // 'beamEdge' only lights the screen borders, leaving the arena black.
+        effects.push({ type: 'beamEdge', color: this.color, life: 4, maxLife: 4 });
     }
     
     draw(ctx) {
         if (this.duration <= 0) return;
-        
+
+        const t = performance.now() * 0.001;
+        const cos = Math.cos(this.angle), sin = Math.sin(this.angle);
+        const org = this.origin();
+        const startX = org.x;
+        const startY = org.y;
+
+        // Expand out of the muzzle over the first frames rather than snapping to full
+        // width. The wind-up is most of what sells a beam's power.
+        const age = this.maxDuration - this.duration;
+        const grow = Math.min(1, 0.28 + age / 9);
+
+        // Terminate on the target when the beam is actually connecting, so it ends in
+        // an impact bloom instead of sliding through the enemy and off the screen.
+        let len = 2400;
+        let hitPoint = null;
+        if (enemy && enemy.hp > 0) {
+            const dx = enemy.x - startX, dy = enemy.y - startY;
+            const along = dx * cos + dy * sin;
+            const perp = Math.abs(-dx * sin + dy * cos);
+            if (along > 0 && perp < this.width / 2 + enemy.radius) {
+                len = along + enemy.radius * 0.4;
+                hitPoint = { x: startX + cos * len, y: startY + sin * len };
+            }
+        }
+
+        drawEnergyBeam(ctx, startX, startY, this.angle, len, this.width, this.color, {
+            time: t,
+            grow: grow,
+            // Each beam owns a different silhouette so they never read as one move:
+            //   feral   = torn, unstable edges that flare hard
+            //   gravity = narrows toward the far end, light falling inward
+            //   default = a clean, confident shaft
+            flare:  this.wrapStyle === "gravity" ? -0.30 : (this.wrapStyle === "feral" ? 0.55 : 0.22),
+            ragged: this.wrapStyle === "feral" ? 0.42 : 0
+        });
+
+        // Per-form flourishes keep beam-using forms distinguishable at a glance
+        if (this.wrapStyle === "feral") this.drawFeralWrap(ctx, startX, startY, len, grow, t);
+        else if (this.wrapStyle === "gravity") this.drawGravityWrap(ctx, startX, startY, len, grow, t);
+
+        // Muzzle scales SUB-linearly with beam width. At a flat 0.72x, Beast's cannon
+        // produced a charge sphere large enough to swallow the fighter firing it.
+        drawBeamMuzzle(ctx, startX, startY, (26 + this.width * 0.26) * grow, this.color, t);
+
+        if (hitPoint) {
+            drawBeamImpact(ctx, hitPoint.x, hitPoint.y, this.angle, this.width * grow * 0.9, this.color, t);
+        }
+    }
+
+    // Beast: arcs lashing along the OUTSIDE of the shaft. Drawn additively and hot —
+    // the earlier near-black version was the same ink-on-light error that made the
+    // beam look dirty. Energy claws at the beam's edges; it never darkens its middle.
+    drawFeralWrap(ctx, sx, sy, len, grow, t) {
         ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(this.angle);
         ctx.globalCompositeOperation = "lighter";
-        let cos = Math.cos(this.angle);
-        let sin = Math.sin(this.angle);
-        
-        let startX = this.owner.x + cos*30;
-        let startY = this.owner.y + sin*30;
-        let endX = this.owner.x + cos*2000;
-        let endY = this.owner.y + sin*2000;
-        
-        // Pulsing width
-        let currentWidth = this.width * (0.8 + Math.random()*0.4);
+        const w = this.width * grow;
+        ctx.lineCap = "round";
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = "#ff3a1a";
+        // SHORT arcs flickering along both edges, each on its own life cycle. Two long
+        // continuous zigzags read as a sawtooth graphic pasted onto the beam; brief
+        // segments that appear and vanish read as energy actually crackling off it.
+        const ARCS = 16;
+        for (let i = 0; i < ARCS; i++) {
+            const seed = i * 2.399;
+            const phase = (t * 1.9 + i / ARCS) % 1;
+            const lifeA = Math.sin(phase * Math.PI);          // fade in and out
+            if (lifeA < 0.15) continue;
+            const side = (i % 2) ? 1 : -1;
+            const f0 = phase;
+            const f1 = Math.min(1, f0 + 0.07);
+            const ride = f => w * (0.30 + 0.16 * flare01(f)) * side;
 
-        // Flare burst at the origin point (muzzle flash)
-        let flareR = currentWidth * 1.3;
-        let flareGrad = ctx.createRadialGradient(startX, startY, 0, startX, startY, flareR);
-        flareGrad.addColorStop(0, "#ffffff");
-        flareGrad.addColorStop(0.4, this.color);
-        flareGrad.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = flareGrad;
-        ctx.beginPath();
-        ctx.arc(startX, startY, flareR, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Outer glow
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = currentWidth;
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = this.color;
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        
-        // Inner core
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = currentWidth * (this.wrapStyle === "feral" ? 0.6 : 0.4);
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "#ffffff";
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-
-        if (this.wrapStyle === "feral") {
-            // Beast: savage black/red lightning wrapped around the core
-            ctx.globalCompositeOperation = "source-over";
-            ctx.strokeStyle = "#110000"; // Almost black
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = "#ff0000";
-            ctx.lineWidth = currentWidth * 0.15;
-            
+            ctx.globalAlpha = lifeA * 0.9;
+            ctx.strokeStyle = i % 3 === 0 ? "#ffd0b0" : "#ff5a3c";
+            ctx.lineWidth = Math.max(1.2, w * 0.03);
             ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            let segments = 25;
-            let dist = 2000 / segments;
-            for(let i=1; i<=segments; i++) {
-                let perpX = -sin;
-                let perpY = cos;
-                let offset = random(-currentWidth * 0.4, currentWidth * 0.4);
-                ctx.lineTo(startX + (cos * dist * i) + (perpX * offset), 
-                           startY + (sin * dist * i) + (perpY * offset));
+            for (let k = 0; k <= 4; k++) {
+                const f = f0 + (f1 - f0) * (k / 4);
+                const jag = Math.sin(seed + k * 2.2 + t * 30) * w * 0.07;
+                const x = f * len, y = ride(f) + jag;
+                k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             }
             ctx.stroke();
-        } else if (this.wrapStyle === "overheat") {
-            // Overdrive: flickering afterimage streaks, like heat-shimmer off a redlined engine
-            ctx.globalCompositeOperation = "lighter";
-            let perpX = -sin, perpY = cos;
-            for (let i = 0; i < 3; i++) {
-                let t = (Date.now() * 0.02 + i * 2.1) % (Math.PI*2);
-                let wobble = Math.sin(t) * currentWidth * 0.6;
-                ctx.strokeStyle = i === 0 ? "#ffffff" : this.color;
-                ctx.globalAlpha = 0.35 - i*0.08;
-                ctx.lineWidth = currentWidth * 0.12;
-                ctx.beginPath();
-                ctx.moveTo(startX + perpX*wobble, startY + perpY*wobble);
-                ctx.lineTo(endX + perpX*wobble, endY + perpY*wobble);
-                ctx.stroke();
-            }
-            ctx.globalAlpha = 1;
-        } else if (this.wrapStyle === "gravity") {
-            // Singularity: concentric rings sliding along the beam, collapsing inward like gravitational lensing
-            ctx.globalCompositeOperation = "lighter";
-            ctx.strokeStyle = this.color;
-            let ringCount = 6;
-            for (let i = 0; i < ringCount; i++) {
-                let t = ((Date.now() * 0.006 + i / ringCount) % 1);
-                let dist = 60 + t * 300;
-                let rx = startX + cos * dist;
-                let ry = startY + sin * dist;
-                let r = currentWidth * 0.55 * (1 - t * 0.7);
-                ctx.globalAlpha = (1 - t) * 0.8;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(rx, ry, Math.max(2, r), 0, Math.PI*2);
-                ctx.stroke();
-            }
-            ctx.globalAlpha = 1;
-        } else if (this.wrapStyle === "holy") {
-            // Divine: gentle sparkle motes drifting along the beam
-            ctx.globalCompositeOperation = "lighter";
-            ctx.fillStyle = "#ffffff";
-            for (let i = 0; i < 8; i++) {
-                let t = ((Date.now() * 0.004 + i / 8) % 1);
-                let dist = t * 500;
-                let sx = startX + cos * dist + random(-8, 8);
-                let sy = startY + sin * dist + random(-8, 8);
-                ctx.globalAlpha = 1 - t;
-                ctx.beginPath();
-                ctx.arc(sx, sy, 2.5, 0, Math.PI*2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1;
         }
-        
+        ctx.restore();
+    }
+
+    // Singularity: rings sliding inward and collapsing, like matter falling down a well
+    drawGravityWrap(ctx, sx, sy, len, grow, t) {
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(this.angle);
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = this.color;
+        const w = this.width * grow;
+        for (let i = 0; i < 7; i++) {
+            const f = ((t * 0.9 + i / 7) % 1);
+            const x = f * len;
+            const r = w * 0.6 * (1 - f * 0.75);
+            ctx.globalAlpha = (1 - f) * 0.75;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(x, 0, Math.max(2, r * 0.3), Math.max(2, r), 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 }
@@ -2757,6 +4532,425 @@ class Execution {
         ctx.arc(this.x, this.y, this.radius * progress, 0, Math.PI*2);
         ctx.stroke();
         ctx.restore();
+
+        // Judgment column: a beam descending onto the marked point, drawn with the
+        // same renderer as every other beam so the game speaks one visual language.
+        // It narrows as it nears the ground, so the eye is pulled to the impact.
+        const t = performance.now() * 0.001;
+        const colH = 900 * (0.35 + progress * 0.65);
+        drawEnergyBeam(
+            ctx, this.x, this.y - colH, Math.PI / 2, colH,
+            this.radius * (0.42 + progress * 0.75), this.color,
+            {
+                time: t,
+                grow: 0.35 + progress * 0.65,
+                flare: -0.34           // wide at the sky end, focused at the target
+            }
+        );
+        drawBeamImpact(ctx, this.x, this.y, -Math.PI / 2, this.radius * 0.55 * (0.4 + progress), this.color, t);
+    }
+}
+
+// A strike that lands at a fixed point a few frames after it was committed.
+// Divine's afterimage uses it: the blink hits now, the echo hits a beat later,
+// which catches anything that rolled out of the first one.
+class DelayedStrike {
+    constructor(owner, x, y, damage, radius, delay, color, ang) {
+        this.owner = owner; this.x = x; this.y = y;
+        this.damage = damage; this.radius = radius;
+        this.delay = delay; this.color = color; this.ang = ang;
+        this.active = true; this.life = delay + 12;
+        this.fired = false;
+    }
+    update(dt) {
+        this.life -= dt;
+        this.delay -= dt;
+        if (!this.fired && this.delay <= 0) {
+            this.fired = true;
+            hitboxes.push({
+                x: this.x, y: this.y, w: this.radius, h: this.radius, life: 5,
+                damage: this.damage, knockback: 8, stun: 10,
+                owner: this.owner, color: this.color, isCircular: true, angle: this.ang
+            });
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 0.7, this.color, 12, "arcSlash", this.ang - 0.5, null,
+                { sweep: 1.6, thickness: this.radius * 0.1, spin: 0.2 }));
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 0.3, "#ffffff", 8, "impactFlash"));
+            this.active = false;
+        }
+    }
+    draw(ctx) {
+        if (this.fired) return;
+        // Faint premonition of where the echo will land
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = 0.25 * (1 - this.delay / 9);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 0.45, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// Divine's Satellites: orbs that hold station around the caster, damaging anything
+// they sweep through. A persistent zone the player positions with their body —
+// a completely different verb from "fire a thing at the enemy".
+class Orbital {
+    constructor(owner, count, duration, radius, damage, color) {
+        this.owner = owner; this.count = count;
+        this.life = duration; this.maxLife = duration;
+        this.radius = radius; this.damage = damage; this.color = color;
+        this.phase = 0; this.active = true;
+        this.cool = new Array(count).fill(0);
+    }
+    update(dt) {
+        this.life -= dt;
+        this.phase += 0.055 * dt;
+        let target = this.owner === player ? enemy : player;
+        for (let i = 0; i < this.count; i++) {
+            if (this.cool[i] > 0) this.cool[i] -= dt;
+            let a = this.phase + (i / this.count) * Math.PI * 2;
+            let ox = this.owner.x + Math.cos(a) * this.radius;
+            let oy = this.owner.y + Math.sin(a) * this.radius;
+            if (Math.random() < 0.5) {
+                particles.push(new Particle(ox, oy, 0, 0, 9, this.color, 10, "normal"));
+            }
+            if (this.cool[i] <= 0 && target && target.hp > 0 && distance({x: ox, y: oy}, target) < 30 + target.radius) {
+                this.cool[i] = 22; // each orb has its own re-hit timer so they don't all dump at once
+                hitboxes.push({
+                    x: ox, y: oy, w: 60, h: 60, life: 3,
+                    damage: this.damage, knockback: 10, stun: 6,
+                    owner: this.owner, color: this.color, isCircular: true
+                });
+                particles.push(new Particle(ox, oy, 0, 0, 26, this.color, 12, "ring"));
+            }
+        }
+        if (this.life <= 0) this.active = false;
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        let fade = Math.min(1, this.life / 30);
+        for (let i = 0; i < this.count; i++) {
+            let a = this.phase + (i / this.count) * Math.PI * 2;
+            let ox = this.owner.x + Math.cos(a) * this.radius;
+            let oy = this.owner.y + Math.sin(a) * this.radius;
+            ctx.globalAlpha = fade;
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 24; ctx.shadowColor = this.color;
+            ctx.beginPath(); ctx.arc(ox, oy, 13, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath(); ctx.arc(ox, oy, 5.5, 0, Math.PI * 2); ctx.fill();
+            // Tether back to the caster reads the orbit as owned rather than incidental
+            ctx.globalAlpha = fade * 0.14;
+            ctx.strokeStyle = this.color; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(this.owner.x, this.owner.y); ctx.lineTo(ox, oy); ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// Beast's Devouring Roar: an instant forward cone rather than a beam. It resolves in
+// one frame over a wide arc, so it punishes anything in front instead of asking the
+// player to hold an aim line — and it loads the target with Rend stacks.
+class Roar {
+    constructor(owner, range, arc, damage, color) {
+        this.owner = owner; this.ang = owner.angle;
+        this.range = range; this.arc = arc; this.damage = damage; this.color = color;
+        this.life = 26; this.maxLife = 26; this.active = true;
+        this.hit = false;
+    }
+    update(dt) {
+        this.life -= dt;
+        if (!this.hit) {
+            this.hit = true;
+            let target = this.owner === player ? enemy : player;
+            if (target && target.hp > 0) {
+                let d = distance(this.owner, target);
+                let da = Math.atan2(Math.sin(angle(this.owner, target) - this.ang), Math.cos(angle(this.owner, target) - this.ang));
+                if (d < this.range && Math.abs(da) < this.arc / 2) {
+                    target.rend = Math.min(8, target.rend + 3);
+                    target.rendSource = this.owner;
+                    target.rendTimer = 18;
+                    let kx = Math.cos(this.ang) * 26, ky = Math.sin(this.ang) * 26;
+                    target.takeDamage(this.damage * (this.owner.zenkaiDmgMult || 1), kx, ky, 30);
+                }
+            }
+            screenShake(26, 0.03);
+            triggerHitStop(8);
+            camera.targetZoom = 1.08;
+            // Debris blown down the cone
+            for (let i = 0; i < 40; i++) {
+                let a = this.ang + random(-this.arc / 2, this.arc / 2);
+                let sp = random(14, 34);
+                particles.push(new Particle(this.owner.x, this.owner.y, Math.cos(a) * sp, Math.sin(a) * sp,
+                    random(4, 11), i % 3 === 0 ? "#ffffff" : this.color, random(16, 30), "spark"));
+            }
+        }
+        if (this.life <= 0) this.active = false;
+    }
+    draw(ctx) {
+        let t = this.life / this.maxLife;
+        let reach = this.range * (1 - Math.pow(t, 2.2));   // the cone punches outward fast
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.translate(this.owner.x, this.owner.y);
+        ctx.rotate(this.ang);
+        let g = ctx.createLinearGradient(0, 0, reach, 0);
+        g.addColorStop(0, "#ffffff");
+        g.addColorStop(0.3, this.color);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalAlpha = t;
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, reach, -this.arc / 2, this.arc / 2);
+        ctx.closePath();
+        ctx.fill();
+        // Concentric pressure fronts travelling down the cone
+        ctx.globalAlpha = t * 0.8;
+        ctx.strokeStyle = "#ffffff";
+        for (let i = 0; i < 3; i++) {
+            let rr = reach * (0.45 + i * 0.26);
+            ctx.lineWidth = 3 - i;
+            ctx.beginPath();
+            ctx.arc(0, 0, rr, -this.arc / 2 * 0.92, this.arc / 2 * 0.92);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// Overdrive's Piledriver: a command grab. It closes, latches, and slams the target
+// repeatedly into one spot. Nothing else in the kit takes control of the enemy's
+// position, which is what makes it feel like a different move and not another combo.
+class Piledriver {
+    constructor(owner, slams, damage, color) {
+        this.owner = owner; this.slams = slams; this.damage = damage; this.color = color;
+        this.done = 0; this.timer = 0; this.active = true;
+        this.life = slams * 13 + 50;
+        this.state = "lunge";
+        owner.isBeaming = true; // reuse the existing busy-lock so other actions pause
+    }
+    update(dt) {
+        this.life -= dt;
+        let target = this.owner === player ? enemy : player;
+        if (!target || target.hp <= 0) { this.finish(); return; }
+
+        if (this.state === "lunge") {
+            let ang = angle(this.owner, target);
+            this.owner.x += (target.x - Math.cos(ang) * 30 - this.owner.x) * 0.45;
+            this.owner.y += (target.y - Math.sin(ang) * 30 - this.owner.y) * 0.45;
+            this.owner.vx = 0; this.owner.vy = 0;
+            particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, this.owner.radius, this.color, 10, "ghost"));
+            if (distance(this.owner, target) < 70) {
+                this.state = "slam";
+                this.anchorX = this.owner.x; this.anchorY = this.owner.y;
+                particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, 80, "#ffffff", 14, "shockRing"));
+            }
+            if (this.life < this.slams * 13 + 10) this.state = "slam"; // never hang on a fleeing target
+            return;
+        }
+
+        // Latched: the target is held and driven into the ground on a beat
+        this.timer -= dt;
+        target.isStunned = Math.max(target.isStunned, 6);
+        let lift = Math.max(0, Math.sin((this.timer / 13) * Math.PI)) * 46;
+        let ang = this.owner.angle;
+        target.x = this.anchorX + Math.cos(ang) * (44 + lift);
+        target.y = this.anchorY + Math.sin(ang) * (44 + lift);
+        target.vx = 0; target.vy = 0;
+
+        if (this.timer <= 0 && this.done < this.slams) {
+            this.timer = 13;
+            this.done++;
+            let last = this.done === this.slams;
+            target.iframes = 0; // the grab is not escapable by i-frames
+            target.takeDamage(this.damage * (last ? 2.4 : 1) * (this.owner.zenkaiDmgMult || 1), 0, 0, 12);
+            particles.push(new Particle(target.x, target.y, 0, 0, last ? 150 : 80, this.color, last ? 26 : 16, "shockRing"));
+            particles.push(new Particle(target.x, target.y, 0, 0, 30, "#ffffff", 10, "impactLines", ang));
+            for (let i = 0; i < (last ? 26 : 10); i++) {
+                let a = random(0, Math.PI * 2), sp = random(6, last ? 26 : 14);
+                particles.push(new Particle(target.x, target.y, Math.cos(a) * sp, Math.sin(a) * sp, random(3, 8), this.color, random(14, 26), "spark"));
+            }
+            screenShake(last ? 30 : 13, last ? 0.04 : 0.015);
+            triggerHitStop(last ? 11 : 5);
+        }
+        if (this.done >= this.slams || this.life <= 0) this.finish();
+    }
+    finish() {
+        if (!this.active) return;
+        this.active = false;
+        this.owner.isBeaming = false;
+    }
+    draw(ctx) {
+        // Everything renders through hitbox/particle spawns above.
+    }
+}
+
+// Singularity's Event Horizon: a placed gravity well. It drags everything inward for
+// a sustained window, then implodes. Unlike a beam it is fire-and-forget and holds
+// ground, so it changes where the fight happens rather than just dealing damage.
+class SingularityWell {
+    constructor(owner, x, y, duration, radius, damage, color) {
+        this.owner = owner; this.x = x; this.y = y;
+        this.life = duration; this.maxLife = duration;
+        this.radius = radius; this.damage = damage; this.color = color;
+        this.active = true; this.spin = 0;
+    }
+    update(dt) {
+        this.life -= dt;
+        this.spin += 0.09 * dt;
+        let target = this.owner === player ? enemy : player;
+        if (target && target.hp > 0) {
+            let d = distance(this, target);
+            if (d < this.radius && d > 1) {
+                let a = angle(target, this);
+                let pull = (1 - d / this.radius) * 2.6;
+                target.vx += Math.cos(a) * pull;
+                target.vy += Math.sin(a) * pull;
+            }
+        }
+        // Infalling matter
+        for (let i = 0; i < 3; i++) {
+            let a = random(0, Math.PI * 2);
+            let d = random(this.radius * 0.35, this.radius);
+            particles.push(new Particle(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d,
+                -Math.cos(a) * random(3, 8), -Math.sin(a) * random(3, 8), random(2, 5), this.color, 16, "spark"));
+        }
+        if (this.life <= 0) {
+            // Implosion
+            hitboxes.push({
+                x: this.x, y: this.y, w: this.radius * 1.1, h: this.radius * 1.1, life: 12,
+                damage: this.damage, knockback: 46, stun: 55,
+                owner: this.owner, color: this.color, isCircular: true, isFinisher: true
+            });
+            particles.push(new Particle(this.x, this.y, 0, 0, this.radius * 0.6, "#ffffff", 30, "shockRing"));
+            particles.push(new Particle(this.x, this.y, 0, 0, 40, this.color, 34, "chromaRing"));
+            for (let i = 0; i < 46; i++) {
+                let a = random(0, Math.PI * 2), sp = random(10, 34);
+                particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, random(4, 12), this.color, random(20, 36), "spark"));
+            }
+            screenShake(34, 0.045);
+            triggerHitStop(12);
+            camera.targetZoom = 1.14;
+            this.active = false;
+        }
+    }
+    draw(ctx) {
+        let t = 1 - this.life / this.maxLife;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        // The void core is drawn as actual darkness, not additive light — it should
+        // subtract from the scene so it reads as a hole rather than another glow.
+        // Scaled to actually swallow a fighter — this is a 92-ki ultimate, and at the
+        // old radius the core read as a pickup rather than a collapsing star.
+        let core = 46 + Math.sin(this.spin * 2) * 5;
+        let g = ctx.createRadialGradient(0, 0, core * 0.3, 0, 0, core * 2.6);
+        g.addColorStop(0, "#000000");
+        g.addColorStop(0.55, "rgba(0,0,0,0.85)");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(0, 0, core * 2.6, 0, Math.PI * 2); ctx.fill();
+
+        ctx.globalCompositeOperation = "lighter";
+        // Accretion disc
+        ctx.rotate(this.spin);
+        ctx.strokeStyle = this.color;
+        ctx.shadowBlur = 30; ctx.shadowColor = this.color;
+        for (let i = 0; i < 3; i++) {
+            ctx.globalAlpha = 0.5 - i * 0.12;
+            ctx.lineWidth = 3 - i * 0.7;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, core * (1.5 + i * 0.55), core * (0.45 + i * 0.2), i * 0.7, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.rotate(-this.spin);
+        // Boundary of influence, tightening as it nears collapse
+        ctx.globalAlpha = 0.16 + t * 0.2;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, this.radius * (1 - t * 0.3), 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// Infinity's Finale: the capstone. Time crawls, the fighter lands strikes from every
+// direction in sequence, then detonates the arena. It is deliberately the only move
+// that plays as a set-piece rather than an action.
+class Finale {
+    constructor(owner, strikes, interval, damage, blastSize, blastDamage, color) {
+        this.owner = owner; this.strikes = strikes; this.interval = interval;
+        this.damage = damage; this.blastSize = blastSize; this.blastDamage = blastDamage;
+        this.color = color;
+        this.done = 0; this.timer = 0; this.active = true;
+        this.life = strikes * interval + 70;
+        this.blown = false;
+        owner.isBeaming = true;
+        camera.targetZoom = 1.16;
+    }
+    update(dt) {
+        this.life -= dt;
+        this.timer -= dt;
+        let target = this.owner === player ? enemy : player;
+
+        if (this.done < this.strikes && this.timer <= 0 && target && target.hp > 0) {
+            this.timer = this.interval;
+            this.done++;
+            // Ring around the target, struck in sequence from alternating sides
+            let a = (this.done / this.strikes) * Math.PI * 4 + (this.done % 2 ? 0 : Math.PI);
+            let r = 46;
+            this.owner.x = target.x + Math.cos(a) * r;
+            this.owner.y = target.y + Math.sin(a) * r;
+            this.owner.vx = 0; this.owner.vy = 0;
+            this.owner.angle = a + Math.PI;
+
+            particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, this.owner.radius, "#ffffff", 12, "ghost"));
+            hitboxes.push({
+                x: target.x, y: target.y, w: 90, h: 90, life: 4,
+                damage: this.damage, knockback: 0, stun: 10,
+                owner: this.owner, color: this.color, isCircular: true
+            });
+            particles.push(new Particle(target.x, target.y, 0, 0, 62, this.color, 11, "arcSlash", a + Math.PI - 0.6, null,
+                { sweep: 1.7, thickness: 13, spin: 0.26 }));
+            particles.push(new Particle(target.x, target.y, 0, 0, 22, "#ffffff", 7, "impactFlash"));
+            screenShake(7);
+            triggerHitStop(2);
+        }
+
+        if (this.done >= this.strikes && !this.blown) {
+            this.blown = true;
+            this.timer = 16; // a held beat before the detonation — the silence sells it
+        }
+        if (this.blown && this.timer <= 0) {
+            hitboxes.push({
+                x: this.owner.x, y: this.owner.y, w: this.blastSize, h: this.blastSize, life: 20,
+                damage: this.blastDamage, knockback: 60, stun: 70,
+                owner: this.owner, color: this.color, isCircular: true, isFinisher: true
+            });
+            particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, this.blastSize / 2, this.color, 30, "explosiveWave"));
+            particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, this.blastSize / 3, "#ffffff", 26, "shockRing"));
+            particles.push(new Particle(this.owner.x, this.owner.y, 0, 0, 50, "#ffffff", 34, "chromaRing"));
+            for (let i = 0; i < 60; i++) {
+                let a = random(0, Math.PI * 2), sp = random(12, 44);
+                particles.push(new Particle(this.owner.x, this.owner.y, Math.cos(a) * sp, Math.sin(a) * sp,
+                    random(5, 14), i % 4 === 0 ? "#ffffff" : this.color, random(24, 44), "spark"));
+            }
+            effects.push({ type: 'flash', color: "#ffffff", life: 26, maxLife: 26 });
+            screenShake(44, 0.06);
+            triggerHitStop(16);
+            camera.targetZoom = 1.2;
+            this.finish();
+        }
+        if (this.life <= 0) this.finish();
+    }
+    finish() {
+        if (!this.active) return;
+        this.active = false;
+        this.owner.isBeaming = false;
+    }
+    draw(ctx) {
+        // Renders via spawned hitboxes/particles.
     }
 }
 
@@ -2835,19 +5029,31 @@ function onEnemyDefeated() {
     gameState.score += Math.round(enemy.maxHp);
 
     // Zenkai Boost: the closer the player came to death this fight, the bigger the permanent payoff
+    // The old curve paid 0.02–0.11 damage growth scaled almost entirely by how close
+    // you came to dying, which PUNISHED skill: clearing a wave cleanly left you
+    // growing ~1.17x per lap against enemies growing 1.55x, so playing well made you
+    // weaker. The floor is now high enough that a clean clear roughly keeps pace with
+    // enemy scaling, and living dangerously still pulls you meaningfully ahead.
     let survivalFactor = 1 - player.lowestHpFrac;
-    if (survivalFactor > 0.05) {
-        let hpBoost = 0.03 + survivalFactor * 0.14;
-        let dmgBoost = 0.02 + survivalFactor * 0.09;
+    {
+        // 0.035 floor makes a clean clear track enemy lap scaling almost exactly;
+        // the survival bonus is deliberately small, because at +0.045 a player who
+        // fought on the edge was one-shotting everything by lap 6.
+        let hpBoost = 0.02 + survivalFactor * 0.035;
+        let dmgBoost = 0.035 + survivalFactor * 0.025;
         player.zenkaiHpMult *= (1 + hpBoost);
         player.zenkaiDmgMult *= (1 + dmgBoost);
         player.maxHp = BASE_MAX_HP * player.zenkaiHpMult;
-        player.hp = player.maxHp;
-        showZenkaiPopup(Math.round(hpBoost*100), Math.round(dmgBoost*100));
-        screenShake(8);
-    } else {
-        // Still reward the win with a partial heal even without a dramatic Zenkai swing
-        player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.3);
+        // A clean clear heals instead of full-restoring, so untouched waves still
+        // carry some risk forward rather than resetting the fight for free.
+        if (survivalFactor > 0.05) {
+            player.hp = player.maxHp;
+            showZenkaiPopup(Math.round(hpBoost*100), Math.round(dmgBoost*100));
+            screenShake(8);
+        } else {
+            player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.35);
+            showZenkaiPopup(Math.round(hpBoost*100), Math.round(dmgBoost*100));
+        }
     }
 
     showVictoryBanner(`${enemy.name} DEFEATED`, `Wave ${gameState.wave} Clear — Power Level ${gameState.score}`);
@@ -3024,7 +5230,39 @@ enemy:      ${enemy ? enemy.name : '-'}
 enemy hp:   ${enemy ? Math.round(enemy.hp) + '/' + Math.round(enemy.maxHp) : '-'}`;
 }
 
-spawnEnemyForWave();
+// --- Title scene boot -------------------------------------------------------
+// The game opens on the title rather than dropping straight into wave 1. The
+// attract fighter is shown in Super so the aura VFX is on display immediately.
+gameState.phase = 'title';
+player.formIndex = 1;
+player.ki = player.maxKi;
+
+function startGame() {
+    const scr = document.getElementById('title-screen');
+    if (!scr.classList.contains('active')) return;
+    scr.classList.remove('active');
+
+    // Reset out of the attract pose into a real run
+    player.formIndex = 0;
+    player.ki = 0;
+    player.angle = 0;
+    particles = []; projectiles = []; hitboxes = []; effects = []; decals = [];
+
+    const formUI = document.getElementById('form-name');
+    formUI.innerText = FORMS[0].name;
+    formUI.style.color = FORMS[0].color;
+    formUI.style.textShadow = 'none';
+
+    gameState.phase = 'fight';
+    camera.targetZoom = 1;
+    spawnEnemyForWave();
+}
+document.getElementById('title-start').addEventListener('click', startGame);
+// Any key also starts, so the player never hunts for the button
+window.addEventListener('keydown', (e) => {
+    if (gameState.phase === 'title' && !e.repeat) startGame();
+});
+
 updateDragonBallTrackerUI();
 
 function hexToRgb(hex) {
@@ -3042,6 +5280,64 @@ function drawGrid(ctx, camX, camY, tintColor) {
     const cx = width/2, cy = height/2;
     const maxDist = Math.hypot(cx, cy);
     const rgb = hexToRgb(tintColor);
+
+    // --- Arena plateau ---------------------------------------------------------
+    // The fight happens on a bounded slab, so draw the slab. World->screen here is
+    // simply (world - cam), matching the grid convention below.
+    const ARENA = 2000;
+    const pl = -ARENA - camX, pt = -ARENA - camY, pw = ARENA * 2;
+    ctx.save();
+    // Slab body: very slightly lifted from the void so it has an edge to read against
+    // Kept deliberately faint. A heavier slab lifts the whole arena to blue-grey,
+    // which kills the contrast the beams and auras need in order to read as light.
+    // The floor should be felt, not seen.
+    let slab = ctx.createLinearGradient(0, pt, 0, pt + pw);
+    slab.addColorStop(0, "rgba(26,32,54,0.22)");
+    slab.addColorStop(0.5, "rgba(18,23,40,0.28)");
+    slab.addColorStop(1, "rgba(10,13,24,0.20)");
+    ctx.fillStyle = slab;
+    ctx.fillRect(pl, pt, pw, pw);
+
+    // Scorch decals sit ON the slab, under the grid etching
+    ctx.globalCompositeOperation = "source-over";
+    for (const d of decals) {
+        const a = Math.min(1, d.life / d.maxLife);
+        const dx = d.x - camX, dy = d.y - camY;
+        if (dx < -300 || dx > width + 300 || dy < -300 || dy > height + 300) continue;
+        // Irregular blast char. A perfect circle with a rim reads as a drawn ring
+        // floating over the floor; a lobed, soft-edged blot reads as a burn in it.
+        ctx.save();
+        ctx.translate(dx, dy);
+        ctx.rotate(d.seed);
+        let g = ctx.createRadialGradient(0, 0, 0, 0, 0, d.r);
+        g.addColorStop(0, `rgba(4,3,8,${0.78 * a})`);
+        g.addColorStop(0.45, `rgba(6,5,12,${0.55 * a})`);
+        g.addColorStop(0.8, `rgba(8,7,16,${0.2 * a})`);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        for (let k = 0; k <= 22; k++) {
+            const ang2 = (k / 22) * Math.PI * 2;
+            const lobe = d.r * (0.74 + 0.26 * Math.sin(ang2 * 3 + d.seed) * Math.cos(ang2 * 2 - d.seed));
+            k === 0 ? ctx.moveTo(Math.cos(ang2) * lobe, Math.sin(ang2) * lobe)
+                    : ctx.lineTo(Math.cos(ang2) * lobe, Math.sin(ang2) * lobe);
+        }
+        ctx.closePath();
+        ctx.fill();
+        // Cooling embers scattered inside the char, fading faster than the burn
+        const rgbD = hexToRgb(d.color);
+        ctx.globalCompositeOperation = "lighter";
+        for (let k = 0; k < 5; k++) {
+            const ea = d.seed + k * 1.9;
+            const er = d.r * (0.2 + 0.42 * ((k * 37) % 10) / 10);
+            ctx.fillStyle = `rgba(${rgbD.r},${rgbD.g},${rgbD.b},${0.1 * a * a})`;
+            ctx.beginPath();
+            ctx.arc(Math.cos(ea) * er, Math.sin(ea) * er, d.r * 0.09, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+    ctx.restore();
 
     ctx.lineWidth = 1;
     // Draw grid lines with per-line radial-ish fade for a moody, spotlighted arena floor
@@ -3093,6 +5389,18 @@ function gameLoop(time) {
         dt = rawDt * 0.06;
     }
     
+    // Title attract mode: no combat, but the arena and a slowly turning fighter keep
+    // rendering behind the title mark so the screen is alive rather than a static card.
+    if (gameState.phase === 'title') {
+        player.x = 0; player.y = 0; player.vx = 0; player.vy = 0;
+        player.angle += 0.0045 * dt;              // idle turn
+        player.ki = player.maxKi;
+        player.charging = false;
+        player.updateStatus(dt);
+        player.updateAura();                      // the aura VFX is the attract shot
+        camera.targetZoom = 1.35;
+    }
+
     // Update logic — combat only advances while a fight is actively underway
     if (gameState.phase === 'fight') {
         player.update(dt);
@@ -3144,8 +5452,12 @@ function gameLoop(time) {
             if (hit && target.isStunned <= 0 && target.hp > 0) { 
                 let kx = 0, ky = 0;
                 
-                // New logic safely computes knockback on arbitrary angles
-                if (hb.angle !== undefined) {
+                // Gravity-style strikes drag the target toward the attacker instead of away
+                if (hb.pull) {
+                    let ang = angle(target, hb.owner);
+                    kx = Math.cos(ang) * hb.knockback;
+                    ky = Math.sin(ang) * hb.knockback;
+                } else if (hb.angle !== undefined) {
                     kx = Math.cos(hb.angle) * hb.knockback;
                     ky = Math.sin(hb.angle) * hb.knockback;
                 } else if (hb.isCircular) {
@@ -3153,9 +5465,34 @@ function gameLoop(time) {
                     kx = Math.cos(ang) * hb.knockback;
                     ky = Math.sin(ang) * hb.knockback;
                 }
-                
+
                 let dmgMult = (hb.owner === player) ? player.zenkaiDmgMult : 1;
-                target.takeDamage(hb.damage * dmgMult, kx, ky, hb.stun);
+                let dealt = hb.damage * dmgMult;
+
+                // --- On-hit status application (Beast's Rend, Godslayer's Seals) ---
+                if (hb.effect === "rend" && target.iframes <= 0) {
+                    target.rend = Math.min(8, target.rend + 1);
+                    target.rendSource = hb.owner;
+                    if (target.rendTimer <= 0) target.rendTimer = 18;
+                } else if (hb.effect === "rendDetonate" && target.iframes <= 0) {
+                    // The finisher cashes in every stack at once, then clears them
+                    if (target.rend > 0) {
+                        // Roughly 8 stacks ~= one extra finisher's worth of damage
+                        dealt += target.rend * 8 * (hb.owner.form ? hb.owner.form.damageMultiplier : 1);
+                        for (let s = 0; s < target.rend * 3; s++) {
+                            let a = random(0, Math.PI * 2), sp = random(6, 18);
+                            particles.push(new Particle(target.x, target.y, Math.cos(a)*sp, Math.sin(a)*sp, random(3, 8), "#ff2222", random(16, 26), "spark"));
+                        }
+                        particles.push(new Particle(target.x, target.y, 0, 0, 40 + target.rend * 14, "#ff3311", 22, "shockRing"));
+                        screenShake(10 + target.rend * 2, 0.02);
+                        triggerHitStop(6);
+                        target.rend = 0;
+                    }
+                } else if (hb.effect === "seal" && target.iframes <= 0) {
+                    target.seals = Math.min(5, target.seals + 1);
+                }
+
+                target.takeDamage(dealt, kx, ky, hb.stun);
                 hb.life = 0; // Consume hitbox
                 
                 // Visual Impact
@@ -3164,7 +5501,22 @@ function gameLoop(time) {
                 particles.push(new Particle(hx, hy, 0, 0, hb.isFinisher ? 40 : 20, hb.color, 10, "ring"));
 
                 if (hb.isFinisher) {
+                    // A finisher is the one thing that breaks a committed wind-up —
+                    // so reading the tell and answering it with your combo ender is a
+                    // real, rewarded decision.
+                    // ...but only EARLY in the tell. A fast form's finisher comes round
+                    // more often than a wind-up lasts, so an unconditional break meant
+                    // mashing interrupted every attack and the AI never landed a blow.
+                    // Breaking now requires catching it in the first half: read the
+                    // tell and answer it, rather than happening to be mid-combo.
+                    if (target.state === 'windup' && target.stateT > target.windupMax * 0.5) {
+                        target.state = 'recover';
+                        target.stateT = 26;
+                        particles.push(new Particle(target.x, target.y, 0, 0, target.radius * 2.6, "#ffffff", 20, "shockRing"));
+                        triggerHitStop(9);
+                    }
                     // Big hits get extra weight: hit-stop, chromatic burst, speed-lines, camera punch
+                    addDecal(hx, hy, Math.max(45, hb.w * 0.55), hb.color);
                     triggerHitStop(7);
                     particles.push(new Particle(hx, hy, 0, 0, 15, hb.color, 22, "chromaRing"));
                     particles.push(new Particle(hx, hy, 0, 0, 25, "#ffffff", 16, "impactLines", angle(hb.owner, target)));
@@ -3192,16 +5544,23 @@ function gameLoop(time) {
         effects[i].life -= dt;
         if (effects[i].life <= 0) effects.splice(i, 1);
     }
+    for (let i = decals.length - 1; i >= 0; i--) {
+        decals[i].life -= dt;
+        if (decals[i].life <= 0) decals.splice(i, 1);
+    }
 
     // Safety valve: hard-cap array sizes so no pathological burst of activity can ever
     // snowball into a performance death-spiral. Trims the oldest entries first.
-    if (particles.length > 350) particles.splice(0, particles.length - 350);
+    if (particles.length > 420) particles.splice(0, particles.length - 420);
     if (projectiles.length > 100) projectiles.splice(0, projectiles.length - 100);
     if (hitboxes.length > 50) hitboxes.splice(0, hitboxes.length - 50);
     
     // Camera follow player
+    // On the title the fighter is framed low, below the title mark, so the aura backs
+    // the type without the sprite itself cutting through the tagline.
+    const camBiasY = gameState.phase === 'title' ? height * 0.30 : 0;
     camera.x += (player.x - width/2 - camera.x) * 0.1;
-    camera.y += (player.y - height/2 - camera.y) * 0.1;
+    camera.y += (player.y - height/2 - camBiasY - camera.y) * 0.1;
 
     // Camera zoom punch, easing back to neutral
     camera.targetZoom += (1 - camera.targetZoom) * 0.08;
@@ -3237,13 +5596,21 @@ function gameLoop(time) {
 
     drawArenaBoundary(ctx, time);
     
+    // Cull off-screen particles before drawing. A fight that drifts toward the arena
+    // edge would otherwise pay full draw cost for blobs nobody can see.
+    const _vm = 160 / camera.zoom;                        // margin, world units
+    const _vl = camera.x - _vm, _vr = camera.x + width / camera.zoom + _vm;
+    const _vt = camera.y - _vm, _vb = camera.y + height / camera.zoom + _vm;
+    const _vis = p => p.x > _vl && p.x < _vr && p.y > _vt && p.y < _vb;
+    const _isBack = p => p.type === "aura" || p.type === "ghost" || p.type === "flameLick" || p.type === "wisp";
+
     // Sort particles by type vaguely (auras behind)
-    particles.forEach(p => { if(p.type === "aura" || p.type === "ghost" || p.type === "flameLick") p.draw(ctx); });
-    
+    particles.forEach(p => { if(_isBack(p) && _vis(p)) p.draw(ctx); });
+
     if (enemy) enemy.draw(ctx);
     player.draw(ctx);
-    
-    particles.forEach(p => { if(p.type !== "aura" && p.type !== "ghost" && p.type !== "flameLick") p.draw(ctx); });
+
+    particles.forEach(p => { if(!_isBack(p) && _vis(p)) p.draw(ctx); });
     projectiles.forEach(p => p.draw(ctx));
 
     // Dragon Ball pickups — glowing orb with its star count, DBZ-style
@@ -3281,13 +5648,18 @@ function gameLoop(time) {
             ctx.globalAlpha = (e.life / e.maxLife) * 0.5;
             ctx.fillRect(0, 0, width, height);
             ctx.globalAlpha = 1.0;
-        } else if (e.type === 'beamGlow') {
+        } else if (e.type === 'beamEdge') {
+            // Rim-only bounce light: bright at the screen edges, fully transparent
+            // across the middle, so the arena keeps its black point while the frame
+            // still reacts to the beam. The old version filled the centre too and
+            // washed everything to olive.
             ctx.save();
             ctx.globalCompositeOperation = "lighter";
-            let g = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width,height) * 0.7);
+            let g = ctx.createRadialGradient(width/2, height/2, Math.min(width,height) * 0.30, width/2, height/2, Math.max(width,height) * 0.72);
             g.addColorStop(0, "rgba(0,0,0,0)");
+            g.addColorStop(0.75, "rgba(0,0,0,0)");
             g.addColorStop(1, e.color);
-            ctx.globalAlpha = (e.life / e.maxLife) * 0.18;
+            ctx.globalAlpha = (e.life / e.maxLife) * 0.30;
             ctx.fillStyle = g;
             ctx.fillRect(0, 0, width, height);
             ctx.restore();
@@ -3319,6 +5691,32 @@ function gameLoop(time) {
     }
     
     document.getElementById('enemy-health-bar').style.width = `${enemy ? Math.max(0, (enemy.hp / enemy.maxHp) * 100) : 0}%`;
+
+    // --- Status readouts -----------------------------------------------------
+    // Rend, Seals and Heat drive real mechanics but had no representation at all,
+    // so players had no way to learn they existed. Rebuilt only when the values
+    // change, since this touches the DOM every frame otherwise.
+    const pips = (n, max) => `<span class="status-pips">${
+        Array.from({length: max}, (_, i) => `<i style="opacity:${i < n ? 1 : 0.18}"></i>`).join('')
+    }</span>`;
+    let eStatus = "";
+    if (enemy && enemy.hp > 0) {
+        if (enemy.rend > 0) eStatus += `<span class="status-chip" style="color:#ff5540">Rend ${pips(enemy.rend, 8)}</span>`;
+        if (enemy.seals > 0) eStatus += `<span class="status-chip" style="color:#ffd700">Seal ${pips(enemy.seals, 5)}</span>`;
+    }
+    const eEl = document.getElementById('enemy-status');
+    if (eEl.dataset.sig !== eStatus) { eEl.innerHTML = eStatus; eEl.dataset.sig = eStatus; }
+
+    let pStatus = "";
+    if (player.form.m1Style === "rush") {
+        const h = Math.round(player.heat || 0);
+        pStatus += `<span class="status-chip" style="color:${h > 75 ? '#ffffff' : '#ffaa00'}">Heat`
+                 + `<span class="status-meter"><span style="width:${h}%"></span></span></span>`;
+    }
+    if (player.iframes > 0) pStatus += `<span class="status-chip" style="color:#7fe9ff">Evade</span>`;
+    const pEl = document.getElementById('player-status');
+    if (pEl.dataset.sig !== pStatus) { pEl.innerHTML = pStatus; pEl.dataset.sig = pStatus; }
+
     document.getElementById('wave-count').innerText = gameState.wave;
     document.getElementById('power-level').innerText = gameState.score;
     updateAdminTelemetry();
@@ -3343,6 +5741,34 @@ function gameLoop(time) {
 
 // Start
 requestAnimationFrame(gameLoop);
+
+// --- Deterministic step hook (development/inspection aid) ---
+// Some embedded preview surfaces never fire requestAnimationFrame, which freezes the
+// sim on frame one. This drives the same loop by hand so the game can be stepped,
+// inspected and captured without depending on the host's animation callbacks.
+window.__t = {
+    step(n = 1, msPerFrame = 1000 / 60) {
+        for (let i = 0; i < n; i++) {
+            lastTime = performance.now() - msPerFrame;
+            gameLoop(performance.now());
+        }
+    },
+    setForm(i) { adminForceForm(i); },
+    press(k) { keys[k] = true; },
+    release(k) { keys[k] = false; },
+    aimAt(x, y) { mouseX = x; mouseY = y; },
+    get() {
+        return {
+            form: player.form.name,
+            formIndex: player.formIndex,
+            hp: Math.round(player.hp), ki: Math.round(player.ki),
+            combo: player.m1Combo, heat: Math.round(player.heat || 0),
+            enemy: enemy ? { name: enemy.name, hp: Math.round(enemy.hp), rend: enemy.rend, seals: enemy.seals } : null,
+            counts: { particles: particles.length, projectiles: projectiles.length, hitboxes: hitboxes.length },
+            wave: gameState.wave, phase: gameState.phase
+        };
+    }
+};
 
 </script>
 </body>

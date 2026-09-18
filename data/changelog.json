@@ -1,7 +1,193 @@
 {
   "entries": [
     {
-      "game": "blox-fruits-2d",
+      "game": "redwater",
+      "title": "Redwater - A Frontier Tale",
+      "date": "2026-09-18",
+      "summary": "Replaces the old Blue Lock game entirely. A top-down open-world western RPG in a single file.",
+      "sections": [
+        {
+          "heading": "The county",
+          "items": [
+            "Six thousand acres of bleached flats, red mesa and dry riverbed, drawn like a spaghetti western printed on an 1880s wanted poster - flat lithographic shapes, heavy blacks, one low raking sun that swings through a seven-minute day.",
+            "Twelve named places including the town of Redwater, the outlaw hold at Black Mesa, Copper Creek Mine, Hargrave Ranch, Perdition Depot, Boot Hill and the Old Mission.",
+            "Eight buildings you walk into rather than menus that open - the Dry Gulch saloon with a piano man who only knows one tune, the sheriff's office with a prisoner who swears he was nowhere near that horse."
+          ]
+        },
+        {
+          "heading": "No side, then a side",
+          "items": [
+            "You start as a drifter nobody has decided about. Sheriff Abel Cordell offers tin; Silas Kane offers the other thing.",
+            "Both branches have their own chain of work - bounties, a stagecoach to hold, a raid on the mesa, or a bank to crack and a sheriff to hang - and both converge on Augustus Hargrave, the baron paying both sides of every argument in the county.",
+            "When the story runs out, the bounty board and the job board keep printing paper forever."
+          ]
+        },
+        {
+          "heading": "Twenty guns, four that wake up",
+          "items": [
+            "Common iron is pale and worn and does nothing but fire; fine steel is blued and brass-banded; rare arms carry an ability on Q.",
+            "Four legendaries carry an awakening on F that charges as you deal damage: Dead Man's Hand stops time and marks every soul in sight, Judgment lays four expanding rings of fire the ground remembers, Widowmaker drains the world to ink and bone for one shot, and Iron Horse brings six barrels and ghost horses through the smoke."
+          ]
+        },
+        {
+          "heading": "Also in there",
+          "items": [
+            "Dead Eye slow-motion aiming, dive-rolls, horses you can buy or break in, and dynamite.",
+            "A wanted level that sends posses after you, quick-draw duels on a full cinematic screen, ten perks, and a save that keeps your ride."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "rivalforge",
+      "title": "Meridian - release notes",
+      "date": "2026-09-18",
+      "summary": "Rivalforge is now Meridian, moved from a night-shift machine hall to a daylit one.",
+      "sections": [
+        {
+          "heading": "Renamed and relit",
+          "items": [
+            "The old name described a dark room the game no longer has. A meridian is both high noon and the precision line on a transit instrument.",
+            "Re-authored world materials, environment map, light rig (the key is now the warm one, the fill the cool one), volumetrics, post grade, and a full light-mode flip of the interface. The forge became a sun gate - a glimpse, not a wall.",
+            "The file is still rivalforge.html and saves still live under the old key, deliberately: renaming either would wipe every player's inventory."
+          ]
+        },
+        {
+          "heading": "Two new rarity tiers",
+          "items": [
+            "Forged - finishes that react to the game. Overclock reads your magazine and runs cold blue to hot orange as it empties; Parallax windmills the Longbow's scope collars and locks as the rifle settles; Filament charges as the balisong closes.",
+            "Zenith - finishes that perform, with their own animations, one per weapon: Aperture (karambit drawn out of a portal), Teardown (rifle hangs in eighteen pieces and assembles on the draw), Afterimage, Glitch, Swarm, Tourbillon (a working clock on the receiver, and nine more behind it that all disagree) and Phase.",
+            "Total skins now 59."
+          ]
+        },
+        {
+          "heading": "Economy rework",
+          "items": [
+            "The old odds mirrored CS:GO, which without a cash market behind them was punishing - a crate returned 5-13% of its price and three of the four crates could not drop the top two tiers at all.",
+            "Crate price now buys genuinely better odds: Classified-or-better runs 5.8%, 10.7%, 16.6% then 25% up the ladder, with expected return a consistent 60-78%.",
+            "Every crate can produce every tier, and Forged and Zenith come from a shared pool.",
+            "New Calibration: a tolerance-drift gauge fills on every disappointing open and guarantees a Classified or better when it fills, with five purchasable levels to shorten it. The first credit sink that is not itself a gamble.",
+            "Trade-up is now five items instead of ten."
+          ]
+        },
+        {
+          "heading": "Weapons, interface and performance",
+          "items": [
+            "Melee rewritten - swings were one symmetric arc that read like a windscreen wiper, now proper keyframed routines with wind-up, fast strike, overshoot and slow recovery.",
+            "Fixed the hand freezing after an inspect, the karambit being held blade-up, inspect dropping your hand below where it belongs, and the Hornet's reflex sight having a solid block in the bore - the SMG could not be aimed for the entire life of the build.",
+            "Rebuilt the type ladder against measured contrast; the bright rework had left micro-labels at 2.6:1 and a Forged skin's name at 1.57:1.",
+            "Fixed a ghost-mesh leak on weapon switches (19ms to 8ms) and Tourbillon's 46ms first-frame hitch."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "aura-fighters",
+      "title": "Aura Fighters - rework",
+      "date": "2026-09-18",
+      "summary": "Every form now plays differently, and rivals became four real archetypes.",
+      "sections": [
+        {
+          "heading": "Combat",
+          "items": [
+            "All 11 forms shared one melee behaviour and the specials collapsed into 6 types - beam alone covered 4 forms. Now every form owns a unique melee signature, ki blast and special.",
+            "Signatures include a 3-hit launcher, 5-hit chain lightning, a blink strike with a delayed echo, i-frame slips, a single shockwave slam with no combo, Rend-stacking claws that detonate, Heat that accelerates then overheats, Seal marks every third hit, strikes that drag enemies in, and a 360-degree omni-strike.",
+            "New systems: Rend bleed stacks, Heat redline, Seals that amplify Execution, and i-frames.",
+            "Three distinct beams rather than four copies of one, with a rebuilt renderer - hot core, stepped falloff, muzzle charge sphere and impact blooms that terminate on the target."
+          ]
+        },
+        {
+          "heading": "Enemies",
+          "items": [
+            "Rivals used to run one behaviour with scaled stats. Four archetypes now: Rusher (telegraphed lunges, long recovery), Zoner (holds range, bursts you off when you close), Duelist (circles and counters mid-attack) and Warlord (blinks in, area slams, enrages below 40%).",
+            "Every attack is telegraphed with a closing ring and threat cone. Interrupting one means landing your combo finisher early in the tell - a read, not a mash."
+          ]
+        },
+        {
+          "heading": "Progression and visuals",
+          "items": [
+            "Enemy lap scaling cut from 1.55x to 1.32x and the Zenkai floor raised. The old curve punished skill - clean clears grew you 1.17x per lap against enemies growing 1.55x. Clean play now keeps pace indefinitely.",
+            "New title scene with a live attract shot, particle-driven auras unique to each form, per-transformation outfits, enemy tier crests, persistent scorch decals and a rebuilt angular HUD."
+          ]
+        },
+        {
+          "heading": "Performance and fixes",
+          "items": [
+            "223ms to roughly 3.4ms per frame, about 65x faster - soft particles blit from a sprite cache instead of rebuilding radial gradients every frame, plus off-screen culling.",
+            "Fixed a permanent soft-lock where a trimmed beam projectile could lock you out of every action forever.",
+            "Fixed stun-lock from fast forms, Ultra being effectively invulnerable (11 i-frames on a 5-frame cooldown), and a safe zone where enemies ignored you past 600 units so you could charge ki for free."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "flytale",
+      "title": "Flytale v3",
+      "date": "2026-09-18",
+      "summary": "A real 1-bit pixel art pass, and roughly double the length.",
+      "sections": [
+        {
+          "heading": "Art - the watercolour fix",
+          "items": [
+            "Every soft edge came from four things: anti-aliased arc() circles, ctx.rotate(), rgba() alpha and browser text. All four are gone - discs are integer scanlines, rotation is nearest-neighbour pre-baked in 16 steps, transparency is checkerboard dither, and text is thresholded to 1-bit.",
+            "Sprites are now built on a real pixel grid with a hard 1px black outline on every shape, in a fixed 28-colour palette.",
+            "The spider's legs were drawn in the same purple as its body and underneath it, so they rendered as nothing. Rebuilt at 78x56 with long two-segment legs, knees above the body, eight eyes and fangs.",
+            "Fixed the zapper racket rendering as a magenta blob, and the electric arc drawing as a wall instead of a bolt."
+          ]
+        },
+        {
+          "heading": "Length",
+          "items": [
+            "Roughly doubled, to six chapters: the sink, the ant picket line, an early ambush where you can only survive the man, the moth at the hall lamp, the spider's toll booth, then the kitchen.",
+            "He now has 8 weapons before his bare hands - flyswatter, newspaper, bug spray, zapper racket, vacuum, shotgun, flamethrower and rocket launcher.",
+            "Verified with a full automated playthrough: all six chapters and all nine weapon stages reach an ending, with no errors."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "multiversefighters",
+      "title": "Multiverse Fighters - rework",
+      "date": "2026-09-18",
+      "summary": "Real animation, real opponents, and a camera that follows the fight.",
+      "sections": [
+        {
+          "heading": "Animation",
+          "items": [
+            "Knee direction fix - every knee value was positive, so legs bent forward and the run read as backwards.",
+            "Proper gait: thigh swings fore and aft, knee tucks on the rear swing, arms counter-swing, two bobs per cycle.",
+            "Attacks went from 3 phases to 4 - anticipate, snap, follow-through, settle - with the overshoot extrapolated from the windup-to-strike vector, so every attack got it without new poses.",
+            "Motion smear trails, squash and stretch on takeoff, landing and strike frames, secondary motion on hair and cape, and root motion so attacks step into the hit."
+          ]
+        },
+        {
+          "heading": "Movement and ultimates",
+          "items": [
+            "Momentum-based instead of lerp-to-target, with 23% higher top speed and heavier gravity.",
+            "Double jump with a flip, aimable air dash, fast fall, skid on hard reversals, and a dash attack that keeps momentum. Jump moved to Space so W and S could become aim directions.",
+            "12 unique charge stances and 12 unique charge routines - all 12 previously used the same arms-back pose and identical converging orbs. Per-ultimate camera: Vanta charges near-black, Ronin desaturated and near-frozen."
+          ]
+        },
+        {
+          "heading": "Opponents and camera",
+          "items": [
+            "The dummy became five levels: Dummy, Rookie, Fighter, Veteran, Master. The AI runs your exact code, so it cannot do anything you cannot.",
+            "A real brain: approach, retreat, guard, anti-air, dash-in, zoning, low pokes, jump-ins and specials, reacting to your swings and turtling when low.",
+            "You now have HP, hitstun, blocking at 84% reduction, K.O. with slow-motion, round reset and a win tally.",
+            "The camera was locked wide; it now tracks the midpoint and zooms on separation, with zoom kick on heavies, pullback for ultimates and a snap to the loser on K.O., plus real parallax."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Tornado and Supernova left the player hovering after the ult, and the viewport reported 0 during layout so a window resize mid-fight never recovered.",
+            "Redrew Aegis's shield - the concentric-disc-with-a-star read as a real trademarked design, and is now an original heater shield with a chevron band."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "grand-line",
       "title": "Grand Line - Sea of Fruits",
       "date": "2026-09-14",
       "summary": "Rebuilt as a top-down pirate action-RPG, drawn like a woodblock adventure print.",

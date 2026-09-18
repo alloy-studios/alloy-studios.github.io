@@ -8,13 +8,13 @@
     "roadmap": [
       {
         "status": "Shipped",
-        "title": "Seven games fully reworked",
-        "detail": "Grand Line, Rank Zero, Port Vesper, Neon Speed Simulator, Foil & Fortune, Cosmic Climb and Elementalis have all been rebuilt. Full details are in the update log."
+        "title": "Eleven games reworked",
+        "detail": "Grand Line, Rank Zero, Port Vesper, Neon Speed Simulator, Foil & Fortune, Cosmic Climb, Elementalis, Meridian, Aura Fighters, Flytale and Multiverse Fighters have all been rebuilt, and Redwater replaces the old Blue Lock game entirely. Full details are in the update log."
       },
       {
         "status": "In development",
-        "title": "Reworking the rest of the catalogue",
-        "detail": "The same treatment for the remaining games - rebuilt feel, rebuilt visuals, and one consistent standard across the whole library instead of twenty-one different ones."
+        "title": "Six games left to rework",
+        "detail": "Echoes, Anime Survivors, Neon Defense Grid, Abyssal Dredging, Orbit Dash and Sole & Co. are the last ones still on their original build. Same treatment as the rest: rebuilt feel, rebuilt visuals, one standard across the whole library."
       },
       {
         "status": "Planned",
@@ -47,16 +47,16 @@
     },
     {
       "id": "rivalforge",
-      "title": "Rivalforge",
-      "tagline": "Chain clean hits in the calibration bay.",
-      "description": "Wave after wave in Calibration Bay 04. Every clean hit builds your chain multiplier and every miss resets it, so the score comes from accuracy rather than volume.",
+      "title": "Meridian",
+      "tagline": "High noon in the machine hall.",
+      "description": "A first-person weapon-skin range, relit from a night-shift machine hall to a daylit one - clerestory glazing, white steel, hard sun across the floor. Fifty-nine skins across two new top tiers: Forged finishes that react to the game, and Zenith finishes that perform, one per weapon.",
       "tags": [
         "action",
-        "arena",
+        "collection",
         "score-attack"
       ],
       "accent": "#f97316",
-      "controls": "WASD to move, mouse to aim, Shift to dash, 1-3 to switch",
+      "controls": "Mouse to aim and fire, F to inspect, crates and trade-up in the menus",
       "added": "2026-09-08"
     },
     {
@@ -74,7 +74,7 @@
       "added": "2026-09-08"
     },
     {
-      "id": "blox-fruits-2d",
+      "id": "grand-line",
       "title": "Grand Line",
       "tagline": "Sea of Fruits.",
       "description": "A top-down pirate action-RPG drawn like a woodblock adventure print. Sail an open sea, make landfall on five islands, and fight your way up the Grand Line with a cutlass and a Devil Fruit. Four fruits with three abilities each - bosses drop theirs, and wild ones wash up on the islands.",
@@ -85,20 +85,6 @@
       ],
       "accent": "#84cc16",
       "controls": "WASD move, mouse aim, click cutlass, Q E R Devil Fruit, Space dash, F talk, M chart",
-      "added": "2026-09-08"
-    },
-    {
-      "id": "blue-lock-enemies",
-      "title": "Blue Lock Rivals: Ego Arena",
-      "tagline": "Three hundred strikers. One goal.",
-      "description": "A single-file football game and fan tribute. Devour the ball, devour your rivals, and become the world's greatest egoist across two-minute matches. The pitch, the strikers, the cut-in cutscenes, the crowd and every sound effect are generated at runtime.",
-      "tags": [
-        "sports",
-        "football",
-        "anime"
-      ],
-      "accent": "#3b82f6",
-      "controls": "WASD to move, Shift to dash, J to shoot, K to pass, L to tackle",
       "added": "2026-09-08"
     },
     {
@@ -147,7 +133,7 @@
       "id": "aura-fighters",
       "title": "Aura Fighters",
       "tagline": "Charge your ki. Transform. Clear the wave.",
-      "description": "Wave-based arena brawling with a power level that never stops climbing. Charge ki, fire blasts, trigger specials, and transform once the gauge fills, taking a Zenkai boost every time a wave falls.",
+      "description": "Wave-based arena brawling with a power level that never stops climbing. Eleven transformations that each play differently - their own melee signature, ki blast and special - against four rival archetypes that telegraph every attack. Charge ki, read the tell, transform, and take a Zenkai boost every time a wave falls.",
       "tags": [
         "action",
         "fighting",
@@ -260,7 +246,7 @@
       "id": "multiversefighters",
       "title": "Multiverse Fighters",
       "tagline": "Twelve fighters. Twelve realms. One ring.",
-      "description": "A 2D fighter with twelve characters pulled from twelve different realms - shinobi, soul reapers, machines, Olympians, cartoons - each with their own normals, specials and an ultimate. Learn a moveset in the training grounds, then take it into a fight.",
+      "description": "A 2D fighter with twelve characters pulled from twelve different realms - shinobi, soul reapers, machines, Olympians, cartoons - each with their own normals, specials and an ultimate with its own charge stance and camera. Five opponent levels that run your exact code, so the AI can never do anything you cannot.",
       "tags": [
         "fighting",
         "action",
@@ -274,7 +260,7 @@
       "id": "flytale",
       "title": "Flytale",
       "tagline": "A short story, told by a fly.",
-      "description": "A chaptered story game where you play the fly - flying, dodging, and staying well clear of the flyswatter. Small, hand-made and over before it outstays its welcome.",
+      "description": "A six-chapter story told from a fly's point of view, drawn in hard 1-bit pixel art on a fixed 28-colour palette. The sink, the ant picket line, an ambush you can only survive, the moth at the hall lamp, the spider's toll booth, then the kitchen - where the man works through eight weapons before his bare hands.",
       "tags": [
         "adventure",
         "story",
@@ -303,7 +289,11 @@
       "title": "Elementalis",
       "tagline": "Wizard of the Broken Wilds.",
       "description": "The old magic shattered into elements and scattered across the wilds. Find the shrines, slay their wardens, and take the power back. Master elements in the Grimoire and fuse them into new ones as you go.",
-      "tags": ["action", "rpg", "magic"],
+      "tags": [
+        "action",
+        "rpg",
+        "magic"
+      ],
       "accent": "#8b5cf6",
       "controls": "WASD move, mouse aim, click to cast, 1-4 spell slots, Shift to blink, E to commune, C for the Grimoire",
       "added": "2026-09-11"
@@ -313,10 +303,28 @@
       "title": "Sole & Co.",
       "tagline": "Grandma left you the shop. Don't blow it.",
       "description": "You inherited a two-metre-wide sneaker shop, three pairs and $1,500. Stock the shelves, read the day's heat, work the market and the customs bench, and make rent before the doors close. Deadstock, customs, trade.",
-      "tags": ["simulation", "management", "trading"],
+      "tags": [
+        "simulation",
+        "management",
+        "trading"
+      ],
       "accent": "#f43f5e",
       "controls": "Mouse to stock, price and serve",
       "added": "2026-09-11"
+    },
+    {
+      "id": "redwater",
+      "title": "Redwater",
+      "tagline": "A frontier tale. Pick a side.",
+      "description": "A top-down open-world western RPG. You ride into Redwater with a rusted six and no side; by the end the whole county knows which one you picked. Six thousand acres of bleached flats and red mesa drawn like a spaghetti western printed on an 1880s wanted poster, twelve named places, twenty guns and four that wake up.",
+      "tags": [
+        "rpg",
+        "action",
+        "open-world"
+      ],
+      "accent": "#b91c1c",
+      "controls": "WASD move, mouse aim, LMB fire, RMB Dead Eye, Space roll, E use, R reload, Q ability, F awakening, Tab journal, M map",
+      "added": "2026-09-18"
     }
   ]
 }
