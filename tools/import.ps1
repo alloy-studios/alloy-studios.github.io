@@ -89,8 +89,20 @@ Write-Host "     -> games\$Id\"
 $dataPath = Join-Path $Root 'data\games.json'
 $data = Get-Content $dataPath -Raw -Encoding utf8 | ConvertFrom-Json
 
+# Every import stamps a new revision. The player appends it to the iframe URL,
+# so an updated game is never served from a returning player's cache - without
+# it, GitHub Pages' max-age=600 hands them the old build.
+$rev = (Get-Date -Format 'yyyyMMdd-HHmm')
+
 if (@($data.games).id -contains $Id) {
-  Write-Host "games.json already has '$Id' - left its metadata alone." -ForegroundColor DarkGray
+  foreach ($g in @($data.games)) {
+    if ($g.id -eq $Id) {
+      if ($g.PSObject.Properties.Name -contains 'rev') { $g.rev = $rev }
+      else { $g | Add-Member -NotePropertyName rev -NotePropertyValue $rev }
+    }
+  }
+  Write-Utf8 $dataPath ((ConvertTo-PrettyJson $data) + "`n")
+  Write-Host "games.json already has '$Id' - metadata kept, revision stamped $rev." -ForegroundColor DarkGray
 } else {
   $entry = [ordered]@{
     id          = $Id
@@ -100,6 +112,7 @@ if (@($data.games).id -contains $Id) {
     tags        = @($Tags -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     controls    = if ($Controls) { $Controls } else { '' }
     added       = (Get-Date -Format 'yyyy-MM-dd')
+    rev         = $rev
   }
   $data.games = @($data.games) + [pscustomobject]$entry
   Write-Utf8 $dataPath ((ConvertTo-PrettyJson $data) + "`n")

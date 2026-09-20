@@ -656,43 +656,85 @@ function drawHUD() {
   X.textBaseline = 'alphabetic';
 }
 
+/* A title card has to be a plate of its own. Floating the type over the
+   mechanism put every line on top of the brass gear and made all of it
+   unreadable. This is a cartouche: scrim, double rule, everything inside it. */
 function drawTitle() {
+  X.fillStyle = 'rgba(6,18,32,.74)';
+  X.fillRect(0, 0, W, H);
+
+  const cw = Math.min(W - u * 14, u * 74), ch = u * 46;
+  const x0 = cx - cw / 2, y0 = cy - ch / 2;
+
+  X.fillStyle = 'rgba(8,22,37,.94)';
+  X.fillRect(x0, y0, cw, ch);
+  X.strokeStyle = 'rgba(233,180,85,.55)'; X.lineWidth = 1.6;
+  X.strokeRect(x0, y0, cw, ch);
+  X.strokeStyle = P.inkDim; X.lineWidth = 1;
+  X.strokeRect(x0 + u * 1.2, y0 + u * 1.2, cw - u * 2.4, ch - u * 2.4);
+  // corner pins
+  for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const px = sx > 0 ? x0 + u * 3 : x0 + cw - u * 3;
+    const py = sy > 0 ? y0 + u * 3 : y0 + ch - u * 3;
+    X.beginPath(); X.arc(px, py, u * .5, 0, 7);
+    X.fillStyle = 'rgba(233,180,85,.6)'; X.fill();
+  }
+
   X.textAlign = 'center';
   X.fillStyle = P.ink;
-  X.font = `700 ${u * 11}px ${SERIF}`;
-  X.fillText('ORBIT DASH', cx, cy - u * 6);
+  X.font = `700 ${Math.min(u * 10, cw / 7.4)}px ${SERIF}`;
+  X.fillText('ORBIT DASH', cx, y0 + u * 15);
 
-  const tw = u * 40;
-  line(cx - tw / 2, cy - u * 3.4, cx + tw / 2, cy - u * 3.4, P.inkDim, 1);
+  const tw = cw - u * 16;
+  line(cx - tw / 2, y0 + u * 18.4, cx + tw / 2, y0 + u * 18.4, 'rgba(233,180,85,.4)', 1);
+  line(cx - tw / 2, y0 + u * 19.3, cx + tw / 2, y0 + u * 19.3, P.inkDim, 1);
+
   X.fillStyle = P.verd;
-  X.font = `500 ${u * 2.1}px ${MONO}`;
-  X.fillText('A N   O R R E R Y', cx, cy - u * .6);
+  X.font = `500 ${u * 2}px ${MONO}`;
+  X.fillText('A N   O R R E R Y', cx, y0 + u * 23.6);
 
   X.fillStyle = P.inkMid;
-  X.font = `500 ${u * 2.15}px ${MONO}`;
-  X.fillText('TAP — change track', cx, cy + u * 7);
-  X.fillText('HOLD — wind down the mainspring, slow the machine', cx, cy + u * 10.6);
+  X.font = `500 ${Math.min(u * 2, cw / 42)}px ${MONO}`;
+  X.fillText('TAP — change track', cx, y0 + u * 30);
+  X.fillText('HOLD — spend the mainspring, slow the machine', cx, y0 + u * 34);
+
   X.fillStyle = P.brass;
-  X.font = `600 ${u * 2.5}px ${MONO}`;
-  X.fillText('PRESS TO BEGIN', cx, cy + u * 16);
+  X.font = `600 ${u * 2.4}px ${MONO}`;
+  X.fillText('PRESS TO BEGIN', cx, y0 + u * 41.4);
 }
 
 function drawDead() {
   X.textAlign = 'center';
-  X.fillStyle = 'rgba(6,18,32,.55)'; X.fillRect(0, 0, W, H);
+  X.fillStyle = 'rgba(6,18,32,.74)'; X.fillRect(0, 0, W, H);
+
+  const cw = Math.min(W - u * 14, u * 66), ch = u * 38;
+  const x0 = cx - cw / 2, y0 = cy - ch / 2;
+  X.fillStyle = 'rgba(8,22,37,.94)'; X.fillRect(x0, y0, cw, ch);
+  X.strokeStyle = 'rgba(210,85,60,.6)'; X.lineWidth = 1.6;
+  X.strokeRect(x0, y0, cw, ch);
+  X.strokeStyle = P.inkDim; X.lineWidth = 1;
+  X.strokeRect(x0 + u * 1.2, y0 + u * 1.2, cw - u * 2.4, ch - u * 2.4);
+
   X.fillStyle = P.copperLt;
-  X.font = `700 ${u * 9}px ${SERIF}`;
-  X.fillText('MECHANISM JAMMED', cx, cy - u * 4);
+  X.font = `700 ${Math.min(u * 7, cw / 12)}px ${SERIF}`;
+  X.fillText('MECHANISM JAMMED', cx, y0 + u * 11);
+
+  const tw = cw - u * 14;
+  line(cx - tw / 2, y0 + u * 14, cx + tw / 2, y0 + u * 14, P.inkDim, 1);
+
+  X.fillStyle = P.inkMid; X.font = `500 ${u * 1.7}px ${MONO}`;
+  X.fillText('ARC SCORE', cx, y0 + u * 18.6);
   X.fillStyle = P.ink;
-  X.font = `600 ${u * 5}px ${MONO}`;
-  X.fillText(String(Math.floor(S.score)), cx, cy + u * 4);
+  X.font = `600 ${u * 6.4}px ${MONO}`;
+  X.fillText(String(Math.floor(S.score)), cx, y0 + u * 26);
   X.fillStyle = P.inkMid;
-  X.font = `500 ${u * 2}px ${MONO}`;
-  X.fillText('BEST ' + best, cx, cy + u * 8.4);
+  X.font = `500 ${u * 1.9}px ${MONO}`;
+  X.fillText('BEST ' + best, cx, y0 + u * 30.4);
+
   if (S.t > .6) {
     X.fillStyle = P.brass;
-    X.font = `600 ${u * 2.4}px ${MONO}`;
-    X.fillText('PRESS TO RE-WIND', cx, cy + u * 15);
+    X.font = `600 ${u * 2.3}px ${MONO}`;
+    X.fillText('PRESS TO RE-WIND', cx, y0 + u * 35.2);
   }
 }
 

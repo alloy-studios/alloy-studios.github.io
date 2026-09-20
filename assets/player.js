@@ -59,7 +59,7 @@ Alloy.boot(({ games, site }) => {
     <div class="stage${game.aspect ? ' ratio' : ''}" id="stage"
          ${game.aspect ? `style="--ratio:${Alloy.esc(game.aspect)}"` : ''}>
       <div class="loader" id="loader"><div class="spinner"></div></div>
-      <iframe id="frame" src="/games/${Alloy.esc(game.id)}/"
+      <iframe id="frame" src="/games/${Alloy.esc(game.id)}/?v=${encodeURIComponent(game.rev || game.added || '1')}"
               title="${Alloy.esc(game.title)}"
               allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; xr-spatial-tracking"></iframe>
     </div>

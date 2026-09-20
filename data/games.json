@@ -197,6 +197,7 @@
       ],
       "accent": "#e9b455",
       "controls": "Tap or Space to change track, hold to spend the mainspring",
+      "rev": "20260920-0300",
       "aspect": "16/9",
       "added": "2026-09-08"
     },
