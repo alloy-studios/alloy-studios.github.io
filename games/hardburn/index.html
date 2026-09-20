@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>HARDBURN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#05080e; --ink2:#0a1018;
+  --paper:#e9e3d3; --paper2:#a9b0bd; --dim:#5d6878; --line:#22303f;
+  --amber:#ffb43c; --red:#ff4a46; --cyan:#8fe3ff;
+  --disp:"Barlow Condensed",Oswald,"Arial Narrow",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--ink);overflow:hidden;color:var(--paper);
+  font-family:var(--disp);-webkit-font-smoothing:antialiased;user-select:none}
+canvas#cv{position:fixed;inset:0;width:100%;height:100%;display:block;background:var(--ink)}
+.scr{position:fixed;inset:0;display:none;z-index:10;overflow:hidden}
+.scr.on{display:block}
+.scr::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px)}
+.veil{position:absolute;inset:0;background:
+   radial-gradient(120% 80% at 50% 0%,rgba(20,34,52,.55),transparent 60%),
+   linear-gradient(180deg,rgba(5,8,14,.72),rgba(5,8,14,.94))}
+.wrap{position:relative;height:100%;display:flex;flex-direction:column;padding:26px 34px;z-index:2}
+.stamp{font-family:var(--mono);font-size:10px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+.brk{position:relative}
+.brk::before,.brk::after{content:"";position:absolute;width:11px;height:11px;border:1px solid var(--line);z-index:3}
+.brk::before{left:-1px;top:-1px;border-right:0;border-bottom:0}
+.brk::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
+
+#shell .mark{font-weight:700;font-size:clamp(64px,13vw,168px);line-height:.82;letter-spacing:-.02em;
+  text-transform:uppercase;color:var(--paper);position:relative;display:inline-block}
+#shell .mark i{font-style:normal;color:var(--amber)}
+#shell .mark::after{content:"";position:absolute;left:0;right:-8%;bottom:.1em;height:3px;background:var(--amber)}
+#shell .sub{font-family:var(--mono);font-size:11px;letter-spacing:.34em;color:var(--paper2);margin-top:16px}
+#shell .mid{flex:1;display:flex;align-items:center}
+.menu{display:flex;flex-direction:column;gap:2px;width:min(430px,46vw)}
+.mi{display:flex;align-items:baseline;gap:14px;padding:11px 14px;border:0;border-left:2px solid transparent;
+  background:transparent;color:var(--paper2);font-size:26px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.05em;cursor:pointer;transition:.12s;font-family:var(--disp);text-align:left}
+.mi b{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:.2em}
+.mi:hover,.mi.sel{background:rgba(255,180,60,.09);border-left-color:var(--amber);color:var(--paper)}
+.mi:hover b,.mi.sel b{color:var(--amber)}
+.mi span.tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.14em}
+.foot{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:10px;
+  border-bottom:1px solid var(--line)}
+.hdr h2{font-size:38px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1}
+.bank{font-family:var(--mono);font-size:12px;color:var(--paper2);letter-spacing:.1em}
+.bank em{font-style:normal;color:var(--amber);font-size:18px;font-weight:600}
+.btn{font-family:var(--disp);font-size:16px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  padding:10px 20px;background:rgba(233,227,211,.05);border:1px solid var(--line);color:var(--paper2);
+  cursor:pointer;transition:.12s}
+.btn:hover{border-color:var(--amber);color:var(--paper);background:rgba(255,180,60,.1)}
+.btn.pri{border-color:var(--amber);color:var(--amber)}
+.btn.pri:hover{background:var(--amber);color:#0a0a0a}
+.btn:disabled{opacity:.3;cursor:not-allowed;border-color:var(--line);background:none}
+.btn.on{border-color:var(--amber);color:var(--amber);background:rgba(255,180,60,.12)}
+
+#hangar .body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,31%);gap:24px;padding-top:18px;min-height:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;overflow-y:auto;
+  align-content:start;padding-right:8px;min-height:0}
+.grid::-webkit-scrollbar{width:5px}.grid::-webkit-scrollbar-thumb{background:var(--line)}
+.chip{position:relative;padding:10px 11px 11px 15px;background:linear-gradient(180deg,rgba(18,26,38,.8),rgba(8,12,19,.8));
+  border:1px solid var(--line);cursor:pointer;transition:.12s;overflow:hidden;text-align:left}
+.chip:hover{border-color:var(--paper2);transform:translateY(-2px)}
+.chip.sel{border-color:var(--rc);box-shadow:inset 0 0 0 1px var(--rc)}
+.chip.lock{opacity:.42;filter:saturate(.2)}
+.chip .bar{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rc)}
+.chip .nm{font-size:19px;font-weight:600;text-transform:uppercase;line-height:1.05;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--paper)}
+.chip.lock .nm{color:var(--paper2)}
+.chip .rr{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--rc);margin-top:3px}
+.chip .ab{font-family:var(--mono);font-size:9px;color:var(--paper2);margin-top:7px;letter-spacing:.06em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:11px}
+.chip .eq{position:absolute;right:7px;bottom:8px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;
+  color:#0a0a0a;background:var(--amber);padding:2px 5px}
+.chip .dup{position:absolute;right:8px;top:8px;font-family:var(--mono);font-size:10px;color:var(--dim)}
+.insp{display:flex;flex-direction:column;border:1px solid var(--line);background:rgba(8,13,21,.6);min-height:0}
+#prev{width:100%;height:240px;display:block;background:radial-gradient(70% 70% at 50% 45%,#0d1622,#05080e);
+  border-bottom:1px solid var(--line)}
+.insp .txt{padding:16px 18px;overflow-y:auto;min-height:0;flex:1}
+.insp .txt::-webkit-scrollbar{width:5px}.insp .txt::-webkit-scrollbar-thumb{background:var(--line)}
+.insp h3{font-size:30px;font-weight:700;text-transform:uppercase;line-height:1;letter-spacing:.02em}
+.insp .rr2{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--rc);margin:6px 0 12px}
+.insp p{font-size:15px;color:var(--paper2);line-height:1.45}
+.spec{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin-top:14px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;color:var(--dim)}
+.spec b{color:var(--paper2);font-weight:500}
+.abil{margin-top:15px;padding:11px 12px;border:1px solid var(--rc);background:rgba(255,255,255,.03)}
+.abil .k{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--rc)}
+.abil .t{font-size:21px;font-weight:600;text-transform:uppercase;margin:2px 0 4px;color:var(--paper)}
+.abil .d{font-size:13px;color:var(--paper2);line-height:1.4}
+
+#roll .body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.odds{display:flex;gap:2px;width:min(780px,86vw)}
+.odds div{flex:1;text-align:center;padding:7px 2px;border-top:2px solid var(--rc);font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;color:var(--dim);background:rgba(255,255,255,.02)}
+.odds div b{display:block;color:var(--rc);font-size:10px;margin-bottom:3px;letter-spacing:.14em}
+#rollcv{width:min(780px,86vw);height:min(330px,40vh);display:block;border:1px solid var(--line)}
+#rollout{height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}
+#rollout .nm{font-size:44px;font-weight:700;text-transform:uppercase;line-height:1}
+#rollout .rr{font-family:var(--mono);font-size:11px;letter-spacing:.3em}
+#rollout .note{font-family:var(--mono);font-size:11px;color:var(--paper2);letter-spacing:.1em}
+.rollbtns{display:flex;gap:10px;align-items:center}
+.pity{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.14em}
+
+#res .body{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:840px}
+.scoreline{display:flex;align-items:baseline;gap:16px;margin:4px 0 18px}
+.scoreline .big{font-family:var(--mono);font-size:74px;font-weight:600;line-height:.9;color:var(--amber)}
+.rows{display:flex;flex-direction:column;gap:1px;margin-bottom:20px}
+.row{display:flex;align-items:baseline;gap:14px;padding:7px 12px;background:rgba(255,255,255,.025);
+  font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--paper2)}
+.row b{margin-left:auto;color:var(--paper);font-size:14px;font-weight:500}
+.row.gain b{color:var(--amber)}
+.row.pb{background:rgba(255,180,60,.1)}
+
+#toast{position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;
+  gap:6px;align-items:center;pointer-events:none}
+.tst{font-family:var(--mono);font-size:11px;letter-spacing:.18em;padding:8px 16px;background:rgba(8,13,21,.92);
+  border:1px solid var(--line);border-left:3px solid var(--amber);color:var(--paper);animation:tin .3s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-family:var(--mono);font-size:11px;
+  color:var(--dim);letter-spacing:.1em}
+.keys b{color:var(--paper2);font-weight:500;white-space:nowrap}
+.seedin{font-family:var(--mono);font-size:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  color:var(--paper);padding:9px 12px;width:200px;letter-spacing:.14em;text-transform:uppercase;outline:none}
+.seedin:focus{border-color:var(--amber)}
+#pausenote{position:fixed;inset:0;display:none;z-index:40;align-items:center;justify-content:center;
+  background:rgba(5,8,14,.82);flex-direction:column;gap:16px}
+#pausenote.on{display:flex}
+#pausenote h3{font-size:54px;font-weight:700;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div class="scr on" id="shell"><div class="veil"></div><div class="wrap">
+  <div style="display:flex;justify-content:space-between">
+    <div class="stamp">TITAN RANGE / MK-IV UNGUIDED / TELEMETRY LIVE</div>
+    <div class="stamp">BUILD 1.0</div>
+  </div>
+  <div class="mid"><div>
+    <div class="mark">HARD<i>BURN</i></div>
+    <div class="sub">YOU LAUNCH IT. THEN YOU HAVE TO FLY IT.</div>
+  </div></div>
+  <div style="display:flex;gap:56px;align-items:flex-end;flex-wrap:wrap">
+    <div class="menu">
+      <button class="mi" data-go="launch"><b>01</b>LAUNCH<span class="tag" id="mSeed"></span></button>
+      <button class="mi" data-go="hangar"><b>02</b>HANGAR<span class="tag" id="mOwn"></span></button>
+      <button class="mi" data-go="roll"><b>03</b>SUPPLY DROP<span class="tag" id="mCred"></span></button>
+      <button class="mi" data-go="help"><b>04</b>FLIGHT MANUAL</button>
+    </div>
+    <div class="keys" style="margin-bottom:14px">
+      <b>SPACE</b><span>LAUNCH — THEN HOLD FOR THRUST</span>
+      <b>MOUSE</b><span>AIM — WHERE YOU ARE HEADED</span>
+      <b>WASD</b><span>SWING THE AIRFRAME OFF THE AIM LINE</span>
+      <b>SHIFT / RMB</b><span>HARD BURN</span>
+      <b>E / LMB</b><span>GRAPPLE — FIRES WHERE YOU AIM</span>
+      <b>C</b><span>DRAG CHUTE</span><b>CTRL</b><span>SNAP AIRFRAME BACK TO THE AIM LINE</span>
+      <b>F</b><span>TIME DILATION</span>
+      <b>Q</b><span>SKIN ABILITY</span>
+    </div>
+  </div>
+  <div class="foot" style="margin-top:22px">
+    <div class="stamp">RANGE CONTROL — ALL RUNS RECORDED</div>
+    <div class="stamp" id="shellstat"></div>
+  </div>
+</div></div>
+
+<div class="scr" id="hangar"><div class="veil"></div><div class="wrap">
+  <div class="hdr">
+    <div><h2>Hangar</h2><div class="stamp" style="margin-top:5px" id="hgStat"></div></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="bank">SCRAP <em id="hgScrap">0</em> &nbsp; CR <em id="hgCred">0</em></div>
+      <button class="btn" data-go="roll">SUPPLY DROP</button>
+      <button class="btn" data-go="shell">BACK</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="grid" id="hgGrid"></div>
+    <div class="insp brk">
+      <canvas id="prev"></canvas>
+      <div class="txt" id="hgTxt"></div>
+      <div style="padding:0 18px 16px"><button class="btn pri" id="hgEquip" style="width:100%">EQUIP</button></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="scr" id="roll"><div class="veil"></div><div class="wrap">
+  <div class="hdr">
+    <div><h2>Supply Drop</h2><div class="stamp" style="margin-top:5px">ORDNANCE REQUISITION / RANDOMISED CRATE</div></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="bank">CR <em id="rlCred">0</em> &nbsp; SCRAP <em id="rlScrap">0</em></div>
+      <button class="btn" data-go="hangar">HANGAR</button>
+      <button class="btn" data-go="shell">BACK</button>
+    </div>
+  </div>
+  <div class="body">
+    <canvas id="rollcv" class="brk"></canvas>
+    <div id="rollout"><div class="note">REQUISITION A CRATE TO SEE WHAT COMES OUT.</div></div>
+    <div class="rollbtns">
+      <button class="btn pri" id="rl1">OPEN CRATE — 100 CR</button>
+      <button class="btn" id="rl10">TEN-PACK — 900 CR</button>
+      <button class="btn" id="rlForge">FORGE FROM SCRAP — 600</button>
+    </div>
+    <div class="pity" id="rlPity"></div>
+    <div class="odds" id="rlOdds"></div>
+  </div>
+</div></div>
+
+<div class="scr" id="res"><div class="veil"></div><div class="wrap">
+  <div class="hdr"><div><h2 id="resTitle">Run Complete</h2>
+    <div class="stamp" style="margin-top:5px" id="resSub"></div></div>
+    <div class="bank">CR <em id="resCred">0</em></div></div>
+  <div class="body">
+    <div class="scoreline"><div class="big" id="resScore">0</div><div class="stamp">STYLE POINTS</div></div>
+    <div class="rows" id="resRows"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn pri" id="resAgain">RE-FLY THIS COURSE</button>
+      <button class="btn" id="resNew">NEW COURSE</button>
+      <button class="btn" data-go="roll">SUPPLY DROP</button>
+      <button class="btn" data-go="shell">RANGE CONTROL</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="scr" id="launch"><div class="veil"></div><div class="wrap">
+  <div class="hdr"><div><h2>Launch</h2><div class="stamp" style="margin-top:5px">SEEDED COURSE GENERATION</div></div>
+    <button class="btn" data-go="shell">BACK</button></div>
+  <div class="body" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;max-width:880px">
+    <div>
+      <div class="stamp" style="margin-bottom:8px">COURSE SEED — ANY WORD BUILDS A COURSE, THE SAME WORD BUILDS THE SAME ONE</div>
+      <div style="display:flex;gap:9px;align-items:center">
+        <input class="seedin" id="seedIn" maxlength="12" spellcheck="false">
+        <button class="btn" id="seedRnd">RANDOMISE</button>
+        <button class="btn" id="seedDaily">TODAY'S RANGE</button>
+      </div>
+    </div>
+    <div>
+      <div class="stamp" style="margin-bottom:8px">DIFFICULTY</div>
+      <div style="display:flex;gap:2px" id="diffRow"></div>
+    </div>
+    <div class="rows" id="lchInfo"></div>
+    <div style="display:flex;gap:14px;align-items:center">
+      <button class="btn pri" id="lchGo" style="font-size:22px;padding:14px 34px">LAUNCH</button>
+      <div class="stamp" id="lchSkin"></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="scr" id="help"><div class="veil"></div><div class="wrap">
+  <div class="hdr"><div><h2>Flight Manual</h2><div class="stamp" style="margin-top:5px">MK-IV UNGUIDED — OPERATOR NOTES</div></div>
+    <button class="btn" data-go="shell">BACK</button></div>
+  <div class="body" style="flex:1;overflow-y:auto;padding-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:34px;align-content:start">
+    <div>
+      <h3 style="font-size:24px;text-transform:uppercase;margin-bottom:9px">The motor runs while you hold it</h3>
+      <p style="color:var(--paper2);font-size:15px;line-height:1.5"><b style="color:var(--amber)">SPACE</b> launches you off the rail, and after that the motor burns for exactly as long as you keep holding it. Let go and you are a dart: gravity takes over, drag bleeds you, and the only thing keeping you up is the speed you already bought. The clock does not start until you light it.</p>
+      <h3 style="font-size:24px;text-transform:uppercase;margin:20px 0 9px">Aim, nose, and where you actually go</h3>
+      <p style="color:var(--paper2);font-size:15px;line-height:1.5">Three different directions, and the gap between them is the game. The <b>mouse</b> sets your <b style="color:var(--paper)">aim</b> — screen-relative, no roll to untangle. <b>WASD</b> swings the <b style="color:var(--paper)">airframe</b> off that line, and thrust follows the airframe, so you can burn sideways out of a corner or swing right round and retro-burn while still looking where you are going. The <b style="color:var(--cyan)">circle</b> on the HUD is your real <b style="color:var(--paper)">flight path</b>. It goes amber when it stops agreeing with your aim.</p>
+      <h3 style="font-size:24px;text-transform:uppercase;margin:20px 0 9px">Style is the score</h3>
+      <div class="keys" style="font-size:12px">
+        <b>SKIM</b><span>FLY WITHIN 8m OF A SURFACE — THE MULTIPLIER CLIMBS WHILE YOU HOLD IT</span>
+        <b>THREAD</b><span>PASS A GATE NEAR ITS CENTRE. DEAD CENTRE AT SPEED PAYS DOUBLE</span>
+        <b>G-LOAD</b><span>HARD TURNS LOAD THE AIRFRAME AND PAY WHILE LOADED</span>
+        <b>SWING</b><span>HOOK A SURFACE AND CARVE ROUND IT — PAYS ON RELEASE, SCALED BY ARC</span>
+        <b>KILL</b><span>HIT THE TARGET. TIME REMAINING CONVERTS TO POINTS</span>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size:24px;text-transform:uppercase;margin-bottom:9px">Banking</h3>
+      <p style="color:var(--paper2);font-size:15px;line-height:1.5">Only the <b style="color:var(--amber)">improvement over your personal best</b> on a course banks at full rate. Re-flying a course you have already beaten pays a fraction. Grinding is not a strategy — flying better is.</p>
+      <h3 style="font-size:24px;text-transform:uppercase;margin:20px 0 9px">Ordnance</h3>
+      <p style="color:var(--paper2);font-size:15px;line-height:1.5">Crates issue airframes. Common frames are paint. From <b style="color:var(--c2)">RARE</b> up the airframe geometry itself changes — length, fins, mass, drag — and it flies differently. <b style="color:var(--c3)">EPIC</b> and above carry a sixth system on top of the four every pilot gets, bound to <b style="color:var(--amber)">Q</b>. Duplicates render down to scrap.</p>
+      <h3 style="font-size:24px;text-transform:uppercase;margin:20px 0 9px">Controls</h3>
+      <div class="keys" style="font-size:12px">
+        <b>SPACE</b><span>LAUNCH, THEN HOLD FOR THRUST</span><b>MOUSE</b><span>AIM</span>
+        <b>WASD</b><span>SWING AIRFRAME OFF THE AIM LINE</span><b>SHIFT / RMB</b><span>HARD BURN (FUEL)</span>
+        <b>E / LMB</b><span>GRAPPLE — FIRES DOWN THE AIM LINE</span><b>C</b><span>DRAG CHUTE</span><b>CTRL</b><span>SNAP AIRFRAME BACK TO THE AIM LINE</span><b>F</b><span>TIME DILATION</span><b>Q</b><span>SKIN ABILITY</span>
+        <b>R</b><span>RESTART RUN</span><b>ESC</b><span>ABORT</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div id="pausenote"><h3>PAUSED</h3><div class="stamp">CLICK TO RESUME — ESC TO ABORT</div></div>
+<div id="toast"></div>
+<script>
+/* =============================================================================
+   HARDBURN — single-file physics time-attack. Fly an unguided missile.
+
+   THESIS   It should feel like gun-camera film off the nose of something that
+            cannot stop and does not want to help you. Committed, not agile.
+   ANCHOR   (proposed) 1960s missile telemetry film + Jane's technical cutaway
+            plates. Bone linework on ink, instruments that look machined.
+   PALETTE  ink #05080e ground / paper #e9e3d3 structure linework /
+            amber #ffb43c instruments + warnings / red #ff4a46 target.
+            LEGIBILITY RULE: the world is bone-on-ink monochrome. Saturated
+            colour belongs to the missile, its exhaust and its VFX — nothing
+            else. So rarity is literally how much colour is on your screen,
+            and a Mythic frame is unmistakable from across the room.
+   TYPE     Barlow Condensed (instrument stencil voice) + IBM Plex Mono
+            (telemetry numerals). Never the system default.
+   RENDERER Canvas2D software 3D — painter-sorted filled polys with inked
+            edges. Chosen because the direction is drawn plates, not lit
+            surfaces; a shader pipeline would fight the linework. Exhaust and
+            VFX use real additive compositing on a separate pass.
+============================================================================= */
+'use strict';
+
+const CV = document.getElementById('cv'), X = CV.getContext('2d', { alpha: false });
+let W = 0, H = 0, DPR = 1, CX = 0, CY = 0, FOC = 600, ready = false;
+
+function applySize(iw, ih) {
+  if (iw < 2 || ih < 2) return;                 // ignore degenerate layout passes
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = iw; H = ih; CX = W / 2; CY = H / 2;
+  CV.width = Math.round(W * DPR); CV.height = Math.round(H * DPR);
+  CV.style.width = W + 'px'; CV.style.height = H + 'px';
+  X.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ready = true;
+}
+function resize() { applySize(window.innerWidth || 0, window.innerHeight || 0); }
+addEventListener('resize', resize);
+
+/* ---------------------------------------------------------------- math ---- */
+const PI = Math.PI, TAU = PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = t => t * t * (3 - 2 * t);
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const V3 = (x, y, z) => ({ x, y, z });
+const vadd = (a, b) => V3(a.x + b.x, a.y + b.y, a.z + b.z);
+const vsub = (a, b) => V3(a.x - b.x, a.y - b.y, a.z - b.z);
+const vmul = (a, s) => V3(a.x * s, a.y * s, a.z * s);
+const vdot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+const vcross = (a, b) => V3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+const vlen = a => Math.hypot(a.x, a.y, a.z);
+const vdist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+function vnorm(a) { const l = vlen(a) || 1; return V3(a.x / l, a.y / l, a.z / l); }
+function vlerp(a, b, t) { return V3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t)); }
+function rotAxis(v, axis, ang) {           // Rodrigues
+  const c = Math.cos(ang), s = Math.sin(ang), k = vcross(axis, v), d = vdot(axis, v) * (1 - c);
+  return V3(v.x * c + k.x * s + axis.x * d, v.y * c + k.y * s + axis.y * d, v.z * c + k.z * s + axis.z * d);
+}
+/* seeded rng */
+function hashStr(s) { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* colour helpers — colours live as [r,g,b] so shading never parses strings */
+const rgb = c => 'rgb(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ')';
+const rgba = (c, a) => 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + a + ')';
+const cmix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const cmul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const INK = [5, 8, 14], PAPER = [233, 227, 211], AMBER = [255, 180, 60], RED = [255, 74, 70], CYAN = [143, 227, 255];
+
+/* ------------------------------------------------------------- rarities --- */
+const RAR = [
+  { n: 'COMMON',    c: [152, 162, 176], odds: 52.0 },
+  { n: 'UNCOMMON',  c: [121, 217, 140], odds: 27.0 },
+  { n: 'RARE',      c: [95, 168, 255],  odds: 13.0 },
+  { n: 'EPIC',      c: [189, 123, 255], odds: 6.0 },
+  { n: 'LEGENDARY', c: [255, 193, 59],  odds: 1.8 },
+  { n: 'MYTHIC',    c: [255, 91, 138],  odds: 0.2 }
+];
+const SCRAP_VALUE = [15, 35, 90, 240, 700, 2000];
+
+/* ------------------------------------------------------------- airframes --- */
+/* geo: len/rad in metres, nose shape, fin set, body bands, strap-on pods.
+   stat: multipliers on cruise speed / turn rate / burn fuel / mass (mass
+   trades dive acceleration against how hard the chute bites).
+   vfx: extra per-frame effects. ab: the sixth system, Epic and up.        */
+function S(o) { return o; }
+const SKINS = [
+  /* ---- COMMON: paint only. Same airframe, different stencils. ---------- */
+  S({ id:'trainer', name:'TRAINER-01', rar:0, tag:'RANGE ISSUE',
+    desc:'What every pilot is handed. Steel, stencils, and a motor that has never once been asked its opinion.',
+    col:{ body:[168,172,178], trim:[228,226,220], glow:[255,210,150], flame:[255,190,110], trail:[255,205,150] },
+    geo:{ len:7.2, rad:.62, nose:'cone', fins:{n:4,span:1.15,chord:1.5,sweep:.8,pos:.04}, bands:[{at:.52,w:.2}], pods:0 },
+    stat:{ spd:1, turn:1, fuel:1, mass:1 }, vfx:'none', ab:null }),
+  S({ id:'rebar', name:'REBAR', rar:0, tag:'FIELD REPAIR',
+    desc:'Half of it is weld. Flies straight enough that nobody has bothered to condemn it.',
+    col:{ body:[142,104,78], trim:[92,74,62], glow:[255,190,120], flame:[255,170,90], trail:[255,180,110] },
+    geo:{ len:6.8, rad:.68, nose:'blunt', fins:{n:3,span:1.25,chord:1.7,sweep:.55,pos:.03}, bands:[{at:.3,w:.12},{at:.62,w:.12}], pods:0 },
+    stat:{ spd:.97, turn:1.02, fuel:1, mass:1.05 }, vfx:'none', ab:null }),
+  S({ id:'surplus', name:'SURPLUS 7', rar:0, tag:'DEPOT STOCK',
+    desc:'Olive drab, stencilled twice, repainted once. The crate it came in was older than the range.',
+    col:{ body:[104,116,88], trim:[62,72,54], glow:[255,200,140], flame:[255,180,100], trail:[255,190,130] },
+    geo:{ len:7.4, rad:.6, nose:'ogive', fins:{n:4,span:1.1,chord:1.4,sweep:.75,pos:.05}, bands:[{at:.7,w:.14}], pods:0 },
+    stat:{ spd:1.01, turn:.99, fuel:1.05, mass:1 }, vfx:'none', ab:null }),
+  S({ id:'ashcan', name:'ASHCAN', rar:0, tag:'WRITE-OFF',
+    desc:'Recovered from a crater, straightened, and issued again. It smells like that.',
+    col:{ body:[78,80,84], trim:[46,48,52], glow:[255,170,110], flame:[255,150,80], trail:[230,170,120] },
+    geo:{ len:6.4, rad:.72, nose:'blunt', fins:{n:4,span:.95,chord:1.5,sweep:.4,pos:.02}, bands:[], pods:0 },
+    stat:{ spd:.95, turn:1.05, fuel:.95, mass:1.08 }, vfx:'none', ab:null }),
+  S({ id:'pipefitter', name:'PIPEFITTER', rar:0, tag:'CIVILIAN',
+    desc:'Galvanised plumbing with fins. Somebody in the shop thought it was funny. It was.',
+    col:{ body:[176,182,190], trim:[120,128,138], glow:[210,230,255], flame:[200,220,255], trail:[190,215,255] },
+    geo:{ len:7.6, rad:.58, nose:'cone', fins:{n:4,span:1.05,chord:1.3,sweep:.7,pos:.06}, bands:[{at:.25,w:.1},{at:.45,w:.1},{at:.65,w:.1}], pods:0 },
+    stat:{ spd:1.02, turn:.98, fuel:1, mass:.98 }, vfx:'none', ab:null }),
+
+  /* ---- UNCOMMON: livery with intent, small handling bias. -------------- */
+  S({ id:'hornet', name:'HORNET', rar:1, tag:'AGGRESSOR SQN',
+    desc:'Aggressor squadron paint. Yellow so the range camera can find the pieces.',
+    col:{ body:[248,196,42], trim:[26,26,28], glow:[255,220,120], flame:[255,196,90], trail:[255,210,110] },
+    geo:{ len:7, rad:.62, nose:'ogive', fins:{n:4,span:1.3,chord:1.5,sweep:.85,pos:.04}, bands:[{at:.34,w:.16},{at:.58,w:.16}], pods:0 },
+    stat:{ spd:1.01, turn:1.06, fuel:1, mass:.97 }, vfx:'none', ab:null }),
+  S({ id:'bluecoat', name:'BLUECOAT', rar:1, tag:'FLEET AIR',
+    desc:'Naval trim, anti-glare panel, and a serial number that belongs to a ship nobody will name.',
+    col:{ body:[52,86,138], trim:[226,230,236], glow:[180,215,255], flame:[150,200,255], trail:[170,210,255] },
+    geo:{ len:7.5, rad:.6, nose:'ogive', fins:{n:4,span:1.2,chord:1.6,sweep:.9,pos:.05}, bands:[{at:.66,w:.2}], pods:0 },
+    stat:{ spd:1.03, turn:1, fuel:1.05, mass:1 }, vfx:'none', ab:null }),
+  S({ id:'dune', name:'DUNERUNNER', rar:1, tag:'DESERT TRIALS',
+    desc:'Sand filter on the intake, canards up front. Built for low, hot and fast.',
+    col:{ body:[206,178,126], trim:[122,96,64], glow:[255,210,150], flame:[255,190,120], trail:[255,200,140] },
+    geo:{ len:7.1, rad:.63, nose:'cone', fins:{n:4,span:1.15,chord:1.5,sweep:.8,pos:.04}, canards:{n:4,span:.55,chord:.7,pos:.72}, bands:[{at:.5,w:.14}], pods:0 },
+    stat:{ spd:1, turn:1.09, fuel:1, mass:.99 }, vfx:'none', ab:null }),
+  S({ id:'mercury', name:'MERCURY', rar:1, tag:'HIGH SPEED TRIALS',
+    desc:'Polished until the range officer could shave in it. Long, thin, and allergic to corners.',
+    col:{ body:[214,220,230], trim:[130,142,158], glow:[220,240,255], flame:[210,235,255], trail:[220,240,255] },
+    geo:{ len:8.4, rad:.52, nose:'dart', fins:{n:3,span:.95,chord:1.3,sweep:.9,pos:.03}, bands:[{at:.4,w:.1}], pods:0 },
+    stat:{ spd:1.09, turn:.93, fuel:1, mass:.95 }, vfx:'none', ab:null }),
+  S({ id:'pitch', name:'PITCHBLACK', rar:1, tag:'NIGHT RANGE',
+    desc:'Matte black, orange tip. Designed to be invisible except at the exact moment it matters.',
+    col:{ body:[30,32,38], trim:[255,110,40], glow:[255,150,70], flame:[255,130,60], trail:[255,140,70] },
+    geo:{ len:7.3, rad:.6, nose:'cone', fins:{n:4,span:1.2,chord:1.45,sweep:.95,pos:.04}, bands:[{at:.78,w:.14}], pods:0 },
+    stat:{ spd:1.04, turn:1.02, fuel:.96, mass:.98 }, vfx:'none', ab:null }),
+
+  /* ---- RARE: the airframe itself changes. Geometry + emissive. --------- */
+  S({ id:'halogen', name:'HALOGEN', rar:2, tag:'PROTOTYPE',
+    desc:'A lighting element with a motor behind it. The strip down the spine runs hot enough to read by.',
+    col:{ body:[36,44,58], trim:[120,240,255], glow:[140,245,255], flame:[120,230,255], trail:[150,240,255] },
+    geo:{ len:9, rad:.5, nose:'dart', fins:{n:3,span:1.05,chord:1.5,sweep:1.1,pos:.02}, strip:true, bands:[{at:.35,w:.08,em:1},{at:.55,w:.08,em:1}], pods:0 },
+    stat:{ spd:1.14, turn:.9, fuel:1.05, mass:.92 }, vfx:'sparks', ab:null }),
+  S({ id:'kingfisher', name:'KINGFISHER', rar:2, tag:'AEROBATIC',
+    desc:'Oversized control surfaces and a nose built to dive. Turns hard enough to hurt the airframe.',
+    col:{ body:[24,128,146], trim:[255,138,58], glow:[120,235,255], flame:[255,160,80], trail:[120,225,255] },
+    geo:{ len:6.9, rad:.64, nose:'ogive', fins:{n:4,span:1.85,chord:1.9,sweep:.7,pos:.03}, canards:{n:4,span:.8,chord:.9,pos:.7}, bands:[{at:.5,w:.16,em:.5}], pods:0 },
+    stat:{ spd:.97, turn:1.24, fuel:1, mass:1.02 }, vfx:'sparks', ab:null }),
+  S({ id:'reliquary', name:'RELIQUARY', rar:2, tag:'CEREMONIAL',
+    desc:'Bone lacquer and gold banding. Somebody consecrated a weapon and it has been smug ever since.',
+    col:{ body:[228,222,206], trim:[212,168,72], glow:[255,224,150], flame:[255,214,140], trail:[255,222,160] },
+    geo:{ len:7.6, rad:.66, nose:'ogive', fins:{n:6,span:1.2,chord:1.5,sweep:.6,pos:.05}, bands:[{at:.22,w:.09,em:.7},{at:.42,w:.09,em:.7},{at:.62,w:.09,em:.7},{at:.8,w:.09,em:.7}], pods:0 },
+    stat:{ spd:.99, turn:1, fuel:1.4, mass:1.03 }, vfx:'sparks', ab:null }),
+  S({ id:'static', name:'STATIC', rar:2, tag:'ANOMALOUS',
+    desc:'Telemetry from this frame comes back as noise. The frame comes back fine. Nobody likes that.',
+    col:{ body:[40,42,50], trim:[236,240,248], glow:[255,255,255], flame:[220,235,255], trail:[235,245,255] },
+    geo:{ len:7.2, rad:.6, nose:'spike', fins:{n:5,span:1.25,chord:1.3,sweep:1,pos:.03}, bands:[{at:.45,w:.3,em:.4}], pods:0 },
+    stat:{ spd:1.06, turn:1.05, fuel:.95, mass:.96 }, vfx:'static', ab:null }),
+  S({ id:'ironclad', name:'IRONCLAD', rar:2, tag:'ASSAULT',
+    desc:'Strap-on boosters and enough plate to shrug off a wall. It will not thank you for the corner.',
+    col:{ body:[96,100,110], trim:[196,80,52], glow:[255,150,90], flame:[255,140,70], trail:[255,160,100] },
+    geo:{ len:7, rad:.78, nose:'blunt', fins:{n:4,span:1.25,chord:1.8,sweep:.5,pos:.02}, bands:[{at:.55,w:.2,em:.3}], pods:4 },
+    stat:{ spd:.94, turn:.96, fuel:1.2, mass:1.25, hull:1 }, vfx:'sparks', ab:null }),
+
+  /* ---- EPIC: sixth system on Q. --------------------------------------- */
+  S({ id:'wraith', name:'WRAITH', rar:3, tag:'CLASSIFIED',
+    desc:'The airframe is only mostly here. Range control logs it as two contacts and neither one is solid.',
+    col:{ body:[60,52,92], trim:[186,150,255], glow:[196,150,255], flame:[176,130,255], trail:[190,145,255] },
+    geo:{ len:8.2, rad:.55, nose:'spike', fins:{n:4,span:1.4,chord:1.4,sweep:1.2,pos:.02}, strip:true,
+          bands:[{at:.3,w:.1,em:1},{at:.7,w:.1,em:1}], pods:0 },
+    stat:{ spd:1.07, turn:1.08, fuel:1.05, mass:.9 }, vfx:'ghost',
+    ab:{ k:'phase', name:'PHASE DRIVE', cd:8, dur:1.5, desc:'Go intangible for 1.5s. Walls stop existing; the score for threading them does not.' } }),
+  S({ id:'hydra', name:'HYDRA', rar:3, tag:'MIRV',
+    desc:'Carries children. They leave early, find the gates for you, and are never mentioned again.',
+    col:{ body:[44,86,74], trim:[140,255,190], glow:[140,255,196], flame:[120,245,180], trail:[140,255,190] },
+    geo:{ len:7.4, rad:.72, nose:'blunt', fins:{n:6,span:1.15,chord:1.4,sweep:.7,pos:.03},
+          bands:[{at:.46,w:.22,em:.8}], pods:3 },
+    stat:{ spd:1, turn:1.04, fuel:1.1, mass:1.05 }, vfx:'orbit',
+    ab:{ k:'split', name:'SPLIT WARHEAD', cd:11, dur:5, desc:'Release three submunitions. They run ahead and tag the next gates — tagged gates pay triple.' } }),
+  S({ id:'leech', name:'LEECH', rar:3, tag:'PARASITIC',
+    desc:'Draws working fluid off whatever it flies past. The closer you shave, the more it takes.',
+    col:{ body:[78,32,48], trim:[255,96,128], glow:[255,110,140], flame:[255,90,120], trail:[255,110,140] },
+    geo:{ len:7.8, rad:.6, nose:'ogive', fins:{n:4,span:1.5,chord:1.35,sweep:1,pos:.03}, strip:true,
+          bands:[{at:.36,w:.12,em:.9},{at:.6,w:.12,em:.9}], pods:2 },
+    stat:{ spd:1.03, turn:1.06, fuel:.85, mass:.96 }, vfx:'orbit',
+    ab:{ k:'siphon', name:'KINETIC SIPHON', cd:9, dur:3.5, desc:'For 3.5s every surface inside 20m feeds you — fuel, speed and a hard multiplier lock.' } }),
+
+  /* ---- LEGENDARY ------------------------------------------------------ */
+  S({ id:'chronos', name:'CHRONOS', rar:4, tag:'TEMPORAL',
+    desc:'Carries two seconds of its own past in a bottle. Pouring it out is the only way to survive a mistake.',
+    col:{ body:[52,46,34], trim:[255,206,110], glow:[255,214,130], flame:[255,196,110], trail:[255,212,140] },
+    geo:{ len:8, rad:.62, nose:'ogive', fins:{n:8,span:1.25,chord:1.2,sweep:.8,pos:.04}, strip:true,
+          bands:[{at:.2,w:.07,em:1},{at:.34,w:.07,em:1},{at:.48,w:.07,em:1},{at:.62,w:.07,em:1},{at:.76,w:.07,em:1}], pods:0 },
+    stat:{ spd:1.05, turn:1.1, fuel:1.15, mass:.95 }, vfx:'aura',
+    ab:{ k:'rewind', name:'REWIND', cd:14, dur:.8, desc:'Wind back two seconds of flight. Speed, position and one lost hull come back with you.' } }),
+  S({ id:'magnetar', name:'MAGNETAR', rar:4, tag:'FIELD EFFECT',
+    desc:'Bends the course toward itself. Gates lean in. Pilots describe it as cheating and keep flying it.',
+    col:{ body:[34,44,78], trim:[130,180,255], glow:[150,190,255], flame:[130,170,255], trail:[150,195,255] },
+    geo:{ len:7.6, rad:.68, nose:'blunt', fins:{n:6,span:1.45,chord:1.5,sweep:.6,pos:.03}, strip:true,
+          bands:[{at:.3,w:.16,em:1},{at:.58,w:.16,em:1}], pods:4 },
+    stat:{ spd:1.02, turn:1.12, fuel:1.1, mass:1.06 }, vfx:'aura',
+    ab:{ k:'singularity', name:'SINGULARITY', cd:12, dur:4, desc:'Drop a field for 4s. Gates drag toward your line, loose debris falls in, threads count double.' } }),
+  S({ id:'solaris', name:'SOLARIS', rar:4, tag:'DIRECTED ENERGY',
+    desc:'The nose is an aperture. When it opens, the course stops being a suggestion.',
+    col:{ body:[92,40,18], trim:[255,168,52], glow:[255,190,90], flame:[255,170,60], trail:[255,180,80] },
+    geo:{ len:8.6, rad:.64, nose:'spike', fins:{n:4,span:1.6,chord:1.7,sweep:1.1,pos:.02}, strip:true,
+          bands:[{at:.4,w:.2,em:1},{at:.68,w:.1,em:1}], pods:2 },
+    stat:{ spd:1.08, turn:1.02, fuel:1.2, mass:1.02 }, vfx:'aura',
+    ab:{ k:'lance', name:'NOVA LANCE', cd:12, dur:1.2, desc:'Fire forward. Everything in the beam is removed from the course and paid out as debris score.' } }),
+
+  /* ---- MYTHIC --------------------------------------------------------- */
+  S({ id:'ouroboros', name:'OUROBOROS', rar:5, tag:'DO NOT ISSUE',
+    desc:'Its own exhaust arrives before it does. The range has stopped filing reports on this one.',
+    col:{ body:[18,16,26], trim:[255,80,140], glow:[255,90,150], flame:[255,70,130], trail:[255,95,155] },
+    geo:{ len:8.8, rad:.6, nose:'spike', fins:{n:8,span:1.5,chord:1.3,sweep:1.3,pos:.02}, strip:true,
+          bands:[{at:.18,w:.08,em:1},{at:.36,w:.08,em:1},{at:.54,w:.08,em:1},{at:.72,w:.08,em:1}], pods:4 },
+    stat:{ spd:1.12, turn:1.15, fuel:1.25, mass:.9 }, vfx:'rift',
+    ab:{ k:'horizon', name:'EVENT HORIZON', cd:16, dur:4, desc:'The course stops for four seconds. You do not. Everything you touch while it is stopped pays five times.' } }),
+  S({ id:'seraph', name:'SERAPH', rar:5, tag:'DO NOT ISSUE',
+    desc:'It unfolds. Nobody who has watched it unfold has been able to explain what the extra surfaces are for.',
+    col:{ body:[240,236,226], trim:[255,214,120], glow:[255,240,200], flame:[255,236,190], trail:[255,242,210] },
+    geo:{ len:8.2, rad:.66, nose:'ogive', fins:{n:6,span:1.9,chord:1.8,sweep:.9,pos:.03}, canards:{n:6,span:1,chord:1,pos:.7}, strip:true,
+          bands:[{at:.28,w:.12,em:1},{at:.5,w:.12,em:1},{at:.72,w:.12,em:1}], pods:2 },
+    stat:{ spd:1.1, turn:1.18, fuel:1.3, mass:.88, hull:1 }, vfx:'prism',
+    ab:{ k:'ascend', name:'ASCENSION', cd:15, dur:5, desc:'Deploy for five seconds: full authority, no airframe limit, nothing can kill you, and every point doubles.' } })
+];
+const SKIN_BY_ID = {}; SKINS.forEach((s, i) => { s.idx = i; SKIN_BY_ID[s.id] = s; });
+
+/* ---------------------------------------------------- airframe geometry --- */
+/* Rare+ frames differ in real geometry, so the mesh is generated from geo{}
+   rather than being a sprite swap. Built once per skin and cached.        */
+const MESH_CACHE = {};
+function noseProfile(shape) {
+  switch (shape) {
+    case 'cone':  return { start: .62, f: t => 1 - t };
+    case 'ogive': return { start: .58, f: t => Math.sqrt(Math.max(0, 1 - t * t)) };
+    case 'blunt': return { start: .82, f: t => 1 - t * .58 };
+    case 'spike': return { start: .38, f: t => Math.pow(1 - t, 1.5) };
+    case 'dart':  return { start: .28, f: t => Math.pow(1 - t, .85) };
+  }
+  return { start: .62, f: t => 1 - t };
+}
+function buildMesh(sk) {
+  if (MESH_CACHE[sk.id]) return MESH_CACHE[sk.id];
+  const g = sk.geo, C = sk.col, SEG = 10, V = [], F = [];
+  const L = g.len, R = g.rad, half = L / 2, np = noseProfile(g.nose);
+  const push = (x, y, z) => { V.push(x, y, z); return V.length / 3 - 1; };
+  const radAt = t => {                    // t = 0 tail .. 1 nose
+    if (t < .08) return R * (.8 + t / .08 * .2);
+    if (t < np.start) return R;
+    const u = (t - np.start) / (1 - np.start);
+    return Math.max(.035, R * np.f(u));
+  };
+  const zAt = t => -half + t * L;
+  const ts = []; for (let i = 0; i <= 22; i++) ts.push(i / 22);
+  const rings = ts.map(t => {
+    const r = radAt(t), z = zAt(t), row = [];
+    for (let s = 0; s < SEG; s++) { const a = s / SEG * TAU; row.push(push(Math.cos(a) * r, Math.sin(a) * r, z)); }
+    return row;
+  });
+  const bandAt = t => { for (const b of (g.bands || [])) if (Math.abs(t - b.at) < b.w / 2) return b; return null; };
+  for (let i = 0; i < ts.length - 1; i++) {
+    const t = (ts[i] + ts[i + 1]) / 2, b = bandAt(t);
+    const base = b ? C.trim : C.body, em = b ? (b.em || 0) : 0;
+    for (let s = 0; s < SEG; s++) {
+      const s2 = (s + 1) % SEG;
+      F.push({ i: [rings[i][s], rings[i][s2], rings[i + 1][s2], rings[i + 1][s]], c: base, em });
+    }
+  }
+  // emissive spine strip along the top of the body (Rare and up)
+  if (g.strip) {
+    const sA = 2, sB = 3;
+    for (let i = 3; i < ts.length - 4; i++)
+      F.push({ i: [rings[i][sA], rings[i][sB], rings[i + 1][sB], rings[i + 1][sA]], c: C.glow, em: 1 });
+  }
+  // tail cap + nozzle
+  const tailC = push(0, 0, -half - .05);
+  for (let s = 0; s < SEG; s++) F.push({ i: [tailC, rings[0][(s + 1) % SEG], rings[0][s]], c: cmul(C.body, .45), em: 0 });
+  // fins
+  const fin = (spec, tiltCol) => {
+    const z0 = -half + spec.pos * L, ch = spec.chord, sw = spec.sweep, sp = spec.span;
+    for (let i = 0; i < spec.n; i++) {
+      const a = i / spec.n * TAU + PI / spec.n, ux = Math.cos(a), uy = Math.sin(a), r0 = radAt((z0 + half) / L) * .95;
+      const p0 = push(ux * r0, uy * r0, z0), p1 = push(ux * r0, uy * r0, z0 + ch);
+      const p2 = push(ux * (r0 + sp), uy * (r0 + sp), z0 + ch - sw), p3 = push(ux * (r0 + sp), uy * (r0 + sp), z0 + sw * .25);
+      F.push({ i: [p0, p1, p2, p3], c: tiltCol, em: 0, ds: 1 });
+    }
+  };
+  if (g.fins) fin(g.fins, C.trim);
+  if (g.canards) fin({ n: g.canards.n, span: g.canards.span, chord: g.canards.chord, sweep: g.canards.chord * .5, pos: g.canards.pos }, C.trim);
+  // strap-on pods
+  if (g.pods) {
+    const PS = 6, pr = R * .38, pl = L * .34, pz = -half + L * .1;
+    for (let i = 0; i < g.pods; i++) {
+      const a = i / g.pods * TAU + PI / 4, ox = Math.cos(a) * (R + pr * .85), oy = Math.sin(a) * (R + pr * .85);
+      const rA = [], rB = [], rC = [];
+      for (let s = 0; s < PS; s++) {
+        const b = s / PS * TAU, cx = Math.cos(b) * pr, cy = Math.sin(b) * pr;
+        rA.push(push(ox + cx, oy + cy, pz)); rB.push(push(ox + cx, oy + cy, pz + pl));
+        rC.push(push(ox + cx * .25, oy + cy * .25, pz + pl + pr * 1.6));
+      }
+      for (let s = 0; s < PS; s++) {
+        const s2 = (s + 1) % PS;
+        F.push({ i: [rA[s], rA[s2], rB[s2], rB[s]], c: cmul(C.body, .88), em: 0 });
+        F.push({ i: [rB[s], rB[s2], rC[s2], rC[s]], c: C.trim, em: 0 });
+      }
+      const pc = push(ox, oy, pz - .12);
+      for (let s = 0; s < PS; s++) F.push({ i: [pc, rA[(s + 1) % PS], rA[s]], c: cmul(C.body, .4), em: .2 });
+    }
+  }
+  const m = { v: new Float32Array(V), f: F, nozzle: -half - .1, len: L, rad: R, pods: g.pods | 0, podZ: -half };
+  MESH_CACHE[sk.id] = m; return m;
+}
+
+/* ------------------------------------------------------------- savegame --- */
+const SAVE_KEY = 'hardburn.v1';
+const DEF_SAVE = { cred: 300, scrap: 0, owned: { trainer: 1 }, equip: 'trainer', rolls: 0,
+  pityEpic: 0, pityLeg: 0, best: {}, runs: 0, kills: 0, bestEver: 0, seen: {} };
+let SV = load();
+function load() {
+  try { const r = JSON.parse(localStorage.getItem(SAVE_KEY)); if (r && r.owned) return Object.assign({}, DEF_SAVE, r); } catch (e) { }
+  return JSON.parse(JSON.stringify(DEF_SAVE));
+}
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SV)); } catch (e) { } }
+function equipped() { return SKIN_BY_ID[SV.equip] || SKINS[0]; }
+</script>
+<script>
+'use strict';
+/* ========================================================== renderer ====== */
+const ZN = 0.45, FOG0 = 520, FOG1 = 3000, LIGHT = vnorm(V3(.34, .82, -.46));
+let camP = V3(0, 0, 0), camF = V3(0, 0, 1), camU = V3(0, 1, 0), camR = V3(1, 0, 0);
+let FB = [], fbN = 0;
+
+function setCam(p, fwd, upHint, roll, fov) {
+  camP = p; camF = vnorm(fwd);
+  let u = vsub(upHint, vmul(camF, vdot(upHint, camF)));
+  if (vlen(u) < 1e-4) u = V3(0, 1, 0);
+  camU = vnorm(u);
+  if (roll) camU = vnorm(rotAxis(camU, camF, roll));
+  camR = vnorm(vcross(camF, camU));
+  FOC = (H / 2) / Math.tan(fov / 2);
+}
+function vw(p) {
+  const dx = p.x - camP.x, dy = p.y - camP.y, dz = p.z - camP.z;
+  return { x: dx * camR.x + dy * camR.y + dz * camR.z,
+           y: dx * camU.x + dy * camU.y + dz * camU.z,
+           z: dx * camF.x + dy * camF.y + dz * camF.z };
+}
+function clipZ(poly) {
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length], ain = a.z >= ZN, bin = b.z >= ZN;
+    if (ain) out.push(a);
+    if (ain !== bin) { const t = (ZN - a.z) / (b.z - a.z);
+      out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: ZN }); }
+  }
+  return out;
+}
+/* pts: world-space polygon. o: {c fill, em emissive 0..1, ds double-sided,
+   edge edge colour, ew edge weight, nrm precomputed normal, flat unshaded} */
+function face(pts, o) {
+  const n = pts.length, vp = new Array(n);
+  let any = false;
+  for (let i = 0; i < n; i++) { const v = vw(pts[i]); vp[i] = v; if (v.z > ZN) any = true; }
+  if (!any) return;
+  const cp = clipZ(vp); if (cp.length < 3) return;
+  const sx = new Array(cp.length), sy = new Array(cp.length);
+  let zs = 0;
+  for (let i = 0; i < cp.length; i++) {
+    const v = cp[i], iz = FOC / v.z;
+    sx[i] = CX + v.x * iz; sy[i] = CY - v.y * iz; zs += v.z;
+  }
+  const z = zs / cp.length;
+  if (!o.ds) {                                    // screen-space backface cull
+    let a2 = 0;
+    for (let i = 0; i < sx.length; i++) { const j = (i + 1) % sx.length; a2 += sx[i] * sy[j] - sx[j] * sy[i]; }
+    /* Two mirrors decide this sign: sy flips y, and setCam's basis is
+       left-handed (camR = cross(camF, camU)). Net result, verified against
+       dot(normal, camera - face) on real course geometry: a camera-facing
+       polygon lands NEGATIVE here. Anything that feeds this function must
+       reach world space through a right-handed transform, or it inverts. */
+    if (a2 > 0) return;
+  }
+  let nrm = o.nrm;
+  if (!nrm) { const e1 = vsub(pts[1], pts[0]), e2 = vsub(pts[2], pts[0]); nrm = vnorm(vcross(e1, e2)); }
+  let sh = o.flat ? 1 : .42 + .58 * (vdot(nrm, LIGHT) * .5 + .5);
+  const fog = clamp((z - FOG0) / (FOG1 - FOG0), 0, 1);
+  let col = cmul(o.c, sh);
+  if (o.em) col = cmix(col, cmix(o.c, [255, 255, 255], .35), o.em);
+  col = cmix(col, INK, fog * .94);
+  FB[fbN++] = { sx, sy, z, fill: o.a != null ? rgba(col, o.a) : rgb(col),
+                edge: o.edge ? rgba(o.edge, (1 - fog) * (o.ea || .55) * (o.a != null ? o.a : 1)) : null,
+                ew: o.ew || 1 };
+}
+function flushFaces() {
+  const list = FB.slice(0, fbN); fbN = 0;
+  list.sort((a, b) => b.z - a.z);
+  for (let k = 0; k < list.length; k++) {
+    const f = list[k], sx = f.sx, sy = f.sy;
+    X.beginPath(); X.moveTo(sx[0], sy[0]);
+    for (let i = 1; i < sx.length; i++) X.lineTo(sx[i], sy[i]);
+    X.closePath();
+    X.fillStyle = f.fill; X.fill();
+    if (f.edge) { X.strokeStyle = f.edge; X.lineWidth = f.ew; X.stroke(); }
+  }
+}
+function line3(a, b, col, wdt, alpha) {
+  const A = vw(a), B = vw(b);
+  if (A.z < ZN && B.z < ZN) return;
+  let p = A, q = B;
+  if (A.z < ZN) { const t = (ZN - A.z) / (B.z - A.z); p = { x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, z: ZN }; }
+  if (B.z < ZN) { const t = (ZN - B.z) / (A.z - B.z); q = { x: B.x + (A.x - B.x) * t, y: B.y + (A.y - B.y) * t, z: ZN }; }
+  const i1 = FOC / p.z, i2 = FOC / q.z;
+  const fog = clamp(((p.z + q.z) / 2 - FOG0) / (FOG1 - FOG0), 0, 1);
+  X.strokeStyle = rgba(col, (alpha == null ? .5 : alpha) * (1 - fog));
+  X.lineWidth = wdt || 1;
+  X.beginPath(); X.moveTo(CX + p.x * i1, CY - p.y * i1); X.lineTo(CX + q.x * i2, CY - q.y * i2); X.stroke();
+}
+function proj(p) {   // returns null when behind
+  const v = vw(p); if (v.z < ZN) return null;
+  const iz = FOC / v.z; return { x: CX + v.x * iz, y: CY - v.y * iz, z: v.z, s: iz };
+}
+
+/* box helpers -------------------------------------------------------------- */
+/* corner bits in boxCorners are i&1 = +x, i&2 = +z, i&4 = +y, so these are
+   the six real faces, each wound to give an outward normal */
+const BOX_F = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[5,7,3,1],[4,5,1,0],[2,3,7,6]];
+function boxCorners(b, out) {
+  const c = Math.cos(b.yaw), s = Math.sin(b.yaw), sx = b.s.x, sy = b.s.y, sz = b.s.z;
+  let k = 0;
+  for (let i = 0; i < 8; i++) {
+    const lx = (i & 1 ? sx : -sx), ly = (i & 4 ? sy : -sy), lz = (i & 2 ? sz : -sz);
+    out[k++] = V3(b.p.x + lx * c + lz * s, b.p.y + ly, b.p.z - lx * s + lz * c);
+  }
+  return out;
+}
+const _bc = new Array(8);
+function drawBox(b) {
+  boxCorners(b, _bc);
+  const haz = b.kind === 'hazard';
+  const ec = haz ? AMBER : b.anchor ? CYAN : PAPER;
+  const ea = b.far ? .14 : haz ? .85 : b.anchor ? .9 : .55;
+  for (let i = 0; i < 6; i++) {
+    const f = BOX_F[i];
+    face([_bc[f[0]], _bc[f[1]], _bc[f[2]], _bc[f[3]]],
+      { c: b.col, em: 0, edge: ec, ea, ew: haz ? 1.5 : 1 });
+  }
+}
+function boxDist(b, p) {                       // distance from point to OBB surface
+  const c = Math.cos(-b.yaw), s = Math.sin(-b.yaw), dx = p.x - b.p.x, dz = p.z - b.p.z;
+  const lx = dx * c + dz * s, lz = -dx * s + dz * c, ly = p.y - b.p.y;
+  const qx = Math.abs(lx) - b.s.x, qy = Math.abs(ly) - b.s.y, qz = Math.abs(lz) - b.s.z;
+  const ox = Math.max(qx, 0), oy = Math.max(qy, 0), oz = Math.max(qz, 0);
+  const outside = Math.hypot(ox, oy, oz);
+  if (outside > 0) return outside;
+  return Math.max(qx, qy, qz);                 // negative inside
+}
+/* exact ray vs oriented box (slab method), in the box's own yaw frame.
+   Returns the entry distance along d, or -1. Used to aim the grapple. */
+function rayBox(b, o, d, maxT) {
+  const c = Math.cos(-b.yaw), s = Math.sin(-b.yaw);
+  const px = o.x - b.p.x, pz = o.z - b.p.z;
+  const oo = [px * c + pz * s, o.y - b.p.y, -px * s + pz * c];
+  const dd = [d.x * c + d.z * s, d.y, -d.x * s + d.z * c];
+  const hh = [b.s.x, b.s.y, b.s.z];
+  let t0 = 0, t1 = maxT;
+  for (let i = 0; i < 3; i++) {
+    if (Math.abs(dd[i]) < 1e-6) { if (Math.abs(oo[i]) > hh[i]) return -1; continue; }
+    let ta = (-hh[i] - oo[i]) / dd[i], tb = (hh[i] - oo[i]) / dd[i];
+    if (ta > tb) { const tmp = ta; ta = tb; tb = tmp; }
+    if (ta > t0) t0 = ta;
+    if (tb < t1) t1 = tb;
+    if (t0 > t1) return -1;
+  }
+  return t0;
+}
+function boxNormal(b, p) {
+  const c = Math.cos(-b.yaw), s = Math.sin(-b.yaw), dx = p.x - b.p.x, dz = p.z - b.p.z;
+  const lx = dx * c + dz * s, lz = -dx * s + dz * c, ly = p.y - b.p.y;
+  const ax = Math.abs(lx) / b.s.x, ay = Math.abs(ly) / b.s.y, az = Math.abs(lz) / b.s.z;
+  let n;
+  if (ax > ay && ax > az) n = V3(Math.sign(lx), 0, 0);
+  else if (ay > az) n = V3(0, Math.sign(ly), 0);
+  else n = V3(0, 0, Math.sign(lz));
+  const cc = Math.cos(b.yaw), ss = Math.sin(b.yaw);
+  return V3(n.x * cc + n.z * ss, n.y, -n.x * ss + n.z * cc);
+}
+
+/* ==================================================== course generation === */
+/* A course is a seeded 3D spline with gates on it and enough structure
+   crowding the line that the fast route is also the frightening one.      */
+const DIFFS = [
+  { n: 'MILK RUN',  gates: 9,  gr: 22, dens: .6,  spd: 1.0,  pay: 1.0 },
+  { n: 'STANDARD',  gates: 12, gr: 18, dens: 1.0, spd: 1.08, pay: 1.35 },
+  { n: 'TIGHT',     gates: 15, gr: 14, dens: 1.5, spd: 1.16, pay: 1.8 },
+  { n: 'SUICIDAL',  gates: 18, gr: 11, dens: 2.1, spd: 1.26, pay: 2.6 }
+];
+function catmull(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  const f = (a, b, c, d) => .5 * ((2 * b) + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+  return V3(f(p0.x, p1.x, p2.x, p3.x), f(p0.y, p1.y, p2.y, p3.y), f(p0.z, p1.z, p2.z, p3.z));
+}
+function makeCourse(seedStr, diff) {
+  const D = DIFFS[diff], rnd = mulberry(hashStr(seedStr.toUpperCase() + '|' + diff));
+  const cp = [V3(0, 110, -260), V3(0, 110, -130)];
+  let hd = 0, y = 110;
+  const N = D.gates + 2, feats = [];
+  /* The route is a sequence of named features, not random drift. Drift gives
+     you a course you can fly with one hand: every tool has to be asked for
+     somewhere. HAIRPIN turns harder than the airframe manages at full speed,
+     so it wants the grapple mast or the chute. CHICANE flicks back the other
+     way and punishes anyone still at 300. FIELD is a slalom, which is what
+     dilation is for. STRAIGHT is where the burn pays. */
+  for (let i = 0; i < N; i++) {
+    const r = rnd(), prevDir = feats.length ? feats[feats.length - 1].dir : 0;
+    let dh, dist, dy, kind;
+    if (i > 0 && r < .28) {
+      kind = 'hairpin';
+      dh = (rnd() < .5 ? -1 : 1) * (1.02 + rnd() * .48);
+      dist = 165 + rnd() * 70; dy = (rnd() - .5) * 34;
+    } else if (i > 0 && r < .46) {
+      kind = 'chicane';
+      dh = (prevDir ? -prevDir : (rnd() < .5 ? -1 : 1)) * (.64 + rnd() * .3);
+      dist = 200 + rnd() * 80; dy = (rnd() - .5) * 42;
+    } else if (r < .62) {
+      kind = 'dive';
+      dh = (rnd() - .5) * .42; dist = 290 + rnd() * 150;
+      dy = (rnd() < .5 ? -1 : 1) * (85 + rnd() * 95);
+    } else if (r < .78) {
+      kind = 'field';
+      dh = (rnd() - .5) * .3; dist = 300 + rnd() * 140; dy = (rnd() - .5) * 36;
+    } else {
+      kind = 'straight';
+      dh = (rnd() - .5) * .26; dist = 330 + rnd() * 200; dy = (rnd() - .5) * 44;
+    }
+    hd += dh; y = clamp(y + dy, 46, 320);
+    feats.push({ kind, dir: Math.sign(dh) || 1 });
+    const last = cp[cp.length - 1];
+    cp.push(V3(last.x + Math.sin(hd) * dist, y, last.z + Math.cos(hd) * dist));
+  }
+  cp.push(vadd(cp[cp.length - 1], vsub(cp[cp.length - 1], cp[cp.length - 2])));
+
+  const at = u => {                            // u in [0, cp.length-3]
+    const i = clamp(Math.floor(u), 0, cp.length - 4), t = u - i;
+    return catmull(cp[i], cp[i + 1], cp[i + 2], cp[i + 3], t);
+  };
+  const tanAt = u => vnorm(vsub(at(Math.min(u + .02, cp.length - 3.01)), at(Math.max(u - .02, 0))));
+  const UMAX = cp.length - 3;
+
+  const gates = [], boxes = [];
+  const slabCol = [46, 62, 82], pylCol = [34, 46, 64], hazCol = [78, 56, 30];
+  for (let gi = 1; gi <= D.gates; gi++) {
+    /* A gate sits ON a waypoint and is aimed down the CHORD through it, not
+       the local tangent. The chord is the line you actually fly; aiming at the
+       tangent at a bend turns the aperture edge-on and you get a slit you
+       cannot thread. Sharper features also get a wider hoop. */
+    const j = gi + 1;
+    if (j > cp.length - 3) break;
+    const kind = (feats[gi - 1] || {}).kind || 'straight';
+    const p = V3(cp[j].x, cp[j].y, cp[j].z);
+    const f = vnorm(vsub(cp[j + 1], cp[j - 1]));
+    const rmul = kind === 'hairpin' ? 1.45 : kind === 'chicane' ? 1.18 : kind === 'dive' ? 1.2 : 1;
+    const r = (D.gr + rnd() * 6) * rmul;
+    gates.push({ p, f, r, th: 1.3 + rnd() * .9, idx: gi - 1, kind, j, passed: 0, tagged: 0, pull: 0 });
+    // structure crowding the gate
+    const rt = vnorm(vcross(f, V3(0, 1, 0))), up = vnorm(vcross(rt, f));
+    const k = Math.round((1 + rnd() * 2) * D.dens * (kind === 'field' ? 2.4 : kind === 'straight' ? .55 : 1));
+    for (let j = 0; j < k; j++) {
+      const side = rnd() < .5 ? -1 : 1, lat = (r + 9 + rnd() * 48) * side, vert = (rnd() - .5) * 90;
+      const along = (rnd() - .5) * 150;
+      const c = vadd(vadd(vadd(p, vmul(rt, lat)), vmul(up, vert)), vmul(f, along));
+      const big = rnd() < .34;
+      const sz = big ? V3(16 + rnd() * 30, 22 + rnd() * 60, 14 + rnd() * 26) : V3(6 + rnd() * 12, 8 + rnd() * 26, 6 + rnd() * 14);
+      const haz = rnd() < .16;
+      boxes.push({ p: V3(c.x, Math.max(sz.y + 1, c.y), c.z), s: sz, yaw: rnd() * TAU,
+        kind: haz ? 'hazard' : 'slab', col: haz ? hazCol : slabCol, alive: 1 });
+    }
+    // ground pylons under the line — gives the floor teeth
+    if (rnd() < .75 * D.dens) {
+      const side = rnd() < .5 ? -1 : 1, lat = (r + 4 + rnd() * 30) * side;
+      const c = vadd(p, vmul(rt, lat));
+      const hgt = Math.max(24, c.y * (.55 + rnd() * .5));
+      boxes.push({ p: V3(c.x, hgt / 2, c.z), s: V3(5 + rnd() * 9, hgt / 2, 5 + rnd() * 9), yaw: rnd() * TAU,
+        kind: 'pylon', col: pylCol, alive: 1 });
+    }
+    // a long ridge running with the line — this is the thing you shave for multiplier
+    if (rnd() < .85) {
+      const side = rnd() < .5 ? -1 : 1, lat = (r + 11 + rnd() * 20) * side;
+      const cc = vadd(vadd(p, vmul(rt, lat)), vmul(up, (rnd() - .5) * 46));
+      const hh = 24 + rnd() * 46, ln = 110 + rnd() * 170;
+      boxes.push({ p: V3(cc.x, Math.max(hh + 2, cc.y), cc.z), s: V3(4 + rnd() * 7, hh, ln),
+        yaw: Math.atan2(f.x, f.z), kind: 'slab', col: slabCol, alive: 1 });
+    }
+  }
+  // distant skyline: no collision consequence, but the eye needs parallax
+  for (let i = 0; i < 46; i++) {
+    const u = rnd() * UMAX, p = at(u), a = rnd() * TAU, d = 420 + rnd() * 1500;
+    const hh = 60 + rnd() * 230;
+    boxes.push({ p: V3(p.x + Math.cos(a) * d, hh, p.z + Math.sin(a) * d),
+      s: V3(14 + rnd() * 40, hh, 14 + rnd() * 40), yaw: rnd() * TAU,
+      kind: 'far', col: [22, 32, 46], alive: 1, far: 1 });
+  }
+  // the target: a frame with a hot core, sat at the end of the line
+  const tu = UMAX - .35, tp = at(tu), tf = tanAt(tu);
+  const trt = vnorm(vcross(tf, V3(0, 1, 0))), tup = vnorm(vcross(trt, tf));
+  const target = { p: tp, f: tf, r: 9, hit: 0 };
+  for (let i = 0; i < 4; i++) {                // frame legs around the core
+    const a = i / 4 * TAU + PI / 4, off = 22;
+    const c = vadd(vadd(tp, vmul(trt, Math.cos(a) * off)), vmul(tup, Math.sin(a) * off));
+    boxes.push({ p: c, s: V3(3, 3, 3), yaw: a, kind: 'slab', col: [30, 40, 54], alive: 1, frame: 1 });
+  }
+  /* A grapple mast on the inside of every hairpin, set back from the gate so
+     you can hook it on the way in. The corner is deliberately sharper than the
+     airframe turns at speed, so the mast is the fast way through it — that is
+     the whole reason the hook exists. */
+  const anchors = [];
+  for (const g of gates) {
+    if (g.kind !== 'hairpin' || g.j == null) continue;
+    const inD = vnorm(vsub(cp[g.j], cp[g.j - 1])), outD = vnorm(vsub(cp[g.j + 1], cp[g.j]));
+    let inward = vsub(outD, inD);
+    if (vlen(inward) < .05) continue;
+    inward = vnorm(inward);                       // points at the turn centre
+    const c2 = vsub(vadd(g.p, vmul(inward, g.r + 46)), vmul(inD, 55));
+    const hgt = Math.max(30, c2.y * .62);
+    const mast = { p: V3(c2.x, hgt, c2.z), s: V3(5.5, hgt, 5.5), yaw: rnd() * TAU,
+      kind: 'anchor', col: [30, 52, 66], alive: 1, anchor: 1 };
+    boxes.push(mast); anchors.push(mast);
+  }
+  // clear the launch bay: dying in the first second is not a skill check
+  const s0 = at(0);
+  for (let i = boxes.length - 1; i >= 0; i--)
+    if (!boxes[i].far && vdist(boxes[i].p, s0) < 190) boxes.splice(i, 1);
+  /* Nothing may stand in a gate's throat. Sampling boxDist along the gate axis
+     is exact — a centre-distance test lets a long slab poke its end through
+     the aperture, which is how gates became impossible. */
+  for (const g of gates) {
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const b = boxes[i];
+      if (b.far) continue;
+      for (let s = -120; s <= 120; s += 20)
+        if (boxDist(b, vadd(g.p, vmul(g.f, s))) < g.r + 9) { boxes.splice(i, 1); break; }
+    }
+  }
+  for (let i = boxes.length - 1; i >= 0; i--)    // and a clear shot at the target
+    if (!boxes[i].far && !boxes[i].frame && boxDist(boxes[i], target.p) < target.r + 34) boxes.splice(i, 1);
+  const len = UMAX;
+  const total = (() => { let d = 0, prev = at(0); for (let u = .05; u <= UMAX; u += .05) { const q = at(u); d += vdist(prev, q); prev = q; } return d; })();
+  const buckets = new Map();
+  const key = (x, z) => ((Math.floor(x / 220) & 2047) << 11 | (Math.floor(z / 220) & 2047));
+  boxes.forEach(b => {
+    const rx = Math.ceil((b.s.x + b.s.z) / 220), rz = rx;
+    for (let i = -rx; i <= rx; i++) for (let j = -rz; j <= rz; j++) {
+      const k2 = key(b.p.x + i * 220, b.p.z + j * 220);
+      if (!buckets.has(k2)) buckets.set(k2, []);
+      const arr = buckets.get(k2); if (arr.indexOf(b) < 0) arr.push(b);
+    }
+  });
+  return { seed: seedStr.toUpperCase(), diff, D, cp, at, tanAt, UMAX, gates, boxes, target, total,
+    anchors, start: at(0), startF: tanAt(0), buckets, key,
+    near(p) { return buckets.get(key(p.x, p.z)) || EMPTY; } };
+}
+const EMPTY = [];
+
+/* --------------------------------------------------------- world drawing -- */
+const STARS = (() => { const r = mulberry(99), a = []; for (let i = 0; i < 300; i++) {
+  const th = r() * TAU, ph = Math.acos(r() * .9);
+  a.push({ d: V3(Math.sin(ph) * Math.cos(th), Math.abs(Math.cos(ph)) * .8 + .04, Math.sin(ph) * Math.sin(th)), m: .3 + r() * .7 }); } return a; })();
+
+function drawSky() {
+  const g = X.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04060b'); g.addColorStop(.55, '#070c14'); g.addColorStop(1, '#0b1320');
+  X.fillStyle = g; X.fillRect(0, 0, W, H);
+  for (let i = 0; i < STARS.length; i++) {
+    const s = STARS[i], p = proj(vadd(camP, vmul(s.d, 6000)));
+    if (!p) continue;
+    if (p.x < -20 || p.x > W + 20 || p.y < -20 || p.y > H + 20) continue;
+    X.fillStyle = rgba(PAPER, .1 + s.m * .4); X.fillRect(p.x, p.y, 1.3, 1.3);
+  }
+}
+function drawGround(px, pz) {
+  const S = 120, R = 9;
+  const gx = Math.round(px / S) * S, gz = Math.round(pz / S) * S;
+  X.lineCap = 'butt';
+  for (let i = -R; i <= R; i++) {
+    const a = gx + i * S;
+    line3(V3(a, 0, gz - R * S), V3(a, 0, gz + R * S), [50, 78, 104], 1, .3);
+    const b = gz + i * S;
+    line3(V3(gx - R * S, 0, b), V3(gx + R * S, 0, b), [50, 78, 104], 1, .3);
+  }
+}
+function drawRing(g, t) {
+  const dc = vdist(g.p, camP);
+  if (dc > 2200) return;
+  const SEGS = dc < 420 ? 22 : dc < 1100 ? 14 : 9, f = g.f;
+  const rt = vnorm(vcross(f, V3(0, 1, 0))), up = vnorm(vcross(rt, f));
+  const ri = g.r, ro = g.r + g.th;
+  const passed = g.passed, tagged = g.tagged;
+  let base = passed ? [22, 34, 44] : [30, 44, 58];
+  let ec = passed ? [70, 92, 110] : (tagged ? [140, 255, 190] : CYAN);
+  const pulse = passed ? 0 : (tagged ? .8 : .35 + Math.sin(t * 2.4 + g.idx) * .16);
+  const pt = (ang, r, off) => vadd(vadd(vadd(g.p, vmul(rt, Math.cos(ang) * r)), vmul(up, Math.sin(ang) * r)), vmul(f, off));
+  for (let s = 0; s < SEGS; s++) {
+    const a1 = s / SEGS * TAU, a2 = (s + 1) / SEGS * TAU;
+    const h = g.th * .6;
+    face([pt(a1, ri, -h), pt(a2, ri, -h), pt(a2, ro, -h), pt(a1, ro, -h)], { c: base, em: pulse * .5, edge: ec, ea: .5, ds: 1, flat: 1 });
+    face([pt(a1, ro, -h), pt(a2, ro, -h), pt(a2, ro, h), pt(a1, ro, h)], { c: cmul(base, .7), em: pulse, edge: ec, ea: .7, ds: 1 });
+    face([pt(a1, ri, h), pt(a2, ri, h), pt(a2, ro, h), pt(a1, ro, h)], { c: base, em: pulse * .5, edge: ec, ea: .5, ds: 1, flat: 1 });
+  }
+  // centre cross-hair so the thread line reads from far out
+  if (!passed) {
+    for (let s = 0; s < 4; s++) {
+      const a = s / 4 * TAU + PI / 4;
+      line3(pt(a, ri * .16, 0), pt(a, ri * .46, 0), ec, 1.6, .75 + pulse * .25);
+    }
+    // outer hoop drawn as a bright polyline: reads at 1km where fills do not
+    const step = SEGS < 14 ? 2 : 1;
+    for (let s = 0; s < SEGS; s += step)
+      line3(pt(s / SEGS * TAU, ro, 0), pt(Math.min(s + step, SEGS) / SEGS * TAU, ro, 0), ec, 2, .75);
+  }
+}
+function drawTarget(tg, t) {
+  const f = tg.f, rt = vnorm(vcross(f, V3(0, 1, 0))), up = vnorm(vcross(rt, f));
+  const pulse = .5 + Math.sin(t * 5) * .32;
+  const R = tg.r * (1 + Math.sin(t * 5) * .06);
+  const pt = (ang, r, off) => vadd(vadd(vadd(tg.p, vmul(rt, Math.cos(ang) * r)), vmul(up, Math.sin(ang) * r)), vmul(f, off));
+  // core: an octahedral shell, the only red thing on the range
+  const NS = 8;
+  for (let s = 0; s < NS; s++) {
+    const a1 = s / NS * TAU, a2 = (s + 1) / NS * TAU;
+    face([pt(a1, R, 0), pt(a2, R, 0), vadd(tg.p, vmul(f, R * 1.1))], { c: [120, 24, 26], em: pulse, edge: RED, ea: .9, ds: 1 });
+    face([pt(a1, R, 0), pt(a2, R, 0), vadd(tg.p, vmul(f, -R * 1.1))], { c: [86, 18, 20], em: pulse * .7, edge: RED, ea: .7, ds: 1 });
+  }
+  // rotating containment rings
+  for (let k = 0; k < 2; k++) {
+    const sp = t * (k ? -.9 : 1.3), rr = R * (1.7 + k * .5);
+    for (let s = 0; s < 18; s++) {
+      const a1 = s / 18 * TAU + sp, a2 = (s + 1) / 18 * TAU + sp;
+      const o1 = k ? Math.sin(a1 * 2) * rr * .4 : 0, o2 = k ? Math.sin(a2 * 2) * rr * .4 : 0;
+      line3(pt(a1, rr, o1), pt(a2, rr, o2), RED, 1.4, .55);
+    }
+  }
+}
+</script>
+<script>
+'use strict';
+/* ============================================================== game state = */
+const G = {
+  state: 'menu', course: null, t: 0, rt: 0, hitstop: 0, trauma: 0, shake: 0,
+  slowWorld: 1, chroma: 0, flash: 0, flashCol: RED, seed: 'TITAN', diff: 1
+};
+const P = {
+  p: V3(0, 0, 0), f: V3(0, 0, 1), up: V3(0, 1, 0), right: V3(1, 0, 0),
+  spd: 100, roll: 0, rollV: 0, hull: 3, maxHull: 3, fuel: 100, charge: 100,
+  g: 0, mult: 1, multT: 0, score: 0, skim: 0, near: 99, dead: 0,
+  grap: null, grapArc: 0, invuln: 0, phase: 0, abT: 0, abCd: 0, abK: '',
+  hist: [], drones: [], dilate: 0, scoreParts: null, alive: 1, tSinceStyle: 9,
+  /* aim is where the mouse points and the flight line you steer; f is the body
+     nose, which WASD swings off the aim; v is real velocity, which is neither */
+  aim: V3(0, 0, 1), v: V3(0, 0, 0), yawOff: 0, pitOff: 0, thrust: 0, crab: 0,
+  grapAim: null, grapMiss: 0
+};
+const RUN = { score: 0, time: 0, gates: 0, gatesTotal: 0, thread: 0, skim: 0, gload: 0,
+  swing: 0, debris: 0, kill: 0, best: 0, crashes: 0, bestMult: 1, done: 0, win: 0 };
+
+/* --------------------------------------------------------------- input ---- */
+const K = {};
+let mdx = 0, mdy = 0, locked = false, sens = .0022;
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  K[k] = 1;
+  if (G.state === 'armed' && k === ' ') launchNow();
+  if (G.state === 'fly' || G.state === 'armed') {
+    if (k === 'q') fireAbility();
+    if (k === 'r') { startRun(G.seed, G.diff); e.preventDefault(); }
+    if (k === 'escape') abortRun();
+    if ([' ', 'w', 'a', 's', 'd', 'q', 'e', 'f', 'c', 'x', 'shift', 'control'].indexOf(k) >= 0) e.preventDefault();
+  }
+});
+addEventListener('keyup', e => { K[e.key.toLowerCase()] = 0; });
+addEventListener('mousemove', e => { if (locked) { mdx += e.movementX; mdy += e.movementY; } });
+addEventListener('mousedown', e => { if ((G.state === 'fly' || G.state === 'armed') && locked) { if (e.button === 0) K['e'] = 1; if (e.button === 2) K['shift'] = 1; } });
+addEventListener('mouseup', e => { if (e.button === 0) K['e'] = 0; if (e.button === 2) K['shift'] = 0; });
+addEventListener('contextmenu', e => { if (G.state === 'fly') e.preventDefault(); });
+document.addEventListener('pointerlockchange', () => {
+  locked = document.pointerLockElement === CV;
+  document.getElementById('pausenote').classList.toggle('on', (G.state === 'fly' || G.state === 'armed') && !locked);
+});
+function lockPointer() { try { const r = CV.requestPointerLock(); if (r && r.catch) r.catch(() => { }); } catch (e) { } }
+CV.addEventListener('click', () => { if ((G.state === 'fly' || G.state === 'armed') && !locked) lockPointer(); });
+
+/* ----------------------------------------------------------- particles ---- */
+const PT = []; let ptN = 0;
+function spark(p, v, life, size, col, kind) {
+  if (ptN > 900) return;
+  PT[ptN++] = { p: V3(p.x, p.y, p.z), v, l: life, L: life, s: size, c: col, k: kind || 0 };
+}
+function stepParticles(dt) {
+  let w = 0;
+  for (let i = 0; i < ptN; i++) {
+    const q = PT[i]; q.l -= dt;
+    if (q.l <= 0) continue;
+    q.p.x += q.v.x * dt; q.p.y += q.v.y * dt; q.p.z += q.v.z * dt;
+    if (q.k === 2) q.v.y -= 42 * dt;                   // debris falls
+    const damp = q.k === 1 ? .9 : .965;
+    q.v.x *= Math.pow(damp, dt * 60); q.v.y *= Math.pow(damp, dt * 60); q.v.z *= Math.pow(damp, dt * 60);
+    PT[w++] = q;
+  }
+  ptN = w;
+}
+function boom(p, n, spd, col, kind) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * TAU, b = Math.acos(Math.random() * 2 - 1), s = spd * (.3 + Math.random());
+    spark(p, V3(Math.sin(b) * Math.cos(a) * s, Math.cos(b) * s, Math.sin(b) * Math.sin(a) * s),
+      .35 + Math.random() * .8, .35 + Math.random() * .7, col, kind);
+  }
+}
+function shake(a) { G.trauma = Math.min(1, G.trauma + a); }
+
+/* ---------------------------------------------------------- run control --- */
+function startRun(seed, diff) {
+  G.seed = seed.toUpperCase(); G.diff = diff;
+  G.course = makeCourse(G.seed, diff);
+  const c = G.course, sk = equipped();
+  P.p = V3(c.start.x, c.start.y, c.start.z);
+  P.f = V3(c.startF.x, c.startF.y, c.startF.z);
+  P.aim = V3(c.startF.x, c.startF.y, c.startF.z);
+  P.v = V3(0, 0, 0); P.up = V3(0, 1, 0);
+  P.yawOff = 0; P.pitOff = 0; P.thrust = 0; P.crab = 0; P.grapAim = null;
+  P.spd = 0; P.roll = 0; P.rollV = 0;
+  P.maxHull = 3 + (sk.stat.hull || 0); P.hull = P.maxHull;
+  P.fuel = 100; P.charge = 100; P.mult = 1; P.multT = 0; P.score = 0; P.g = 0;
+  P.grap = null; P.grapArc = 0; P.invuln = 2.2; P.phase = 0; P.abT = 0; P.abCd = 0;
+  P.hist.length = 0; P.drones.length = 0; P.dilate = 0; P.alive = 1; P.tSinceStyle = 9;
+  Object.assign(RUN, { score: 0, time: 0, gates: 0, gatesTotal: c.gates.length, thread: 0, skim: 0,
+    gload: 0, swing: 0, debris: 0, kill: 0, crashes: 0, bestMult: 1, done: 0, win: 0 });
+  ptN = 0; TRAIL.length = 0; G.trauma = 0; G.hitstop = 0; G.slowWorld = 1; G.rt = 0;
+  G.state = 'armed';                   // on the rail until the pilot says go
+  showScreen(null);
+  if (!locked) lockPointer();
+}
+/* the clock does not start until the motor lights */
+function launchNow() {
+  if (G.state !== 'armed') return;
+  G.state = 'fly';
+  const sk = equipped(), m = buildMesh(sk);
+  P.v = vmul(P.f, 62);
+  P.invuln = 1.6;
+  shake(.7); G.flash = .6; G.flashCol = sk.col.flame; G.hitstop = .05;
+  boom(vadd(P.p, vmul(P.f, m.nozzle * 1.5)), 44, 75, sk.col.flame, 0);
+  toastGame('MOTOR LIT — HOLD SPACE');
+}
+function abortRun() { document.exitPointerLock(); endRun(false); }
+function endRun(win) {
+  if (G.state !== 'fly' && G.state !== 'armed') return;
+  RUN.win = win ? 1 : 0; RUN.done = 1;
+  G.state = 'over';
+  document.exitPointerLock();
+  setTimeout(() => finishRun(), 700);
+}
+
+/* -------------------------------------------------------------- abilities - */
+function abilityDur(sk) { return sk.ab ? sk.ab.dur : 0; }
+function fireAbility() {
+  const sk = equipped(); if (!sk.ab || P.abCd > 0 || P.abT > 0) return;
+  const k = sk.ab.k; P.abK = k; P.abCd = sk.ab.cd; P.abT = sk.ab.dur;
+  const c = G.course;
+  toastGame(sk.ab.name);
+  shake(.3); G.flash = .5; G.flashCol = sk.col.glow;
+  if (k === 'phase') { P.phase = sk.ab.dur; P.invuln = sk.ab.dur; }
+  if (k === 'split') {
+    const next = c.gates.filter(g => !g.passed).slice(0, 3);
+    next.forEach((g, i) => P.drones.push({ p: V3(P.p.x, P.p.y, P.p.z), g, t: 0,
+      off: V3((i - 1) * 6, 4 + i * 2, 0) }));
+  }
+  if (k === 'rewind') {
+    const want = G.rt - 2;
+    let best = null;
+    for (const h of P.hist) if (h.t <= want) best = h;
+    if (best) { P.p = V3(best.p.x, best.p.y, best.p.z); P.f = V3(best.f.x, best.f.y, best.f.z);
+      if (best.aim) P.aim = V3(best.aim.x, best.aim.y, best.aim.z);
+      if (best.v) P.v = V3(best.v.x, best.v.y, best.v.z); P.spd = best.s; }
+    P.hull = Math.min(P.maxHull, P.hull + 1); P.invuln = 1.4;
+    boom(P.p, 30, 40, sk.col.glow, 1);
+  }
+  if (k === 'lance') {
+    let n = 0;
+    for (const b of c.boxes) {
+      if (!b.alive || b.frame) continue;
+      const d = vsub(b.p, P.p), along = vdot(d, P.f);
+      if (along < 0 || along > 460) continue;
+      const perp = vlen(vsub(d, vmul(P.f, along)));
+      if (perp < 26 + b.s.x) { b.alive = 0; n++; boom(b.p, 12, 46, sk.col.glow, 2); }
+    }
+    RUN.debris += n * 260; addScore(n * 260, 0);
+    shake(.55);
+  }
+  if (k === 'horizon') { G.flash = .9; }
+  if (k === 'ascend') { P.invuln = sk.ab.dur; P.hull = P.maxHull; }
+  if (k === 'singularity') {
+    for (const g of c.gates) if (!g.passed && vdist(g.p, P.p) < 520) g.pull = 1;
+  }
+}
+function abilityScale() {                    // score multiplier from the active ability
+  if (P.abT <= 0) return 1;
+  if (P.abK === 'horizon') return 5;
+  if (P.abK === 'ascend') return 2;
+  if (P.abK === 'singularity') return 1.4;
+  return 1;
+}
+
+/* ------------------------------------------------------------ scoring ----- */
+const POPS = [];
+function addScore(n, popKind, at) {
+  const v = Math.round(n * abilityScale());
+  P.score += v; RUN.score = P.score;
+  if (popKind) POPS.push({ t: 0, v, k: popKind, p: at ? V3(at.x, at.y, at.z) : null });
+}
+function styleTick(kind, amt) {
+  P.tSinceStyle = 0;
+  P.multT = Math.min(3.2, P.multT + amt);
+}
+function updateMult(dt) {
+  P.tSinceStyle += dt;
+  if (P.tSinceStyle > .35) P.multT = Math.max(0, P.multT - dt * 1.25);
+  const target = 1 + P.multT * 2.6;
+  P.mult = lerp(P.mult, target, 1 - Math.pow(.001, dt));
+  if (P.mult > RUN.bestMult) RUN.bestMult = P.mult;
+}
+
+/* -------------------------------------------------------------- grapple --- */
+/* Fired from the nose down the line you are aiming, and it hooks the exact
+   point the ray strikes — no auto-targeting the nearest lump of scenery. The
+   tether is a real constraint: hold length, kill the outward radial velocity,
+   and the tangential speed carries you round. Reeling in tightens the arc. */
+const GRAP_RANGE = 340;
+function noseTip() {
+  const m = buildMesh(equipped());
+  return vadd(P.p, vmul(P.f, m.len * .5 * MODEL_SCALE));
+}
+function castGrapple(c) {
+  const nose = noseTip(), d = P.aim;
+  let bestT = GRAP_RANGE, bestB = null;
+  const seen = new Set();
+  const test = b => {
+    if (!b.alive || b.far || seen.has(b)) return;
+    seen.add(b);
+    const t = rayBox(b, nose, d, bestT);
+    if (t >= 0 && t < bestT) { bestT = t; bestB = b; }
+  };
+  for (let s = 0; s <= GRAP_RANGE; s += 90) {
+    const q = vadd(nose, vmul(d, s));
+    for (const b of c.near(q)) test(b);
+  }
+  for (const b of c.anchors) test(b);
+  return bestB ? { b: bestB, hit: vadd(nose, vmul(d, bestT)), t: bestT } : null;
+}
+function fireGrapple() {
+  const a = P.grapAim;
+  if (!a) { P.grapMiss = .3; return; }
+  P.grap = { b: a.b, a: a.hit, len: Math.max(20, a.t * .95), n: vnorm(vsub(a.hit, P.p)) };
+  P.grapArc = 0; P.grapAim = null;
+  shake(.07);
+  boom(a.hit, 7, 16, equipped().col.glow, 1);
+}
+function releaseGrapple() {
+  const gain = Math.min(3400, P.grapArc * 980 * P.mult);
+  if (gain > 60) { addScore(gain, 'SWING', P.p); RUN.swing += gain; styleTick('swing', .55); }
+  P.grap = null;
+}
+function tickGrapple(dt) {
+  const g = P.grap;
+  const to = vsub(g.a, P.p), d = vlen(to);
+  if (d < 7 || d > GRAP_RANGE + 110 || !g.b.alive) { releaseGrapple(); return; }
+  const n = vmul(to, 1 / d);
+  g.len = Math.max(18, g.len - dt * 30);          // reeling in is what carves the corner
+  if (d > g.len) {
+    P.p = vsub(g.a, vmul(n, g.len));              // hold the tether taut
+    const radial = vdot(P.v, n);                  // +ve = closing on the anchor
+    if (radial < 0) P.v = vsub(P.v, vmul(n, radial));
+  }
+  const tang = vsub(P.v, vmul(n, vdot(P.v, n)));  // pump the swing round the arc
+  if (vlen(tang) > 1) P.v = vadd(P.v, vmul(vnorm(tang), 58 * dt));
+  P.grapArc += Math.acos(clamp(vdot(g.n, n), -1, 1));
+  g.n = n;
+  styleTick('swing', dt * .6);
+  if (Math.random() < dt * 26)
+    spark(g.a, V3((Math.random() - .5) * 14, (Math.random() - .5) * 14, (Math.random() - .5) * 14),
+      .4, .34, equipped().col.glow, 1);
+}
+
+/* -------------------------------------------------------------- physics --- */
+const TRAIL = [];
+function sim(dt) {
+  const c = G.course, sk = equipped(), st = sk.stat;
+  RUN.time = G.rt;                     /* the run clock ticks in real time, so
+                                          dilation genuinely costs you time */
+
+  /* --- AIM: the mouse says where you want to go, screen-relative -------- */
+  let sx = mdx * sens, sy = mdy * sens; mdx = 0; mdy = 0;
+  const spdFac = clamp(130 / Math.max(60, P.spd), .55, 1.25);
+  const rate = 2.6 * st.turn * spdFac * (P.abT > 0 && P.abK === 'ascend' ? 2 : 1);
+  const aimR = vnorm(vcross(P.aim, V3(0, 1, 0))), aimU = vnorm(vcross(aimR, P.aim));
+  const turnX = clamp(sx * rate, -rate * .07, rate * .07);
+  const turnY = clamp(sy * rate, -rate * .07, rate * .07);
+  P.aim = vnorm(rotAxis(P.aim, aimU, -turnX));
+  P.aim = vnorm(rotAxis(P.aim, aimR, -turnY));
+  if (Math.abs(P.aim.y) > .985) { P.aim.y = Math.sign(P.aim.y) * .985; P.aim = vnorm(P.aim); }
+  P.right = aimR; P.up = aimU;
+
+  /* --- WASD: swing the airframe off the aim line ------------------------ */
+  /* The nose is NOT locked to the flight line. Thrust follows the body, so
+     yawing it hard lets you burn sideways out of a corner, and swinging it
+     right round lets you retro-burn without giving up the view ahead. */
+  const kYaw = (K['d'] || K['arrowright'] ? 1 : 0) - (K['a'] || K['arrowleft'] ? 1 : 0);
+  const kPit = (K['s'] || K['arrowdown'] ? 1 : 0) - (K['w'] || K['arrowup'] ? 1 : 0);
+  const AUTH = 2.7;
+  P.yawOff = clamp(P.yawOff + kYaw * AUTH * dt, -2.4, 2.4);
+  P.pitOff = clamp(P.pitOff + kPit * AUTH * dt, -1.5, 1.5);
+  /* No spring back to centre. The offset is an ORIENTATION you set, not a
+     deflection you hold — let go and the airframe stays where you put it.
+     CTRL (or X) is the only thing that pulls it back: tap to snap to the aim
+     line, hold to keep it pinned there while you fly. */
+  if (K['control'] || K['x']) {
+    const k = Math.min(1, dt * 14);
+    P.yawOff -= P.yawOff * k;
+    P.pitOff -= P.pitOff * k;
+  }
+  let nose = rotAxis(P.aim, aimU, -P.yawOff);
+  nose = vnorm(rotAxis(nose, vnorm(vcross(nose, V3(0, 1, 0))), -P.pitOff));
+  P.f = nose;
+  P.crab = Math.acos(clamp(vdot(P.f, P.aim), -1, 1));
+
+  /* --- thrust, gravity, drag -------------------------------------------- */
+  /* Hold SPACE or the motor is off, and everything follows from that: coasting
+     bleeds speed and drops you, so a run is an energy problem, not just a
+     steering one. Velocity is a real vector — the nose is where thrust points,
+     not where you are going, and the gap between them is the whole game. */
+  const thrusting = K[' '] === 1;
+  const boosting = K['shift'] && P.fuel > 0;
+  const chuting = !!K['c'];
+  P.thrust = (thrusting || boosting) ? Math.min(1, P.thrust + dt * 7) : Math.max(0, P.thrust - dt * 8);
+  const prevV = V3(P.v.x, P.v.y, P.v.z);
+  if (thrusting || boosting) {
+    const acc = 94 * st.spd * c.D.spd * (boosting ? 2.25 : 1);
+    P.v = vadd(P.v, vmul(P.f, acc * dt));
+    if (boosting) P.fuel = Math.max(0, P.fuel - dt * 26 / st.fuel);
+  }
+  if (!boosting) P.fuel = Math.min(100, P.fuel + dt * 7.5 * st.fuel);
+  P.v.y -= 17 * dt * st.mass;                              // gravity
+  {
+    // axial drag, plus the fins biting whatever velocity is off the nose
+    const along = vdot(P.v, P.f);
+    let lat = vsub(P.v, vmul(P.f, along));
+    lat = vmul(lat, Math.exp(-(.9 + (chuting ? 2.6 : 0)) * dt));
+    const dragK = .0011 * (chuting ? 6.5 : 1) / st.mass;
+    const al = along - Math.sign(along) * dragK * along * along * dt;
+    P.v = vadd(vmul(P.f, al), lat);
+  }
+  if (chuting) styleTick('chute', dt * .1);
+  if (K['f'] && P.charge > 0) { P.dilate = Math.min(1, P.dilate + dt * 5); P.charge = Math.max(0, P.charge - dt * 34); }
+  else { P.dilate = Math.max(0, P.dilate - dt * 3.4); P.charge = Math.min(100, P.charge + dt * 11); }
+  P.spd = vlen(P.v);
+  if (P.spd > 400) { P.v = vmul(P.v, 400 / P.spd); P.spd = 400; }
+
+  /* --- grapple: fired from the nose, down the line you are aiming ------- */
+  P.grapAim = P.grap ? null : castGrapple(c);
+  const wantGrap = K['e'] === 1;
+  if (wantGrap && !P.grap) fireGrapple();
+  else if (!wantGrap && P.grap) releaseGrapple();
+  if (P.grap) tickGrapple(dt);
+
+  /* --- integrate -------------------------------------------------------- */
+  const prev = V3(P.p.x, P.p.y, P.p.z);
+  P.p = vadd(P.p, vmul(P.v, dt));
+  P.spd = vlen(P.v);
+  // G is read off the actual turn of the velocity vector, not off the input
+  if (P.spd > 1) {
+    const dv = vsub(P.v, prevV), vn = vmul(P.v, 1 / P.spd);
+    const perp = vlen(vsub(dv, vmul(vn, vdot(dv, vn))));
+    P.g = lerp(P.g, clamp(perp / Math.max(dt, .001) / 9.8, 0, 12), 1 - Math.pow(.02, dt));
+  }
+  P.rollV = lerp(P.rollV, -turnX * 46 - P.yawOff * .42, 1 - Math.pow(.004, dt));
+  P.roll = lerp(P.roll, clamp(P.rollV, -.9, .9), 1 - Math.pow(.02, dt));
+  TRAIL.push(P.p.x, P.p.y, P.p.z);
+  if (TRAIL.length > 3 * 90) TRAIL.splice(0, 3);
+  if (!P.hist.length || G.rt - P.hist[P.hist.length - 1].t > .06) {
+    P.hist.push({ t: G.rt, p: V3(P.p.x, P.p.y, P.p.z), f: V3(P.f.x, P.f.y, P.f.z),
+      aim: V3(P.aim.x, P.aim.y, P.aim.z), v: V3(P.v.x, P.v.y, P.v.z), s: P.spd });
+    while (P.hist.length && G.rt - P.hist[0].t > 3) P.hist.shift();
+  }
+
+  /* --- exhaust ---------------------------------------------------------- */
+  /* the plume starts behind the nozzle and leaves fast, so it never sits on
+     top of the airframe when the tail is pointed straight at the camera */
+  const m = buildMesh(sk), tail = vadd(P.p, vmul(P.f, m.nozzle * 1.5 - 1.4));
+  if (P.thrust > .05 && Math.random() < dt * (boosting ? 160 : 90) * P.thrust) {
+    for (let i = 0; i < (boosting ? 3 : 2); i++)
+      spark(vadd(tail, vmul(P.f, -Math.random() * 3)),
+        vadd(vmul(P.f, -(80 + Math.random() * 90)), V3((Math.random() - .5) * 7, (Math.random() - .5) * 7, (Math.random() - .5) * 7)),
+        .16 + Math.random() * .2, (boosting ? .46 : .28) + Math.random() * .2, sk.col.flame, 0);
+  }
+
+  /* --- ability upkeep --------------------------------------------------- */
+  if (P.abCd > 0) P.abCd = Math.max(0, P.abCd - dt);
+  if (P.abT > 0) {
+    P.abT = Math.max(0, P.abT - dt);
+    if (P.abK === 'phase') P.phase = P.abT;
+    if (P.abK === 'ascend') { P.invuln = Math.max(P.invuln, P.abT); P.fuel = Math.min(100, P.fuel + dt * 30); }
+    if (P.abK === 'siphon') {
+      for (const b of c.near(P.p)) {
+        if (!b.alive) continue;
+        const d = boxDist(b, P.p);
+        if (d < 24) { P.fuel = Math.min(100, P.fuel + dt * 42); P.spd += dt * 26; styleTick('siphon', dt * 1.3);
+          if (Math.random() < dt * 30) { const n = boxNormal(b, P.p);
+            spark(vadd(P.p, vmul(n, d)), vmul(vsub(P.p, vadd(P.p, vmul(n, d))), 2), .4, .4, sk.col.glow, 1); } }
+      }
+    }
+  } else P.phase = Math.max(0, P.phase - dt);
+  G.slowWorld = (P.abT > 0 && P.abK === 'horizon') ? .06 : 1;
+  if (P.abT > 0 && P.abK === 'singularity') {
+    for (const g of c.gates) {
+      if (g.passed || !g.pull) continue;
+      const d = vsub(P.p, g.p), dist = vlen(d);
+      if (dist < 600) {
+        const line = vadd(P.p, vmul(P.f, clamp(vdot(vsub(g.p, P.p), P.f), 0, 1e9)));
+        g.p = vlerp(g.p, line, clamp(dt * 1.4, 0, .4));
+      }
+    }
+    for (const b of c.near(P.p)) if (b.alive && !b.frame && b.s.x < 14 && vdist(b.p, P.p) < 120) {
+      b.p = vlerp(b.p, P.p, dt * .5);
+    }
+  }
+  // drones
+  for (let i = P.drones.length - 1; i >= 0; i--) {
+    const d = P.drones[i]; d.t += dt;
+    const tgt = vadd(d.g.p, d.off);
+    const dir = vsub(tgt, d.p), dd = vlen(dir);
+    d.p = vadd(d.p, vmul(vnorm(dir), Math.min(dd, (P.spd + 130) * dt)));
+    if (Math.random() < dt * 30) spark(d.p, V3(0, 0, 0), .3, .4, sk.col.glow, 1);
+    if (dd < 12 || d.t > 6) { if (dd < 12) { d.g.tagged = 1; boom(d.g.p, 14, 26, sk.col.glow, 1); } P.drones.splice(i, 1); }
+  }
+
+  /* --- gates ------------------------------------------------------------ */
+  for (const g of c.gates) {
+    if (g.passed) continue;
+    const dPrev = vdot(vsub(prev, g.p), g.f), dCur = vdot(vsub(P.p, g.p), g.f);
+    if (dPrev < 0 && dCur >= 0) {
+      const t = dPrev / (dPrev - dCur);
+      const cross = vlerp(prev, P.p, t);
+      const off = vlen(vsub(cross, g.p));
+      if (off <= g.r) {
+        g.passed = 1; RUN.gates++;
+        const tight = 1 - clamp(off / g.r, 0, 1);
+        let pts = (180 + 620 * tight * tight) * P.mult * (1 + P.spd / 260);
+        if (g.tagged) pts *= 3;
+        if (P.abT > 0 && P.abK === 'singularity') pts *= 2;
+        RUN.thread += pts;
+        addScore(pts, tight > .8 ? 'DEAD CENTRE' : 'THREAD', cross);
+        styleTick('thread', .55 + tight * .5);
+        shake(.1 + tight * .12);
+        boom(cross, 10, 30, tight > .8 ? AMBER : CYAN, 1);
+      } else if (off <= g.r + g.th + 2 && !P.phase && P.invuln <= 0) {
+        crash(vnorm(vsub(cross, g.p)));
+      }
+    }
+  }
+
+  /* --- surfaces: skim, scorch, collision -------------------------------- */
+  /* Swept collision. A point test samples every ~5 m at cruise and up to 18 m
+     on a long frame, so it walks straight through any wall thinner than that
+     — which is most of them. Step the frame's movement and stop at the first
+     contact, putting the airframe back where it actually hit. */
+  if (!P.phase && P.invuln <= 0) {
+    const segLen = vdist(prev, P.p), steps = clamp(Math.ceil(segLen / 2), 1, 14);
+    let hb = null, hq = null;
+    for (let s = 1; s <= steps && !hq; s++) {
+      const q = vlerp(prev, P.p, s / steps);
+      if (q.y < 1.6) { hq = q; break; }
+      for (const b of c.near(q)) {
+        if (!b.alive || b.far) continue;
+        if (boxDist(b, q) < 2) { hb = b; hq = q; break; }
+      }
+    }
+    if (hq) { P.p = hq; crash(hb ? boxNormal(hb, hq) : V3(0, 1, 0)); }
+  }
+  let nearest = 999, nb = null;
+  for (const b of c.near(P.p)) {
+    if (!b.alive || b.far) continue;
+    const d = boxDist(b, P.p);
+    if (d < nearest) { nearest = d; nb = b; }
+  }
+  const groundD = P.p.y - 1.4;
+  if (groundD < nearest) { nearest = groundD; nb = null; }
+  P.near = nearest;
+  if (nearest >= 2.2 && nearest < 9) {
+    const q = 1 - (nearest - 2.2) / 6.8;
+    const pts = dt * (30 + P.spd * .42) * q * P.mult;
+    P.score += pts * abilityScale(); RUN.skim += pts; RUN.score = P.score;
+    styleTick('skim', dt * (1.1 + q));
+    if (Math.random() < dt * 40 * q) {
+      const n = nb ? boxNormal(nb, P.p) : V3(0, 1, 0);
+      spark(vadd(P.p, vmul(n, -Math.max(nearest, .5))), vadd(vmul(P.f, -30), vmul(n, 22 + Math.random() * 30)),
+        .3 + Math.random() * .4, .3 + Math.random() * .35, sk.col.flame, 1);
+    }
+  }
+  if (P.g > 2.6) {
+    const pts = dt * (P.g - 2.6) * 42 * P.mult;
+    P.score += pts * abilityScale(); RUN.gload += pts; RUN.score = P.score;
+    styleTick('g', dt * .8);
+  }
+
+  /* --- target ----------------------------------------------------------- */
+  const td = vdist(P.p, c.target.p);
+  if (td < c.target.r + 3) {
+    c.target.hit = 1;
+    const timeBonus = Math.max(0, 9000 - G.rt * 210);
+    RUN.kill = 2500 + timeBonus;
+    addScore(RUN.kill, 'TARGET DESTROYED', c.target.p);
+    boom(c.target.p, 90, 130, RED, 2); boom(c.target.p, 40, 70, AMBER, 1);
+    shake(1); G.flash = 1; G.flashCol = RED; G.hitstop = .12;
+    endRun(true);
+  }
+  if (P.p.y < -40 || G.rt > 240) endRun(false);
+
+  updateMult(dt);
+  if (P.invuln > 0) P.invuln -= dt;
+  stepParticles(dt);
+  for (let i = POPS.length - 1; i >= 0; i--) { POPS[i].t += dt; if (POPS[i].t > 1.3) POPS.splice(i, 1); }
+}
+function crash(n) {
+  P.hull--; RUN.crashes++;
+  P.spd *= .42; P.invuln = 1.1;
+  P.p = vadd(P.p, vmul(n, 3.4));
+  P.f = vnorm(vadd(vmul(n, .55), P.f));
+  P.multT = 0; P.mult = 1;
+  boom(P.p, 26, 60, AMBER, 1);
+  shake(.85); G.hitstop = .09; G.chroma = 1; G.flash = .5; G.flashCol = AMBER;
+  if (P.hull <= 0) { P.alive = 0; boom(P.p, 60, 110, RED, 2); shake(1); endRun(false); }
+}
+</script>
+<script>
+'use strict';
+/* ============================================================ camera ====== */
+let camPos = null, camFwd = null, camRoll = 0, camFov = 1.2;
+function updateCamera(dt) {
+  /* upo/back sets how far off the missile's own axis we sit, and that angle
+     alone decides how much of its length you see. Below ~25 deg an 8 m pencil
+     foreshortens into a starburst of fins, so this ratio is load-bearing. */
+  const back = 11 + P.spd * .022, upo = (11 + P.spd * .022) * .52;
+  const wish = vadd(vadd(P.p, vmul(P.aim, -back)), V3(0, upo, 0));
+  if (!camPos) { camPos = wish; camFwd = V3(P.aim.x, P.aim.y, P.aim.z); }
+  camPos = vlerp(camPos, wish, clamp(1 - Math.pow(.00008, dt), 0, 1));
+  camFwd = vnorm(vlerp(camFwd, P.aim, clamp(1 - Math.pow(6e-7, dt), 0, 1)));  /* follow the flight line, not the crabbing body */
+  camRoll = lerp(camRoll, P.roll * .32, 1 - Math.pow(.01, dt));
+  const tf = 1.1 + clamp((P.spd - 100) / 320, 0, .46) - P.dilate * .08;
+  camFov = lerp(camFov, tf, 1 - Math.pow(.02, dt));
+  G.shake = G.trauma * G.trauma;
+  G.trauma = Math.max(0, G.trauma - dt * 1.6);
+  const s = G.shake * 2.8;
+  const eye = vadd(camPos, V3((Math.random() - .5) * s, (Math.random() - .5) * s, (Math.random() - .5) * s));
+  /* The camera sits ABOVE the airframe and aims level down the flight line.
+     Dead astern on the same axis renders any cylinder as a starburst of fins;
+     this angle looks down its back, so you read length, roll and attitude. */
+  const look = vadd(P.p, vmul(camFwd, 24));
+  setCam(eye, vsub(look, eye), V3(0, 1, 0), camRoll + (Math.random() - .5) * G.shake * .06, camFov);
+}
+
+/* ====================================================== missile drawing === */
+/* Drawn 1.5× its collision size: at 200 m/s a true-scale 7 m body is four
+   pixels, and you cannot read your own attitude off four pixels. */
+const MODEL_SCALE = 2;
+function frameBasis(fwd, roll) {
+  /* R has to be cross(up, fwd). cross(fwd, up) gives a LEFT-handed basis,
+     which mirrors the mesh on its way into world space and so inverts the
+     winding of every face — the airframe then renders inside-out against a
+     world whose boxes are built by an ordinary rotation. */
+  const rt = vnorm(vcross(V3(0, 1, 0), fwd)), upv = vnorm(vcross(fwd, rt));
+  const cr = Math.cos(roll), sr = Math.sin(roll);
+  return { R: vadd(vmul(rt, cr), vmul(upv, sr)), U: vsub(vmul(upv, cr), vmul(rt, sr)), F: fwd };
+}
+function meshPoints(m, org, b, scale) {
+  const v = m.v, n = v.length / 3, out = new Array(n), s = scale || 1;
+  for (let i = 0; i < n; i++) {
+    const x = v[i * 3] * s, y = v[i * 3 + 1] * s, z = v[i * 3 + 2] * s;
+    out[i] = V3(org.x + b.R.x * x + b.U.x * y + b.F.x * z,
+                org.y + b.R.y * x + b.U.y * y + b.F.y * z,
+                org.z + b.R.z * x + b.U.z * y + b.F.z * z);
+  }
+  return out;
+}
+function drawMissile() {
+  const sk = equipped(), m = buildMesh(sk), b = frameBasis(P.f, P.roll);
+  const ghost = P.phase > 0;
+  if (sk.vfx === 'ghost' || ghost) {          // after-images trailing the body
+    for (let k = 1; k <= 2; k++) {
+      const org = vadd(P.p, vmul(P.f, -k * (ghost ? 3.4 : 1.6)));
+      const pts = meshPoints(m, org, b, MODEL_SCALE * (1 - k * .06));
+      for (const f of m.f) {
+        const poly = f.i.map(i => pts[i]);
+        face(poly, { c: sk.col.glow, em: .8, ds: 1, a: (ghost ? .16 : .09) / k, flat: 1 });
+      }
+    }
+  }
+  if (ghost) return;                          // the real body is not here right now
+  const pts = meshPoints(m, P.p, b, MODEL_SCALE);
+  const blink = P.invuln > 0 && ((G.rt * 14) | 0) % 2 === 0 ? .45 : 1;
+  for (const f of m.f) {
+    const poly = f.i.map(i => pts[i]);
+    face(poly, { c: f.c, em: f.em, ds: f.ds, edge: PAPER, ea: .6 * blink, ew: 1.1, a: blink < 1 ? .6 : null });
+  }
+}
+/* additive VFX live in screen space, drawn after the sorted polygon pass */
+function addDot(x, y, r, col, a) {
+  X.fillStyle = rgba(col, a); X.beginPath(); X.arc(x, y, r, 0, TAU); X.fill();
+}
+function drawTrail() {
+  const n = TRAIL.length / 3; if (n < 4) return;
+  const sk = equipped(), pts = [];
+  for (let i = 0; i < n; i++) {
+    const q = proj(V3(TRAIL[i * 3], TRAIL[i * 3 + 1], TRAIL[i * 3 + 2]));
+    pts.push(q);
+  }
+  const wMax = 3.2 + clamp(P.spd / 70, 0, 4) + (K['shift'] && P.fuel > 0 ? 3.5 : 0);
+  const L = [], Rr = [];
+  for (let i = 0; i < pts.length; i++) {
+    const q = pts[i]; if (!q) { continue; }
+    const nx = pts[i + 1] || pts[i - 1]; if (!nx) continue;
+    let dx = nx.x - q.x, dy = nx.y - q.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    const t = i / (pts.length - 1);
+    // loaded-brush taper: thin tail, belly at ~40%, thin head
+    const taper = Math.pow(t, .7) * Math.pow(1 - Math.pow(Math.max(0, t - .4) / .6, 2), .6);
+    const w = wMax * clamp(taper, 0, 1) * clamp(q.s * 60, .15, 1.4);
+    L.push({ x: q.x - dy * w, y: q.y + dx * w }); Rr.push({ x: q.x + dy * w, y: q.y - dx * w });
+  }
+  if (L.length < 3) return;
+  X.beginPath(); X.moveTo(L[0].x, L[0].y);
+  for (let i = 1; i < L.length; i++) X.lineTo(L[i].x, L[i].y);
+  for (let i = Rr.length - 1; i >= 0; i--) X.lineTo(Rr[i].x, Rr[i].y);
+  X.closePath();
+  const a = pts.find(q => q), z = pts[pts.length - 1];
+  if (a && z) {
+    const g = X.createLinearGradient(a.x, a.y, z.x, z.y);
+    g.addColorStop(0, rgba(sk.col.trail, 0));
+    g.addColorStop(.5, rgba(sk.col.trail, .13));
+    g.addColorStop(1, rgba(sk.col.flame, .34));
+    X.fillStyle = g;
+  } else X.fillStyle = rgba(sk.col.trail, .14);
+  X.fill();
+  // hot core line down the middle of the ribbon
+  X.beginPath();
+  let started = false;
+  for (let i = 0; i < pts.length; i++) {
+    const q = pts[i]; if (!q) continue;
+    if (!started) { X.moveTo(q.x, q.y); started = true; } else X.lineTo(q.x, q.y);
+  }
+  if (started) {
+    X.strokeStyle = rgba(cmix(sk.col.flame, [255, 250, 240], .4), .3);
+    X.lineWidth = 1.6; X.stroke();
+  }
+}
+function drawParticles() {
+  for (let i = 0; i < ptN; i++) {
+    const q = PT[i], p = proj(q.p); if (!p) continue;
+    /* q.s is a world-space radius in metres, so particles obey perspective
+       instead of blowing out the airframe whenever the tail faces camera */
+    const t = q.l / q.L, r = q.s * p.s * (q.k === 0 ? (.4 + t * .9) : (.3 + t));
+    if (r < .2 || r > 300) continue;
+    if (q.k === 0) {                 // exhaust: a streak along its own velocity
+      const b = proj(V3(q.p.x - q.v.x * .045, q.p.y - q.v.y * .045, q.p.z - q.v.z * .045));
+      if (b) {
+        X.strokeStyle = rgba(q.c, clamp(t * .34, 0, 1));
+        X.lineCap = 'round'; X.lineWidth = r * 2;
+        X.beginPath(); X.moveTo(p.x, p.y); X.lineTo(b.x, b.y); X.stroke();
+        continue;
+      }
+    }
+    addDot(p.x, p.y, r, q.c, clamp(t * (q.k === 0 ? .32 : .6), 0, 1));
+    if (r > 2.5) addDot(p.x, p.y, r * .38, [255, 250, 240], clamp(t * .3, 0, 1));
+  }
+}
+/* the torch itself: a tapered additive cone off the nozzle, drawn from the
+   same projected axis as the body so the two can never disagree */
+function drawTorch(t) {
+  const sk = equipped(), m = buildMesh(sk);
+  if (P.thrust < .05) return;
+  const boost = K["shift"] && P.fuel > 0;
+  const len = (boost ? 9 : 4.2) * P.thrust * (1 + Math.sin(t * 37) * .07);
+  const n0 = vadd(P.p, vmul(P.f, m.nozzle * MODEL_SCALE));
+  const a = proj(n0), b = proj(vadd(n0, vmul(P.f, -len)));
+  if (!a || !b) return;
+  let dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+  const w = clamp(m.rad * MODEL_SCALE * a.s * .9, 1.5, 90);
+  const layers = [[1.25, .30, sk.col.flame], [.72, .34, cmix(sk.col.flame, [255, 250, 235], .55)],
+                  [.3, .42, [255, 252, 246]]];
+  for (const [wm, al, col] of layers) {
+    const ww = w * wm;
+    X.beginPath();
+    X.moveTo(a.x - dy * ww, a.y + dx * ww);
+    X.quadraticCurveTo(a.x + dx * d * .5 - dy * ww * .8, a.y + dy * d * .5 + dx * ww * .8, b.x, b.y);
+    X.quadraticCurveTo(a.x + dx * d * .5 + dy * ww * .8, a.y + dy * d * .5 - dx * ww * .8, a.x + dy * ww, a.y - dx * ww);
+    X.closePath();
+    X.fillStyle = rgba(col, al); X.fill();
+  }
+}
+/* grapple masts read as instrument marks rather than scenery — you need to
+   spot the hook point while still far enough out to commit to the corner */
+function drawAnchors(t) {
+  const c = G.course; if (!c || !c.anchors) return;
+  for (const b of c.anchors) {
+    const d = vdist(b.p, P.p); if (d > 460) continue;
+    const p = proj(vadd(b.p, V3(0, b.s.y + 9, 0))); if (!p) continue;
+    const live = d < 260 && vdot(vsub(b.p, P.p), P.f) > 0;
+    const s = clamp(p.s * 9, 4, 44), a = live ? .9 : .28;
+    X.strokeStyle = rgba(CYAN, a); X.lineWidth = live ? 2 : 1.2;
+    X.beginPath();
+    X.moveTo(p.x, p.y - s); X.lineTo(p.x + s * .66, p.y);
+    X.lineTo(p.x, p.y + s); X.lineTo(p.x - s * .66, p.y);
+    X.closePath(); X.stroke();
+    if (live) {
+      X.strokeStyle = rgba(CYAN, .3); X.lineWidth = 1;
+      X.beginPath(); X.arc(p.x, p.y, s * 1.8 + Math.sin(t * 6) * 2.5, 0, TAU); X.stroke();
+      txt('HOOK', p.x, p.y - s * 2.1, 10, rgba(CYAN, .75), 'center', true, 500, 2);
+    }
+  }
+}
+function drawSkinVFX(t) {
+  const sk = equipped(), c = proj(P.p); if (!c) return;
+  drawTorch(t);
+  // screen radius of the airframe itself, so VFX track the body, not the depth
+  const s = clamp(sk.geo.rad * MODEL_SCALE * c.s * 2.4, 5, 220), col = sk.col.glow;
+  if (sk.vfx === 'sparks' || sk.vfx === 'static') {
+    for (let i = 0; i < 5; i++) {
+      const a = t * 3 + i * 1.3, r = s * (.6 + (i % 3) * .3);
+      addDot(c.x + Math.cos(a) * r, c.y + Math.sin(a * 1.3) * r * .5, s * .06, col, .5);
+    }
+  }
+  if (sk.vfx === 'static') {
+    X.strokeStyle = rgba([235, 245, 255], .35); X.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      X.beginPath();
+      const y = c.y + (Math.random() - .5) * s * 1.4;
+      X.moveTo(c.x - s * (.4 + Math.random() * .6), y); X.lineTo(c.x + s * (.4 + Math.random() * .6), y); X.stroke();
+    }
+  }
+  if (sk.vfx === 'orbit') {
+    for (let i = 0; i < 3; i++) {
+      const a = t * 2.2 + i * TAU / 3, r = s * .95;
+      const x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r * .42;
+      addDot(x, y, s * .1, col, .75);
+      X.strokeStyle = rgba(col, .2); X.lineWidth = 1;
+      X.beginPath(); X.moveTo(c.x, c.y); X.lineTo(x, y); X.stroke();
+    }
+  }
+  if (sk.vfx === 'aura' || sk.vfx === 'rift' || sk.vfx === 'prism') {
+    const pulse = .5 + Math.sin(t * 3) * .5;
+    for (let k = 0; k < 3; k++) {
+      const r = s * (.8 + k * .45 + pulse * .16);
+      X.strokeStyle = rgba(sk.vfx === 'prism' ? [255, 240, 200] : col, .22 - k * .05);
+      X.lineWidth = 2 - k * .5;
+      X.beginPath(); X.ellipse(c.x, c.y, r, r * .42, camRoll, 0, TAU); X.stroke();
+    }
+  }
+  if (sk.vfx === 'rift') {
+    for (let i = 0; i < 9; i++) {
+      const a = t * -1.4 + i * TAU / 9, r = s * (1.3 + Math.sin(t * 2 + i) * .25);
+      addDot(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r * .5, s * .07, [255, 80, 140], .55);
+    }
+    X.strokeStyle = rgba([255, 80, 140], .3); X.lineWidth = 3;
+    X.beginPath(); X.arc(c.x, c.y, s * 1.9, 0, TAU); X.stroke();
+  }
+  if (sk.vfx === 'prism') {
+    const cols = [[255, 90, 110], [255, 210, 110], [120, 240, 255]];
+    for (let i = 0; i < 3; i++) {
+      const a = t * 1.6 + i * TAU / 3;
+      addDot(c.x + Math.cos(a) * s * 1.5, c.y + Math.sin(a) * s * .7, s * .16, cols[i], .4);
+    }
+  }
+  // ability-active overlays
+  if (P.abT > 0) {
+    const k = P.abK, a = clamp(P.abT / Math.max(.2, abilityDur(sk)), 0, 1);
+    if (k === 'siphon' || k === 'singularity') {
+      X.strokeStyle = rgba(col, .35 * a); X.lineWidth = 2;
+      X.beginPath(); X.arc(c.x, c.y, s * (4 + Math.sin(t * 6)), 0, TAU); X.stroke();
+    }
+    if (k === 'lance') {
+      const far = proj(vadd(P.p, vmul(P.f, 460)));
+      if (far) {
+        X.strokeStyle = rgba(sk.col.glow, .8 * a); X.lineWidth = 26 * a;
+        X.beginPath(); X.moveTo(c.x, c.y); X.lineTo(far.x, far.y); X.stroke();
+        X.strokeStyle = rgba([255, 252, 240], .95 * a); X.lineWidth = 8 * a;
+        X.beginPath(); X.moveTo(c.x, c.y); X.lineTo(far.x, far.y); X.stroke();
+      }
+    }
+    if (k === 'ascend') {
+      for (let i = 0; i < 10; i++) {
+        const a2 = t * 2 + i * TAU / 10;
+        X.strokeStyle = rgba([255, 240, 200], .3 * a); X.lineWidth = 2;
+        X.beginPath(); X.moveTo(c.x, c.y);
+        X.lineTo(c.x + Math.cos(a2) * s * 3.4, c.y + Math.sin(a2) * s * 3.4); X.stroke();
+      }
+    }
+  }
+  // grapple cable
+  if (P.grap) {
+    // the cable leaves the NOSE, not the middle of the airframe
+    const m2 = buildMesh(sk);
+    const nz = proj(vadd(P.p, vmul(P.f, m2.len * .5 * MODEL_SCALE)));
+    const an = proj(P.grap.a);
+    if (nz && an) {
+      const sag = Math.max(0, 1 - vdist(P.p, P.grap.a) / Math.max(P.grap.len, 1)) * 16;
+      const mx = (nz.x + an.x) / 2 + Math.sin(t * 20) * 3, my = (nz.y + an.y) / 2 + Math.cos(t * 17) * 3 + sag;
+      X.strokeStyle = rgba(sk.col.glow, .85); X.lineWidth = 2;
+      X.beginPath(); X.moveTo(nz.x, nz.y); X.quadraticCurveTo(mx, my, an.x, an.y); X.stroke();
+      X.strokeStyle = rgba([255, 252, 246], .5); X.lineWidth = .8;
+      X.beginPath(); X.moveTo(nz.x, nz.y); X.quadraticCurveTo(mx, my, an.x, an.y); X.stroke();
+      addDot(an.x, an.y, 6, sk.col.glow, .85);
+      addDot(an.x, an.y, 2.5, [255, 252, 246], .9);
+    }
+  }
+  // drones
+  for (const d of P.drones) { const q = proj(d.p); if (q) addDot(q.x, q.y, 3.5, col, .9); }
+}
+</script>
+<script>
+'use strict';
+/* =============================================================== HUD ====== */
+const DISP = '"Barlow Condensed",Oswald,sans-serif', MONO = '"IBM Plex Mono",Consolas,monospace';
+function txt(s, x, y, size, col, align, mono, wgt, ls) {
+  X.font = (wgt || 600) + ' ' + size + 'px ' + (mono ? MONO : DISP);
+  X.textAlign = align || 'left'; X.textBaseline = 'alphabetic';
+  if ('letterSpacing' in X) X.letterSpacing = (ls == null ? 0 : ls) + 'px';
+  X.fillStyle = typeof col === 'string' ? col : rgba(col, 1);
+  X.fillText(s, x, y);
+  if ('letterSpacing' in X) X.letterSpacing = '0px';
+}
+function bracket(x, y, w, h, col, a, n) {
+  X.strokeStyle = rgba(col, a); X.lineWidth = 1; const L = n || 10;
+  X.beginPath();
+  X.moveTo(x, y + L); X.lineTo(x, y); X.lineTo(x + L, y);
+  X.moveTo(x + w - L, y); X.lineTo(x + w, y); X.lineTo(x + w, y + L);
+  X.moveTo(x + w, y + h - L); X.lineTo(x + w, y + h); X.lineTo(x + w - L, y + h);
+  X.moveTo(x + L, y + h); X.lineTo(x, y + h); X.lineTo(x, y + h - L);
+  X.stroke();
+}
+function bar(x, y, w, h, f, col, bg) {
+  X.fillStyle = rgba(bg || [40, 52, 68], .55); X.fillRect(x, y, w, h);
+  X.fillStyle = rgba(col, .92); X.fillRect(x, y, w * clamp(f, 0, 1), h);
+  X.strokeStyle = rgba(col, .35); X.lineWidth = 1; X.strokeRect(x + .5, y + .5, w - 1, h - 1);
+}
+function fmtTime(s) {
+  const m = Math.floor(s / 60), r = s - m * 60;
+  return m + ':' + (r < 10 ? '0' : '') + r.toFixed(2);
+}
+function drawHUD(t) {
+  const sk = equipped(), c = G.course, M = 22;
+  bracket(M, M, W - M * 2, H - M * 2, [90, 120, 150], .22, 16);
+
+  /* ---- score + multiplier (top left) ---------------------------------- */
+  txt('STYLE', M + 12, M + 26, 11, rgba([120, 140, 164], 1), 'left', true, 500, 3);
+  txt(Math.round(P.score).toLocaleString('en-US'), M + 10, M + 68, 44, rgba(AMBER, 1), 'left', true, 600, -1);
+  const mw = 168;
+  bar(M + 12, M + 80, mw, 5, P.multT / 3.2, P.mult > 4 ? AMBER : CYAN);
+  txt('x' + P.mult.toFixed(2), M + 12 + mw + 9, M + 86, 16, rgba(P.mult > 4 ? AMBER : PAPER, 1), 'left', true, 600, 0);
+
+  /* ---- clock + gates (top centre) ------------------------------------- */
+  txt(fmtTime(G.rt), CX, M + 34, 30, rgba(PAPER, .92), 'center', true, 500, 1);
+  const gtot = c.gates.length, gw = Math.min(280, gtot * 20), gx = CX - gw / 2;
+  for (let i = 0; i < gtot; i++) {
+    const w = gw / gtot - 3, x = gx + i * (gw / gtot);
+    X.fillStyle = c.gates[i].passed ? rgba(CYAN, .85) : (c.gates[i].tagged ? rgba([140, 255, 190], .7) : rgba([70, 90, 112], .5));
+    X.fillRect(x, M + 44, w, 4);
+  }
+  txt('GATES ' + RUN.gates + '/' + gtot, CX, M + 64, 11, rgba([120, 140, 164], 1), 'center', true, 500, 2);
+
+  /* ---- hull + airframe (top right) ------------------------------------ */
+  const rc = RAR[sk.rar].c;
+  txt(sk.name, W - M - 12, M + 28, 22, rgba(PAPER, .95), 'right', false, 600, 1);
+  txt(RAR[sk.rar].n, W - M - 12, M + 43, 9, rgba(rc, 1), 'right', true, 500, 3);
+  for (let i = 0; i < P.maxHull; i++) {
+    const x = W - M - 12 - (i + 1) * 15 + 15 - 11;
+    X.fillStyle = i < P.hull ? rgba(AMBER, .9) : rgba([70, 40, 30], .8);
+    X.fillRect(W - M - 12 - (P.maxHull - i) * 15 + 4, M + 52, 11, 5);
+  }
+
+  /* ---- speed + fuel (bottom left) ------------------------------------- */
+  const by = H - M - 62;
+  txt('VEL', M + 12, by - 46, 11, rgba([120, 140, 164], 1), 'left', true, 500, 3);
+  txt(Math.round(P.spd), M + 10, by - 8, 52, rgba(P.spd > 200 ? AMBER : PAPER, 1), 'left', true, 600, -1);
+  txt('M/S', M + 12 + X.measureText(Math.round(P.spd)).width + 8, by - 10, 13, rgba([120, 140, 164], 1), 'left', true, 500, 2);
+  // speed ladder
+  for (let i = 0; i < 18; i++) {
+    const v = i * 20, on = P.spd >= v;
+    X.fillStyle = on ? rgba(v > 200 ? AMBER : CYAN, .8) : rgba([60, 78, 96], .45);
+    X.fillRect(M + 12 + i * 9, by + 2, 6, i % 5 === 0 ? 9 : 5);
+  }
+  txt('FUEL', M + 12, by + 26, 9, rgba([120, 140, 164], 1), 'left', true, 500, 2);
+  bar(M + 48, by + 19, 118, 6, P.fuel / 100, P.fuel > 20 ? [120, 200, 255] : RED);
+
+  /* ---- G + dilation (bottom right) ------------------------------------ */
+  const gx2 = W - M - 152, gy2 = by - 30;
+  X.strokeStyle = rgba([60, 78, 96], .6); X.lineWidth = 6;
+  X.beginPath(); X.arc(gx2 + 40, gy2 + 22, 34, PI * .75, PI * 2.25); X.stroke();
+  const gf = clamp(P.g / 9, 0, 1);
+  X.strokeStyle = rgba(P.g > 6 ? RED : (P.g > 3 ? AMBER : CYAN), .95); X.lineWidth = 6;
+  X.beginPath(); X.arc(gx2 + 40, gy2 + 22, 34, PI * .75, PI * .75 + PI * 1.5 * gf); X.stroke();
+  txt(P.g.toFixed(1), gx2 + 40, gy2 + 28, 26, rgba(PAPER, 1), 'center', true, 600, 0);
+  txt('G', gx2 + 40, gy2 + 44, 10, rgba([120, 140, 164], 1), 'center', true, 500, 3);
+  txt('DILATE', W - M - 12, by + 26, 9, rgba([120, 140, 164], 1), 'right', true, 500, 2);
+  bar(W - M - 130, by + 19, 70, 6, P.charge / 100, [190, 150, 255]);
+
+  /* ---- ability rail (bottom centre) ----------------------------------- */
+  let grapReady = 0;
+  for (const b of (c.anchors || [])) {
+    const d = vsub(b.p, P.p);
+    if (vdot(d, P.f) > 0 && vlen(d) < 260) { grapReady = 1; break; }
+  }
+  const chips = [
+    { n: 'THRUST', k: 'HOLD SPACE', f: P.thrust, on: P.thrust > .1, c: [255, 180, 60] },
+    { n: 'HARD BURN', k: 'SHIFT', f: P.fuel / 100, on: K['shift'] && P.fuel > 0, c: [120, 200, 255] },
+    { n: 'CHUTE', k: 'C', f: 1, on: !!K['c'], c: [255, 140, 90] },
+    { n: 'GRAPPLE', k: 'E / LMB', f: (P.grapAim || P.grap) ? 1 : .22, on: !!P.grap, c: [140, 255, 190] },
+    { n: 'DILATE', k: 'F', f: P.charge / 100, on: P.dilate > .1, c: [190, 150, 255] }
+  ];
+  if (sk.ab) chips.push({ n: sk.ab.name, k: 'Q', f: P.abCd > 0 ? 1 - P.abCd / sk.ab.cd : 1,
+    on: P.abT > 0, c: rc, big: 1 });
+  const cw = 104, gap = 4, tw = chips.length * (cw + gap) - gap, sx0 = CX - tw / 2, cy0 = H - M - 52;
+  chips.forEach((ch, i) => {
+    const x = sx0 + i * (cw + gap);
+    X.fillStyle = ch.on ? rgba(ch.c, .2) : rgba([16, 24, 34], .72); X.fillRect(x, cy0, cw, 30);
+    X.strokeStyle = rgba(ch.c, ch.on ? .95 : (ch.f >= 1 ? .4 : .2)); X.lineWidth = 1;
+    X.strokeRect(x + .5, cy0 + .5, cw - 1, 29);
+    X.fillStyle = rgba(ch.c, ch.on ? .35 : .18); X.fillRect(x + 1, cy0 + 26, (cw - 2) * clamp(ch.f, 0, 1), 3);
+    txt(ch.n, x + cw / 2, cy0 + 16, ch.big ? 14 : 13, rgba(ch.f >= 1 || ch.on ? PAPER : [120, 140, 164], 1), 'center', false, 600, .6);
+    txt(ch.k, x + cw / 2, cy0 + 25, 8, rgba(ch.c, .8), 'center', true, 500, 1.5);
+  });
+
+  /* ---- reticle, flight path, grapple lock ----------------------------- */
+  /* The reticle sits on the AIM line, not at screen centre, because the aim
+     line is also the grapple line — the bracket is literally where the hook
+     will go. The flight-path marker shows where you are ACTUALLY going, and
+     the gap between the two is your crab angle. */
+  const aimP = proj(vadd(P.p, vmul(P.aim, 260)));
+  const rs = 15 + P.g * 2;
+  if (aimP) {
+    X.strokeStyle = rgba(PAPER, .55); X.lineWidth = 1.3;
+    X.beginPath();
+    X.moveTo(aimP.x - rs, aimP.y); X.lineTo(aimP.x - rs * .45, aimP.y);
+    X.moveTo(aimP.x + rs * .45, aimP.y); X.lineTo(aimP.x + rs, aimP.y);
+    X.moveTo(aimP.x, aimP.y - rs); X.lineTo(aimP.x, aimP.y - rs * .45);
+    X.moveTo(aimP.x, aimP.y + rs * .45); X.lineTo(aimP.x, aimP.y + rs);
+    X.stroke();
+  }
+  if (P.grapAim && aimP) {                 // the hook has something to bite
+    const hp = proj(P.grapAim.hit);
+    if (hp) {
+      const s = 11;
+      X.strokeStyle = rgba([140, 255, 190], .9); X.lineWidth = 1.4;
+      X.beginPath();
+      X.moveTo(hp.x - s, hp.y - s + 4); X.lineTo(hp.x - s, hp.y - s); X.lineTo(hp.x - s + 4, hp.y - s);
+      X.moveTo(hp.x + s - 4, hp.y - s); X.lineTo(hp.x + s, hp.y - s); X.lineTo(hp.x + s, hp.y - s + 4);
+      X.moveTo(hp.x + s, hp.y + s - 4); X.lineTo(hp.x + s, hp.y + s); X.lineTo(hp.x + s - 4, hp.y + s);
+      X.moveTo(hp.x - s + 4, hp.y + s); X.lineTo(hp.x - s, hp.y + s); X.lineTo(hp.x - s, hp.y + s - 4);
+      X.stroke();
+      txt(Math.round(P.grapAim.t) + 'm', hp.x, hp.y + s + 13, 10, rgba([140, 255, 190], .8), 'center', true, 500, 1.5);
+    }
+  }
+  if (P.spd > 12) {                        // flight-path marker
+    const fp = proj(vadd(P.p, vmul(vmul(P.v, 1 / P.spd), 260)));
+    if (fp) {
+      const off = aimP ? Math.hypot(fp.x - aimP.x, fp.y - aimP.y) : 0;
+      const col = off > 60 ? AMBER : CYAN;
+      X.strokeStyle = rgba(col, .8); X.lineWidth = 1.4;
+      X.beginPath(); X.arc(fp.x, fp.y, 7, 0, TAU);
+      X.moveTo(fp.x - 7, fp.y); X.lineTo(fp.x - 15, fp.y);
+      X.moveTo(fp.x + 7, fp.y); X.lineTo(fp.x + 15, fp.y);
+      X.moveTo(fp.x, fp.y - 7); X.lineTo(fp.x, fp.y - 13);
+      X.stroke();
+    }
+  }
+  let nextG = null;
+  for (const g of c.gates) if (!g.passed) { nextG = g; break; }
+  const aim = nextG ? nextG.p : c.target.p, aimCol = nextG ? CYAN : RED;
+  const ap = proj(aim);
+  const dist = vdist(P.p, aim);
+  if (ap && ap.x > 0 && ap.x < W && ap.y > 0 && ap.y < H) {
+    const r = clamp((nextG ? nextG.r : c.target.r) * ap.s, 8, 400);
+    X.strokeStyle = rgba(aimCol, .5); X.lineWidth = 1;
+    X.beginPath(); X.arc(ap.x, ap.y, r * .5, 0, TAU); X.stroke();
+    txt(Math.round(dist) + 'm', ap.x, ap.y - r * .5 - 7, 12, rgba(aimCol, .85), 'center', true, 500, 1);
+  } else {
+    const v = vw(aim);
+    let ang = Math.atan2(-v.y, v.x); if (v.z < 0) ang = Math.atan2(v.y, -v.x);
+    const rr = Math.min(W, H) * .33;
+    const x = CX + Math.cos(ang) * rr, y = CY + Math.sin(ang) * rr;
+    X.save(); X.translate(x, y); X.rotate(ang);
+    X.fillStyle = rgba(aimCol, .8);
+    X.beginPath(); X.moveTo(12, 0); X.lineTo(-7, -7); X.lineTo(-7, 7); X.closePath(); X.fill();
+    X.restore();
+    txt(Math.round(dist) + 'm', x, y + 22, 11, rgba(aimCol, .7), 'center', true, 500, 1);
+  }
+
+  /* ---- launch prompt --------------------------------------------------- */
+  if (G.state === 'armed') {
+    const pulse = .6 + Math.sin(t * 4) * .4;
+    bracket(CX - 210, CY - 108, 420, 92, AMBER, .5, 14);
+    txt('PRESS SPACE TO LAUNCH', CX, CY - 62, 34, rgba(AMBER, pulse), 'center', false, 700, 5);
+    txt('THEN HOLD IT — THE MOTOR ONLY RUNS WHILE YOU DO', CX, CY - 36, 11,
+      rgba([169, 176, 189], .85), 'center', true, 500, 2.5);
+    txt('CLOCK STARTS ON LAUNCH', CX, M + 88, 10, rgba([120, 140, 164], 1), 'center', true, 500, 3);
+  }
+  if (P.crab > .25 && G.state === 'fly')
+    txt('CRAB ' + Math.round(P.crab * 57.3) + '°' + (P.crab > .5 ? '    CTRL TO ALIGN' : ''),
+      CX, CY + 122, 13, rgba(P.crab > 1.2 ? AMBER : [120, 140, 164], .9), 'center', true, 600, 3);
+
+  /* ---- warnings + pops ------------------------------------------------- */
+  if (P.near < 9 && P.near > 2) {
+    const a = .35 + (1 - P.near / 9) * .55;
+    txt('PROXIMITY', CX, CY - 52, 15, rgba(AMBER, a), 'center', true, 600, 5);
+    bracket(CX - 96, CY - 74, 192, 148, AMBER, a * .5, 12);
+  }
+  if (P.fuel < 12) txt('FUEL LOW', CX, H - M - 62, 13, rgba(RED, .6 + Math.sin(t * 9) * .3), 'center', true, 600, 4);
+  if (P.abT > 0 && sk.ab) txt(sk.ab.name + '  ' + P.abT.toFixed(1) + 's', CX, CY + 150, 16, rgba(rc, .9), 'center', true, 600, 4);
+  for (const pop of POPS) {
+    const a = 1 - pop.t / 1.3;
+    let x = CX, y = CY - 90;
+    if (pop.p) { const q = proj(pop.p); if (q) { x = q.x; y = q.y; } }
+    y -= pop.t * 46;
+    txt(pop.k, x, y, 14, rgba(AMBER, a * .8), 'center', false, 600, 3);
+    txt('+' + pop.v.toLocaleString('en-US'), x, y + 20, 20, rgba(PAPER, a), 'center', true, 600, 0);
+  }
+}
+</script>
+<script>
+'use strict';
+/* =========================================================== post pass ==== */
+const GRAIN = document.createElement('canvas'); GRAIN.width = GRAIN.height = 128;
+(() => { const g = GRAIN.getContext('2d'), d = g.createImageData(128, 128);
+  for (let i = 0; i < d.data.length; i += 4) { const v = 120 + Math.random() * 135;
+    d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 20; }
+  g.putImageData(d, 0, 0); })();
+let GPAT = null, VIG = null, vigW = 0;
+function post(t) {
+  if (P.spd > 150 && G.state === 'fly') {       // radial speed streaks
+    const n = Math.round(clamp((P.spd - 150) / 12, 0, 22));
+    X.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * TAU, r0 = Math.min(W, H) * (.28 + Math.random() * .2), r1 = r0 + 40 + Math.random() * 130;
+      X.strokeStyle = rgba(PAPER, .035 + Math.random() * .05); X.lineWidth = 1 + Math.random();
+      X.beginPath(); X.moveTo(CX + Math.cos(a) * r0, CY + Math.sin(a) * r0);
+      X.lineTo(CX + Math.cos(a) * r1, CY + Math.sin(a) * r1); X.stroke();
+    }
+    X.globalCompositeOperation = 'source-over';
+  }
+  if (G.chroma > .01) {                          // impact-only aberration
+    const k = G.chroma * 5;
+    X.globalCompositeOperation = 'lighter'; X.globalAlpha = G.chroma * .3;
+    X.drawImage(CV, -k, 0, W, H); X.drawImage(CV, k, 0, W, H);
+    X.globalAlpha = 1; X.globalCompositeOperation = 'source-over';
+  }
+  if (G.flash > .01) {
+    X.fillStyle = rgba(G.flashCol, G.flash * .3); X.fillRect(0, 0, W, H);
+  }
+  if (P.abT > 0 && P.abK === 'horizon') {        // the course is stopped, you are not
+    X.fillStyle = rgba([40, 6, 22], .3); X.fillRect(0, 0, W, H);
+    X.strokeStyle = rgba([255, 80, 140], .25); X.lineWidth = 2;
+    for (let i = 0; i < 4; i++) { const r = ((t * 260 + i * 160) % 700);
+      X.beginPath(); X.arc(CX, CY, r, 0, TAU); X.stroke(); }
+  }
+  if (P.dilate > .02) {
+    X.fillStyle = rgba([110, 80, 190], P.dilate * .12); X.fillRect(0, 0, W, H);
+  }
+  if (!VIG || vigW !== W) {
+    VIG = X.createRadialGradient(CX, CY, Math.min(W, H) * .32, CX, CY, Math.max(W, H) * .78);
+    VIG.addColorStop(0, 'rgba(0,0,0,0)'); VIG.addColorStop(1, 'rgba(0,0,0,.72)'); vigW = W;
+  }
+  X.fillStyle = VIG; X.fillRect(0, 0, W, H);
+  if (!GPAT) GPAT = X.createPattern(GRAIN, 'repeat');
+  X.save();
+  X.globalAlpha = .5;
+  X.translate((Math.random() * 128) | 0, (Math.random() * 128) | 0);
+  X.fillStyle = GPAT; X.fillRect(-128, -128, W + 256, H + 256);
+  X.restore();
+  X.globalAlpha = 1;
+  // gun-camera frame: scanline + corner burn
+  X.fillStyle = 'rgba(0,0,0,.14)';
+  for (let y = 0; y < H; y += 3) X.fillRect(0, y, W, 1);
+  G.chroma = Math.max(0, G.chroma - .05);
+  G.flash = Math.max(0, G.flash - .05);
+}
+
+/* ============================================================== draw ====== */
+function drawWorld(t) {
+  const c = G.course;
+  drawSky();
+  drawGround(camP.x, camP.z);
+  for (const b of c.boxes) {
+    if (!b.alive) continue;
+    const d = vsub(b.p, camP), along = vdot(d, camF);
+    if (along < -140 || along > 2600) continue;
+    if (vlen(d) > 2600) continue;
+    drawBox(b);
+  }
+  for (const g of c.gates) drawRing(g, t);
+  if (!c.target.hit) drawTarget(c.target, t);
+  if (P.alive && G.state !== 'over') drawMissile();
+  flushFaces();
+  X.globalCompositeOperation = 'lighter';
+  drawTrail();
+  drawParticles();
+  if (P.alive && G.state !== 'over') { drawSkinVFX(t); drawAnchors(t); }
+  X.globalCompositeOperation = 'source-over';
+}
+function draw() {
+  if (!ready || !W) return;
+  if (!G.course) { X.fillStyle = '#05080e'; X.fillRect(0, 0, W, H); return; }
+  drawWorld(G.t);
+  if (G.state === 'fly' || G.state === 'armed') drawHUD(G.t);
+  else if (G.state === 'over' && !curScreen) {   // the beat before the report
+    drawHUD(G.t);
+    X.fillStyle = 'rgba(5,8,14,.5)'; X.fillRect(0, 0, W, H);
+    txt(RUN.win ? 'TARGET DESTROYED' : (P.hull <= 0 ? 'AIRFRAME LOST' : 'RUN ENDED'),
+      CX, CY - 4, 54, rgba(RUN.win ? AMBER : RED, 1), 'center', false, 700, 6);
+  }
+  post(G.t);
+}
+
+/* ============================================================== loop ====== */
+let last = 0;
+function tick(dt) {
+  if (!W || !ready) { resize(); if (!W || !ready) return; }
+  if (G.hitstop > 0) { G.hitstop -= dt; dt *= .08; }
+  G.t += dt;
+  if (G.state === 'fly') {
+    const sdt = Math.min(.05, dt * (1 - P.dilate * .62));
+    G.rt += dt * (P.abT > 0 && P.abK === 'horizon' ? .06 : 1);
+    sim(sdt);
+    updateCamera(sdt);
+  } else if (G.state === 'armed') {
+    stepParticles(dt);                        // sat on the rail, clock stopped
+    updateCamera(dt);
+  } else if (G.course) {
+    stepParticles(dt);
+    if (G.state === 'over') { if (camPos) updateCamera(dt); }
+    else demoStep(dt);                        // menus fly the range in the background
+  }
+  draw();
+  uiFrame(G.t);
+}
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000 || .016); last = now;
+  tick(dt);
+  requestAnimationFrame(frame);
+}
+/* deterministic step hook — the preview pane does not run rAF */
+window.__t = {
+  step: (n, dt) => { for (let i = 0; i < (n || 1); i++) tick(dt || 1 / 60); },
+  forceSize: (w, h) => applySize(w, h),
+  fly: (seed, diff) => startRun(seed || 'TITAN', diff == null ? 1 : diff),
+  give: id => { SV.owned[id] = (SV.owned[id] || 0) + 1; SV.equip = id; save(); refreshUI(); },
+  giveAll: () => { SKINS.forEach(s => SV.owned[s.id] = 1); SV.cred += 99999; save(); refreshUI(); },
+  set: o => Object.assign(P, o),
+  aim: (x, y) => { mdx += x || 0; mdy += y || 0; },
+  key: (k, v) => { K[k] = v ? 1 : 0; },
+  get: () => ({ state: G.state, W, H, score: Math.round(P.score), spd: Math.round(P.spd),
+    hull: P.hull, gates: RUN.gates + '/' + RUN.gatesTotal, mult: +P.mult.toFixed(2),
+    near: +P.near.toFixed(1), t: +G.rt.toFixed(2), parts: ptN, skin: SV.equip,
+    pos: [P.p.x | 0, P.p.y | 0, P.p.z | 0] })
+};
+</script>
+<script>
+'use strict';
+/* =============================================================== shell ==== */
+const $ = id => document.getElementById(id);
+const SCREENS = ['shell', 'hangar', 'roll', 'res', 'launch', 'help'];
+let curScreen = 'shell';
+function showScreen(id) {
+  curScreen = id;
+  SCREENS.forEach(s => $(s).classList.toggle('on', s === id));
+  $('pausenote').classList.remove('on');
+  if (id) refreshUI();
+}
+function toast(msg, col) {
+  const d = document.createElement('div');
+  d.className = 'tst'; d.textContent = msg;
+  if (col) d.style.borderLeftColor = col;
+  $('toast').appendChild(d);
+  setTimeout(() => d.remove(), 2600);
+}
+function toastGame(m) { toast(m); }
+document.body.addEventListener('click', e => {
+  const b = e.target.closest('[data-go]'); if (!b) return;
+  showScreen(b.dataset.go);
+});
+
+/* ===================================================== airframe preview === */
+/* Its own tiny projector so the hangar can orbit a frame without touching
+   the flight camera. Same shading rules, so what you see is what launches. */
+function previewFrame(ctx, cw, ch, sk, time, dist, withVfx) {
+  const m = buildMesh(sk), v = m.v, n = v.length / 3;
+  const foc = ch * 1.5, yaw = time * .5, pit = -.2;
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pit), sp = Math.sin(pit);
+  const X1 = new Float64Array(n), Y1 = new Float64Array(n), Z1 = new Float64Array(n);
+  const sxA = new Float64Array(n), syA = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = v[i * 3], y = v[i * 3 + 1], z = v[i * 3 + 2];
+    const ax = x * cy + z * sy, az = -x * sy + z * cy;
+    const ay = y * cp - az * sp, bz = y * sp + az * cp;
+    X1[i] = ax; Y1[i] = ay; Z1[i] = bz + dist;
+    sxA[i] = cw / 2 + ax * foc / Z1[i]; syA[i] = ch / 2 - ay * foc / Z1[i];
+  }
+  const list = [];
+  for (const f of m.f) {
+    let z = 0, ok = true;
+    for (const i of f.i) { if (Z1[i] < .4) { ok = false; break; } z += Z1[i]; }
+    if (!ok) continue;
+    z /= f.i.length;
+    let a2 = 0;
+    for (let k = 0; k < f.i.length; k++) { const i1 = f.i[k], i2 = f.i[(k + 1) % f.i.length];
+      a2 += sxA[i1] * syA[i2] - sxA[i2] * syA[i1]; }
+    if (!f.ds && a2 < 0) continue;
+    const p0 = f.i[0], p1 = f.i[1], p2 = f.i[2];
+    const e1 = V3(X1[p1] - X1[p0], Y1[p1] - Y1[p0], Z1[p1] - Z1[p0]);
+    const e2 = V3(X1[p2] - X1[p0], Y1[p2] - Y1[p0], Z1[p2] - Z1[p0]);
+    const nr = vnorm(vcross(e1, e2));
+    const sh = .4 + .6 * (vdot(nr, vnorm(V3(-.4, .7, -.6))) * .5 + .5);
+    let col = cmul(f.c, sh);
+    if (f.em) col = cmix(col, cmix(f.c, [255, 255, 255], .4), f.em);
+    list.push({ f, z, col });
+  }
+  list.sort((a, b) => b.z - a.z);
+  for (const it of list) {
+    const f = it.f;
+    ctx.beginPath(); ctx.moveTo(sxA[f.i[0]], syA[f.i[0]]);
+    for (let k = 1; k < f.i.length; k++) ctx.lineTo(sxA[f.i[k]], syA[f.i[k]]);
+    ctx.closePath();
+    ctx.fillStyle = rgb(it.col); ctx.fill();
+    ctx.strokeStyle = rgba(PAPER, .28); ctx.lineWidth = 1; ctx.stroke();
+  }
+  if (withVfx) {
+    ctx.globalCompositeOperation = 'lighter';
+    const prj = (x, y, z) => {
+      const ax = x * cy + z * sy, az = -x * sy + z * cy;
+      const ay = y * cp - az * sp, bz = y * sp + az * cp + dist;
+      return { x: cw / 2 + ax * foc / bz, y: ch / 2 - ay * foc / bz };
+    };
+    const a0 = prj(0, 0, m.nozzle), a1 = prj(0, 0, m.nozzle - m.len * .6);
+    for (let i = 0; i < 14; i++) {
+      const t = i / 14, w = Math.pow(1 - t, 1.4), jit = Math.sin(time * 11 + i) * 1.1;
+      ctx.fillStyle = rgba(cmix(sk.col.flame, [255, 250, 235], 1 - t * .9), .3 * w);
+      ctx.beginPath();
+      ctx.arc(lerp(a0.x, a1.x, t) + jit, lerp(a0.y, a1.y, t) + jit * .4, ch * .03 * w + 1.2, 0, TAU);
+      ctx.fill();
+    }
+    if (sk.rar >= 2) {
+      const rc = RAR[sk.rar].c;
+      for (let k = 0; k < 3; k++) {
+        ctx.strokeStyle = rgba(sk.col.glow, .16 - k * .04); ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(cw / 2, ch / 2, ch * (.22 + k * .1 + Math.sin(time * 2) * .012), ch * (.1 + k * .04), 0, 0, TAU);
+        ctx.stroke();
+      }
+      for (let i = 0; i < (sk.rar >= 4 ? 14 : 6); i++) {
+        const a = time * 1.4 + i * TAU / 8, r = ch * (.26 + (i % 3) * .07);
+        ctx.fillStyle = rgba(sk.col.glow, .5);
+        ctx.beginPath(); ctx.arc(cw / 2 + Math.cos(a) * r * 1.5, ch / 2 + Math.sin(a) * r * .5, 2.2, 0, TAU); ctx.fill();
+      }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+}
+function paintPreviewCanvas(cv, sk, time, label) {
+  const ctx = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+  const cw = cv.clientWidth || 300, ch = cv.clientHeight || 220;
+  if (cv.width !== Math.round(cw * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cw, ch);
+  const g = ctx.createRadialGradient(cw / 2, ch * .45, 10, cw / 2, ch * .45, ch);
+  g.addColorStop(0, '#0e1826'); g.addColorStop(1, '#05080e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+  ctx.strokeStyle = 'rgba(80,110,140,.13)'; ctx.lineWidth = 1;
+  for (let x = 0; x < cw; x += 26) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke(); }
+  for (let y = 0; y < ch; y += 26) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+  previewFrame(ctx, cw, ch, sk, time, sk.geo.len * 2.3, true);
+  ctx.font = '500 9px ' + MONO; ctx.fillStyle = 'rgba(120,140,164,.8)';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+  ctx.fillText(label || (sk.geo.len.toFixed(1) + 'm  ·  ' + sk.geo.fins.n + ' FIN  ·  ' + sk.geo.nose.toUpperCase()), 10, ch - 10);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+}
+
+/* ============================================================== hangar ==== */
+let hgSel = null;
+function buildHangar() {
+  const grid = $('hgGrid'); grid.innerHTML = '';
+  SKINS.forEach(sk => {
+    const owned = SV.owned[sk.id] || 0, rc = RAR[sk.rar];
+    const b = document.createElement('button');
+    b.className = 'chip' + (owned ? '' : ' lock') + (hgSel === sk.id ? ' sel' : '');
+    b.style.setProperty('--rc', rgb(rc.c));
+    b.innerHTML = '<div class="bar"></div>' +
+      '<div class="nm">' + (owned ? sk.name : '— LOCKED —') + '</div>' +
+      '<div class="rr">' + rc.n + '</div>' +
+      '<div class="ab">' + (sk.ab ? '◆ ' + sk.ab.name : (owned ? sk.tag : 'NOT ISSUED')) + '</div>' +
+      (SV.equip === sk.id ? '<div class="eq">EQUIPPED</div>' : '') +
+      (owned > 1 ? '<div class="dup">×' + owned + '</div>' : '');
+    b.onclick = () => { hgSel = sk.id; buildHangar(); };
+    grid.appendChild(b);
+  });
+  const sk = SKIN_BY_ID[hgSel] || equipped(), owned = SV.owned[sk.id] || 0, rc = RAR[sk.rar];
+  const st = sk.stat;
+  const pct = v => (v >= 1 ? '+' : '') + Math.round((v - 1) * 100) + '%';
+  $('hgTxt').style.setProperty('--rc', rgb(rc.c));
+  $('hgTxt').innerHTML =
+    '<h3>' + sk.name + '</h3><div class="rr2">' + rc.n + ' · ' + sk.tag + '</div>' +
+    '<p>' + sk.desc + '</p>' +
+    '<div class="spec">' +
+      '<b>LENGTH</b><span>' + sk.geo.len.toFixed(2) + ' m</span>' +
+      '<b>CALIBRE</b><span>' + (sk.geo.rad * 200).toFixed(0) + ' mm</span>' +
+      '<b>NOSE</b><span>' + sk.geo.nose.toUpperCase() + '</span>' +
+      '<b>SURFACES</b><span>' + sk.geo.fins.n + (sk.geo.canards ? ' + ' + sk.geo.canards.n + ' CANARD' : '') + (sk.geo.pods ? ' · ' + sk.geo.pods + ' POD' : '') + '</span>' +
+      '<b>VELOCITY</b><span>' + pct(st.spd) + '</span>' +
+      '<b>AUTHORITY</b><span>' + pct(st.turn) + '</span>' +
+      '<b>FUEL</b><span>' + pct(st.fuel) + '</span>' +
+      '<b>MASS</b><span>' + pct(st.mass) + '</span>' +
+      (st.hull ? '<b>HULL</b><span>+' + st.hull + '</span>' : '') +
+    '</div>' +
+    (sk.ab ? '<div class="abil" style="--rc:' + rgb(rc.c) + '"><div class="k">SKIN SYSTEM · KEY Q · ' + sk.ab.cd + 's CYCLE</div>' +
+      '<div class="t">' + sk.ab.name + '</div><div class="d">' + sk.ab.desc + '</div></div>'
+      : '<div class="spec" style="margin-top:14px"><b>SYSTEMS</b><span>BASE FOUR ONLY</span></div>') +
+    (owned ? '' : '<div class="spec" style="margin-top:14px"><b>STATUS</b><span style="color:var(--red)">NOT IN INVENTORY</span></div>');
+  const eq = $('hgEquip');
+  eq.disabled = !owned || SV.equip === sk.id;
+  eq.textContent = !owned ? 'NOT ISSUED' : (SV.equip === sk.id ? 'EQUIPPED' : 'EQUIP ' + sk.name);
+  eq.onclick = () => { if (SV.owned[sk.id]) { SV.equip = sk.id; save(); buildHangar(); refreshUI(); toast('EQUIPPED ' + sk.name, rgb(rc.c)); } };
+  const ownN = SKINS.filter(s => SV.owned[s.id]).length;
+  $('hgStat').textContent = ownN + ' OF ' + SKINS.length + ' AIRFRAMES ISSUED · ' +
+    SKINS.filter(s => SV.owned[s.id] && s.ab).length + ' WITH SKIN SYSTEMS';
+}
+</script>
+<script>
+'use strict';
+/* ========================================================== supply drop === */
+const ROLL = { t: 0, phase: 'idle', sk: null, dupe: 0, pack: null, packI: 0 };
+function pickRarity(force) {
+  SV.rolls++; SV.pityEpic++; SV.pityLeg++;
+  if (force != null) return force;
+  if (SV.pityLeg >= 150) { SV.pityLeg = 0; SV.pityEpic = 0; return Math.random() < .12 ? 5 : 4; }
+  if (SV.pityEpic >= 40) { SV.pityEpic = 0; return 3; }
+  let r = Math.random() * 100, acc = 0;
+  for (let i = RAR.length - 1; i >= 0; i--) { acc += RAR[i].odds; if (r < acc) return i; }
+  return 0;
+}
+function rollOnce(force) {
+  const rar = pickRarity(force);
+  const pool = SKINS.filter(s => s.rar === rar);
+  const sk = pool[(Math.random() * pool.length) | 0];
+  if (rar >= 3) { SV.pityEpic = 0; }
+  if (rar >= 4) { SV.pityLeg = 0; }
+  const dupe = (SV.owned[sk.id] || 0) > 0;
+  if (dupe) SV.scrap += SCRAP_VALUE[rar];
+  else SV.owned[sk.id] = 1;
+  if (!dupe) SV.owned[sk.id] = 1; else SV.owned[sk.id]++;
+  SV.seen[sk.id] = 1;
+  save();
+  return { sk, dupe };
+}
+function beginReveal(r) {
+  ROLL.sk = r.sk; ROLL.dupe = r.dupe; ROLL.t = 0; ROLL.phase = 'spin';
+  $('rollout').innerHTML = '<div class="note">…</div>';
+}
+function doRoll(n, force, costCred, costScrap) {
+  if (costCred && SV.cred < costCred) { toast('NOT ENOUGH CREDITS', '#ff4a46'); return; }
+  if (costScrap && SV.scrap < costScrap) { toast('NOT ENOUGH SCRAP', '#ff4a46'); return; }
+  SV.cred -= costCred || 0; SV.scrap -= costScrap || 0;
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(rollOnce(i === 0 ? force : null));
+  out.sort((a, b) => b.sk.rar - a.sk.rar);
+  ROLL.pack = n > 1 ? out : null;
+  beginReveal(out[0]);
+  save(); refreshUI();
+}
+function revealDone() {
+  const sk = ROLL.sk, rc = RAR[sk.rar];
+  let extra = '';
+  if (ROLL.pack) {
+    const rest = ROLL.pack.slice(1).map(r => r.sk.name + (r.dupe ? '*' : '')).join('  ·  ');
+    extra = '<div class="note">ALSO IN CRATE: ' + rest + '</div>';
+  }
+  $('rollout').innerHTML =
+    '<div class="rr" style="color:' + rgb(rc.c) + '">' + rc.n + (ROLL.dupe ? ' · DUPLICATE → +' + SCRAP_VALUE[sk.rar] + ' SCRAP' : ' · NEW AIRFRAME') + '</div>' +
+    '<div class="nm" style="color:' + (ROLL.dupe ? 'var(--paper2)' : rgb(rc.c)) + '">' + sk.name + '</div>' +
+    (sk.ab ? '<div class="note" style="color:' + rgb(rc.c) + '">◆ ' + sk.ab.name + ' — ' + sk.ab.desc.slice(0, 74) + '…</div>' : extra ||
+      '<div class="note">' + sk.tag + '</div>');
+  if (!ROLL.dupe) toast('NEW AIRFRAME: ' + sk.name, rgb(rc.c));
+}
+function drawRollCanvas(cv, t) {
+  const ctx = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+  const cw = cv.clientWidth || 600, ch = cv.clientHeight || 300;
+  if (cv.width !== Math.round(cw * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const g = ctx.createRadialGradient(cw / 2, ch / 2, 10, cw / 2, ch / 2, ch);
+  g.addColorStop(0, '#0d1725'); g.addColorStop(1, '#05080e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+  ctx.strokeStyle = 'rgba(80,110,140,.1)';
+  for (let x = 0; x < cw; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke(); }
+  for (let y = 0; y < ch; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+
+  if (ROLL.phase === 'idle') {
+    ctx.strokeStyle = 'rgba(169,176,189,.35)'; ctx.lineWidth = 1.5;
+    const s = 54 + Math.sin(t * 1.6) * 3;
+    ctx.save(); ctx.translate(cw / 2, ch / 2);
+    ctx.strokeRect(-s, -s * .62, s * 2, s * 1.24);
+    ctx.beginPath(); ctx.moveTo(-s, -s * .2); ctx.lineTo(s, -s * .2);
+    ctx.moveTo(-s, s * .2); ctx.lineTo(s, s * .2); ctx.stroke();
+    ctx.font = '500 10px ' + MONO; ctx.fillStyle = 'rgba(120,140,164,.8)';
+    ctx.textAlign = 'center'; ctx.fillText('ORDNANCE CRATE — SEALED', 0, s * .95);
+    ctx.restore();
+    return;
+  }
+  const rc = RAR[ROLL.sk.rar].c;
+  if (ROLL.phase === 'spin') {
+    const p = clamp(ROLL.t / 1.15, 0, 1);
+    const shake = p * p * 9;
+    ctx.save();
+    ctx.translate(cw / 2 + (Math.random() - .5) * shake, ch / 2 + (Math.random() - .5) * shake);
+    const flick = RAR[Math.min(RAR.length - 1, (Math.random() * (1 + p * 5)) | 0)].c;
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 26; i++) {
+      const a = Math.random() * TAU, r0 = 40 + p * 60, r1 = r0 + 30 + Math.random() * 260 * p;
+      ctx.strokeStyle = rgba(flick, .06 + p * .16); ctx.lineWidth = 1 + Math.random() * 2;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0);
+      ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1); ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    const s = 54 * (1 - p * .25);
+    ctx.strokeStyle = rgba(flick, .5 + p * .5); ctx.lineWidth = 2;
+    ctx.strokeRect(-s, -s * .62, s * 2, s * 1.24);
+    ctx.restore();
+    if (ROLL.t > 1.15) { ROLL.phase = 'burst'; ROLL.t = 0; }
+    return;
+  }
+  const bt = ROLL.phase === 'burst' ? ROLL.t : 99;
+  ctx.globalCompositeOperation = 'lighter';
+  const rays = ROLL.sk.rar >= 3 ? 40 : 18;
+  for (let i = 0; i < rays; i++) {
+    const a = i / rays * TAU + t * (ROLL.sk.rar >= 4 ? .3 : .08);
+    const r0 = ch * .16, r1 = ch * (.3 + (i % 3) * .12) * (ROLL.sk.rar >= 2 ? 1.25 : .8);
+    ctx.strokeStyle = rgba(rc, ROLL.sk.rar >= 3 ? .13 : .08);
+    ctx.lineWidth = ROLL.sk.rar >= 4 ? 3 : 1.5;
+    ctx.beginPath(); ctx.moveTo(cw / 2 + Math.cos(a) * r0, ch / 2 + Math.sin(a) * r0 * .55);
+    ctx.lineTo(cw / 2 + Math.cos(a) * r1, ch / 2 + Math.sin(a) * r1 * .55); ctx.stroke();
+  }
+  if (bt < .6) {
+    const q = 1 - bt / .6;
+    ctx.fillStyle = rgba(rc, q * .55);
+    ctx.beginPath(); ctx.arc(cw / 2, ch / 2, ch * .5 * (1 - q), 0, TAU); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  previewFrame(ctx, cw, ch, ROLL.sk, t, ROLL.sk.geo.len * (2.2 + Math.max(0, .8 - bt) * 2.2), true);
+  ctx.font = '500 10px ' + MONO; ctx.fillStyle = rgba(rc, .85); ctx.textAlign = 'left';
+  ctx.fillText(RAR[ROLL.sk.rar].n, 12, 20);
+  if (ROLL.phase === 'burst' && ROLL.t > .45) { ROLL.phase = 'done'; revealDone(); }
+}
+
+/* ============================================================== results === */
+function finishRun() {
+  const c = G.course, key = c.seed + '|' + c.diff, prev = SV.best[key] || 0;
+  const score = Math.round(P.score);
+  const improve = Math.max(0, score - prev);
+  const pay = c.D.pay;
+  const cred = Math.round(improve / 100 * pay) + Math.round(score / 900 * pay) + (RUN.win ? 40 : 0);
+  const isPB = score > prev;
+  if (isPB) SV.best[key] = score;
+  SV.cred += cred; SV.runs++; if (RUN.win) SV.kills++;
+  if (score > SV.bestEver) SV.bestEver = score;
+  save();
+  const row = (k, v, cls) => '<div class="row ' + (cls || '') + '"><span>' + k + '</span><b>' + v + '</b></div>';
+  const n = v => Math.round(v).toLocaleString('en-US');
+  $('resTitle').textContent = RUN.win ? 'Target Destroyed' : (P.hull <= 0 ? 'Airframe Lost' : 'Run Aborted');
+  $('resSub').textContent = c.seed + ' · ' + c.D.n + ' · ' + fmtTime(RUN.time) + ' · ' + RUN.gates + '/' + RUN.gatesTotal + ' GATES';
+  $('resScore').textContent = n(score);
+  $('resRows').innerHTML =
+    row('THREADING', n(RUN.thread)) + row('SKIM', n(RUN.skim)) + row('G-LOAD', n(RUN.gload)) +
+    row('SWING', n(RUN.swing)) + (RUN.debris ? row('DEBRIS', n(RUN.debris)) : '') +
+    (RUN.kill ? row('TARGET + TIME BONUS', n(RUN.kill)) : '') +
+    row('PEAK MULTIPLIER', '×' + RUN.bestMult.toFixed(2)) +
+    row('CRASHES', RUN.crashes) +
+    row('PERSONAL BEST', n(prev) + (isPB ? '  →  ' + n(score) : ''), isPB ? 'pb' : '') +
+    row('IMPROVEMENT BANKED', n(improve) + ' pts', '') +
+    row('CREDITS EARNED', '+' + n(cred) + ' CR', 'gain');
+  $('resCred').textContent = n(SV.cred);
+  showScreen('res');
+  if (isPB && prev > 0) toast('NEW PERSONAL BEST ON ' + c.seed);
+}
+
+/* =============================================================== launch === */
+const WORDS = ['TITAN', 'HALDOR', 'VESPER', 'CINDER', 'MAGPIE', 'KESTREL', 'OSSUARY', 'LANTERN',
+  'DRYDOCK', 'FERRITE', 'NOCTURN', 'SALTPAN', 'BRAMBLE', 'ANVIL', 'QUARRY', 'TALLOW'];
+function randSeed() { return WORDS[(Math.random() * WORDS.length) | 0] + ((Math.random() * 90 + 10) | 0); }
+function buildLaunch() {
+  const row = $('diffRow'); row.innerHTML = '';
+  DIFFS.forEach((d, i) => {
+    const b = document.createElement('button');
+    b.className = 'btn' + (i === G.diff ? ' on' : '');
+    b.textContent = d.n;
+    b.onclick = () => { G.diff = i; buildLaunch(); };
+    row.appendChild(b);
+  });
+  const seed = ($('seedIn').value || G.seed).toUpperCase();
+  const key = seed + '|' + G.diff, best = SV.best[key] || 0, d = DIFFS[G.diff];
+  const r = (k, v) => '<div class="row"><span>' + k + '</span><b>' + v + '</b></div>';
+  $('lchInfo').innerHTML = r('GATES', d.gates) + r('GATE APERTURE', '≈' + d.gr * 2 + ' m') +
+    r('STRUCTURE DENSITY', '×' + d.dens.toFixed(1)) + r('PAYOUT RATE', '×' + d.pay.toFixed(2)) +
+    r('YOUR BEST ON ' + seed, best ? best.toLocaleString('en-US') : '— NEVER FLOWN —');
+  const sk = equipped();
+  $('lchSkin').textContent = 'AIRFRAME: ' + sk.name + (sk.ab ? '  ·  Q = ' + sk.ab.name : '  ·  NO SKIN SYSTEM');
+}
+
+/* ================================================================= glue === */
+function refreshUI() {
+  const n = v => Math.round(v).toLocaleString('en-US');
+  const ownN = SKINS.filter(s => SV.owned[s.id]).length;
+  $('mCred').textContent = n(SV.cred) + ' CR';
+  $('mOwn').textContent = ownN + '/' + SKINS.length;
+  $('mSeed').textContent = equipped().name;
+  $('shellstat').textContent = 'RUNS ' + SV.runs + ' · KILLS ' + SV.kills + ' · BEST ' + n(SV.bestEver);
+  $('hgCred').textContent = n(SV.cred); $('hgScrap').textContent = n(SV.scrap);
+  $('rlCred').textContent = n(SV.cred); $('rlScrap').textContent = n(SV.scrap);
+  $('rlPity').textContent = 'EPIC OR BETTER GUARANTEED IN ' + (40 - SV.pityEpic) + ' · LEGENDARY OR BETTER IN ' + (150 - SV.pityLeg) + ' · ' + SV.rolls + ' CRATES OPENED';
+  $('rl1').disabled = SV.cred < 100; $('rl10').disabled = SV.cred < 900; $('rlForge').disabled = SV.scrap < 600;
+  if (curScreen === 'hangar') buildHangar();
+  if (curScreen === 'launch') buildLaunch();
+}
+function uiFrame(t) {
+  if (curScreen === 'hangar') paintPreviewCanvas($('prev'), SKIN_BY_ID[hgSel] || equipped(), t, null);
+  else if (curScreen === 'roll') { ROLL.t += 1 / 60; drawRollCanvas($('rollcv'), t); }
+}
+/* menu background: a frame cruising the range on its own */
+let demoU = 0;
+function demoStep(dt) {
+  const c = G.course; if (!c) return;
+  demoU += dt * .09; if (demoU > c.UMAX - .5) demoU = .2;
+  const p = c.at(demoU), f = c.tanAt(demoU);
+  P.p = p; P.f = f; P.roll = Math.sin(G.t * .5) * .3; P.spd = 120; P.alive = 1;
+  TRAIL.push(p.x, p.y, p.z); if (TRAIL.length > 3 * 70) TRAIL.splice(0, 3);
+  const sk = equipped(), m = buildMesh(sk);
+  if (Math.random() < dt * 60) spark(vadd(p, vmul(f, m.nozzle)),
+    vadd(vmul(f, -30), V3((Math.random() - .5) * 8, (Math.random() - .5) * 8, (Math.random() - .5) * 8)),
+    .4, .45, sk.col.flame, 0);
+  const eye = vadd(vadd(p, vmul(f, -34)), V3(Math.sin(G.t * .23) * 16, 9, 0));
+  setCam(eye, vsub(vadd(p, vmul(f, 70)), eye), V3(0, 1, 0), Math.sin(G.t * .17) * .04, 1.18);
+}
+
+/* ================================================================= boot === */
+$('hgEquip').onclick = () => { };
+$('rl1').onclick = () => doRoll(1, null, 100, 0);
+$('rl10').onclick = () => doRoll(10, null, 900, 0);
+$('rlForge').onclick = () => { const r = Math.random(); doRoll(1, r < .8 ? 3 : r < .98 ? 4 : 5, 0, 600); };
+$('seedRnd').onclick = () => { $('seedIn').value = randSeed(); buildLaunch(); };
+$('seedDaily').onclick = () => { const d = new Date(); $('seedIn').value = 'DAY' + (d.getMonth() + 1) + '' + d.getDate(); buildLaunch(); };
+$('seedIn').oninput = () => buildLaunch();
+$('lchGo').onclick = () => { const s = ($('seedIn').value || randSeed()).toUpperCase(); $('seedIn').value = s; startRun(s, G.diff); };
+$('resAgain').onclick = () => startRun(G.seed, G.diff);
+$('resNew').onclick = () => { $('seedIn').value = randSeed(); showScreen('launch'); };
+$('rlOdds').innerHTML = RAR.map(r => '<div style="--rc:' + rgb(r.c) + '"><b>' + r.n + '</b>' + r.odds.toFixed(1) + '%</div>').join('');
+
+(function boot() {
+  resize();
+  $('seedIn').value = randSeed();
+  G.seed = $('seedIn').value;
+  G.course = makeCourse(G.seed, 1);
+  hgSel = SV.equip;
+  showScreen('shell');
+  refreshUI();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -2,201 +2,776 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbit Dash</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ORBIT DASH — Orrery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; height: 100%; background: #05060c; overflow: hidden;
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
-  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  html, body { margin:0; height:100%; background:#081625; overflow:hidden; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <script>
-/* Orbit Dash - demo game for the Alloy Studios shell.
-   Self-contained: no assets, no libraries, nothing outside this file. */
+/* ============================================================================
+   ORBIT DASH — Orrery
+   ----------------------------------------------------------------------------
+   THESIS   You are not flying a ship through space. You are a brass bead
+            running the tracks of an antique orrery, and the thing trying to
+            kill you is the machine's own shed debris. Precise, engraved,
+            mechanical — never neon.
 
-const cv = document.getElementById('c');
-const ctx = cv.getContext('2d');
-let W = 0, H = 0, cx = 0, cy = 0, unit = 0;
+   ANCHOR   18th-century brass orreries and engraved star atlases (Bayer's
+            Uranometria), printed as a cyanotype blueprint. Line work and
+            hatching do the drawing; there is no lit surface anywhere.
 
-function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  W = cv.clientWidth; H = cv.clientHeight;
-  cv.width = W * dpr; cv.height = H * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+   PALETTE  Prussian paper (#0b1f33 / #081625) is the ground.
+            Engraving ink (#cfe2f2) is all structure — rings, ticks, frame.
+            Brass (#e9b455 / #ffe0a3) is YOU, and nothing else is warm gold.
+            Copper (#d2553c) is lethal, and nothing else is red.
+            Verdigris (#57b9a8) is reward — gates, chain, the mainspring.
+
+   TYPE     Cormorant Garamond for the engraved voice, IBM Plex Mono for
+            anything numeric (an instrument reads its own dials in mono).
+
+   LEGIBILITY
+            Warm = you. Red = will kill you. Cool blue = scenery, always.
+            Verdigris = the only thing worth chasing. Debris is angular and
+            cross-hatched; you are a filled circle with a trail. Silhouette
+            alone separates them with the colour removed.
+
+   NOTE     No bloom, no chromatic aberration — this is a print direction, and
+            filmic post would turn engraved line work to mush. Paper grain and
+            plate vignette only, because those ARE the medium.
+   ========================================================================== */
+
+const CV = document.getElementById('c');
+const X  = CV.getContext('2d');
+
+/* ---------- palette ---------- */
+const P = {
+  paper:   '#0b1f33',
+  paperLo: '#061220',
+  ink:     '#cfe2f2',
+  inkMid:  'rgba(207,226,242,.45)',
+  inkDim:  'rgba(207,226,242,.20)',
+  inkFaint:'rgba(207,226,242,.10)',
+  brass:   '#e9b455',
+  brassLt: '#ffe4ad',
+  copper:  '#d2553c',
+  copperLt:'#f0906d',
+  verd:    '#57b9a8'
+};
+
+const SERIF = '"Cormorant Garamond", "Iowan Old Style", Georgia, serif';
+const MONO  = '"IBM Plex Mono", ui-monospace, Consolas, monospace';
+
+/* ---------- canvas sizing (guarded: the preview pane fires 0-size resizes) --- */
+let W = 0, H = 0, cx = 0, cy = 0, u = 0, dpr = 1, ready = false;
+
+function applySize(iw, ih) {
+  if (iw < 2 || ih < 2) return;
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = iw; H = ih;
+  CV.width = Math.round(W * dpr); CV.height = Math.round(H * dpr);
+  CV.style.width = W + 'px'; CV.style.height = H + 'px';
+  X.setTransform(dpr, 0, 0, dpr, 0, 0);
   cx = W / 2; cy = H / 2;
-  unit = Math.min(W, H) / 100;
+  u = Math.min(W, H) / 100;
+  buildPaper();
+  ready = true;
 }
+function resize() { applySize(innerWidth || 0, innerHeight || 0); }
 addEventListener('resize', resize);
-resize();
+// NB: the first resize() is called at the bottom of the file, after buildPaper
+// and the rest of the module exist. Calling it here reaches them in their TDZ.
 
-const RING = [26, 40];              // orbit radii, in units
-const stars = Array.from({ length: 90 }, () => ({
-  x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + .3, a: Math.random() * .6 + .2
-}));
+/* ---------- seeded noise, so the plate is identical every load ---------- */
+let seed = 20260919;
+function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
 
-let state, best = +(localStorage.getItem('orbitdash.best') || 0);
+/* ---------- the paper: cyanotype wash + plate grain, baked once ---------- */
+let paper = null;
+function buildPaper() {
+  const pw = Math.max(2, Math.ceil(W)), ph = Math.max(2, Math.ceil(H));
+  paper = document.createElement('canvas');
+  paper.width = pw; paper.height = ph;
+  const g = paper.getContext('2d');
+
+  // uneven wash — a hand-coated plate is never flat
+  const bg = g.createRadialGradient(pw * .42, ph * .38, u * 6, pw * .5, ph * .5, Math.max(pw, ph) * .78);
+  bg.addColorStop(0, '#12293f');
+  bg.addColorStop(.55, P.paper);
+  bg.addColorStop(1, P.paperLo);
+  g.fillStyle = bg; g.fillRect(0, 0, pw, ph);
+
+  // fibre grain
+  seed = 77003;
+  const img = g.getImageData(0, 0, pw, ph), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (rnd() - .5) * 15;
+    d[i] += n; d[i + 1] += n; d[i + 2] += n * .8;
+  }
+  g.putImageData(img, 0, 0);
+
+  // a few coating blooms
+  seed = 5150;
+  for (let i = 0; i < 14; i++) {
+    const bx = rnd() * pw, by = rnd() * ph, br = (rnd() * 12 + 6) * u;
+    const rg = g.createRadialGradient(bx, by, 0, bx, by, br);
+    rg.addColorStop(0, 'rgba(70,120,160,.05)');
+    rg.addColorStop(1, 'rgba(70,120,160,0)');
+    g.fillStyle = rg; g.beginPath(); g.arc(bx, by, br, 0, 7); g.fill();
+  }
+}
+
+/* ---------- engraved star chart behind the mechanism ---------- */
+let chart = [];
+function buildChart() {
+  seed = 99181;
+  chart = [];
+  for (let i = 0; i < 90; i++) {
+    const a = rnd() * Math.PI * 2, r = 9 + rnd() * 36;
+    chart.push({ a, r, m: rnd() * 1.6 + .35 });
+  }
+  // constellation lines between near neighbours
+  chart.lines = [];
+  for (let i = 0; i < chart.length; i++) {
+    for (let j = i + 1; j < chart.length; j++) {
+      const dx = chart[i].r * Math.cos(chart[i].a) - chart[j].r * Math.cos(chart[j].a);
+      const dy = chart[i].r * Math.sin(chart[i].a) - chart[j].r * Math.sin(chart[j].a);
+      if (Math.hypot(dx, dy) < 11 && rnd() < .34) chart.lines.push([i, j]);
+    }
+  }
+}
+buildChart();
+
+/* ---------- the machine ---------- */
+const RING = [21, 30, 39];        // track radii, in units
+const TOL  = 3.0;                 // how close to a ring counts as "on" it
+
+let S, best = +(localStorage.getItem('orbitdash.best.v2') || 0);
 
 function reset() {
-  state = {
-    ring: 0, r: RING[0], ang: -Math.PI / 2, spin: 1.5,
-    rocks: [], t: 0, score: 0, over: false, shake: 0, trail: []
+  S = {
+    state: 'title',               // title | run | dead
+    ring: 1, r: RING[1], ang: -Math.PI / 2,
+    spin: 1.15,
+    trail: [],
+    debris: [], gates: [], marks: [], sparks: [],
+    t: 0, score: 0, chain: 1, chainT: 0,
+    spring: 0, transit: 0, transitHeld: false,
+    trauma: 0, hitstop: 0,
+    gateClock: 0, debrisClock: 0,
+    chartRot: 0
   };
 }
 reset();
 
-function swap() {
-  if (state.over) { reset(); return; }
-  state.ring = 1 - state.ring;
+/* ---------- input: tap swaps a track, hold spends the mainspring ---------- */
+let pressT = 0, pressing = false;
+
+function press() {
+  if (S.state === 'title') { start(); return; }
+  if (S.state === 'dead')  { if (S.t > .6) { reset(); start(); } return; }
+  pressing = true; pressT = 0;
+  S.ring = (S.ring + 1) % RING.length;      // fires immediately — no input lag
+  S.trauma = Math.min(S.trauma + .12, 1);
+}
+function release() { pressing = false; S.transitHeld = false; }
+
+function start() { reset(); S.state = 'run'; }
+
+addEventListener('pointerdown', e => { e.preventDefault(); press(); });
+addEventListener('pointerup', release);
+addEventListener('pointercancel', release);
+addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) press(); }
+});
+addEventListener('keyup', e => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter') release(); });
+
+/* ---------- spawning ---------- */
+function spawnGate() {
+  const ring = (Math.random() * 3) | 0;
+  S.gates.push({ ring, ang: S.ang + Math.PI * (.85 + Math.random() * .8), span: .13, live: true, fade: 0 });
+}
+/* Fairness guarantee: at most ONE piece of debris may occupy any angular
+   window. Debris all drift at the same rate, so the angular gaps between
+   pieces never change — a check at spawn time holds for the whole run.
+   With only one track ever blocked at a given bearing, the player can always
+   survive by staying put (if it is not their track) or by one tap (if it is),
+   and a tap always lands them on a track that is guaranteed clear. */
+const SAFE_ARC = 0.62;   // radians of clearance demanded between any two pieces
+
+function debrisFits(ang) {
+  for (const b of S.debris) if (Math.abs(angDiff(b.ang, ang)) < SAFE_ARC) return false;
+  return true;
 }
 
-addEventListener('pointerdown', swap);
-addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') {
-    e.preventDefault(); swap();
+function spawnDebris() {
+  let ang = 0, ok = false;
+  for (let tries = 0; tries < 12 && !ok; tries++) {
+    ang = S.ang + Math.PI * (.9 + Math.random() * .75);
+    ok = debrisFits(ang);
   }
-});
+  if (!ok) return;                       // the wheel is busy; skip this beat
 
-function spawn() {
-  const ring = Math.random() < .5 ? 0 : 1;
-  state.rocks.push({
-    ring,
-    ang: state.ang + Math.PI * (0.9 + Math.random() * 0.7),
-    size: 1.8 + Math.random() * 1.4,
-    hue: 200 + Math.random() * 60
+  const ring = (Math.random() * 3) | 0;
+  const n = 3 + ((Math.random() * 3) | 0);
+  const shape = [];
+  for (let i = 0; i < n + 3; i++) shape.push(.6 + Math.random() * .75);
+  S.debris.push({
+    ring, ang,
+    size: 2.5 + Math.random() * 1.3, rot: Math.random() * 7, spin: (Math.random() - .5) * 2.2,
+    shape, warn: 1.0
   });
 }
 
-let last = performance.now(), acc = 0;
+/* ---------- simulation ---------- */
+function sim(dt) {
+  S.t += dt;
+  S.chartRot += dt * .012;
 
-function step(dt) {
-  const s = state;
-  if (s.over) { s.shake *= 0.9; return; }
+  if (S.state !== 'run') { S.trauma = Math.max(0, S.trauma - dt * 1.5); decay(dt); return; }
 
-  s.t += dt;
-  s.score += dt * 10;
-  s.spin = 1.5 + Math.min(s.t / 30, 1.4);          // speeds up over ~30s
-  s.ang += s.spin * dt;
+  // mainspring: held button + charge spends it, slowing the whole mechanism
+  S.transitHeld = pressing && S.spring > .02;
+  if (S.transitHeld) { S.spring = Math.max(0, S.spring - dt * .55); S.transit = Math.min(1, S.transit + dt * 6); }
+  else               { S.transit = Math.max(0, S.transit - dt * 4); }
+  const scale = 1 - .62 * S.transit;          // time dilation factor
+  const sdt = dt * scale;
 
-  const target = RING[s.ring];
-  s.r += (target - s.r) * Math.min(1, dt * 11);     // smooth orbit change
+  S.score += sdt * 12 * S.chain;
+  S.spin = 1.15 + Math.min(S.t / 42, 1.35);
+  S.ang += S.spin * sdt;
 
-  s.trail.unshift({ ang: s.ang, r: s.r });
-  if (s.trail.length > 22) s.trail.pop();
+  // track change eases rather than snapping — it is a bead on a rail
+  const target = RING[S.ring];
+  S.r += (target - S.r) * Math.min(1, dt * 17);   // snappy: a transit must finish well inside SAFE_ARC
 
-  if (Math.random() < dt * (1.1 + s.t / 40)) spawn();
+  S.trail.unshift({ ang: S.ang, r: S.r });
+  if (S.trail.length > 30) S.trail.pop();
 
-  for (const rock of s.rocks) {
-    rock.ang -= s.spin * 0.55 * dt;                 // rocks drift the other way
-    const near = Math.abs(RING[rock.ring] - s.r) < 5;
-    let d = Math.abs(((rock.ang - s.ang + Math.PI) % (Math.PI * 2)) - Math.PI);
-    if (near && d < 0.11) {
-      s.over = true; s.shake = 14;
-      best = Math.max(best, Math.floor(s.score));
-      localStorage.setItem('orbitdash.best', best);
+  // chain bleeds if you stop threading gates
+  S.chainT -= sdt;
+  if (S.chainT <= 0 && S.chain > 1) { S.chain = Math.max(1, S.chain - sdt * .55); }
+
+  // spawn cadence
+  S.gateClock -= sdt;
+  if (S.gateClock <= 0) { spawnGate(); S.gateClock = .95 - Math.min(.45, S.t / 90); }
+  S.debrisClock -= sdt;
+  if (S.debrisClock <= 0) { spawnDebris(); S.debrisClock = 1.05 - Math.min(.55, S.t / 70); }
+
+  // gates
+  for (const g of S.gates) {
+    if (!g.live) { g.fade += dt * 2.4; continue; }
+    const d = angDiff(g.ang, S.ang);
+    if (Math.abs(d) < g.span && Math.abs(RING[g.ring] - S.r) < TOL) {
+      g.live = false;
+      S.chain = Math.min(9.9, S.chain + .34);
+      S.chainT = 2.4;
+      S.score += 55 * S.chain;
+      S.spring = Math.min(1, S.spring + .17);
+      S.marks.push({ ang: g.ang, r: RING[g.ring], life: 1, kind: 'thread' });
+      for (let i = 0; i < 9; i++) burst(g.ang, RING[g.ring], P.verd);
+      S.trauma = Math.min(1, S.trauma + .1);
     }
   }
-  s.rocks = s.rocks.filter(r => Math.abs(r.ang - s.ang) < Math.PI * 3);
+  S.gates = S.gates.filter(g => g.fade < 1 && Math.abs(angDiff(g.ang, S.ang)) < Math.PI * 1.35);
+
+  // debris
+  for (const b of S.debris) {
+    b.warn = Math.max(0, b.warn - dt);
+    b.ang -= S.spin * .48 * sdt;
+    b.rot += b.spin * sdt;
+    if (b.warn > 0) continue;
+    const near = Math.abs(RING[b.ring] - S.r) < TOL;
+    const d = Math.abs(angDiff(b.ang, S.ang));
+    if (near && d < .085 + b.size * .012) {
+      if (S.transit > .5) {                    // shatter it inside a Transit
+        b.dead = true;
+        S.score += 90 * S.chain;
+        S.marks.push({ ang: b.ang, r: RING[b.ring], life: 1, kind: 'smudge' });
+        for (let i = 0; i < 16; i++) burst(b.ang, RING[b.ring], P.copperLt);
+        S.trauma = Math.min(1, S.trauma + .3);
+        S.hitstop = .05;
+      } else die();
+    }
+  }
+  S.debris = S.debris.filter(b => !b.dead && Math.abs(angDiff(b.ang, S.ang)) < Math.PI * 1.5);
+
+  decay(dt);
 }
 
-function pos(ang, r) {
-  return [cx + Math.cos(ang) * r * unit, cy + Math.sin(ang) * r * unit];
+function decay(dt) {
+  S.trauma = Math.max(0, S.trauma - dt * 1.4);
+  for (const m of S.marks) m.life -= dt * (m.kind === 'smudge' ? .09 : .055);
+  S.marks = S.marks.filter(m => m.life > 0);
+  for (const s of S.sparks) { s.life -= dt * 1.8; s.r += s.vr * dt; s.ang += s.va * dt; }
+  S.sparks = S.sparks.filter(s => s.life > 0);
+}
+
+function burst(ang, r, col) {
+  S.sparks.push({ ang, r, vr: (Math.random() - .5) * 26, va: (Math.random() - .5) * 2.2, life: 1, col });
+}
+
+function die() {
+  S.state = 'dead';
+  S.t = 0;
+  S.trauma = 1; S.hitstop = .11;
+  for (let i = 0; i < 26; i++) burst(S.ang, S.r, P.brassLt);
+  S.marks.push({ ang: S.ang, r: S.r, life: 1, kind: 'smudge' });
+  best = Math.max(best, Math.floor(S.score));
+  try { localStorage.setItem('orbitdash.best.v2', best); } catch (_) {}
+}
+
+function angDiff(a, b) { return ((a - b + Math.PI * 3) % (Math.PI * 2)) - Math.PI; }
+function pos(ang, r) { return [cx + Math.cos(ang) * r * u, cy + Math.sin(ang) * r * u]; }
+
+/* ---------- drawing ---------- */
+function line(x1, y1, x2, y2, col, w) {
+  X.beginPath(); X.moveTo(x1, y1); X.lineTo(x2, y2);
+  X.strokeStyle = col; X.lineWidth = w; X.stroke();
+}
+
+function drawChart() {
+  X.save();
+  X.translate(cx, cy); X.rotate(S.chartRot);
+  X.strokeStyle = P.inkFaint; X.lineWidth = 1;
+  for (const [i, j] of chart.lines) {
+    const a = chart[i], b = chart[j];
+    X.beginPath();
+    X.moveTo(Math.cos(a.a) * a.r * u, Math.sin(a.a) * a.r * u);
+    X.lineTo(Math.cos(b.a) * b.r * u, Math.sin(b.a) * b.r * u);
+    X.stroke();
+  }
+  for (const s of chart) {
+    const x = Math.cos(s.a) * s.r * u, y = Math.sin(s.a) * s.r * u;
+    X.fillStyle = 'rgba(207,226,242,.30)';
+    X.beginPath(); X.arc(x, y, s.m * u * .18, 0, 7); X.fill();
+    if (s.m > 1.3) {                       // engraved star: a cross, not a dot
+      X.strokeStyle = 'rgba(207,226,242,.22)'; X.lineWidth = 1;
+      const k = s.m * u * .5;
+      line(x - k, y, x + k, y, 'rgba(207,226,242,.22)', 1);
+      line(x, y - k, x, y + k, 'rgba(207,226,242,.22)', 1);
+    }
+  }
+  X.restore();
+}
+
+function drawFrame() {
+  const m = u * 3.4;
+  X.strokeStyle = P.inkDim; X.lineWidth = 1;
+  X.strokeRect(m, m, W - m * 2, H - m * 2);
+  X.strokeStyle = P.inkFaint;
+  X.strokeRect(m + u * .9, m + u * .9, W - m * 2 - u * 1.8, H - m * 2 - u * 1.8);
+  // corner registration marks
+  X.strokeStyle = P.inkMid;
+  for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const px = sx > 0 ? m : W - m, py = sy > 0 ? m : H - m;
+    line(px, py - sy * u * 1.6, px, py + sy * u * 1.6, P.inkMid, 1);
+    line(px - sx * u * 1.6, py, px + sx * u * 1.6, py, P.inkMid, 1);
+  }
+}
+
+function drawRings() {
+  for (let i = 0; i < RING.length; i++) {
+    const R = RING[i] * u, active = Math.abs(RING[i] - S.r) < TOL;
+
+    // graduated track
+    X.beginPath(); X.arc(cx, cy, R, 0, 7);
+    X.strokeStyle = active ? 'rgba(233,180,85,.55)' : P.inkDim;
+    X.lineWidth = active ? 1.6 : 1;
+    X.stroke();
+
+    // degree ticks, longer every 30°
+    for (let d = 0; d < 360; d += 6) {
+      const a = d * Math.PI / 180, major = d % 30 === 0;
+      const len = (major ? 1.5 : .7) * u;
+      const c1 = Math.cos(a), s1 = Math.sin(a);
+      line(cx + c1 * (R - len), cy + s1 * (R - len), cx + c1 * R, cy + s1 * R,
+           active ? 'rgba(233,180,85,.4)' : P.inkFaint, 1);
+    }
+  }
+}
+
+function drawGates() {
+  for (const g of S.gates) {
+    const R = RING[g.ring] * u;
+    const a = 1 - g.fade;
+    X.save();
+    X.globalAlpha = g.live ? 1 : Math.max(0, a);
+    X.beginPath();
+    X.arc(cx, cy, R, g.ang - g.span, g.ang + g.span);
+    X.strokeStyle = P.verd; X.lineWidth = 4.4 + (g.live ? 0 : 4 * g.fade);
+    X.stroke();
+    // jaws
+    for (const s of [-1, 1]) {
+      const aa = g.ang + s * g.span;
+      const c1 = Math.cos(aa), s1 = Math.sin(aa);
+      line(cx + c1 * (R - u * 1.9), cy + s1 * (R - u * 1.9),
+           cx + c1 * (R + u * 1.9), cy + s1 * (R + u * 1.9), P.verd, 2.2);
+    }
+    X.restore();
+  }
+}
+
+function drawDebris() {
+  for (const b of S.debris) {
+    const R = RING[b.ring] * u;
+    const [x, y] = pos(b.ang, RING[b.ring]);
+    X.save(); X.translate(x, y); X.rotate(b.rot);
+    const rad = b.size * u * .62;
+
+    if (b.warn > 0) {                        // telegraph before it becomes lethal
+      X.globalAlpha = .25 + .5 * Math.abs(Math.sin(b.warn * 22));
+      X.strokeStyle = P.copper; X.lineWidth = 1;
+      X.beginPath(); X.arc(0, 0, rad * (1 + b.warn * 1.7), 0, 7); X.stroke();
+      X.globalAlpha = 1 - b.warn;
+    }
+
+    // angular chunk
+    X.beginPath();
+    for (let i = 0; i < b.shape.length; i++) {
+      const a = i / b.shape.length * Math.PI * 2;
+      const rr = rad * b.shape[i];
+      i ? X.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : X.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    X.closePath();
+    X.fillStyle = 'rgba(12,28,44,.92)'; X.fill();   // dark backing so it lifts off the track
+    X.fillStyle = 'rgba(210,85,60,.34)'; X.fill();
+    X.strokeStyle = P.copperLt; X.lineWidth = 2.1; X.stroke();
+
+    // cross-hatch, clipped to the chunk
+    X.save(); X.clip();
+    X.strokeStyle = 'rgba(240,144,109,.55)'; X.lineWidth = 1;
+    for (let h = -rad; h < rad; h += Math.max(2, u * .5)) {
+      X.beginPath(); X.moveTo(-rad, h); X.lineTo(rad, h + rad); X.stroke();
+    }
+    X.restore();
+    X.restore();
+  }
+}
+
+function drawMarks() {
+  for (const m of S.marks) {
+    const [x, y] = pos(m.ang, m.r);
+    X.save();
+    if (m.kind === 'thread') {
+      X.globalAlpha = m.life * .5;
+      X.strokeStyle = P.verd; X.lineWidth = 1;
+      X.beginPath(); X.arc(x, y, u * 1.1, 0, 7); X.stroke();
+    } else {
+      // an ink blot, not a glow — hard irregular edge plus spatter, because a
+      // soft radial gradient is the only unengraved thing that was on screen
+      X.globalAlpha = m.life * .5;
+      X.fillStyle = 'rgba(178,64,44,.85)';
+      if (!m.pts) {
+        m.pts = []; m.spat = [];
+        const n = 9 + ((Math.random() * 4) | 0);
+        for (let i = 0; i < n; i++) m.pts.push(.55 + Math.random() * .7);
+        for (let i = 0; i < 7; i++)
+          m.spat.push([Math.random() * Math.PI * 2, 1.4 + Math.random() * 1.9, .1 + Math.random() * .22]);
+      }
+      X.beginPath();
+      for (let i = 0; i < m.pts.length; i++) {
+        const a = i / m.pts.length * Math.PI * 2, rr = u * 1.9 * m.pts[i];
+        i ? X.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr)
+          : X.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      }
+      X.closePath(); X.fill();
+      for (const [a, d, s] of m.spat) {
+        X.beginPath();
+        X.arc(x + Math.cos(a) * u * d, y + Math.sin(a) * u * d, u * s, 0, 7);
+        X.fill();
+      }
+    }
+    X.restore();
+  }
+}
+
+/* brass bead + a trail tapered like a loaded brush: thin tail, belly at 40% */
+function drawPlayer() {
+  const n = S.trail.length;
+  if (n > 3) {
+    const L = [], Rt = [];
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1);
+      const belly = t < .4 ? t / .4 : 1 - (t - .4) / .6;
+      const w = Math.max(.05, belly) * u * 1.15 * (1 - t * .25);
+      const p = S.trail[i];
+      const [px, py] = pos(p.ang, p.r);
+      const nx = Math.cos(p.ang), ny = Math.sin(p.ang);
+      L.push([px + nx * w, py + ny * w]);
+      Rt.push([px - nx * w, py - ny * w]);
+    }
+    X.beginPath();
+    X.moveTo(L[0][0], L[0][1]);
+    for (let i = 1; i < L.length; i++) X.lineTo(L[i][0], L[i][1]);
+    for (let i = Rt.length - 1; i >= 0; i--) X.lineTo(Rt[i][0], Rt[i][1]);
+    X.closePath();
+    const [hx, hy] = pos(S.trail[0].ang, S.trail[0].r);
+    const [tx, ty] = pos(S.trail[n - 1].ang, S.trail[n - 1].r);
+    const g = X.createLinearGradient(hx, hy, tx, ty);
+    g.addColorStop(0, 'rgba(255,228,173,.85)');
+    g.addColorStop(1, 'rgba(233,180,85,0)');
+    X.fillStyle = g; X.fill();
+  }
+
+  const [x, y] = pos(S.ang, S.r);
+  const dead = S.state === 'dead';
+  X.beginPath(); X.arc(x, y, u * 2.0, 0, 7);
+  X.fillStyle = dead ? P.copperLt : P.brassLt; X.fill();
+  X.strokeStyle = dead ? P.copper : P.brass; X.lineWidth = 2.2; X.stroke();
+  X.beginPath(); X.arc(x, y, u * 2.9, 0, 7);
+  X.strokeStyle = dead ? 'rgba(210,85,60,.45)' : 'rgba(233,180,85,.45)'; X.lineWidth = 1; X.stroke();
+  // engraved meridian on the bead
+  X.save(); X.beginPath(); X.arc(x, y, u * 2.0, 0, 7); X.clip();
+  line(x - u * 1.6, y - u * .5, x + u * 1.6, y - u * .5, 'rgba(11,31,51,.5)', 1);
+  line(x - u * 1.6, y + u * .45, x + u * 1.6, y + u * .45, 'rgba(11,31,51,.35)', 1);
+  X.restore();
+}
+
+function drawSparks() {
+  for (const s of S.sparks) {
+    const [x, y] = pos(s.ang, s.r);
+    X.globalAlpha = Math.max(0, s.life);
+    X.fillStyle = s.col;
+    X.fillRect(x - 1, y - 1, 2.2, 2.2);
+  }
+  X.globalAlpha = 1;
+}
+
+/* central sun gear — brass, toothed, hatched. The engine of the whole thing. */
+function drawCore() {
+  const R = u * 10.5;
+  X.save(); X.translate(cx, cy);
+
+  // opaque plate first, so the star chart does not show through the brass
+  X.beginPath(); X.arc(0, 0, R, 0, 7);
+  X.fillStyle = '#0a1b2c'; X.fill();
+  X.fillStyle = 'rgba(233,180,85,.22)'; X.fill();
+  X.strokeStyle = 'rgba(233,180,85,.95)'; X.lineWidth = 2.2; X.stroke();
+
+  // teeth, turning with the mechanism
+  const teeth = 28, rot = S.ang * .22;
+  X.strokeStyle = 'rgba(233,180,85,.75)'; X.lineWidth = 1.7;
+  for (let i = 0; i < teeth; i++) {
+    const a = rot + i / teeth * Math.PI * 2;
+    const c1 = Math.cos(a), s1 = Math.sin(a);
+    X.beginPath(); X.moveTo(c1 * R, s1 * R); X.lineTo(c1 * (R + u * 1.15), s1 * (R + u * 1.15)); X.stroke();
+  }
+
+  // hatching
+  X.save(); X.beginPath(); X.arc(0, 0, R, 0, 7); X.clip();
+  X.strokeStyle = 'rgba(233,180,85,.18)'; X.lineWidth = 1;
+  for (let h = -R; h < R; h += Math.max(2.5, u * .62)) {
+    X.beginPath(); X.moveTo(-R, h); X.lineTo(R, h * .5); X.stroke();
+  }
+  X.restore();
+
+  // engraved sun face on the hub: rays, then the boss
+  X.save(); X.rotate(-S.ang * .1);
+  X.strokeStyle = 'rgba(233,180,85,.8)'; X.lineWidth = 1.3;
+  for (let i = 0; i < 16; i++) {
+    const a = i / 16 * Math.PI * 2;
+    const c1 = Math.cos(a), s1 = Math.sin(a);
+    X.beginPath();
+    X.moveTo(c1 * u * 2.6, s1 * u * 2.6);
+    X.lineTo(c1 * u * (i % 2 ? 4.6 : 6.2), s1 * u * (i % 2 ? 4.6 : 6.2));
+    X.stroke();
+  }
+  X.restore();
+
+  X.beginPath(); X.arc(0, 0, u * 2.3, 0, 7);
+  X.fillStyle = '#0a1b2c'; X.fill();
+  X.strokeStyle = P.brassLt; X.lineWidth = 1.8; X.stroke();
+  X.beginPath(); X.arc(0, 0, u * .8, 0, 7);
+  X.fillStyle = P.brass; X.fill();
+  X.restore();
+}
+
+/* ---------- instrument panels ---------- */
+function plate(x, y, w, h) {
+  X.fillStyle = 'rgba(6,18,32,.72)';
+  X.strokeStyle = P.inkDim; X.lineWidth = 1;
+  X.fillRect(x, y, w, h); X.strokeRect(x, y, w, h);
+  X.strokeStyle = P.inkFaint;
+  X.strokeRect(x + 2, y + 2, w - 4, h - 4);
+}
+
+function drawHUD() {
+  const m = u * 5.5;
+
+  // score plate
+  plate(m, m, u * 30, u * 12.5);
+  X.fillStyle = P.inkMid;
+  X.font = `500 ${u * 1.9}px ${MONO}`; X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  X.fillText('ARC SCORE', m + u * 1.6, m + u * 4);
+  X.fillStyle = P.ink;
+  X.font = `600 ${u * 6.2}px ${MONO}`;
+  X.fillText(String(Math.floor(S.score)).padStart(5, '0'), m + u * 1.5, m + u * 10.6);
+
+  X.fillStyle = P.inkMid;
+  X.font = `500 ${u * 1.75}px ${MONO}`;
+  X.fillText('BEST ' + String(best).padStart(5, '0'), m + u * 1.6, m + u * 15.6);
+
+  // chain arc, top right
+  const chx = W - m - u * 9, chy = m + u * 9;
+  X.beginPath(); X.arc(chx, chy, u * 6.4, Math.PI * .75, Math.PI * .75 + Math.PI * 1.5);
+  X.strokeStyle = P.inkDim; X.lineWidth = u * 1.1; X.stroke();
+  const frac = Math.min(1, (S.chain - 1) / 8.9);
+  if (frac > 0) {
+    X.beginPath(); X.arc(chx, chy, u * 6.4, Math.PI * .75, Math.PI * .75 + Math.PI * 1.5 * frac);
+    X.strokeStyle = P.verd; X.lineWidth = u * 1.1; X.stroke();
+  }
+  X.textAlign = 'center';
+  X.fillStyle = S.chain > 1.05 ? P.verd : P.inkMid;
+  X.font = `600 ${u * 3.6}px ${MONO}`;
+  X.fillText(S.chain.toFixed(1) + '×', chx, chy + u * 1.3);
+  X.fillStyle = P.inkMid; X.font = `500 ${u * 1.6}px ${MONO}`;
+  X.fillText('CHAIN', chx, chy + u * 4.2);
+
+  // mainspring, bottom centre
+  const bw = u * 34, bx = cx - bw / 2, by = H - m - u * 4.6;
+  plate(bx, by, bw, u * 4.6);
+  X.fillStyle = S.transitHeld ? P.brassLt : P.verd;
+  X.fillRect(bx + 3, by + 3, (bw - 6) * S.spring, u * 4.6 - 6);
+  // wound-spring ticks over the fill
+  X.strokeStyle = 'rgba(6,18,32,.55)'; X.lineWidth = 1;
+  for (let i = 1; i < 12; i++) {
+    const lx = bx + (bw / 12) * i;
+    X.beginPath(); X.moveTo(lx, by + 3); X.lineTo(lx, by + u * 4.6 - 3); X.stroke();
+  }
+  // caption sits on its own plate — it used to be stranded over the outer track
+  const cap = S.spring > .02 ? 'MAINSPRING — HOLD TO WIND DOWN' : 'MAINSPRING';
+  X.font = `500 ${u * 1.7}px ${MONO}`; X.textAlign = 'center';
+  const cw = X.measureText(cap).width + u * 3;
+  plate(cx - cw / 2, by - u * 4.4, cw, u * 3.2);
+  X.fillStyle = S.spring > .96 ? P.brassLt : P.inkMid;
+  X.textBaseline = 'middle';
+  X.fillText(cap, cx, by - u * 2.8);
+  X.textBaseline = 'alphabetic';
+}
+
+function drawTitle() {
+  X.textAlign = 'center';
+  X.fillStyle = P.ink;
+  X.font = `700 ${u * 11}px ${SERIF}`;
+  X.fillText('ORBIT DASH', cx, cy - u * 6);
+
+  const tw = u * 40;
+  line(cx - tw / 2, cy - u * 3.4, cx + tw / 2, cy - u * 3.4, P.inkDim, 1);
+  X.fillStyle = P.verd;
+  X.font = `500 ${u * 2.1}px ${MONO}`;
+  X.fillText('A N   O R R E R Y', cx, cy - u * .6);
+
+  X.fillStyle = P.inkMid;
+  X.font = `500 ${u * 2.15}px ${MONO}`;
+  X.fillText('TAP — change track', cx, cy + u * 7);
+  X.fillText('HOLD — wind down the mainspring, slow the machine', cx, cy + u * 10.6);
+  X.fillStyle = P.brass;
+  X.font = `600 ${u * 2.5}px ${MONO}`;
+  X.fillText('PRESS TO BEGIN', cx, cy + u * 16);
+}
+
+function drawDead() {
+  X.textAlign = 'center';
+  X.fillStyle = 'rgba(6,18,32,.55)'; X.fillRect(0, 0, W, H);
+  X.fillStyle = P.copperLt;
+  X.font = `700 ${u * 9}px ${SERIF}`;
+  X.fillText('MECHANISM JAMMED', cx, cy - u * 4);
+  X.fillStyle = P.ink;
+  X.font = `600 ${u * 5}px ${MONO}`;
+  X.fillText(String(Math.floor(S.score)), cx, cy + u * 4);
+  X.fillStyle = P.inkMid;
+  X.font = `500 ${u * 2}px ${MONO}`;
+  X.fillText('BEST ' + best, cx, cy + u * 8.4);
+  if (S.t > .6) {
+    X.fillStyle = P.brass;
+    X.font = `600 ${u * 2.4}px ${MONO}`;
+    X.fillText('PRESS TO RE-WIND', cx, cy + u * 15);
+  }
+}
+
+/* ---------- plate grain + vignette (the medium, not a filmic pass) -------- */
+function post() {
+  const g = X.createRadialGradient(cx, cy, Math.min(W, H) * .32, cx, cy, Math.max(W, H) * .78);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, 'rgba(2,8,16,.55)');
+  X.fillStyle = g; X.fillRect(0, 0, W, H);
 }
 
 function draw() {
-  const s = state;
-  ctx.save();
-  if (s.shake > .2) ctx.translate((Math.random() - .5) * s.shake, (Math.random() - .5) * s.shake);
+  if (!ready) return;
+  X.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  ctx.fillStyle = '#05060c';
-  ctx.fillRect(-20, -20, W + 40, H + 40);
+  if (paper) X.drawImage(paper, 0, 0, W, H);
+  else { X.fillStyle = P.paper; X.fillRect(0, 0, W, H); }
 
-  for (const st of stars) {
-    ctx.globalAlpha = st.a;
-    ctx.fillStyle = '#9fb2ff';
-    ctx.fillRect(st.x * W, st.y * H, st.r, st.r);
-  }
-  ctx.globalAlpha = 1;
+  const sh = S.trauma * S.trauma * u * 1.6;
+  X.save();
+  if (sh > .2) X.translate((Math.random() - .5) * sh, (Math.random() - .5) * sh);
 
-  // orbit rings
-  RING.forEach((rr, i) => {
-    ctx.beginPath();
-    ctx.arc(cx, cy, rr * unit, 0, Math.PI * 2);
-    ctx.strokeStyle = i === s.ring ? 'rgba(124,92,255,.55)' : 'rgba(255,255,255,.09)';
-    ctx.lineWidth = i === s.ring ? 2 : 1;
-    ctx.stroke();
-  });
+  // the Transit reads as the paper cooling, not as a colour filter
+  drawChart();
+  drawMarks();
+  drawRings();
+  drawCore();
+  drawGates();
+  drawDebris();
+  drawPlayer();
+  drawSparks();
 
-  // planet
-  const grd = ctx.createRadialGradient(cx - unit * 4, cy - unit * 5, unit, cx, cy, unit * 15);
-  grd.addColorStop(0, '#3b2f8f');
-  grd.addColorStop(1, '#120f2c');
-  ctx.beginPath(); ctx.arc(cx, cy, unit * 14, 0, Math.PI * 2);
-  ctx.fillStyle = grd; ctx.fill();
-  ctx.strokeStyle = 'rgba(34,211,238,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
-
-  // rocks
-  for (const rock of s.rocks) {
-    const [x, y] = pos(rock.ang, RING[rock.ring]);
-    ctx.beginPath(); ctx.arc(x, y, rock.size * unit * .5, 0, Math.PI * 2);
-    ctx.fillStyle = `hsl(${rock.hue} 80% 62%)`;
-    ctx.shadowColor = `hsl(${rock.hue} 90% 60%)`; ctx.shadowBlur = 14;
-    ctx.fill(); ctx.shadowBlur = 0;
+  if (S.transit > .01) {
+    X.fillStyle = `rgba(87,185,168,${.10 * S.transit})`;
+    X.fillRect(0, 0, W, H);
   }
 
-  // player trail + ship
-  s.trail.forEach((p, i) => {
-    const [x, y] = pos(p.ang, p.r);
-    ctx.globalAlpha = (1 - i / s.trail.length) * .5;
-    ctx.beginPath(); ctx.arc(x, y, unit * 1.1 * (1 - i / s.trail.length), 0, Math.PI * 2);
-    ctx.fillStyle = '#22d3ee'; ctx.fill();
-  });
-  ctx.globalAlpha = 1;
+  X.restore();
 
-  const [px, py] = pos(s.ang, s.r);
-  ctx.beginPath(); ctx.arc(px, py, unit * 1.7, 0, Math.PI * 2);
-  ctx.fillStyle = s.over ? '#ff5c7c' : '#eef1f7';
-  ctx.shadowColor = s.over ? '#ff5c7c' : '#22d3ee'; ctx.shadowBlur = 20;
-  ctx.fill(); ctx.shadowBlur = 0;
+  if (S.state === 'run') drawHUD();
+  if (S.state === 'title') { drawHUD(); drawTitle(); }
+  if (S.state === 'dead') { drawHUD(); drawDead(); }
 
-  // hud
-  ctx.fillStyle = '#eef1f7';
-  ctx.font = `700 ${unit * 5}px -apple-system, "Segoe UI", sans-serif`;
-  ctx.textAlign = 'left';
-  ctx.fillText(Math.floor(s.score), unit * 4, unit * 9);
-  ctx.fillStyle = '#646d84';
-  ctx.font = `500 ${unit * 2.6}px -apple-system, "Segoe UI", sans-serif`;
-  ctx.fillText('BEST ' + best, unit * 4, unit * 13);
-
-  if (s.over) {
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#eef1f7';
-    ctx.font = `800 ${unit * 7}px -apple-system, "Segoe UI", sans-serif`;
-    ctx.fillText('CRASHED', cx, cy - unit * 24);
-    ctx.fillStyle = '#9aa3b8';
-    ctx.font = `500 ${unit * 3}px -apple-system, "Segoe UI", sans-serif`;
-    ctx.fillText('click or press space to fly again', cx, cy - unit * 19);
-  } else if (s.t < 3) {
-    ctx.textAlign = 'center';
-    ctx.globalAlpha = Math.max(0, 1 - s.t / 3);
-    ctx.fillStyle = '#9aa3b8';
-    ctx.font = `500 ${unit * 3}px -apple-system, "Segoe UI", sans-serif`;
-    ctx.fillText('click or press space to switch orbit', cx, cy + unit * 25);
-    ctx.globalAlpha = 1;
-  }
-
-  ctx.restore();
+  drawFrame();
+  post();
 }
 
-function frame(now) {
-  const dt = Math.min((now - last) / 1000, 0.05);
-  last = now;
-  step(dt);
+/* ---------- loop, split so the preview pane can step it by hand ---------- */
+function tick(dt) {
+  if (!W || !ready) { resize(); if (!W || !ready) return; }
+  if (S.hitstop > 0) { S.hitstop -= dt; dt *= .12; }
+  sim(dt);
   draw();
+}
+
+resize();   // safe here: every declaration above exists
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000);
+  last = now;
+  tick(dt);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+window.__t = {
+  reset, start,
+  step: (n, dt) => { for (let i = 0; i < (n || 1); i++) tick(dt || 1 / 60); },
+  forceSize: (w, h) => applySize(w, h),
+  press, release,
+  spawnGate, spawnDebris,
+  set: o => Object.assign(S, o),
+  get: () => ({ state: S.state, score: Math.floor(S.score), chain: +S.chain.toFixed(2), ang: +S.ang.toFixed(3),
+                spring: +S.spring.toFixed(2), ring: S.ring, r: +S.r.toFixed(1),
+                gates: S.gates.length, debris: S.debris.length, marks: S.marks.length,
+                trail: S.trail.length, W, H, u: +u.toFixed(2),
+                dAng: S.debris.map(b => +b.ang.toFixed(3)), dRing: S.debris.map(b => b.ring) })
+};
 </script>
 </body>
 </html>

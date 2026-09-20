@@ -8,18 +8,18 @@
     "roadmap": [
       {
         "status": "Shipped",
-        "title": "Eleven games reworked",
-        "detail": "Grand Line, Rank Zero, Port Vesper, Neon Speed Simulator, Foil & Fortune, Cosmic Climb, Elementalis, Meridian, Aura Fighters, Flytale and Multiverse Fighters have all been rebuilt, and Redwater replaces the old Blue Lock game entirely. Full details are in the update log."
+        "title": "The whole catalogue is reworked",
+        "detail": "Every game has now been rebuilt or replaced - the last of them being Echoes, Abyssal Dredging, Sole & Co. and Orbit Dash. Each one got its own committed art direction rather than a shared house style, and the full detail for all of them is in the update log."
       },
       {
         "status": "In development",
-        "title": "Six games left to rework",
-        "detail": "Echoes, Anime Survivors, Neon Defense Grid, Abyssal Dredging, Orbit Dash and Sole & Co. are the last ones still on their original build. Same treatment as the rest: rebuilt feel, rebuilt visuals, one standard across the whole library."
+        "title": "New games",
+        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out; more are in the works."
       },
       {
         "status": "Planned",
-        "title": "New games after the reworks",
-        "detail": "Once the back catalogue is caught up, the focus goes back to new titles."
+        "title": "Thumbnails and a proper library",
+        "detail": "Every game card is still a generated tile rather than a screenshot. Real capture art across the library is the next thing the site itself needs."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
@@ -105,28 +105,14 @@
       "id": "echoes",
       "title": "Echoes",
       "tagline": "Recovered audio. Do not play alone.",
-      "description": "A horror game in three recovered tracks, where sound carries the information rather than decorating it. Headphones strongly recommended, and the warning on the title screen is not decoration either.",
+      "description": "Found-tape horror in three tracks, built on two senses that disagree: the lamp shows the truth, the echo shows memory. The echo is a real expanding wavefront, so returns arrive near-to-far and phosphor only remembers where a wall was, not what has moved since. Headphones strongly recommended - sound is information here.",
       "tags": [
         "horror",
         "atmospheric",
         "audio"
       ],
       "accent": "#64748b",
-      "controls": "Mouse. Headphones strongly recommended",
-      "added": "2026-09-08"
-    },
-    {
-      "id": "anime-survivors",
-      "title": "Anime Survivors",
-      "tagline": "Awaken your weapons, then go further.",
-      "description": "Bullet-heaven survival, visually remastered. Reach level 5 to awaken your weapons and level 10 to unleash their true ultimate forms, with anomaly bosses breaking in as you climb.",
-      "tags": [
-        "roguelite",
-        "survival",
-        "anime"
-      ],
-      "accent": "#ec4899",
-      "controls": "WASD or arrows to move, touch and drag on mobile",
+      "controls": "WASD move, mouse aim, F lamp, Space echo pulse, RMB focus beam, C hold breath",
       "added": "2026-09-08"
     },
     {
@@ -141,20 +127,6 @@
       ],
       "accent": "#fbbf24",
       "controls": "WASD to move, mouse to aim, Q to dash, 1 ki blast, 2 special, hold C to charge, T to transform",
-      "added": "2026-09-08"
-    },
-    {
-      "id": "neon-defense-grid",
-      "title": "Neon Defense Grid",
-      "tagline": "Six towers against the incursion.",
-      "description": "Tower defense on a neon grid. Build pulse blasters, void spitters, arc emitters, artillery nodes, hive drones and rail-spires, then deconstruct and rebuild as the incursion escalates and your system integrity drains.",
-      "tags": [
-        "tower-defense",
-        "strategy",
-        "sci-fi"
-      ],
-      "accent": "#10b981",
-      "controls": "Mouse to place and upgrade towers",
       "added": "2026-09-08"
     },
     {
@@ -175,7 +147,7 @@
       "id": "abyssal-dredging",
       "title": "Abyssal Dredging",
       "tagline": "Idle salvage from the trench.",
-      "description": "Drop nets into the abyss, haul up specimens and scrap, then spend it on high-torque motors, phosphor lures and heavier nets to pull more per trip. Runs itself once the automation is assembled.",
+      "description": "Idle deep-sea salvage on a wet steel deck at night. Drop nets into a real water column and watch the catch ride up through storm sea, marine snow and drifting leviathans before the log ever tells you what you got. Nine rarity tiers, thirty-four items, and collapsible docks so you can fold the interface away and just watch the ocean.",
       "tags": [
         "idle",
         "incremental",
@@ -216,15 +188,15 @@
     {
       "id": "orbit-dash",
       "title": "Orbit Dash",
-      "tagline": "One button. Infinite orbits.",
-      "description": "One button, two orbits, and debris coming the other way. Tap to swap rings, thread the gaps, and watch the whole thing speed up under you. Your best run is saved locally.",
+      "tagline": "One button. An antique orrery.",
+      "description": "You are a brass bead running the tracks of an 18th-century orrery, drawn as a cyanotype blueprint. Tap to change track, thread the verdigris gates to build a chain, and wind the mainspring - then hold to spend it, slowing the whole machine so you can shatter the debris instead of dodging it.",
       "tags": [
         "arcade",
         "one-button",
         "endless"
       ],
-      "accent": "#7c5cff",
-      "controls": "Click / Space to jump orbit",
+      "accent": "#e9b455",
+      "controls": "Tap or Space to change track, hold to spend the mainspring",
       "aspect": "16/9",
       "added": "2026-09-08"
     },
@@ -302,7 +274,7 @@
       "id": "shoeshopsimulator",
       "title": "Sole & Co.",
       "tagline": "Grandma left you the shop. Don't blow it.",
-      "description": "You inherited a two-metre-wide sneaker shop, three pairs and $1,500. Stock the shelves, read the day's heat, work the market and the customs bench, and make rent before the doors close. Deadstock, customs, trade.",
+      "description": "You inherited a two-metre-wide sneaker shop, five pairs and $2,400. Stock the shelves, read the day s heat, work the market and the customs bench, and make rent before the doors close. Twelve models across six sole architectures and seventeen colourways, so the stock on your wall actually looks like stock.",
       "tags": [
         "simulation",
         "management",
@@ -325,6 +297,34 @@
       "accent": "#b91c1c",
       "controls": "WASD move, mouse aim, LMB fire, RMB Dead Eye, Space roll, E use, R reload, Q ability, F awakening, Tab journal, M map",
       "added": "2026-09-18"
+    },
+    {
+      "id": "hardburn",
+      "title": "Hardburn",
+      "tagline": "You launch a missile. Then you have to fly it.",
+      "description": "A physics time-attack. Hold the motor and it burns; let go and you're a dart with gravity attached. The mouse aims, WASD swings the airframe off that line so you can burn sideways out of a corner, and a nose-fired grapple carves the turns you can't. Seeded courses, so any word you type builds the same track forever.",
+      "tags": [
+        "action",
+        "score-attack",
+        "physics"
+      ],
+      "accent": "#e2e8f0",
+      "controls": "Space to launch and hold for thrust, mouse to aim, WASD to swing the airframe, X to realign, E grapple, Shift hard burn",
+      "added": "2026-09-19"
+    },
+    {
+      "id": "ratswithwings",
+      "title": "Rats With Wings",
+      "tagline": "A small grey menace in a sunny plaza.",
+      "description": "A 3D pigeon simulator. You have 120 seconds and a limited payload. Bomb pedestrians from above, desecrate the bronze General for a fortune, snatch ice cream mid-lick, and set off car alarms because you can. Eating refills ammunition, fast hits chain a chaos multiplier, and cooing summons the flock. Your splats stay on the pavement all round.",
+      "tags": [
+        "arcade",
+        "sandbox",
+        "comedy"
+      ],
+      "accent": "#60a5fa",
+      "controls": "Mouse to fly, click to bomb, eat to reload, coo to summon the flock",
+      "added": "2026-09-19"
     }
   ]
 }

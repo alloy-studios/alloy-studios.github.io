@@ -1,6 +1,214 @@
 {
   "entries": [
     {
+      "game": "orbit-dash",
+      "title": "Orbit Dash - Orrery",
+      "date": "2026-09-19",
+      "summary": "Rebuilt as an 18th-century brass orrery printed on cyanotype paper. The last of the catalogue reworks.",
+      "sections": [
+        {
+          "heading": "New direction",
+          "items": [
+            "The neon-on-black space look is gone. The whole game is now engraved line work on a hand-coated cyanotype plate - graduated tracks with degree ticks, a toothed brass sun gear, and an engraved star chart turning slowly behind the mechanism.",
+            "Colour carries the rules and nothing else: brass is you and only you, copper is lethal and only lethal, verdigris is reward, and every cool blue line is scenery.",
+            "No bloom and no film grade - filmic post would turn engraved line work to mush. Only paper grain and a plate vignette, because those are the medium rather than an effect."
+          ]
+        },
+        {
+          "heading": "New play",
+          "items": [
+            "Three tracks instead of two, still on one button - a tap steps you outward and wraps around.",
+            "Gates: verdigris arcs to thread for a chain multiplier that bleeds away if you stop threading.",
+            "The mainspring, wound by threading gates. Hold the button to spend it and the entire machine slows, letting you shatter debris instead of dodging it.",
+            "Threaded gates stamp tick marks on the plate and wrecks leave ink blots, so a long run visibly accumulates evidence on the paper."
+          ]
+        },
+        {
+          "heading": "Fair by construction",
+          "items": [
+            "Debris can never share a bearing with other debris, so exactly one track is ever blocked at a given angle. Staying put survives if it is not your track; one tap survives if it is, and the tap always lands you somewhere guaranteed clear.",
+            "Because every piece of debris drifts at the same rate, the gaps between them never change - the check at spawn time holds for the whole run.",
+            "Verified: 900 frames with zero shared-bearing violations, and a reactive player survived a 30-second run without dying."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Fixed a crash on load where the first resize ran before the paper buffer existed.",
+            "Guarded the zero-size layout pass that could collapse the canvas and spawn everything at the origin.",
+            "Track changes are now snappy enough to finish well inside the guaranteed clearance arc."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "hardburn",
+      "title": "Hardburn",
+      "date": "2026-09-19",
+      "summary": "New game. You launch a missile, then you have to fly it.",
+      "sections": [
+        {
+          "heading": "Three directions, and the gaps between them",
+          "items": [
+            "Aim is where the mouse points. Airframe is where the nose points, which is where thrust goes. Flight path is where you are actually going - and it turns amber when it stops agreeing with your aim.",
+            "Swing the nose 90 degrees off your flight path and you can thrust sideways out of a corner; swing it all the way round and you retro-burn while still looking where you are going.",
+            "Hold the motor and it burns; let go and you are a dart with gravity attached. A nose-fired grapple carves the turns the airframe cannot."
+          ]
+        },
+        {
+          "heading": "Scoring and courses",
+          "items": [
+            "Style scoring: thread gates near centre, skim within 8m of a surface, load the airframe in hard turns, and swing off a hooked surface.",
+            "Only the improvement over your personal best on a course banks at full rate, so grinding is not a strategy - flying better is.",
+            "Courses are seeded and generated: type any word and you get that course, forever, identically, on any machine. Four difficulties from Milk Run to Suicidal."
+          ]
+        },
+        {
+          "heading": "Airframes",
+          "items": [
+            "23 across six rarities. From Rare up the airframe is genuinely rebuilt rather than recoloured - length, calibre, nose, fins, canards and pods all change, and the hangar preview is the mesh that launches.",
+            "Epic and above carry a sixth system on Q; Legendary and Mythic bring Rewind, Singularity, Nova Lance, Event Horizon and Ascension.",
+            "Bone-on-ink monochrome world, with saturated colour reserved for your missile and its exhaust - so rarity is literally how much colour is on screen."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "ratswithwings",
+      "title": "Rats With Wings",
+      "date": "2026-09-19",
+      "summary": "New game. A 3D pigeon simulator about being a small grey menace.",
+      "sections": [
+        {
+          "heading": "The plaza",
+          "items": [
+            "120 seconds and a limited payload. Bomb pedestrians from above - head hits score double, and they have opinions about it.",
+            "Desecrate the bronze General for a fortune, dive-bomb people to snatch their ice cream mid-lick, and set off car alarms for no reason at all.",
+            "Eating refills your ammunition, fast hits chain a five-times chaos multiplier, and cooing summons the local flock to follow you around like a tiny feathered gang."
+          ]
+        },
+        {
+          "heading": "Consequences",
+          "items": [
+            "Hit the hot dog cart and the vendor starts hurling buns at you - a problem, right up until you realise the ones he misses with are free food.",
+            "Your splats stay on the pavement and in people's hair for the rest of the round, so the plaza slowly fills with evidence.",
+            "Ranks run from Sidewalk Nobody to Flying Rat Supreme."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "echoes",
+      "title": "Echoes v2.0",
+      "date": "2026-09-19",
+      "summary": "A complete rebuild, written from scratch rather than evolved. Three new tracks.",
+      "sections": [
+        {
+          "heading": "Two senses, sharpened",
+          "items": [
+            "The central tension is now explicit: the lamp shows the truth, the echo shows memory.",
+            "The echo is a real expanding wavefront, not a screen effect. Rays are cast at fire time and each return is held until the wave physically reaches it, so returns arrive near-to-far. Brightness falls with range and with how square-on the surface is - walls you face light up, walls you skim stay dark.",
+            "Phosphor shows where a wall was, not what has moved since. The lamp burns the cell, and anything with eyes can see you holding it."
+          ]
+        },
+        {
+          "heading": "New tracks",
+          "items": [
+            "The Drowned Floor - the Tenant returns nothing on sonar, a moving hole in your picture, and only advances while the lamp is off it. Open three sluices while the flood rises.",
+            "The Chorus - seven identical bowed figures, six recordings and one that is not. Ping them and the live one burns a white outline into the phosphor permanently; or spend cell, because under lamplight the recordings carry tape dropout. Information costs either noise or power.",
+            "The Transmitter - the Needle is deaf to light and hunts sound only. Carry the accumulator to the array; hands full means no ping and no sprint."
+          ]
+        },
+        {
+          "heading": "Presentation",
+          "items": [
+            "Procedural materials baked per track, real lighting with actual penumbra from three offset origins, and water as a marching-squares contour so the shoreline cuts diagonally across the grid instead of following it.",
+            "Creatures built on real top-down anatomy - you see crowns of heads and tops of shoulders, never faces, and tell them apart by silhouette alone. You are now a person, with the lamp held out in front where the beam actually comes from.",
+            "The room cuts to silence for about 270ms before every scare hit, then swells back. That gap does most of the work."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Screen shake could run away on Track 03 and throw the camera thousands of pixels off-screen; it is now hard-capped globally.",
+            "The Needle could never actually kill you - it halted 42px short of its target while its kill radius was 30px.",
+            "The struggle QTE was unwinnable: the meter clamped at exactly 1.0, but decay was applied before the win check."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "abyssal-dredging",
+      "title": "Abyssal Dredging - rework",
+      "date": "2026-09-19",
+      "summary": "The interface folds away and there is now an actual ocean under the rig.",
+      "sections": [
+        {
+          "heading": "The panels",
+          "items": [
+            "The old layout hard-split the page: the rig got a strip at the top, a static panel took the rest, and nothing could be moved or hidden.",
+            "Four independent docks - Upgrades, Cargo Hold, Extraction Log and Console - each folding to a thin labelled tab on the screen edge.",
+            "Focus mode folds all four at once, leaving nothing on screen but the sea. Phones start folded, so a first-time player lands on the water instead of behind a drawer."
+          ]
+        },
+        {
+          "heading": "The ocean",
+          "items": [
+            "Previously the cable dropped off the bottom of the rig strip and the haul only ever appeared as text in a list. Now there is a real water column and the net travels down into it.",
+            "Above water: storm sky with parallax cloud bands, rain as real streaks that punch ripple rings into the surface, branching lightning, and a jack-up rig drawn in full - lattice legs, derrick A-frame, turning sheave, and a sodium lamp with a feathered cone. The submerged legs are drawn before the water, so the rig stands in the ocean rather than on it.",
+            "Below water: a depth-graded column down to true black, marine snow in three parallax layers, drifting jellyfish, a sunken salvage field silhouetted against backscatter murk, and a leviathan that crosses the deep every minute or two."
+          ]
+        },
+        {
+          "heading": "One gameplay change",
+          "items": [
+            "The loot roll now happens at the bottom of the dive rather than at the end, so the catch physically rides up through the water - each item a seeded silhouette rim-lit in its rarity colour, with the net glowing in the colour of the best item in the bag. You read the result off the ocean before the log tells you.",
+            "No balance was touched: every drop chance, upgrade cost, multiplier, max level, crush yield and rank threshold is byte-identical to the original."
+          ]
+        },
+        {
+          "heading": "Settings and fixes",
+          "items": [
+            "Auto-scrap now covers the full ladder, with a warning on anything from Legendary up because it can eat a one-in-fifty-million pull. The cutscene fires and the Collection records the discovery before the crush, so you keep the reveal and the completion credit.",
+            "Cutscene skipping is now a per-tier threshold instead of a single on/off, and old saves migrate automatically.",
+            "Fixed the cursor vanishing during cutscenes, so you could not see what you were aiming at to hit Skip, and hero text overflowing narrow windows."
+          ]
+        }
+      ]
+    },
+    {
+      "game": "shoeshopsimulator",
+      "title": "Sole & Co. - update",
+      "date": "2026-09-19",
+      "summary": "Two pieces of playtest feedback: it was too hard, and the shoes all looked identical.",
+      "sections": [
+        {
+          "heading": "Difficulty - it was a bug, not a preference",
+          "items": [
+            "The root cause was an economy bug. Wholesale asks averaged 0.93x a shoe's value and customer offers averaged 0.94x, so the average trade lost money before rent was even deducted.",
+            "Starting cash $1,500 to $2,400, display slots 8 to 10, customer budgets $90-180 to $170-330 with a 22% chance of a whale, and patience 13s to 24s.",
+            "Rent down from $130 + $14/day to $95 + $8/day, offers up across every tier, and haggle success from 50% to 62%.",
+            "Verified over 2,800 simulated flips: buying at or under 0.75x value and selling to a matching customer now clears about 173% margin, versus roughly break-even before."
+          ]
+        },
+        {
+          "heading": "The shoes",
+          "items": [
+            "Nine models to twelve, and one shared sole becomes six sole architectures - cup, vulc, air, boost, stack and wedge - each with its own outsole tread.",
+            "The big 'they all look identical' tell was the heel line: it sat at about 88% of collar height on every model, rounding every back into the same pod shape. Now derived per model at 60-76%.",
+            "The ankle opening is a real cut now - a closed dark band generated from the rim curve with a padded lip - instead of a floating line, and the thick stroked collar band that read as a roll bar is gone.",
+            "15 to 17 colourways rebuilt for contrast, and fixed a colour-role collision that was painting orange toe bumpers onto a Converse."
+          ]
+        },
+        {
+          "heading": "Known limitation",
+          "items": [
+            "At large scale these read as good vector illustrations rather than photoreal sneakers. The one thing that measurably worked was measuring against a reference photo, which corrected proportions three prior passes had guessed wrong."
+          ]
+        }
+      ]
+    },
+    {
       "game": "redwater",
       "title": "Redwater - A Frontier Tale",
       "date": "2026-09-18",

@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-09-19",
+      "title": "Every game in the catalogue is now reworked",
+      "body": "Hardburn and Rats With Wings arrive, replacing Anime Survivors and Neon Defense Grid. Echoes is rebuilt from scratch with three new tracks, Abyssal Dredging gets a real ocean under the rig, and Sole & Co. fixes the economy bug that made it unwinnable. Orbit Dash closes it out, rebuilt as an 18th-century brass orrery printed on cyanotype paper. That is the whole library caught up.",
+      "game": "orbit-dash"
+    },
+    {
       "date": "2026-09-18",
       "title": "Redwater arrives, four more games reworked",
       "body": "Redwater replaces the old Blue Lock game outright - a top-down open-world western RPG where you ride in with no side and leave with one. Rivalforge is now Meridian - new name, new URL at /meridian/, and moved from a night-shift machine hall to high noon, with two new skin tiers and a reworked economy. Aura Fighters, Flytale and Multiverse Fighters are rebuilt too. Six games left on their original build.",
