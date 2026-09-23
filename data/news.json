@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-09-22",
+      "title": "Every game has a real thumbnail",
+      "body": "The generated colour tiles are gone. Every card in the library now shows a frame rendered from the game itself - staged mid-play, no text, built to still read at card size. Alloy Mind has also been retired from the catalogue.",
+      "game": null
+    },
+    {
       "date": "2026-09-19",
       "title": "Every game in the catalogue is now reworked",
       "body": "Hardburn and Rats With Wings arrive, replacing Anime Survivors and Neon Defense Grid. Echoes is rebuilt from scratch with three new tracks, Abyssal Dredging gets a real ocean under the rig, and Sole & Co. fixes the economy bug that made it unwinnable. Orbit Dash closes it out, rebuilt as an 18th-century brass orrery printed on cyanotype paper. That is the whole library caught up.",

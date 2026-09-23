@@ -48,7 +48,9 @@ const Alloy = (() => {
 
   function artHTML(game, cls) {
     if (game.thumb) {
-      return `<div class="art"><img src="${esc(game.thumb)}" alt="" loading="lazy"></div>`;
+      // The colour tile sits behind the image, so a card is never an empty
+      // box while its lazy-loaded thumbnail is still on the way.
+      return `<div class="art" style="${artStyle(game)}"><img src="${esc(game.thumb)}" alt="" loading="lazy"></div>`;
     }
     return `<div class="art" style="${artStyle(game)}">
       <div class="mono">${esc(initials(game.title))}</div>

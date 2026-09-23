@@ -12,14 +12,14 @@
         "detail": "Every game has now been rebuilt or replaced - the last of them being Echoes, Abyssal Dredging, Sole & Co. and Orbit Dash. Each one got its own committed art direction rather than a shared house style, and the full detail for all of them is in the update log."
       },
       {
+        "status": "Shipped",
+        "title": "Real thumbnails for every game",
+        "detail": "Every card in the library now shows a frame rendered from the game itself, instead of a generated colour tile."
+      },
+      {
         "status": "In development",
         "title": "New games",
         "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out; more are in the works."
-      },
-      {
-        "status": "Planned",
-        "title": "Thumbnails and a proper library",
-        "detail": "Every game card is still a generated tile rather than a screenshot. Real capture art across the library is the next thing the site itself needs."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
@@ -43,7 +43,8 @@
       "accent": "#22d3ee",
       "controls": "WASD or arrows to move, Space to dash, 1-3 to pick",
       "added": "2026-09-08",
-      "featured": true
+      "featured": true,
+      "thumb": "/assets/thumbs/neon-survivor-legends.webp"
     },
     {
       "id": "meridian",
@@ -57,7 +58,8 @@
       ],
       "accent": "#f97316",
       "controls": "Mouse to aim and fire, F to inspect, crates and trade-up in the menus",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/meridian.png"
     },
     {
       "id": "port-vesper",
@@ -71,7 +73,8 @@
       ],
       "accent": "#ef4444",
       "controls": "WASD to move or drive, mouse to aim, E to enter a car, R to rob, Space to handbrake",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/port-vesper.webp"
     },
     {
       "id": "grand-line",
@@ -85,7 +88,8 @@
       ],
       "accent": "#84cc16",
       "controls": "WASD move, mouse aim, click cutlass, Q E R Devil Fruit, Space dash, F talk, M chart",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/grand-line.webp"
     },
     {
       "id": "leveling-the-system",
@@ -99,7 +103,8 @@
       ],
       "accent": "#8b5cf6",
       "controls": "WASD to move, mouse to aim, dash through a telegraph to parry",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/leveling-the-system.webp"
     },
     {
       "id": "echoes",
@@ -113,7 +118,8 @@
       ],
       "accent": "#64748b",
       "controls": "WASD move, mouse aim, F lamp, Space echo pulse, RMB focus beam, C hold breath",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/echoes.webp"
     },
     {
       "id": "aura-fighters",
@@ -127,7 +133,8 @@
       ],
       "accent": "#fbbf24",
       "controls": "WASD to move, mouse to aim, Q to dash, 1 ki blast, 2 special, hold C to charge, T to transform",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/aura-fighters.webp"
     },
     {
       "id": "tcg-cardshop-simulator",
@@ -141,7 +148,8 @@
       ],
       "accent": "#d946ef",
       "controls": "WASD to move around the shop, click to interact",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/tcg-cardshop-simulator.webp"
     },
     {
       "id": "abyssal-dredging",
@@ -155,7 +163,8 @@
       ],
       "accent": "#0891b2",
       "controls": "Mouse / touch",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/abyssal-dredging.webp"
     },
     {
       "id": "speed-simulator",
@@ -169,7 +178,8 @@
       ],
       "accent": "#f472b6",
       "controls": "Mouse / touch",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/speed-simulator.webp"
     },
     {
       "id": "cosmic-climb",
@@ -183,7 +193,8 @@
       ],
       "accent": "#a855f7",
       "controls": "A/D or arrows to move, W, Up or Space to jump",
-      "added": "2026-09-08"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/cosmic-climb.webp"
     },
     {
       "id": "orbit-dash",
@@ -199,21 +210,8 @@
       "controls": "Tap or Space to change track, hold to spend the mainspring",
       "rev": "20260920-0300",
       "aspect": "16/9",
-      "added": "2026-09-08"
-    },
-    {
-      "id": "alloymind",
-      "title": "Alloy Mind",
-      "tagline": "Turn the boring PDF into a game.",
-      "description": "Feed it the PDF your teacher posted - or a Word doc, slides, a sheet, a link, or raw pasted text - and it comes back as questions. Five game modes, coins to earn, packs to pull, and fifty-five collectibles to chase. Bring your own Claude API key and the questions get noticeably smarter.",
-      "tags": [
-        "study",
-        "learning",
-        "quiz"
-      ],
-      "accent": "#14b8a6",
-      "controls": "Mouse. Forge a set, then pick between answer choices",
-      "added": "2026-09-09"
+      "added": "2026-09-08",
+      "thumb": "/assets/thumbs/orbit-dash.webp"
     },
     {
       "id": "multiversefighters",
@@ -227,7 +225,8 @@
       ],
       "accent": "#a78bfa",
       "controls": "A/D move, Space jump, W/S aim, Shift dash, J and K attack, L special, U ultimate",
-      "added": "2026-09-10"
+      "added": "2026-09-10",
+      "thumb": "/assets/thumbs/multiversefighters.webp"
     },
     {
       "id": "flytale",
@@ -241,7 +240,8 @@
       ],
       "accent": "#38bdf8",
       "controls": "Arrows or WASD to fly, Z to confirm, X to cancel, M to mute",
-      "added": "2026-09-10"
+      "added": "2026-09-10",
+      "thumb": "/assets/thumbs/flytale.png"
     },
     {
       "id": "madballs",
@@ -255,7 +255,8 @@
       ],
       "accent": "#fb923c",
       "controls": "Drag from the slingshot to fire, Space or click mid-flight for your skin's ability",
-      "added": "2026-09-10"
+      "added": "2026-09-10",
+      "thumb": "/assets/thumbs/madballs.webp"
     },
     {
       "id": "elementalis",
@@ -269,7 +270,8 @@
       ],
       "accent": "#8b5cf6",
       "controls": "WASD move, mouse aim, click to cast, 1-4 spell slots, Shift to blink, E to commune, C for the Grimoire",
-      "added": "2026-09-11"
+      "added": "2026-09-11",
+      "thumb": "/assets/thumbs/elementalis.webp"
     },
     {
       "id": "shoeshopsimulator",
@@ -283,7 +285,8 @@
       ],
       "accent": "#f43f5e",
       "controls": "Mouse to stock, price and serve",
-      "added": "2026-09-11"
+      "added": "2026-09-11",
+      "thumb": "/assets/thumbs/shoeshopsimulator.webp"
     },
     {
       "id": "redwater",
@@ -297,7 +300,8 @@
       ],
       "accent": "#b91c1c",
       "controls": "WASD move, mouse aim, LMB fire, RMB Dead Eye, Space roll, E use, R reload, Q ability, F awakening, Tab journal, M map",
-      "added": "2026-09-18"
+      "added": "2026-09-18",
+      "thumb": "/assets/thumbs/redwater.webp"
     },
     {
       "id": "hardburn",
@@ -311,7 +315,8 @@
       ],
       "accent": "#e2e8f0",
       "controls": "Space to launch and hold for thrust, mouse to aim, WASD to swing the airframe, X to realign, E grapple, Shift hard burn",
-      "added": "2026-09-19"
+      "added": "2026-09-19",
+      "thumb": "/assets/thumbs/hardburn.webp"
     },
     {
       "id": "ratswithwings",
@@ -325,7 +330,8 @@
       ],
       "accent": "#60a5fa",
       "controls": "Mouse to fly, click to bomb, eat to reload, coo to summon the flock",
-      "added": "2026-09-19"
+      "added": "2026-09-19",
+      "thumb": "/assets/thumbs/ratswithwings.webp"
     }
   ]
 }
