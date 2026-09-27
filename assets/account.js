@@ -36,7 +36,9 @@
   var readyResolve, settled = false;
   var ready = new Promise(function (r) { readyResolve = r; });
 
-  function settle() { if (!settled) { settled = true; readyResolve(pub()); } }
+  // The header shows a placeholder until this runs, so redraw it here: callers
+  // emit() just before settling, which would otherwise leave it spinning.
+  function settle() { if (!settled) { settled = true; readyResolve(pub()); renderButton(); } }
   function pub() { return user ? { uid: user.uid, name: user.name } : null; }
   function hinted() { try { return localStorage.getItem(HINT) === "1"; } catch (_) { return false; } }
   function setHint(on) { try { on ? localStorage.setItem(HINT, "1") : localStorage.removeItem(HINT); } catch (_) {} }

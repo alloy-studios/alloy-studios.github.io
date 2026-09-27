@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-27",
+      "title": "Fixed: the account button kept loading",
+      "body": "If you were signed in, the account button in the top right could stay on its loading shimmer forever after opening a page, even though your account was working underneath. It now shows your player name as soon as sign-in finishes.",
+      "game": null
+    },
+    {
+      "date": "2026-09-27",
       "title": "A new look, built from the logo",
       "body": "The site has been redesigned around the Alloy Studios logo: polished chrome, warm copper light and a brushed-metal finish, with the real logo in the header, a slow glint across the masthead and cards that catch the light as you move over them. Every animation switches off if your device is set to reduce motion.",
       "game": null
