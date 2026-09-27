@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-27",
+      "title": "Our contact address is changing",
+      "body": "The alloystudiocontact address no longer works - please don't send anything there. A new contact address is coming soon and will appear on this page.",
+      "game": null
+    },
+    {
+      "date": "2026-09-27",
       "title": "Alloy accounts are rolling out",
       "body": "There is now a Sign in button at the top of every page. One Alloy account works in every game, so progress follows you between devices instead of living in one browser. Orbit Dash is the first game on it; the rest of the catalogue moves over one at a time. Speed Simulator players: your existing login carries over, and so does your progress. Every save is checked on our server before it's kept, and accounts are what will power limited-time events.",
       "game": "orbit-dash"
@@ -45,7 +51,7 @@
     {
       "date": "2026-09-10",
       "title": "Three games added, contact address changed",
-      "body": "Multiverse Fighters, Flytale and Madballs join the catalogue, Alloy Mind gets a proper write-up, and Rivalforge and Neon Survivor Legends are updated to their latest builds. The studio contact address is now alloystudiocontact@gmail.com.",
+      "body": "Multiverse Fighters, Flytale and Madballs join the catalogue, Alloy Mind gets a proper write-up, and Rivalforge and Neon Survivor Legends are updated to their latest builds.",
       "game": "multiversefighters"
     },
     {
