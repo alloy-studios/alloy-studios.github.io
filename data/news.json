@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-27",
+      "title": "Only the real thing",
+      "body": "Some sites show browser games inside their own pages, wrapped in their ads, or copy them outright. Every page here now notices when it's been embedded somewhere else and points you back to alloy-studios.github.io instead. Orbit Dash also refuses to run as a copy on another site; the rest of the games get the same check as they move to Alloy accounts. If a game ever says you're on an unofficial copy, its button takes you to the real one - free, with your progress saved to your account.",
+      "game": null
+    },
+    {
+      "date": "2026-09-27",
       "title": "New contact address",
       "body": "Alloy Studios can now be reached at alloy-studios@googlegroups.com - it goes straight to the whole team. The old alloystudiocontact address no longer works, so please don't send anything there.",
       "game": null

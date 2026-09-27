@@ -32,6 +32,48 @@ slow load can let an empty device upload over a real account.
 Your game never loads Firebase, never shows a login screen, and never talks to
 a database. If it has its own account system today, remove it.
 
+## Home check (anti-copy)
+
+Paste this as the **first script in `<head>`**, right after `<meta charset>`,
+and set `GAME` to your id. On `alloy-studios.github.io`, on `localhost` and as a
+local file it does nothing. Anywhere else, whether that's a copy rehosted on
+another site or the game framed by someone else's page, it replaces the page
+with a link to the real game before any game code loads. The site's own pages
+already refuse to be framed (`assets/shell.js`); this covers the game file
+itself. Don't add any other anti-copy scheme, like split loaders or code served
+from Firebase: the repos are public, so they only add cost and deploys.
+
+```html
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "your-game-id";                                 // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
+```
+
+If the game has more than one HTML page, put it in each one. Test it by
+opening the file directly (it must still play) and through the local site
+preview.
+
 ## The API
 
 | Call | Returns | Notes |
@@ -176,6 +218,8 @@ has recorded as claimed — so a reward survives reinstalling or changing device
 ## Checklist before you report back
 
 - [ ] Game works identically with `AA === null` (open the file directly)
+- [ ] Home check is the first script in `<head>` of every HTML page, `GAME` set to your id
+- [ ] No other anti-copy scheme (split loaders, code fetched from Firebase)
 - [ ] Own login / account UI removed
 - [ ] Admin / debug / redeem grant panels removed or localhost-only
 - [ ] Loads cloud save on start and on sign-in; uploads local save if the cloud is empty

@@ -5,6 +5,17 @@
      2. Render whichever page it is on, from data/games.json.
    =========================================================== */
 
+/* Other sites sometimes show this whole page inside a frame of their own,
+   wrapped in their ads. GitHub Pages can't send the header that forbids that,
+   and browsers no longer let a framed page redirect the window by itself — so
+   instead the page is replaced with a button that takes the player to the real
+   site. The click is what browsers allow to escape the frame. */
+const FRAMED_BY_STRANGER = (() => {
+  if (window.top === window.self) return false;
+  try { return window.top.location.hostname !== location.hostname; }
+  catch (_) { return true; }            // can't read the parent: someone else's page
+})();
+
 const Alloy = (() => {
   const DATA_URL = '/data/games.json';
 
@@ -193,7 +204,24 @@ const Alloy = (() => {
 
   /* ---------- boot ---------- */
 
+  function framedNotice() {
+    document.body.innerHTML = `
+      <main class="framed">
+        <div>
+          <h1>You're playing on someone else's site</h1>
+          <p>Alloy Studios games are free, and they live at alloy-studios.github.io.
+             This page has been embedded somewhere else, probably to show you their ads.</p>
+          <a class="btn" href="${esc(location.href)}" target="_top" rel="noopener">Play at alloy-studios.github.io</a>
+        </div>
+      </main>`;
+  }
+
   async function boot(render) {
+    if (FRAMED_BY_STRANGER) {
+      try { window.top.location.replace(location.href); } catch (_) {}   // works in some browsers
+      framedNotice();
+      return;
+    }
     renderHeader();
     try {
       const res = await fetch(DATA_URL, { cache: 'no-cache' });

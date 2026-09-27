@@ -246,6 +246,16 @@ main { flex: 1 1 auto; }
   font-size: 14.5px; line-height: 1.65; max-width: 64ch;
 }
 
+/* ---------- Shown when another site frames this page ---------- */
+
+.framed {
+  min-height: 100dvh; display: grid; place-items: center;
+  padding: 24px; text-align: center;
+}
+.framed h1 { margin: 0 0 10px; font-size: 24px; letter-spacing: -.02em; }
+.framed p { margin: 0 auto 24px; max-width: 46ch; color: var(--text-dim); line-height: 1.6; }
+.framed .btn { align-self: auto; }
+
 /* ---------- Alloy account ---------- */
 
 .acct { position: relative; flex: 0 0 auto; }
