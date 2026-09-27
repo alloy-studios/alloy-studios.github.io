@@ -2,6 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>.
+   On alloy-studios.github.io, on localhost and as a local file it does
+   nothing. Anywhere else — a copy rehosted on another site, or this file
+   framed by someone else's page — it replaces the page with a link to the
+   real game before any game code loads. See AlloyStudios/firebase/GAMES.md. */
+(function () {
+  var GAME = "neon-survivor-legends";                        // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Neon Survivor — Legendary Super Fusions</title>
 <style>
@@ -292,6 +320,10 @@ input[type=password]:focus{border-color:var(--cyan);box-shadow:0 0 18px rgba(34,
   padding-top:11px;border-top:1px solid rgba(255,194,74,.3)}
 .payTotalRow span{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--amber)}
 .payTotalRow b{font-size:31px;font-weight:700;color:var(--amber);text-shadow:0 0 24px rgba(255,194,74,.6)}
+/* Alloy account sync state (96_account.js). Only shown inside the site. */
+#cloudLine{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim);margin:12px 0 2px;text-align:center}
+#cloudLine.ok{color:var(--lime)}
 /* First-run coaching. Sits above the weapon rack, clear of the boss bar at the
    top and the dash button at bottom-right. */
 #tutorial{position:absolute;left:50%;transform:translateX(-50%);
@@ -507,6 +539,7 @@ input[type=password]:focus{border-color:var(--cyan);box-shadow:0 0 18px rgba(34,
     <div id="payRows"></div>
     <div class="payTotalRow"><span>ALLOY EARNED</span><b id="payTotal">0</b></div>
   </div>
+  <div id="cloudLine" class="hide"></div>
   <div class="startBtns">
     <button id="againBtn" class="btn">Run it back</button>
     <button id="toArmoryBtn" class="btn ghost">Armory</button>
@@ -581,50 +614,7 @@ input[type=password]:focus{border-color:var(--cyan);box-shadow:0 0 18px rgba(34,
   </div>
 </div>
 
-<!-- ============ ADMIN LOGIN ============ -->
-<div id="adminLogin" class="layer on hide">
-  <div class="panel modal" style="width:min(330px,88vw)">
-    <h2 style="color:var(--danger)">Debug access</h2>
-    <div class="rule" style="margin:14px 0 20px"></div>
-    <input type="password" id="pwd" placeholder="PASSWORD" autocomplete="off">
-    <p id="pwdErr" class="err hide">ACCESS DENIED</p>
-    <div class="btnGrid" style="margin-top:20px">
-      <button id="pwdCancel" class="btn ghost">Cancel</button>
-      <button id="pwdGo" class="btn warn">Unlock</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============ ADMIN PANEL ============ -->
-<div id="adminPanel" class="layer on hide">
-  <div class="panel modal" style="width:min(430px,92vw)">
-    <h2 style="color:var(--danger)">Debug module</h2>
-    <div class="rule" style="margin:14px 0 16px"></div>
-    <div class="adminScroll">
-      <div class="eyebrow" style="margin-bottom:8px">Resources</div>
-      <div class="btnGrid">
-        <button id="dbgXp" class="btn ghost">+2000 XP</button>
-        <button id="dbgHeal" class="btn ghost">Full heal</button>
-        <button id="dbgGod" class="btn ghost">God mode</button>
-        <button id="dbgKill" class="btn ghost">Clear screen</button>
-        <button id="dbgAlloy" class="btn ghost wide">+1000 alloy</button>
-      </div>
-      <div class="eyebrow" style="margin:18px 0 8px">Progression</div>
-      <div class="btnGrid">
-        <button id="dbgBoss" class="btn ghost wide">Summon boss now</button>
-        <button id="dbgFus" class="btn ghost wide">Grant 3 random fusions</button>
-        <button id="dbgSuper" class="btn ghost wide">Grant random super fusion</button>
-      </div>
-      <div class="eyebrow" style="margin:18px 0 8px">Max a weapon</div>
-      <div class="btnGrid" id="maxGrid"></div>
-    </div>
-    <div class="btnGrid" style="margin-top:18px">
-      <button id="dbgClose" class="btn">Resume</button>
-    </div>
-  </div>
-</div>
-
-<div id="fpsMeter" class="hide"></div><script>
+<script>
 'use strict';
 /* ==========================================================================
    NEON SURVIVOR — core, render pipeline, background
@@ -1069,7 +1059,8 @@ const START_UNLOCKS = { orbital:60, aura:70, tesla:85, mines:85, missiles:100, f
 const meta = {
   alloy:0, up:{}, unlocked:['blaster'], start:'blaster',
   runs:0, bestTime:0, bestLevel:1, totalKills:0, totalBosses:0, lifetimeAlloy:0,
-  bestScore:0, bestChain:0, tutorialDone:false, tutorialSeen:[]
+  bestScore:0, bestChain:0, tutorialDone:false, tutorialSeen:[],
+  resets:0      // times "Reset all progress" was used; lets the account server tell a wipe from a cheat
 };
 UPGRADES.forEach(u=>meta.up[u.id]=0);
 
@@ -1093,6 +1084,7 @@ function loadMeta(){
     meta.lifetimeAlloy=+d.lifetimeAlloy||0;
     meta.bestScore=+d.bestScore||0; meta.bestChain=+d.bestChain||0;
     meta.tutorialDone=!!d.tutorialDone;
+    meta.resets=Math.max(0,Math.floor(+d.resets||0));
     if(Array.isArray(d.tutorialSeen)) meta.tutorialSeen=d.tutorialSeen.filter(x=>typeof x==="string");
     if(d.up) UPGRADES.forEach(u=>meta.up[u.id]=clamp(+d.up[u.id]||0,0,u.max));
     if(Array.isArray(d.unlocked)) meta.unlocked=d.unlocked.filter(w=>w==='blaster'||START_UNLOCKS[w]);
@@ -2739,7 +2731,7 @@ function renderArmory(){
       <button class="amBuy" ${maxed?'disabled':''}>${maxed?'MAXED':`<b>${fmt(cost)}</b> ALLOY`}</button>`;
     if(!maxed) el.querySelector('.amBuy').onclick=()=>{
       if(meta.alloy<cost){ sfx.zap(); el.classList.add('deny'); setTimeout(()=>el.classList.remove('deny'),320); return; }
-      meta.alloy-=cost; meta.up[u.id]=l+1; saveMeta(); sfx.levelup(); renderArmory();
+      meta.alloy-=cost; meta.up[u.id]=l+1; checkpoint(); sfx.levelup(); renderArmory();
     };
     grid.appendChild(el);
   }
@@ -2754,9 +2746,9 @@ function renderArmory(){
     el.innerHTML=`<span class="g">${BASE_META[id].g}</span><span class="n">${BASE_META[id].n}</span>
       <span class="c">${owned?(sel?'EQUIPPED':'SELECT'):fmt(cost)+' ⬢'}</span>`;
     el.onclick=()=>{
-      if(owned){ meta.start=id; saveMeta(); sfx.pickup(); renderArmory(); return; }
+      if(owned){ meta.start=id; checkpoint(); sfx.pickup(); renderArmory(); return; }
       if(meta.alloy<cost){ sfx.zap(); el.classList.add('deny'); setTimeout(()=>el.classList.remove('deny'),320); return; }
-      meta.alloy-=cost; meta.unlocked.push(id); meta.start=id; saveMeta(); sfx.levelup(); renderArmory();
+      meta.alloy-=cost; meta.unlocked.push(id); meta.start=id; checkpoint(); sfx.levelup(); renderArmory();
     };
     wg.appendChild(el);
   }
@@ -2800,7 +2792,7 @@ function showSummary(){
   meta.bestScore=Math.max(meta.bestScore,score);
   meta.bestChain=Math.max(meta.bestChain,bestCombo);
   meta.totalKills+=player.kills; meta.totalBosses+=bossesKilled;
-  saveMeta();
+  checkpoint(); cloudRunEvents(bossesKilled);
 
   $('fTime').textContent=mmss(gameTime);
   $('fLvl').textContent=player.level;
@@ -4184,9 +4176,126 @@ $('amWipe').onclick=()=>{
   }
   // One call rather than a field-by-field list — the old version had already
   // been missed twice when new meta fields were added.
-  resetMeta();
-  saveMeta(); delete $('amWipe').dataset.armed; sfx.boom(); renderArmory();
+  const resets=meta.resets||0;
+  resetMeta(); meta.resets=resets+1;
+  checkpoint(); delete $('amWipe').dataset.armed; sfx.boom(); renderArmory();
 };
+/* ==========================================================================
+   ALLOY ACCOUNT — optional cloud save
+
+   On alloy-studios.github.io the site shell hands this iframe
+   window.AlloyAccount. Opened on its own (a local file, its own repo) there is
+   none, AA is null, and everything here is a no-op: the localStorage save in
+   20_meta.js stays the only save, exactly as before. The site owns sign-in;
+   this game never shows a login screen or talks to a database.
+
+   The server re-checks every number (alloy/validator.js), so nothing sent from
+   here is trusted. Two rules keep an HONEST player from ever being clamped:
+
+   - Push only at checkpoints BETWEEN runs: the end of a run, an Armory
+     purchase, a reset. The validator bounds income by server time since the
+     last accepted save, so a save from mid-run (the tutorial writes one
+     locally) would shrink that window below the run it then has to pay for.
+     Signing in mid-run therefore waits for the run to end, too.
+   - Never push before the first load has finished, or a slow load lets an
+     empty device upload over a real account.
+   ========================================================================== */
+const ACCOUNT_GAME = 'neon-survivor-legends';
+const AA = (() => {
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+/* A build carrying the debug panel can grant alloy with a click; that must
+   never reach an account. DEV_PANEL is declared by 98_debug.js, which only
+   --dev builds include. Only called at runtime, after every file has run. */
+const cloudOff = () => !AA || typeof DEV_PANEL !== 'undefined';
+const cloud = { signedIn:false, loaded:false, synced:false, saving:false, pending:false, seq:0, events:[] };
+const inRun = () => gameState==='PLAYING' || gameState==='PAUSED' || gameState==='LEVELUP';
+
+/* Which save wins when both exist. A higher reset count means the player
+   wiped deliberately on some device, and that stands. Otherwise the save with
+   more alloy ever earned is the one with more play in it. */
+const cloudWins = d => {
+  const r=Math.floor(+d.resets||0), mine=meta.resets||0;
+  return r!==mine ? r>mine : (+d.lifetimeAlloy||0) >= meta.lifetimeAlloy;
+};
+
+function adoptSave(d){
+  Store.set(SAVE_KEY, JSON.stringify(d));
+  resetMeta(); loadMeta();            // loadMeta re-sanitises, same as any local save
+  if(!$('start').classList.contains('hide')) renderStartScreen();
+  if(!$('armory').classList.contains('hide')) renderArmory();
+}
+
+async function cloudPull(){
+  if(cloudOff()) return;
+  const user=AA.user();
+  cloud.signedIn=!!user; cloud.loaded=false; cloud.synced=false; cloud.events=[];
+  paintCloud();
+  if(!user) return;
+  if(inRun()){ cloud.pending=true; return; }
+  let r=null;
+  try{ r=await AA.load(ACCOUNT_GAME); }catch(e){ r=null; }
+  const now=AA.user();
+  if(!r || !now || now.uid!==user.uid) return;    // unreachable, or the account changed meanwhile
+  cloud.loaded=true;
+  if(r.data && cloudWins(r.data)){ adoptSave(r.data); cloud.synced=true; }
+  else if(inRun()) cloud.pending=true;            // a run began while loading: push at its end
+  else await cloudPush();
+  paintCloud();
+  try{ cloud.events=(await AA.events(ACCOUNT_GAME)).filter(e=>e.live); }catch(e){ cloud.events=[]; }
+}
+
+function cloudPush(){
+  if(cloudOff() || !cloud.loaded || !AA.user()) return Promise.resolve();
+  cloud.pending=false; cloud.saving=true; paintCloud();
+  const mine=++cloud.seq;
+  return AA.save(ACCOUNT_GAME, JSON.parse(JSON.stringify(meta)), {now:true}).then(res=>{
+    if(mine!==cloud.seq) return;                  // a newer save is on its way; its reply decides
+    cloud.saving=false; cloud.synced=!!(res && res.ok);
+    // What the server stored is what exists. Not mid-run, though: the next
+    // checkpoint resends local state anyway, and this keeps tutorial progress.
+    if(cloud.synced && res.data && !inRun()) adoptSave(res.data);
+    paintCloud();
+  }).catch(()=>{ if(mine===cloud.seq){ cloud.saving=false; cloud.synced=false; paintCloud(); } });
+}
+
+/* Save locally, and to the account if there is one. Call this — not saveMeta()
+   — wherever progress is settled between runs. */
+function checkpoint(){
+  saveMeta();
+  if(cloudOff()) return;
+  if(cloud.loaded) cloudPush();
+  else if(cloud.pending){ cloud.pending=false; cloudPull(); }
+}
+
+// Boss kills are the one metric with an honest ceiling (see the validator).
+function cloudRunEvents(bosses){
+  if(cloudOff() || !AA.user() || bosses<=0) return;
+  for(const e of cloud.events){
+    if(e.metric!=='bosses') continue;
+    if(e.type==='leaderboard') AA.score(e.id, bosses); else AA.progress(e.id, bosses);
+  }
+}
+
+function paintCloud(){
+  const el=$('cloudLine'); if(!el) return;
+  if(!AA){ el.classList.add('hide'); return; }
+  el.classList.remove('hide');
+  el.classList.toggle('ok', !cloudOff() && cloud.signedIn && cloud.synced && !cloud.saving);
+  el.textContent = cloudOff() ? 'Dev build — account sync off'
+    : !cloud.signedIn ? 'Sign in, top right, to keep your progress'
+    : cloud.saving ? 'Saving to your Alloy account…'
+    : cloud.synced ? 'Saved to your Alloy account'
+    : 'Alloy account — not synced yet';
+}
+
+function cloudStart(){
+  paintCloud();
+  if(cloudOff()) return;
+  AA.ready.then(cloudPull);
+  AA.onChange(cloudPull);
+}
 /* ==========================================================================
    SETTINGS
    ========================================================================== */
@@ -4233,93 +4342,6 @@ $('volRange').oninput=e=>{
 };
 
 /* ==========================================================================
-   DEBUG MODULE — dev builds only
-   Included by build.mjs only when --dev is passed, together with
-   src/01_debug.html. Production dist/index.html contains none of this:
-   no panel markup, no password string, no cheat entry points.
-   ========================================================================== */
-// The Debug button lives here rather than in the shell, so the production
-// settings modal simply has no way in.
-(()=>{
-  const b=document.createElement('button');
-  b.id='adminOpen'; b.className='btn ghost'; b.textContent='Debug';
-  $('setFoot').prepend(b);
-  $('setClose').classList.remove('wide');
-  $('fpsMeter').classList.remove('hide');
-})();
-
-const DEBUG_PASSWORD='hitaf';
-$('adminOpen').onclick=()=>{ $('settings').classList.add('hide'); $('adminLogin').classList.remove('hide');
-  $('pwd').value=''; $('pwdErr').classList.add('hide'); setTimeout(()=>$('pwd').focus(),40); };
-$('pwdCancel').onclick=()=>{ $('adminLogin').classList.add('hide'); $('settings').classList.remove('hide'); };
-function tryLogin(){
-  if($('pwd').value===DEBUG_PASSWORD){ $('adminLogin').classList.add('hide'); $('adminPanel').classList.remove('hide'); }
-  else $('pwdErr').classList.remove('hide');
-}
-$('pwdGo').onclick=tryLogin;
-$('pwd').onkeydown=e=>{ if(e.key==='Enter') tryLogin(); };
-$('dbgClose').onclick=()=>{ $('adminPanel').classList.add('hide'); if(gameState==='PAUSED') resume(); };
-
-const dbgNote=(txt,c)=>floaters.push(new Floater(player.x,player.y-40,txt,c||PAL.cyan,{size:16,life:1.3}));
-
-$('dbgXp').onclick=()=>{ player.addXp(2000); dbgNote('+2000 XP',PAL.lime); };
-$('dbgAlloy').onclick=()=>{ meta.alloy+=1000; saveMeta(); renderAlloy(); dbgNote('+1000 ALLOY',PAL.amber); };
-$('dbgHeal').onclick=()=>{ player.hp=player.maxHp; updateHUD(); dbgNote('REPAIRED',PAL.lime); };
-$('dbgGod').onclick=e=>{ godMode=!godMode; e.target.textContent=godMode?'God mode: ON':'God mode'; dbgNote(godMode?'GOD MODE ON':'GOD MODE OFF',PAL.amber); };
-$('dbgKill').onclick=()=>{ for(const e of enemies) if(!e.isBoss) e.die(); };
-$('dbgBoss').onclick=()=>{ if(!isBossActive&&bossWarn<=0){ nextBossTime=gameTime; $('adminPanel').classList.add('hide'); if(gameState==='PAUSED') resume(); } };
-
-$('dbgFus').onclick=()=>{
-  const w=player.w;
-  let free=shuffle(BASE_IDS), chosen=[];
-  for(const f of shuffle(FUSIONS)){
-    if(free.includes(f.w1)&&free.includes(f.w2)&&w[f.t].l===0){
-      chosen.push(f); free=free.filter(x=>x!==f.w1&&x!==f.w2);
-    }
-    if(chosen.length===3) break;
-  }
-  if(chosen.length===3){
-    chosen.forEach(f=>{ w[f.w1].fused=true; w[f.w2].fused=true; w[f.t].l=1;
-      if(f.t==='droneSwarm') player.spawnDrones(); });
-    dbgNote('3 FUSIONS GRANTED',PAL.plasma);
-    $('adminPanel').classList.add('hide');
-    player.pending++;
-    if(gameState==='PAUSED') resume();
-  } else dbgNote('FUSION MATH FAILED',PAL.danger);
-};
-
-$('dbgSuper').onclick=()=>{
-  const w=player.w;
-  if(SUPERS.some(s=>w[s.t].l>0)){ dbgNote('SUPER ALREADY ACTIVE',PAL.danger); return; }
-  const s=pick(SUPERS);
-  BASE_IDS.forEach(id=>{ w[id].l=0; w[id].fused=false; });
-  FUSIONS.forEach(f=>w[f.t].l=0);
-  w[s.t].l=1; w[s.t].spawned=false;
-  sfx.ascend(); addFlash(.8,'255,194,74'); addShake(24);
-  dbgNote(s.n.toUpperCase(),PAL.amber);
-  updateHUD();
-  $('adminPanel').classList.add('hide');
-  if(gameState==='PAUSED') resume();
-};
-
-$('maxGrid').innerHTML=BASE_IDS.map(id=>
-  `<button class="btn ghost" data-w="${id}">${BASE_META[id].n}</button>`).join('');
-$('maxGrid').onclick=e=>{
-  const b=e.target.closest('button'); if(!b) return;
-  const id=b.dataset.w, s=player.w[id];
-  if(s.fused){ dbgNote('ALREADY FUSED',PAL.danger); return; }
-  s.l=MAX_BASE; updateHUD(); sfx.levelup();
-  dbgNote(BASE_META[id].n.toUpperCase()+' MAXED',PAL.amber);
-};
-
-/* Live FPS + entity readout. #fpsMeter is styled in the shell but only ever
-   populated here, so production ships an empty, hidden div. */
-setInterval(()=>{
-  if(gameState!=='PLAYING') return;
-  let n=0; for(const a of ALL_POOLS()) n+=a.length;
-  $('fpsMeter').textContent=`${fpsAvg.toFixed(0)} fps · ${autoQuality} · ${n} ent`;
-},250);
-/* ==========================================================================
    BOOT
 
    Nothing here waits on the network. The whole game is one self-contained
@@ -4340,6 +4362,9 @@ addEventListener('load', paintIdleFrame);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ resize(); if(gameState!=='PLAYING') paintIdleFrame(); } });
 addEventListener('pointerdown',()=>{ initAudio(); if(actx&&actx.state==='suspended') actx.resume(); },{once:true});
 
+
+/* Alloy account sync (96_account.js). Last, so DEV_PANEL is already decided. */
+cloudStart();
 </script>
 </body>
 </html>

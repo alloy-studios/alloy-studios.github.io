@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-27",
+      "title": "Four more games save to your Alloy account",
+      "body": "Neon Survivor Legends, Meridian, Rank Zero and Redwater now sync to your Alloy account, so your upgrades, skins, levels and story progress follow you to any device. Sign in with the button at the top of the page. Progress you already have in this browser is uploaded the first time you do. Every save is checked on our server first, so nobody can skip the grind with DevTools. Grand Line also gets the new check against unofficial copies; it doesn't need saving, because every voyage starts fresh.",
+      "game": null
+    },
+    {
+      "date": "2026-09-27",
       "title": "Speed Simulator is fully on Alloy accounts",
       "body": "Speed Simulator now saves through your Alloy account like Orbit Dash, and its old login is gone for good. If you played before, your progress was carried over, and it comes across the first time you sign in, even if that's months from now. The game also loads faster now, because it no longer fetches part of itself from a server.",
       "game": "speed-simulator"

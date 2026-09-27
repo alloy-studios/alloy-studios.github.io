@@ -17,6 +17,7 @@ const REGISTRY = {
   "meridian": require("./meridian"),
   "redwater": require("./redwater"),
   "leveling-the-system": require("./leveling-the-system"),
+  "neon-survivor-legends": require("./neon-survivor-legends"),
 };
 
 function validatorFor(gameId) {
