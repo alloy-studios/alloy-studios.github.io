@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-27",
+      "title": "Speed Simulator is fully on Alloy accounts",
+      "body": "Speed Simulator now saves through your Alloy account like Orbit Dash, and its old login is gone for good. If you played before, your progress was carried over, and it comes across the first time you sign in, even if that's months from now. The game also loads faster now, because it no longer fetches part of itself from a server.",
+      "game": "speed-simulator"
+    },
+    {
+      "date": "2026-09-27",
       "title": "Only the real thing",
       "body": "Some sites show browser games inside their own pages, wrapped in their ads, or copy them outright. Every page here now notices when it's been embedded somewhere else and points you back to alloy-studios.github.io instead. Orbit Dash also refuses to run as a copy on another site; the rest of the games get the same check as they move to Alloy accounts. If a game ever says you're on an unofficial copy, its button takes you to the real one - free, with your progress saved to your account.",
       "game": null

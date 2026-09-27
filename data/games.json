@@ -184,7 +184,8 @@
       "accent": "#f472b6",
       "controls": "Mouse / touch",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/speed-simulator.webp"
+      "thumb": "/assets/thumbs/speed-simulator.webp",
+      "rev": "20260927-1411"
     },
     {
       "id": "cosmic-climb",

@@ -46,7 +46,7 @@ const NAME_RE = /^[A-Za-z0-9_]{3,16}$/;
 // legacy docs can no longer change, so each player is mirrored one last time and
 // then skipped. Never remove the mirroring itself — a player who has not visited
 // since the switch still needs their old save carried across.
-const LEGACY_FROZEN = false;
+const LEGACY_FROZEN = true;   // Speed Simulator moved to Alloy on 2026-09-27
 
 // One-off gifts: reward ids granted to a specific player on their next session,
 // keyed by the SHA-256 of their trimmed, lower-cased sign-in email so no address
