@@ -94,7 +94,8 @@
       "accent": "#84cc16",
       "controls": "WASD move, mouse aim, click cutlass, Q E R Devil Fruit, Space dash, F talk, M chart",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/grand-line.webp"
+      "thumb": "/assets/thumbs/grand-line.webp",
+      "rev": "20260927-1444"
     },
     {
       "id": "leveling-the-system",
