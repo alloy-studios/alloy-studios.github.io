@@ -16,6 +16,7 @@ const REGISTRY = {
   "speed-simulator": require("./speed-simulator"),
   "meridian": require("./meridian"),
   "redwater": require("./redwater"),
+  "leveling-the-system": require("./leveling-the-system"),
 };
 
 function validatorFor(gameId) {

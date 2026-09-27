@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+    /* Alloy Studios home check - keep this the FIRST script in <head>. */
+    (function () {
+      var GAME = "leveling-the-system";                          // this game's id on the site
+      var h = location.hostname;
+      var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+      var stranger = false;
+      try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+      catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+      if (home && !stranger) return;
+      var url = "https://alloy-studios.github.io/" + GAME + "/";
+      document.documentElement.innerHTML =
+        '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+        '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+        'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+        '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+        '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+        '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+        'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+        'Play it at alloy-studios.github.io</a></div></body>';
+      if (window.stop) window.stop();                            // stop the rest of the page loading
+      throw new Error("Alloy Studios: not on the home site");
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RANK ZERO — Sovereign Protocol</title>
     <style>
@@ -266,6 +290,11 @@
         .ledger-drops { margin-top: 18px; text-align: left; }
         .ledger-drop { font-family: var(--ui); font-size: 15px; padding: 5px 0 5px 14px; border-left: 2px solid var(--gold); margin-bottom: 5px; color: var(--vellum); }
         .ledger-note { color: #6f6959; font-size: 14px; font-style: italic; margin-top: 16px; }
+        .alloy-status { font-family: var(--ui); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #7d7563; }
+        .alloy-status.ok { color: #9c8a5c; }
+        .alloy-status.warn { color: #b8745f; }
+        .alloy-status.guest { color: var(--gold); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+        .ledger .alloy-status { margin: 14px 0 -6px; }
         .ledger button { margin-top: 26px; }
 
         /* ============================================================
@@ -401,6 +430,7 @@
             <div class="ledger-gradelabel">GRADE ATTAINED</div>
             <div class="ledger-rows" id="ledger-rows"></div>
             <div class="ledger-drops" id="ledger-drops"></div>
+            <div class="alloy-status" style="display:none" onclick="alloySignIn()"></div>
             <button class="gate-enter" onclick="closeLedger()">CLOSE THE PAGE</button>
         </div>
     </div>
@@ -428,6 +458,7 @@
                     <div style="text-align: right;">
                         <div style="font-family: 'Cinzel'; font-size: 20px; color: var(--sys-purple); font-weight: bold; letter-spacing: 1px;" id="st-job">CLASS: NONE</div>
                         <div style="color: var(--sys-gold); font-size: 17px; margin-top: 5px; font-weight: bold; font-family: 'Cinzel';">G <span id="st-gold">0</span></div>
+                        <div class="alloy-status" style="display:none; margin-top: 7px;" onclick="alloySignIn()"></div>
                     </div>
                 </div>
                 <div style="text-align: center; color: var(--sys-blue); font-size: 20px; margin-bottom: 22px; font-family: 'Cinzel'; font-weight: bold; letter-spacing: 1px; text-shadow: 0 0 12px var(--sys-blue-glow);">UNALLOCATED POINTS: <span id="st-ap" style="color:#fff; font-size: 26px;">0</span></div>
@@ -729,36 +760,180 @@ function clampArray(arr, max) { if (arr.length > max) arr.splice(0, arr.length -
 function formatTime(frames) { const secs = Math.floor(frames / 60); return `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`; }
 function getNextExpForLevel(level) { return Math.floor(70 + Math.pow(level, 1.45) * 45 + level * 18); }
 
-function saveProgress() {
-    try {
-        const data = {
-            level: player.level, exp: player.exp, nextExp: player.nextExp, gold: player.gold, ap: player.ap,
-            baseStats: player.baseStats, job: player.job, inventory: player.inventory, equipment: player.equipment
-        };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-    } catch (err) {}
+/* The save is the same object locally and in the cloud. alloy/validator.js
+   cleans exactly these fields server-side. */
+function packSave() {
+    return {
+        level: player.level, exp: player.exp, nextExp: player.nextExp, gold: player.gold, ap: player.ap,
+        baseStats: { ...player.baseStats }, job: player.job, inventory: player.inventory.slice(),
+        equipment: { weapon: player.equipment.weapon, armor: player.equipment.armor || null }
+    };
+}
+function applySave(data) {
+    if (!data || typeof data !== 'object') return;
+    player.level = Math.max(1, Math.floor(Number(data.level)) || 1);
+    player.exp = Math.max(0, Number(data.exp) || 0);
+    const tunedNextExp = getNextExpForLevel(player.level);
+    const savedNextExp = Math.max(100, Number(data.nextExp) || tunedNextExp);
+    player.nextExp = savedNextExp > tunedNextExp * 1.25 ? tunedNextExp : savedNextExp;
+    player.gold = Math.max(0, Number(data.gold) || 0);
+    player.ap = Math.max(0, Number(data.ap) || 0);
+    player.baseStats = { str: 10, agi: 10, vit: 10, per: 10, int: 10, ...(data.baseStats || {}) };
+    player.job = JOBS[data.job] ? data.job : 'none';
+    player.inventory = Array.isArray(data.inventory) ? data.inventory.filter(id => ITEMS[id]).slice(0, INVENTORY_SIZE) : ['w_rusty'];
+    if (!player.inventory.includes('w_rusty')) player.inventory.unshift('w_rusty');
+    const eq = data.equipment || {};
+    player.equipment.weapon = ITEMS[eq.weapon] ? eq.weapon : 'w_rusty';
+    player.equipment.armor = ITEMS[eq.armor] ? eq.armor : null;
+}
+function writeLocal() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(packSave())); } catch (err) {}
+}
+/* routine = coalesced cloud save (stat clicks, mid-run level-ups); anything
+   else is a checkpoint and goes out straight away. */
+function saveProgress(routine) {
+    writeLocal();
+    pushCloud(!routine);
 }
 function loadProgress() {
     try {
         const raw = localStorage.getItem(SAVE_KEY); if (!raw) return;
-        const data = JSON.parse(raw);
-        player.level = Math.max(1, Number(data.level) || 1);
-        player.exp = Math.max(0, Number(data.exp) || 0);
-        const tunedNextExp = getNextExpForLevel(player.level);
-        const savedNextExp = Math.max(100, Number(data.nextExp) || tunedNextExp);
-        player.nextExp = savedNextExp > tunedNextExp * 1.25 ? tunedNextExp : savedNextExp;
-        player.gold = Math.max(0, Number(data.gold) || 0);
-        player.ap = Math.max(0, Number(data.ap) || 0);
-        player.baseStats = { ...player.baseStats, ...(data.baseStats || {}) };
-        if (JOBS[data.job]) player.job = data.job;
-        if (Array.isArray(data.inventory)) player.inventory = data.inventory.filter(id => ITEMS[id]).slice(0, INVENTORY_SIZE);
-        if (!player.inventory.includes('w_rusty')) player.inventory.unshift('w_rusty');
-        if (data.equipment) {
-            player.equipment.weapon = ITEMS[data.equipment.weapon] ? data.equipment.weapon : 'w_rusty';
-            player.equipment.armor = ITEMS[data.equipment.armor] ? data.equipment.armor : null;
-        }
+        applySave(JSON.parse(raw));
     } catch (err) {}
 }
+
+/* ---------- Alloy account ----------
+   Optional. On alloy-studios.github.io the site shell hands this iframe
+   window.AlloyAccount; opened on its own (a file, localhost) AA is null and the
+   game only ever touches localStorage. The server re-checks every number we
+   send (alloy/validator.js), so nothing here needs to be trusted. */
+const ALLOY_ID = 'leveling-the-system';
+const AA = (() => {
+    try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+    catch (_) { return null; }
+})();
+// Which account the local save belongs to (unset = guest progress). A save that
+// belongs to someone else is parked under SAVE_KEY + '.' + uid, never uploaded
+// into the account that just signed in.
+const OWNER_KEY = 'rankzero_save_owner';
+const cloud = { uid: null, loaded: false, saving: false, synced: false, failed: false, pullPending: false, pull: 0, seq: 0 };
+let liveEvents = [];
+
+function readLocalJSON(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (err) { return null; } }
+function writeLocalKey(key, val) { try { if (val === null) localStorage.removeItem(key); else localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val)); } catch (err) {} }
+function readOwner() { try { return localStorage.getItem(OWNER_KEY) || null; } catch (err) { return null; } }
+
+/* Total EXP ever earned: how far along a save is. */
+function progressOf(s) {
+    if (!s) return -1;
+    let total = Math.max(0, Number(s.exp) || 0);
+    const lvl = Math.max(1, Math.floor(Number(s.level)) || 1);
+    for (let l = 1; l < lvl; l++) total += getNextExpForLevel(l);
+    return total;
+}
+function sameSave(a, b) {
+    if (!a || !b) return false;
+    const ea = a.equipment || {}, eb = b.equipment || {}, sa = a.baseStats || {}, sb = b.baseStats || {};
+    return a.level === b.level && Math.abs((a.exp || 0) - (b.exp || 0)) < 0.01 && a.nextExp === b.nextExp
+        && a.gold === b.gold && a.ap === b.ap && a.job === b.job
+        && ['str', 'agi', 'vit', 'per', 'int'].every(s => sa[s] === sb[s])
+        && JSON.stringify(a.inventory || []) === JSON.stringify(b.inventory || [])
+        && ea.weapon === eb.weapon && (ea.armor || null) === (eb.armor || null);
+}
+
+async function pullCloud() {
+    if (!AA) return;
+    const user = AA.user();
+    if (user && cloud.loaded && user.uid === cloud.uid) return;   // a name change: already in sync
+    const my = ++cloud.pull;
+    cloud.uid = user ? user.uid : null;
+    cloud.loaded = false; cloud.synced = false; cloud.failed = false; cloud.saving = false; cloud.pullPending = false;
+    liveEvents = [];
+    renderAlloyStatus();
+    if (!user) return;
+    // Signed in mid-rift: finish the run first, then sync (winGate / dieGate).
+    if (gameState === 'combat') { cloud.pullPending = true; return; }
+    let r = null;
+    try { r = await AA.load(ALLOY_ID); } catch (err) { r = null; }
+    if (my !== cloud.pull) return;               // signed out / switched account meanwhile
+    if (!r) { cloud.failed = true; renderAlloyStatus(); return; }
+    const uid = user.uid, owner = readOwner();
+    // This account's local progress: the live save if it is theirs (or a guest's),
+    // otherwise the copy parked the last time someone else signed in here.
+    const mine = !owner || owner === uid;
+    const local = mine ? packSave() : readLocalJSON(SAVE_KEY + '.' + uid);
+    if (!mine) writeLocalKey(SAVE_KEY + '.' + owner, packSave());
+    const theirs = r.data || null;
+    // Higher progress wins. On a tie the cloud wins, unless the local save is
+    // already this account's (then it holds anything bought offline).
+    const pl = progressOf(local), pc = progressOf(theirs);
+    const useLocal = local && (!theirs || pl > pc || (owner === uid && pl === pc));
+    if (useLocal) applySave(local);
+    else if (theirs) applySave(theirs);
+    else applySave({ level: 1, exp: 0, nextExp: 100, gold: 0, ap: 5 });   // someone else's device, empty account: fresh start
+    writeLocalKey(OWNER_KEY, uid);
+    writeLocalKey(SAVE_KEY + '.' + uid, null);
+    writeLocal();
+    cloud.loaded = true;
+    if (gameState !== 'combat') updateHubUI();
+    if (!sameSave(packSave(), theirs)) pushCloud(true);
+    else { cloud.synced = true; renderAlloyStatus(); }
+    try {
+        const evs = await AA.events(ALLOY_ID);
+        if (my === cloud.pull) liveEvents = (evs || []).filter(e => e.live);
+    } catch (err) {}
+}
+
+function pushCloud(now) {
+    if (!AA || !cloud.loaded || !AA.user()) return;
+    const uid = cloud.uid, sent = packSave(), my = ++cloud.seq;
+    cloud.saving = true; renderAlloyStatus();
+    Promise.resolve(AA.save(ALLOY_ID, sent, { now: !!now })).then(res => {
+        if (my !== cloud.seq || uid !== cloud.uid) return;   // a newer save went out, or the account changed
+        cloud.saving = false;
+        cloud.synced = !!(res && res.ok); cloud.failed = !cloud.synced;
+        // The server stores what it accepted. If it changed anything, that is the
+        // real save now. Mid-rift, the end-of-run checkpoint's reply covers it.
+        if (cloud.synced && res.data && !sameSave(res.data, sent) && gameState !== 'combat') {
+            applySave(res.data); writeLocal(); updateHubUI();
+        }
+        renderAlloyStatus();
+    }).catch(() => {
+        if (my !== cloud.seq) return;
+        cloud.saving = false; cloud.synced = false; cloud.failed = true; renderAlloyStatus();
+    });
+}
+
+/* End of a run: checkpoint save, event counters, and any sync that waited. */
+function alloyRunEnd(cleared, kills) {
+    saveProgress();
+    if (AA && cloud.loaded && AA.user()) {
+        for (const e of liveEvents) {
+            const n = e.metric === 'kills' ? kills : (e.metric === 'rifts' && cleared ? 1 : 0);
+            if (n <= 0) continue;
+            if (e.type === 'leaderboard') AA.score(e.id, n); else AA.progress(e.id, n);
+        }
+    }
+    // A sync that waited for the run to end, or a load that couldn't reach the server
+    if (AA && AA.user() && (cloud.pullPending || (!cloud.loaded && cloud.failed))) pullCloud();
+}
+
+function renderAlloyStatus() {
+    let text = '', cls = '';
+    if (AA) {
+        if (!AA.user()) { text = 'Sign in to keep your progress'; cls = 'guest'; }
+        else if (cloud.pullPending) text = 'Your Alloy account syncs after this rift';
+        else if (!cloud.loaded && !cloud.failed) text = 'Syncing with your Alloy account…';
+        else if (cloud.saving) text = 'Saving to your Alloy account…';
+        else if (cloud.synced) { text = 'Saved to your Alloy account'; cls = 'ok'; }
+        else { text = 'Couldn’t reach your Alloy account — saved on this device'; cls = 'warn'; }
+    }
+    document.querySelectorAll('.alloy-status').forEach(el => {
+        el.textContent = text; el.className = 'alloy-status' + (cls ? ' ' + cls : '');
+        el.style.display = text ? '' : 'none';
+    });
+}
+function alloySignIn() { if (AA && !AA.user()) AA.signIn(); }
 
 function getStats() {
     let stats = { ...player.baseStats }; let gearBonus = { str: 0, agi: 0, vit: 0, per: 0, int: 0 };
@@ -805,13 +980,13 @@ function addStat(stat, n, ev) {
     if (give <= 0) return;
     player.baseStats[stat] += give;
     player.ap -= give;
-    saveProgress(); updateHubUI();
+    saveProgress(true); updateHubUI();
 }
 function addStatAll(stat) {
     if (player.ap <= 0) return;
     player.baseStats[stat] += player.ap;
     player.ap = 0;
-    saveProgress(); updateHubUI();
+    saveProgress(true); updateHubUI();
 }
 /* Press-and-hold on the + button keeps spending, accelerating as it goes. */
 let statHold = null;
@@ -993,24 +1168,29 @@ function togglePause(force) {
 }
 function abandonGate() { togglePause(false); dieGate(); }
 
+/* Dev console and cheats only exist when the game runs locally (a file or
+   localhost). On the site they would be a cheat that follows a cloud save. */
+const DEV_LOCAL = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 function checkDevPassword() {
+    if (!DEV_LOCAL) return;
     const input = document.getElementById('dev-pwd-input');
     if (input.value === 'adminhitafekajmustard') { document.getElementById('password-modal').classList.add('hidden'); document.getElementById('testing-panel').style.display = 'block'; input.value = ''; sysAlert("DEVELOPER MODE UNLOCKED", "#9a63e8"); }
     else { document.getElementById('password-modal').classList.add('hidden'); input.value = ''; sysAlert("ACCESS DENIED", "#d8402f"); }
 }
-function cheatAddExp() { player.exp += 100000; checkLevelUp(); saveProgress(); updateHubUI(); }
-function cheatAddGold() { player.gold += 1000000; saveProgress(); updateHubUI(); }
-function cheatAddAP() { player.ap += 100; saveProgress(); updateHubUI(); }
-function cheatGetAllItems() { Object.keys(ITEMS).forEach(key => { if (!player.inventory.includes(key) && player.inventory.length < INVENTORY_SIZE) player.inventory.push(key); }); saveProgress(); updateHubUI(); sysAlert("DEV: ITEMS ADDED", "#9a63e8"); }
+function cheatAddExp() { if (!DEV_LOCAL) return; player.exp += 100000; checkLevelUp(); saveProgress(); updateHubUI(); }
+function cheatAddGold() { if (!DEV_LOCAL) return; player.gold += 1000000; saveProgress(); updateHubUI(); }
+function cheatAddAP() { if (!DEV_LOCAL) return; player.ap += 100; saveProgress(); updateHubUI(); }
+function cheatGetAllItems() { if (!DEV_LOCAL) return; Object.keys(ITEMS).forEach(key => { if (!player.inventory.includes(key) && player.inventory.length < INVENTORY_SIZE) player.inventory.push(key); }); saveProgress(); updateHubUI(); sysAlert("DEV: ITEMS ADDED", "#9a63e8"); }
 function cheatGrantItem(itemId) {
+    if (!DEV_LOCAL) return;
     if (!ITEMS[itemId]) { sysAlert("DEV: UNKNOWN ITEM", "#d8402f"); return; }
     if (player.inventory.includes(itemId)) { sysAlert(`DEV: ALREADY OWNED — ${ITEMS[itemId].name}`, "#94897a"); return; }
     if (player.inventory.length >= INVENTORY_SIZE) { sysAlert("DEV: STORAGE FULL", "#d8402f"); return; }
     player.inventory.push(itemId); saveProgress(); updateHubUI(); sysAlert(`DEV: ADDED ${ITEMS[itemId].name}`, getRarityColor(ITEMS[itemId].rarity));
 }
-function cheatGetNewWeapons() { DEV_TEST_WEAPONS.forEach(cheatGrantItem); sysAlert("DEV: NEW WEAPONS READY", "#9a63e8"); }
-function cheatToggleGodMode() { godMode = !godMode; document.getElementById('cheat-god-btn').innerText = `God Mode: ${godMode ? 'ON' : 'OFF'}`; if (godMode && gameState === 'combat') { player.hp = player.maxHp; updateCombatUI(); } }
-function cheatKillAll() { if (gameState === 'combat') { entities.forEach(e => e.hp = 0); } }
+function cheatGetNewWeapons() { if (!DEV_LOCAL) return; DEV_TEST_WEAPONS.forEach(cheatGrantItem); sysAlert("DEV: NEW WEAPONS READY", "#9a63e8"); }
+function cheatToggleGodMode() { if (!DEV_LOCAL) return; godMode = !godMode; document.getElementById('cheat-god-btn').innerText = `God Mode: ${godMode ? 'ON' : 'OFF'}`; if (godMode && gameState === 'combat') { player.hp = player.maxHp; updateCombatUI(); } }
+function cheatKillAll() { if (!DEV_LOCAL) return; if (gameState === 'combat') { entities.forEach(e => e.hp = 0); } }
 function cheatCycleQuality() {
     const order = ['ultra', 'high', 'low'];
     QUALITY.level = order[(order.indexOf(QUALITY.level) + 1) % order.length];
@@ -1133,7 +1313,7 @@ window.addEventListener('keydown', ev => {
     if (isTyping) { if (ev.key === 'Enter' && ev.target.id === 'dev-pwd-input') checkDevPassword(); return; }
     if (keys.hasOwnProperty(key)) { keys[key] = true; ev.preventDefault(); }
     if (ev.key === 'Escape' && gameState === 'combat') { ev.preventDefault(); togglePause(); }
-    if (ev.key === '`' || ev.key === '~') {
+    if (DEV_LOCAL && (ev.key === '`' || ev.key === '~')) {
         const panel = document.getElementById('testing-panel'); const modal = document.getElementById('password-modal');
         if (panel.style.display === 'block') panel.style.display = 'none';
         else { modal.classList.remove('hidden'); setTimeout(() => document.getElementById('dev-pwd-input').focus(), 50); }
@@ -4696,7 +4876,7 @@ function winGate() {
     const goldReward = Math.floor((currentGate.levelRec * 85 + currentGate.waves * 75) * (1 + RANK.best * 0.15));
     player.gold += goldReward;
     const expGained = combatStats.expCollected || 0;
-    checkLevelUp(); saveProgress(); updateHubUI();
+    checkLevelUp(); alloyRunEnd(true, combatStats.kills || 0); updateHubUI();
     showLedger(true, wonDrops, goldReward, expGained);
 }
 
@@ -4741,6 +4921,7 @@ function dieGate() {
     document.getElementById('hud-boss-warning').style.display = 'none';
     document.getElementById('boss-bar-wrap').style.display = 'none';
     showBossDrops(false);
+    checkLevelUp(); alloyRunEnd(false, combatStats.kills || 0);
     updateHubUI();
     showLedger(false, [], 0, 0);
 }
@@ -4756,7 +4937,7 @@ function checkLevelUp() {
             addVfx('level_up', { x: player.x, y: player.y, radius: 260, color: '#e0a93b', life: 1.4, maxLife: 1.4, decay: 0.022, follow: true });
             spawnParticles(player.x, player.y, '#e0a93b', 50, 5, 'spark');
         }
-        saveProgress(); scheduleAlert(30, `LEVEL UP — LV. ${player.level}`);
+        saveProgress(gameState === 'combat'); scheduleAlert(30, `LEVEL UP — LV. ${player.level}`);
     }
 }
 
@@ -8463,7 +8644,7 @@ function mainLoop() {
 }
 
 /* test harness — lets a headless driver step the sim deterministically */
-window.__t = {
+if (DEV_LOCAL) window.__t = {
     step: (n = 1) => { for (let i = 0; i < n; i++) { if (gameState === 'combat') updateCombat(); } },
     enter: (i = 0) => { closeTitle(); enterGate(i); },
     spawn: (kind = 'stalker', n = 1, elite = false, r = 260) => {
@@ -8486,6 +8667,8 @@ mouse.x = width / 2; mouse.y = height / 2;
 validateSkills();
 loadProgress();
 updateHubUI();
+renderAlloyStatus();
+if (AA) { AA.ready.then(pullCloud); AA.onChange(pullCloud); }
 mainLoop();
 
 /* Guards against the class of bug where the per-frame background fill is not

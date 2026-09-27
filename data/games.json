@@ -111,7 +111,8 @@
       "accent": "#8b5cf6",
       "controls": "WASD to move, mouse to aim, dash through a telegraph to parry",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/leveling-the-system.webp"
+      "thumb": "/assets/thumbs/leveling-the-system.webp",
+      "rev": "20260927-1454"
     },
     {
       "id": "echoes",
