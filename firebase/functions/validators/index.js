@@ -15,6 +15,7 @@ const REGISTRY = {
   "orbit-dash": require("./orbit-dash"),
   "speed-simulator": require("./speed-simulator"),
   "meridian": require("./meridian"),
+  "redwater": require("./redwater"),
 };
 
 function validatorFor(gameId) {

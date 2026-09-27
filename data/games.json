@@ -309,7 +309,8 @@
       "accent": "#b91c1c",
       "controls": "WASD move, mouse aim, LMB fire, RMB Dead Eye, Space roll, E use, R reload, Q ability, F awakening, Tab journal, M map",
       "added": "2026-09-18",
-      "thumb": "/assets/thumbs/redwater.webp"
+      "thumb": "/assets/thumbs/redwater.webp",
+      "rev": "20260927-1451"
     },
     {
       "id": "hardburn",

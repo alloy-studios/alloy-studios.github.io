@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "redwater";                                     // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>REDWATER — A Frontier Tale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2913,6 +2937,7 @@ function gainXP(n){
   if(P.xp>=need){ P.xp-=need; P.lvl++; P.sp++;
     P.maxhp+=6; P.hp=P.maxhp;
     toast('LEVEL '+P.lvl, 'A skill point earned — press K', C.gold);
+    checkpoint();
     sfx('chime'); addTrauma(.12);
     for(let i=0;i<26;i++){ const a=rnd(TAU);
       spawnP(P.x,P.y-8,Math.cos(a)*rnd(60,220),Math.sin(a)*rnd(60,220),rnd(.5,1),rnd(1.5,3),C.gold,'spark',{drag:.9}); }
@@ -3501,6 +3526,8 @@ function doneQ(id){
   sfx('chime');
   if(qq.onDone) qq.onDone();
   if(qq.next) offerQ(qq.next);
+  if(qq.board) reportEvent('bounties',1);       // law bounties and Kane's jobs alike
+  checkpoint();
 }
 function giveGun(id){
   if(P.guns.indexOf(id)>=0){ P.money+=200; return; }
@@ -3934,6 +3961,7 @@ function chooseSide(side){
         side==='law'?'Redwater County Sheriff’s Office':'Black Mesa',
         side==='law'?C.law:C.outlaw);
   sfx('drone',{f:side==='law'?70:44,dur:2.6}); sfx('chime');
+  checkpoint();
   // the other side turns on you
   for(const en of ents){
     if(side==='law'&&en.team==='outlaw') en.renegade=true;
@@ -4132,7 +4160,7 @@ function buy(entry){
     const g=GUNS[entry.id];
     if(P.guns.indexOf(entry.id)>=0){ toast('ALREADY OWNED','',C.bone); return; }
     if(P.money<g.price){ toast('NOT ENOUGH COIN','$'+g.price+' is the price.',C.outlaw); sfx('click'); return; }
-    P.money-=g.price; giveGun(entry.id); sfx('coin');
+    P.money-=g.price; giveGun(entry.id); sfx('coin'); checkpoint();
   } else {
     const it=ITEMS[entry.id];
     if(P.money<it.price){ toast('NOT ENOUGH COIN','',C.outlaw); sfx('click'); return; }
@@ -4141,7 +4169,7 @@ function buy(entry){
     else if(entry.id==='ammo_shell') P.ammo.shell+=16;
     else if(entry.id==='ammo_rifle') P.ammo.rifle+=20;
     else P.items[entry.id]=(P.items[entry.id]||0)+1;
-    sfx('coin'); addFloat(P.x,P.y-30,it.n,C.gold,12);
+    sfx('coin'); addFloat(P.x,P.y-30,it.n,C.gold,12); checkpoint();
   }
 }
 function openBoard(kind){
@@ -4200,6 +4228,8 @@ function updateDuel(d){
         P.hp=Math.max(4,P.hp-46); P.honor-=1;
         toast(r==='early'?'YOU DREW EARLY':'HE WAS FASTER','You woke at Doc Perry’s with a bill.',C.outlaw);
       }
+      if(r==='win') reportEvent('duels',1);
+      checkpoint();
     }
   }
 }
@@ -4795,6 +4825,7 @@ function drawJournal(){
   }
   if(btn(x+w-160, y+h-48, 136, 32, 'CLOSE  [TAB]')||press('Tab')||press('Escape')){ mode='play'; }
   if(btn(x+28, y+h-48, 120, 32, 'SAVE')){ saveGame(); }
+  drawCloudLine(x+164, y+h-27, 'left', true);
 }
 
 // ---- the map -------------------------------------------------------------
@@ -4870,7 +4901,7 @@ function drawMap(){
 }
 
 // ---- title / death -------------------------------------------------------
-let titleT=0;
+let titleT=0, titleConfirm=0;
 function drawTitle(){
   // a poster, not a menu
   ctx.fillStyle='#120d10'; ctx.fillRect(0,0,W,H);
@@ -4920,9 +4951,15 @@ function drawTitle(){
   ctx.restore();
   // buttons
   const bw=260, bx=W/2-bw/2;
-  const hasSave = !!localStorage.getItem('redwater_save');
-  if(btn(bx, H*0.60, bw, 40, '        RIDE OUT  —  NEW GAME')) { newGame(); }
+  const hasSave = !!readLocal();
+  // Checkpoints autosave now (and an account may sit behind that), so a stray
+  // NEW GAME would overwrite a real ride at the first job done. Ask once.
+  if(titleConfirm>0) titleConfirm-=dt;
+  const ng = (hasSave && titleConfirm>0) ? '    CLICK AGAIN TO START OVER' : '        RIDE OUT  —  NEW GAME';
+  if(btn(bx, H*0.60, bw, 40, ng)) {
+    if(hasSave && titleConfirm<=0) titleConfirm=4; else { titleConfirm=0; newGame(); } }
   if(hasSave && btn(bx, H*0.60+50, bw, 40, '        CONTINUE')) { loadGame(); }
+  drawCloudLine(W/2, H*0.60+(hasSave?116:66), 'center');
   ctx.save(); ctx.textAlign='center'; ctx.font='11px '+FT; ctx.fillStyle='rgba(232,220,192,.45)';
   ctx.fillText('WASD move  ·  MOUSE aim  ·  LMB fire  ·  RMB dead eye  ·  SPACE roll  ·  E use  ·  R reload', W/2, H-58);
   ctx.fillText('Q ability  ·  F awakening  ·  G dynamite  ·  TAB book  ·  M map  ·  1-5 guns', W/2, H-40);
@@ -4938,7 +4975,8 @@ function drawDeath(){
   ctx.fillText('Doc Perry will take what you had on you.', W/2, H*0.36+34);
   ctx.restore();
   if(btn(W/2-130, H*0.55, 260, 40, '        WAKE AT DOC PERRY’S')){ respawn(); }
-  if(btn(W/2-130, H*0.55+50, 260, 40, '        LOAD LAST SAVE', !!localStorage.getItem('redwater_save'))){ loadGame(); }
+  if(btn(W/2-130, H*0.55+50, 260, 40, '        LOAD LAST SAVE', !!readLocal())){ loadGame(); }
+  drawCloudLine(W/2, H*0.55+116, 'center');
 }
 
 // ==========================================================================
@@ -5407,6 +5445,8 @@ function sim(d){
     updateThrown(d);
     checkGoto();
     updateWorldEvents(d);
+    // routine account save; the client coalesces these to one per 20s anyway
+    if(AA && mode==='play'){ cloudRoutineT-=rawDt; if(cloudRoutineT<=0){ cloudRoutineT=30; cloudSave(false); } }
     // pickups
     for(let i=pickups.length-1;i>=0;i--){ const pk=pickups[i];
       pk.life-=d;
@@ -5537,41 +5577,65 @@ function respawn(){
   for(const e of ents) if(e.state==='combat'&&e.target===P){ e.state='wander'; e.target=null; e.seen=0; }
   mode='play'; fadeT=1.2; grade.red=0;
   toast('YOU LIVED','Doc Perry took your coin for the trouble.','#a89a80');
+  checkpoint();
 }
-function saveGame(){
-  try{
-    const qs={};
-    for(const id in QUESTS) qs[id]={s:QUESTS[id].state,c:QUESTS[id].cur,p:QUESTS[id].prog};
-    const data={
-      v:1, x:P.x, y:P.y, hp:P.hp, maxhp:P.maxhp, money:P.money, xp:P.xp, lvl:P.lvl, sp:P.sp,
-      side:P.side, honor:P.honor, noto:P.noto, wanted:P.wanted, bounty:P.bounty,
-      guns:P.guns, gi:P.gi, mags:P.mags, ammo:P.ammo, items:P.items, perks:P.perks,
-      awaken:P.awaken, kills:P.kills, dayT:dayT, flags:P.flags, legend:P.legend,
-      outside:P.outside||null,
-      q:qs, active:activeQ.slice(), tracked:tracked
-    };
-    localStorage.setItem('redwater_save', JSON.stringify(data));
-    toast('SAVED','The ride is written down.',C.gold); sfx('chime');
-  }catch(e){ toast('COULD NOT SAVE','',C.outlaw); }
+// The story quests are the only quests that can be saved. Board jobs are minted
+// three at a time per board refresh and never survive a reload (a save only
+// restores quests the world has defined), so serialising them just made the
+// save grow for as long as someone played — straight into the server's size cap.
+const SAVE_KEY = 'redwater_save';
+const STORY_Q = ['arrival','crate','twooffers','badge','deadoralive','thestage','raid',
+                 'black','bankjob','rustle','hangsheriff','ledger','widowhunt','minetrouble'];
+
+function buildSave(){
+  const qs={};
+  for(const id of STORY_Q) if(QUESTS[id]) qs[id]={s:QUESTS[id].state,c:QUESTS[id].cur,p:QUESTS[id].prog};
+  return {
+    v:1, x:P.x, y:P.y, hp:P.hp, maxhp:P.maxhp, money:P.money, xp:P.xp, lvl:P.lvl, sp:P.sp,
+    side:P.side, honor:P.honor, noto:P.noto, wanted:P.wanted, bounty:P.bounty,
+    guns:P.guns.slice(), gi:P.gi, mags:Object.assign({},P.mags), ammo:Object.assign({},P.ammo),
+    items:Object.assign({},P.items), perks:Object.assign({},P.perks),
+    awaken:P.awaken, kills:P.kills, dayT:dayT, flags:Object.assign({},P.flags),
+    legend:Object.assign({},P.legend), outside:P.outside||null,
+    q:qs, active:activeQ.filter(function(id){ return STORY_Q.indexOf(id)>=0; }),
+    tracked: STORY_Q.indexOf(tracked)>=0 ? tracked : null
+  };
 }
-function loadGame(){
-  let data=null;
-  try{ data=JSON.parse(localStorage.getItem('redwater_save')); }catch(e){}
-  if(!data){ newGame(); return; }
+function readLocal(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){ return null; } }
+function writeLocal(data){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(data)); return true; }catch(e){ return false; } }
+
+function saveGame(){                               // the campfire / journal SAVE
+  if(writeLocal(buildSave())){ toast('SAVED','The ride is written down.',C.gold); sfx('chime'); cloudSave(true); }
+  else toast('COULD NOT SAVE','',C.outlaw);
+}
+// Quiet autosave at the moments that matter: a job done, a level, a purchase,
+// a side chosen, a duel settled. Keeps the guest save and the account in step.
+function checkpoint(){
+  if(mode==='title' || !P || P.hp<=0) return;
+  writeLocal(buildSave());
+  cloudSave(true);
+}
+
+function applySave(data){
   initWorld();
-  P.x=data.x; P.y=data.y; P.hp=data.hp; P.maxhp=data.maxhp;
-  P.money=data.money; P.xp=data.xp; P.lvl=data.lvl; P.sp=data.sp;
-  P.side=data.side; P.honor=data.honor; P.noto=data.noto;
-  P.wanted=data.wanted; P.bounty=data.bounty;
-  P.guns=data.guns; P.gi=Math.min(data.gi,data.guns.length-1);
-  P.mags=data.mags; P.ammo=data.ammo; P.items=data.items; P.perks=data.perks||{};
+  const guns = (Array.isArray(data.guns) && data.guns.length) ? data.guns.filter(function(g){ return GUNS[g]; }) : [];
+  P.guns = guns.length ? guns : ['rusted'];
+  P.gi = clamp(data.gi|0, 0, P.guns.length-1);
+  P.mags = data.mags||{};
+  for(const g of P.guns) if(P.mags[g]==null) P.mags[g]=GUNS[g].mag;
+  P.x=data.x; P.y=data.y; P.maxhp=data.maxhp||140; P.hp=clamp(data.hp||P.maxhp,1,P.maxhp);
+  P.money=data.money||0; P.xp=data.xp||0; P.lvl=data.lvl||1; P.sp=data.sp||0;
+  P.side=data.side||null; P.honor=data.honor||0; P.noto=data.noto||0;
+  P.wanted=data.wanted||0; P.bounty=data.bounty||0;
+  P.ammo=Object.assign({pistol:0,shell:0,rifle:0}, data.ammo||{});
+  P.items=Object.assign({whiskey:0,bandage:0,dynamite:0,tonic:0}, data.items||{});
+  P.perks=data.perks||{};
   P.awaken=data.awaken||0; P.kills=data.kills||0;
   P.flags=data.flags||{}; P.legend=data.legend||{};
   P.outside=data.outside||null;
-  if(P.perks.grit) {} // maxhp already stored
   if(P.perks.eye){ P.deadeyeMax=160; P.deadeye=160; }
-  dayT=data.dayT||0.32;
-  for(const id in data.q){ if(QUESTS[id]){ QUESTS[id].state=data.q[id].s;
+  dayT=(data.dayT==null)?0.32:data.dayT;
+  for(const id in (data.q||{})){ if(QUESTS[id]){ QUESTS[id].state=data.q[id].s;
     QUESTS[id].cur=data.q[id].c; QUESTS[id].prog=data.q[id].p; } }
   activeQ.length=0;
   for(const id of (data.active||[])) if(QUESTS[id]) activeQ.push(id);
@@ -5581,8 +5645,142 @@ function loadGame(){
   refreshQuestMarks();
   cam.x=P.x; cam.y=P.y;
   mode='play'; fadeT=1.2;
+}
+function loadGame(){
+  const data=readLocal();
+  if(!data){ newGame(); return; }
+  applySave(data);
   toast('SADDLED UP','Where you left off.',C.gold);
 }
+
+// ==========================================================================
+//  ALLOY ACCOUNT
+//  Optional. The site shell hands this iframe window.AlloyAccount; opened as a
+//  file, or anywhere without the site, AA is null and everything stays local.
+//  The server re-checks every field we send (alloy/validator.js), so nothing
+//  here needs to be trusted — it only has to be careful not to lose progress.
+// ==========================================================================
+const AA = (function(){
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+const AA_ID = 'redwater';
+// loaded: the first AA.load finished, so writing is safe.  tried: we asked.
+const cloud = { signedIn:false, tried:false, loaded:false, ok:false, events:[], rewards:[] };
+let cloudSeq = 0, cloudRoutineT = 30;
+
+// Which of two saves is further along. A fresh guest ride must never be uploaded
+// over an account that is thirty levels deep, and offline progress on this
+// device must not be thrown away for an older cloud copy — so neither "cloud
+// always wins" nor "newest wins" is safe. Progress is: level, then story jobs
+// finished, then experience. Ties go to the cloud.
+function saveRank(s){
+  if(!s) return [-1,0,0];
+  let done=0; if(s.q) for(const k in s.q) if(s.q[k] && s.q[k].s==='done') done++;
+  return [s.lvl||0, done, s.xp||0];
+}
+function aheadOf(a,b){
+  const x=saveRank(a), y=saveRank(b);
+  for(let i=0;i<3;i++) if(x[i]!==y[i]) return x[i]>y[i];
+  return false;
+}
+
+async function pullCloud(){
+  if(!AA) return;
+  cloud.signedIn = !!AA.user();
+  cloud.tried=false; cloud.loaded=false; cloud.ok=false; cloud.events=[];
+  if(!cloud.signedIn) return;
+  let r=null;
+  try{ r = await AA.load(AA_ID); }catch(e){ r=null; }
+  cloud.tried = true;
+  if(!r) return;                                  // unreachable: stay local, write nothing
+  cloud.rewards = r.rewards || [];
+  const playing = mode!=='title';
+  const mine = playing ? buildSave() : readLocal();
+  const theirs = r.data;
+  cloud.loaded = true;
+  if(theirs && !aheadOf(mine, theirs)){
+    writeLocal(theirs);
+    if(playing){ applySave(theirs); toast('YOUR RIDE','Picked up from your Alloy account.',C.gold); }
+    cloud.ok = true;
+  } else if(mine){
+    const res = await AA.save(AA_ID, mine, {now:true}).catch(function(){ return null; });
+    cloud.ok = !!(res && res.ok);
+    if(cloud.ok){ if(playing) adoptClamps(mine, res.data); writeLocal(playing? buildSave() : res.data); }
+  } else cloud.ok = true;                         // nothing anywhere yet
+  try{ cloud.events = (await AA.events(AA_ID)).filter(function(e){ return e.live; }); }catch(e){}
+}
+
+// The server's reply is what exists. But the player keeps playing while a save
+// is in flight, so the reply is adopted as a CORRECTION to what was sent — a
+// clamp of 300 coins takes 300 coins, it does not undo the 50 earned since.
+function adoptClamps(sent, got){
+  if(!got || !P) return;
+  const nums = ['money','xp','lvl','sp','maxhp','kills','awaken'];
+  for(const k of nums){ const d=(got[k]||0)-(sent[k]||0); if(d) P[k]=(P[k]||0)+d; }
+  for(const k of ['pistol','shell','rifle']){
+    const d=((got.ammo||{})[k]||0)-((sent.ammo||{})[k]||0); if(d) P.ammo[k]=Math.max(0,(P.ammo[k]||0)+d); }
+  for(const k in (sent.items||{})){
+    const d=((got.items||{})[k]||0)-((sent.items||{})[k]||0); if(d) P.items[k]=Math.max(0,(P.items[k]||0)+d); }
+  if(Array.isArray(got.guns)){
+    P.guns = P.guns.filter(function(g){ return sent.guns.indexOf(g)<0 || got.guns.indexOf(g)>=0; });
+    if(!P.guns.length) P.guns=['rusted'];
+    P.gi = clamp(P.gi,0,P.guns.length-1);
+  }
+  if(got.perks) for(const k in P.perks) if(sent.perks[k] && !got.perks[k]) delete P.perks[k];
+  P.hp = Math.min(P.hp, P.maxhp);
+}
+
+function cloudSave(now){
+  if(!AA || !cloud.loaded || !AA.user()) return;  // never write before the first load
+  const my = ++cloudSeq, sent = buildSave();
+  AA.save(AA_ID, sent, {now:!!now}).then(function(res){
+    if(my!==cloudSeq) return;                     // a newer save supersedes this reply
+    cloud.ok = !!(res && res.ok);
+    if(cloud.ok){ adoptClamps(sent, res.data); writeLocal(buildSave()); }
+  }).catch(function(){ if(my===cloudSeq) cloud.ok=false; });
+}
+
+// Event metrics — only the two the validator can bound (see alloy/validator.js).
+function reportEvent(metric, n){
+  if(!AA || !AA.user()) return;
+  for(const e of cloud.events)
+    if(e.metric===metric && e.type!=='leaderboard'){ try{ AA.progress(e.id, n); }catch(_){} }
+}
+
+function cloudStatus(){
+  if(!AA) return null;
+  if(!AA.user()) return { t:'Sign in to keep your ride on your Alloy account', c:'#a89a80', signIn:true };
+  if(!cloud.tried) return { t:'Reaching your Alloy account…', c:'#a89a80' };
+  if(!cloud.loaded || !cloud.ok) return { t:'Alloy account unreachable — saving on this device', c:C.outlaw };
+  return { t:'Saved to your Alloy account', c:C.gold };
+}
+// One small line wherever the ride is saved or lost. `onPaper` picks ink over
+// bone for the journal's paper panel.
+function drawCloudLine(x, y, align, onPaper){
+  const s=cloudStatus(); if(!s) return;
+  ctx.save(); ctx.textAlign=align||'left'; ctx.textBaseline='alphabetic'; ctx.font='11px '+FT;
+  ctx.fillStyle = onPaper && s.c==='#a89a80' ? 'rgba(33,26,28,.6)' : s.c;
+  ctx.fillText(s.t, x, y);
+  const tw=ctx.measureText(s.t).width;
+  ctx.restore();
+  if(s.signIn){
+    // Its own pill: the paper-panel btn() is ink on paper and vanishes on the
+    // dark title and death screens, which is exactly where this button lives.
+    const w=96, h=24, bx = align==='center' ? x-w/2 : x+tw+12, by = align==='center' ? y+10 : y-17;
+    const over = hit(bx,by,w,h), dark = !onPaper;
+    ctx.save();
+    ctx.fillStyle = over ? C.gold : (dark ? 'rgba(240,180,41,.14)' : 'rgba(33,26,28,.08)');
+    ctx.beginPath(); rr(bx,by,w,h,h/2); ctx.fill();
+    ctx.strokeStyle = dark ? C.gold : C.ink; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.fillStyle = over ? C.ink : (dark ? C.gold : C.ink);
+    ctx.font='11px '+FT; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('SIGN IN', bx+w/2, by+h/2+1);
+    ctx.restore();
+    if(over && mouse.clicked){ mouse.clicked=false; sfx('ui',{f:600}); try{ AA.signIn(); }catch(_){} }
+  }
+}
+if(AA){ AA.ready.then(pullCloud); AA.onChange(pullCloud); }
 
 // ---- go -----------------------------------------------------------------
 resize();
@@ -5632,10 +5830,18 @@ window.__t = {
 //  Off unless the page is opened with ?test (or you hit the ` key).
 //  Nothing here runs in a normal game, so the shipped build stays honest.
 // ==========================================================================
-const DBG = window.DBG = {
+// The bench grants guns, money, levels and god mode. With saves synced to an
+// Alloy account that would be a cheat that follows the player to every device,
+// so it only exists where no account can: localhost, or the file opened
+// directly (a file:// page has its own storage and no AlloyAccount parent).
+const LOCAL_DEV = location.hostname==='localhost' || location.hostname==='127.0.0.1' ||
+                  location.protocol==='file:';
+const DBG = {
   on:false, god:false, noclip:false, speed:1, fps:0, _ft:0, _fn:0, built:false
 };
-const DBG_WANTED = /[?&#]test\b/i.test(location.search + location.hash);
+if(LOCAL_DEV) window.DBG = DBG;             // the game's god/noclip/speed hooks read window.DBG
+else delete window.__t;                     // the headless test hook can set money and guns too
+const DBG_WANTED = LOCAL_DEV && /[?&#]test\b/i.test(location.search + location.hash);
 
 const dbgCSS = `
 #dbg{position:fixed;top:0;right:0;width:310px;max-height:100%;overflow-y:auto;z-index:999;
@@ -5666,7 +5872,6 @@ function dbgBuild(){
   const tip=document.createElement('div'); tip.id='dbgTip';
   tip.textContent='` toggles test bench'; document.body.appendChild(tip);
   // in a normal game the hint says its piece and then gets out of the way
-  if(!DBG_WANTED) setTimeout(function(){ tip.style.transition='opacity .8s'; tip.style.opacity=0; }, 6000);
   if(!DBG_WANTED) setTimeout(function(){ tip.style.transition='opacity .8s'; tip.style.opacity=0; }, 6000);
   // keystrokes typed at the panel must not also drive the player
   ['keydown','keyup','mousedown','mouseup','wheel'].forEach(function(ev){
@@ -5865,11 +6070,13 @@ function dbgToggle(){
   DBG.el.classList.toggle('hid', !DBG.on);
   if(DBG.on) dbgRender();
 }
-window.addEventListener('keydown', function(e){
-  if(e.key==='`' || e.key==='~'){ e.preventDefault(); dbgToggle(); }
-});
-if(DBG_WANTED){ dbgBuild(); DBG.on=true; }
-else { dbgBuild(); DBG.on=false; DBG.el.classList.add('hid'); }
+if(LOCAL_DEV){
+  window.addEventListener('keydown', function(e){
+    if(e.key==='`' || e.key==='~'){ e.preventDefault(); dbgToggle(); }
+  });
+  if(DBG_WANTED){ dbgBuild(); DBG.on=true; }
+  else { dbgBuild(); DBG.on=false; DBG.el.classList.add('hid'); }
+}
 </script>
 </body>
 </html>
