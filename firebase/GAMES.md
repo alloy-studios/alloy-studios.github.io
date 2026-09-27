@@ -32,6 +32,16 @@ slow load can let an empty device upload over a real account.
 Your game never loads Firebase, never shows a login screen, and never talks to
 a database. If it has its own account system today, remove it.
 
+## First: does your game need it?
+
+Every game gets the **home check** (next section) and **prefixed localStorage
+keys**. The account sync is only for games with progress that carries over
+between visits: unlocks, currency, levels, skins, a best score worth keeping.
+If every session starts fresh and nothing is kept, stop after the home check
+and the key prefixes. Skip `AA`, don't write a validator, and say so when you
+report back. Don't invent progress just to have something to save; the owner
+will ask for accounts later if the game grows some.
+
 ## Home check (anti-copy)
 
 Paste this as the **first script in `<head>`**, right after `<meta charset>`,
