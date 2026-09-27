@@ -10,31 +10,51 @@ const MARK = `<div class="mark" aria-hidden="true">
   <span class="sheen"></span>
 </div>`;
 
+// Only the newest few posts show; the rest sit behind a button so the front
+// page doesn't grow with every update.
+const NEWS_SHOWN = 4;
+
 function newsHTML(posts, games) {
   if (!posts.length) return '';
   const byId = Object.fromEntries(games.map(g => [g.id, g]));
+
+  const postHTML = p => {
+    const g = p.game ? byId[p.game] : null;
+    const when = new Date(p.date + 'T00:00:00');
+    const stamp = isNaN(when) ? p.date : when.toLocaleDateString(undefined,
+      { year: 'numeric', month: 'short', day: 'numeric' });
+    return `
+      <article class="post">
+        <time datetime="${Alloy.esc(p.date)}">${Alloy.esc(stamp)}</time>
+        <div>
+          <h3>${Alloy.esc(p.title)}</h3>
+          <p>${Alloy.esc(p.body)}</p>
+          ${g ? `<a class="post-link" href="/${Alloy.esc(g.id)}/">Play ${Alloy.esc(g.title)} &rarr;</a>` : ''}
+        </div>
+      </article>`;
+  };
+  const older = posts.slice(NEWS_SHOWN);
 
   return `
     <section class="news" id="news">
       <div class="section-head"><h2>News</h2>
         <button class="see-all" id="openLog" type="button">Full update log &rarr;</button>
       </div>
-      ${posts.map(p => {
-        const g = p.game ? byId[p.game] : null;
-        const when = new Date(p.date + 'T00:00:00');
-        const stamp = isNaN(when) ? p.date : when.toLocaleDateString(undefined,
-          { year: 'numeric', month: 'short', day: 'numeric' });
-        return `
-          <article class="post">
-            <time datetime="${Alloy.esc(p.date)}">${Alloy.esc(stamp)}</time>
-            <div>
-              <h3>${Alloy.esc(p.title)}</h3>
-              <p>${Alloy.esc(p.body)}</p>
-              ${g ? `<a class="post-link" href="/${Alloy.esc(g.id)}/">Play ${Alloy.esc(g.title)} &rarr;</a>` : ''}
-            </div>
-          </article>`;
-      }).join('')}
+      ${posts.slice(0, NEWS_SHOWN).map(postHTML).join('')}
+      ${older.length ? `
+        <div class="news-older" id="olderNews" hidden>${older.map(postHTML).join('')}</div>
+        <button class="btn ghost news-more" id="moreNews" type="button" aria-controls="olderNews" aria-expanded="false">
+          Show older news (${older.length})</button>` : ''}
     </section>`;
+}
+
+function wireOlderNews() {
+  const btn = document.getElementById('moreNews');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    document.getElementById('olderNews').hidden = false;
+    btn.remove();
+  });
 }
 
 Alloy.boot(async ({ games, site }) => {
@@ -126,6 +146,7 @@ Alloy.boot(async ({ games, site }) => {
     document.getElementById('addr').textContent = address;
   }
 
+  wireOlderNews();
   wireUpdateLog(games);
 });
 

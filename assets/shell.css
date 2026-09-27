@@ -575,6 +575,10 @@ button.see-all:hover { border-color: rgba(var(--accent-rgb), .45); }
   font-size: 13.5px; font-weight: 600; color: var(--accent-2);
 }
 .post-link:hover { text-decoration: underline; }
+.btn.news-more { margin: 22px auto 0; display: flex; width: fit-content; }
+.news-older:not([hidden]) { animation: fadeIn .4s ease both; }
+.news-older .post:last-child { border-bottom: 1px solid var(--line-soft); }
+.news > .post:nth-last-child(3) { border-bottom: 1px solid var(--line-soft); }
 
 @media (max-width: 620px) {
   .post { grid-template-columns: 1fr; gap: 6px; }
