@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "meridian";                                     // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="color-scheme" content="dark">
 <title>MERIDIAN</title>
@@ -486,6 +510,18 @@ h2.sec::after{ content:""; flex:1; height:1px; background:var(--edge); }
   padding:11px 8px; white-space:nowrap;
 }
 
+/* --- Alloy account status: small, and only where there is an account --- */
+.alloy-sync{
+  font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;
+}
+.alloy-sync.synced::before{ content:""; display:inline-block; width:6px; height:6px;
+  margin-right:8px; vertical-align:1px; border-radius:50%; background:#1f9d55; }
+.alloy-sync.guest{ color:var(--ember-ink); cursor:pointer; text-decoration:underline;
+  text-underline-offset:3px; }
+.alloy-sync.offline, .alloy-sync.error{ color:var(--dim); }
+#rcard > .alloy-sync{ padding:12px 32px 0; }
+
 /* ---------------------------------------------------------- result card */
 #result{ position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; }
 #result.on{ display:flex; }
@@ -896,10 +932,27 @@ function fmt(n) { return (n | 0).toLocaleString('en-US'); }
 function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
 /* ---------------------------------------------------------- storage */
+/* Every Alloy Studios game shares ONE origin (alloy-studios.github.io), so
+   every localStorage key must carry the game's own name or another game
+   will overwrite it.  The key was 'rivalforge.v2' -- the old name, which
+   is still unique but is not this game's id on the site.  It is migrated
+   ONCE: read the old key, write the new one, and only then remove the old,
+   so a failed write (quota) leaves the player's save exactly where it was. */
 var Store = {
-  key: 'rivalforge.v2',
+  key: 'meridian.save',
+  legacy: ['rivalforge.v2'],
   read: function () {
-    try { var s = localStorage.getItem(this.key); return s ? JSON.parse(s) : null; }
+    try {
+      var s = localStorage.getItem(this.key);
+      for (var i = 0; !s && i < this.legacy.length; i++) {
+        var old = localStorage.getItem(this.legacy[i]);
+        if (!old) continue;
+        localStorage.setItem(this.key, old);
+        localStorage.removeItem(this.legacy[i]);
+        s = old;
+      }
+      return s ? JSON.parse(s) : null;
+    }
     catch (e) { return null; }
   },
   write: function (o) {
@@ -4224,7 +4277,7 @@ var Econ = (function () {
   E.calBuy = function () {
     if (E.cal >= E.CAL.max) return false;
     if (!E.spend(E.CAL.cost[E.cal + 1])) return false;
-    E.cal++; E.save(); return true;
+    E.cal++; E.save(true); return true;
   };
 
   /* ---------------------------------------------- rolling */
@@ -4316,7 +4369,7 @@ var Econ = (function () {
   E.add = function (item) {
     E.inv.unshift(item);
     if (E.inv.length > 400) E.inv.length = 400;
-    E.save();
+    E.save(true);
     return item;
   };
   E.remove = function (uid) {
@@ -4333,7 +4386,7 @@ var Econ = (function () {
     var v = E.valueOf(it);
     E.remove(uid);
     E.credits += v;
-    E.save();
+    E.save(true);
     return v;
   };
   E.byId = function (uid) { return E.inv.find(function (x) { return x.uid === uid; }); };
@@ -4365,7 +4418,7 @@ var Econ = (function () {
     return !!w && E.loadout[w.slot] === wid;
   };
 
-  E.earn = function (n) { E.credits += n; E.save(); return E.credits; };
+  E.earn = function (n) { E.credits += n; E.save(true); return E.credits; };
   E.spend = function (n) {
     if (E.credits < n) return false;
     E.credits -= n; E.save(); return true;
@@ -4390,7 +4443,7 @@ var Econ = (function () {
     E.stats.drops = (E.stats.drops || 0) + 1;
     E.crates = E.crates || {};
     E.crates[id] = (E.crates[id] || 0) + 1;
-    E.save();
+    E.save(true);
     return { id: id, name: E.CRATES[id].name };
   };
   E.owned = function (crateId) { return (E.crates && E.crates[crateId]) || 0; };
@@ -4448,12 +4501,49 @@ var Econ = (function () {
   };
 
   /* ---------------------------------------------- persistence */
-  E.save = function () {
-    Store.write({
+  /* The save as one plain object -- the SAME shape locally and in the
+     cloud, so the account copy and the guest copy are interchangeable. */
+  E.snapshot = function () {
+    return {
       v: E.version, cr: E.credits, inv: E.inv, eq: E.equip,
       lo: E.loadout, cr8: E.crates || {}, st: E.stats,
       cal: E.cal || 0, dft: E.drift || 0
+    };
+  };
+  /* `now` marks a checkpoint -- an open, a sale, a payout, a purchase --
+     which Alloy sends at once instead of coalescing.  `rev` lets the sync
+     tell whether a server reply is still about the current state. */
+  E.rev = 0;
+  E.onSave = null;
+  E.save = function (now) {
+    E.rev++;
+    Store.write(E.snapshot());
+    if (E.onSave) E.onSave(!!now);
+  };
+  function apply(d) {
+    E.credits = Math.max(0, +d.cr || 0);
+    E.inv = Array.isArray(d.inv) ? d.inv : [];
+    E.equip = (d.eq && typeof d.eq === 'object') ? d.eq : {};
+    E.loadout = (d.lo && typeof d.lo === 'object') ? d.lo : {};
+    // repair anything the catalogue no longer contains
+    Object.keys(DEFAULT_LOADOUT).forEach(function (s) {
+      var wid = E.loadout[s], w = wid && Arsenal.get(wid);
+      if (!w || w.slot !== s) E.loadout[s] = DEFAULT_LOADOUT[s];
     });
+    E.crates = (d.cr8 && typeof d.cr8 === 'object') ? d.cr8 : {};
+    E.stats = (d.st && typeof d.st === 'object') ? d.st : {};
+    E.cal = Math.max(0, Math.min(E.CAL.max, d.cal || 0));
+    E.drift = Math.max(0, d.dft || 0);
+    // drop anything whose skin no longer exists
+    E.inv = E.inv.filter(function (x) { return x && !!Skins.get(x.skin); });
+  }
+  /* Take a save that came from the account server.  Written straight to
+     localStorage rather than through save(), which would push it back up. */
+  E.adopt = function (d) {
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return false;
+    apply(d);
+    Store.write(E.snapshot());
+    return true;
   };
   E.load = function () {
     var d = Store.read();
@@ -4465,22 +4555,8 @@ var Econ = (function () {
        loaded and the missing fields take their defaults; only a save
        older than that (or absent) starts fresh. */
     if (!d || !d.v || d.v < E.MIN_SAVE || d.v > E.version) { E.grant(); return; }
-    E.credits = d.cr || 0;
-    E.inv = Array.isArray(d.inv) ? d.inv : [];
-    E.equip = d.eq || {};
-    E.loadout = d.lo || {};
-    // repair anything the catalogue no longer contains
-    Object.keys(DEFAULT_LOADOUT).forEach(function (s) {
-      var wid = E.loadout[s], w = wid && Arsenal.get(wid);
-      if (!w || w.slot !== s) E.loadout[s] = DEFAULT_LOADOUT[s];
-    });
-    E.crates = d.cr8 || {};
-    E.stats = d.st || {};
-    E.cal = Math.max(0, Math.min(E.CAL.max, d.cal || 0));
-    E.drift = Math.max(0, d.dft || 0);
+    apply(d);
     if (d.v !== E.version) E.save();   // rewrite in the current shape
-    // drop anything whose skin no longer exists
-    E.inv = E.inv.filter(function (x) { return !!Skins.get(x.skin); });
   };
   /* First run: enough to see the whole system working without a grind. */
   E.grant = function () {
@@ -11022,6 +11098,147 @@ var Unbox = (function () {
 })();
 
 
+/* ===================== 87_alloy.js ===================== */
+/* =============================================================
+   87_alloy — Alloy Studios account sync
+
+   On alloy-studios.github.io the game runs in an iframe and the site
+   around it owns sign-in; it hands the game one object,
+   window.parent.AlloyAccount.  Opened on its own (a local file, a
+   standalone copy) there is no parent and AA is null, and then this
+   whole file does nothing: the localStorage save is the save, exactly
+   as before.  Alloy is a sync layer ON TOP of that save, never instead
+   of it.  Contract: AlloyStudios/firebase/GAMES.md.
+
+   Nothing here needs to be trusted.  The server re-checks every field
+   (alloy/validator.js in this repo) and clamps anything too big or too
+   fast, and this file ADOPTS whatever it stored.
+
+   Three rules this file exists to keep:
+
+   - Never write to the cloud before the first load has come back.  A
+     slow load would otherwise let a fresh device upload its empty save
+     over a real account.  `A.loaded` gates every push.
+   - Cloud wins when it exists; an empty cloud gets this device's save.
+   - A reply older than the local state is not adopted.  Routine saves
+     are coalesced for 20 s, so by the time one resolves the player may
+     have opened another crate; adopting the stale reply would roll that
+     open back.  The newer state is already queued in a later save.
+   ============================================================= */
+var Alloy = (function () {
+
+  var ID = 'meridian';
+  var AA = (function () {
+    try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+    catch (e) { return null; }
+  })();
+  // The selftest rewrites the save on purpose -- it must never reach an account.
+  if (/[?&]selftest/.test(location.search)) AA = null;
+
+  var A = { aa: AA, state: AA ? 'guest' : 'local', loaded: false };
+  var gen = 0, lastTry = 0, els = [];
+
+  function user() { try { return AA ? AA.user() : null; } catch (e) { return null; } }
+
+  /* ---------------------------------------------- status line */
+  var TEXT = {
+    guest:   'Sign in to keep your progress',
+    syncing: 'Syncing with your Alloy account',
+    synced:  'Saved to your Alloy account',
+    offline: 'Account unreachable · saved on this device',
+    error:   'Could not save to your account · saved on this device'
+  };
+  function paint() {
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i];
+      e.hidden = A.state === 'local';        // standalone: nothing to say
+      e.textContent = TEXT[A.state] || '';
+      e.className = 'alloy-sync ' + A.state;
+      e.title = A.state === 'guest' ? 'Sign in' : '';
+    }
+  }
+  function setState(s) { A.state = s; paint(); }
+
+  function mount(host, before) {
+    if (!host) return;
+    var e = document.createElement('div');
+    e.className = 'alloy-sync';
+    e.hidden = true;
+    e.addEventListener('click', function () {
+      if (A.state === 'guest' && AA && AA.signIn) AA.signIn();
+    });
+    if (before && before.parentNode === host) host.insertBefore(e, before); else host.appendChild(e);
+    els.push(e);
+  }
+
+  /* ---------------------------------------------- adopting */
+  // Cheap fingerprint of what the player can SEE change, so a reply that
+  // stored exactly what we sent does not rebuild the weapon in their hands.
+  function sig() {
+    return [Econ.credits, Econ.inv.length, Econ.cal, JSON.stringify(Econ.equip),
+            JSON.stringify(Econ.loadout), JSON.stringify(Econ.crates || {})].join('|');
+  }
+  function adopt(data) {
+    var before = sig();
+    if (!Econ.adopt(data) || sig() === before) return;
+    if (window.UI && UI.refreshWallet) UI.refreshWallet();
+    if (window.UI && UI.open && UI.show) UI.show(UI.screen);
+    else if (window.Player && Player.refresh) Player.refresh();
+  }
+
+  /* ---------------------------------------------- load */
+  function sync() {
+    if (!AA) return;
+    var my = ++gen;
+    A.loaded = false;
+    lastTry = Date.now();
+    if (!user()) { setState('guest'); return; }
+    setState('syncing');
+    AA.load(ID).then(function (r) {
+      if (my !== gen) return;                  // a later sign-in/out superseded this
+      if (!r) { setState('offline'); return; } // unreachable: keep local, write nothing
+      A.loaded = true;
+      if (r.data) { adopt(r.data); setState('synced'); }
+      else push(true);                         // empty cloud: this device's save goes up
+    }, function () { if (my === gen) setState('offline'); });
+  }
+
+  /* ---------------------------------------------- save */
+  function push(now) {
+    if (!AA || !user()) return;
+    if (!A.loaded) {
+      // the first load failed; try it again at a checkpoint, not every frame
+      if (A.state === 'offline' && Date.now() - lastTry > 30000) sync();
+      return;
+    }
+    var my = gen, rev = Econ.rev;
+    AA.save(ID, Econ.snapshot(), { now: !!now }).then(function (res) {
+      if (my !== gen) return;
+      if (!res || !res.ok) { setState('error'); return; }
+      if (res.data && Econ.rev === rev) adopt(res.data);
+      setState('synced');
+    }, function () { if (my === gen) setState('error'); });
+  }
+
+  A.init = function () {
+    // the result card (the end of a run) and the header of every terminal screen
+    var card = document.querySelector('#rcard');
+    mount(card, document.querySelector('#ract'));
+    [].forEach.call(document.querySelectorAll('.screen .bar'), function (bar) {
+      mount(bar, bar.querySelector('.xbtn'));
+    });
+    paint();
+    if (!AA) return A;
+    Econ.onSave = push;
+    AA.ready.then(function () { sync(); }, function () { setState('offline'); });
+    if (AA.onChange) AA.onChange(function () { sync(); });
+    return A;
+  };
+
+  return A;
+})();
+
+
 /* ===================== 88_admin.js ===================== */
 /* =============================================================
    88_admin — testing panel
@@ -11348,7 +11565,12 @@ var Game = (function () {
                                          if (window.VFX && VFX.init) VFX.init();
                                          if (window.HUD && HUD.init) HUD.init();
                                          if (window.UI && UI.init) UI.init();
-                                         if (window.Admin && Admin.init) Admin.init();
+                                         // Admin can GIVE items.  With cloud saves that would be a
+                                         // cheat that follows the player to every device, so it
+                                         // only exists on a dev server.
+                                         if (window.Admin && Admin.init &&
+                                             /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) Admin.init();
+                                         if (window.Alloy && Alloy.init) Alloy.init();
                                          // stand a few plates up, so walking into
                                          // the bay is not an empty hall
                                          if (window.Drill && Drill.idle) Drill.idle(); }]
@@ -11563,6 +11785,10 @@ else Game.init();
 (function () {
 
   if (!/[?&]selftest/.test(location.search)) return;
+  // The suite adds, sells and trades items in the REAL save.  On the site
+  // that save belongs to an account, so the suite only runs where it can't.
+  var host = location.hostname;
+  if (!(host === 'localhost' || host === '127.0.0.1' || location.protocol === 'file:')) return;
 
   var results = [], t0 = 0;
   function ok(name, cond, detail) {

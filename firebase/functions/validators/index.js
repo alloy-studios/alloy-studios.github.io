@@ -14,6 +14,7 @@ const generic = require("./generic");
 const REGISTRY = {
   "orbit-dash": require("./orbit-dash"),
   "speed-simulator": require("./speed-simulator"),
+  "meridian": require("./meridian"),
 };
 
 function validatorFor(gameId) {

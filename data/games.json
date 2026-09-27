@@ -64,7 +64,8 @@
       "accent": "#f97316",
       "controls": "Mouse to aim and fire, F to inspect, crates and trade-up in the menus",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/meridian.png"
+      "thumb": "/assets/thumbs/meridian.png",
+      "rev": "20260927-1449"
     },
     {
       "id": "port-vesper",
