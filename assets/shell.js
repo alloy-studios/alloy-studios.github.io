@@ -104,22 +104,14 @@ const Alloy = (() => {
 
   /* ---------- shared header ---------- */
 
-  const LOGO = `<svg viewBox="0 0 32 32" aria-hidden="true">
-    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/>
-    </linearGradient></defs>
-    <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#lg)"/>
-    <path d="M10 22 L16 9 L22 22" stroke="#0b0d14" stroke-width="3"
-          fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M12.5 18 h7" stroke="#0b0d14" stroke-width="3" stroke-linecap="round"/>
-  </svg>`;
+  const LOGO = '<img src="/assets/brand/logo-sm.webp" alt="" width="120" height="97">';
 
   function renderHeader() {
     const el = document.createElement('header');
     el.className = 'site-header';
     el.innerHTML = `
-      <a class="brand" href="/">
-        ${LOGO}<span>Alloy<b>Studios</b></span>
+      <a class="brand" href="/" aria-label="Alloy Studios home">
+        ${LOGO}<span><b>Alloy</b> Studios</span>
       </a>
       <div class="search-wrap">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -196,10 +188,58 @@ const Alloy = (() => {
   function renderFooter() {
     const f = document.createElement('footer');
     f.className = 'site-footer';
-    f.innerHTML = `<span>&copy; ${new Date().getFullYear()} ${esc(state.site.name || 'Alloy Studios')}</span>
+    f.innerHTML = `${LOGO}<span>&copy; ${new Date().getFullYear()} ${esc(state.site.name || 'Alloy Studios')}</span>
       <span>&middot;</span><a href="/">Home</a>
       <span>&middot;</span><a href="/all/">All games</a>`;
     document.body.appendChild(f);
+  }
+
+  /* ---------- motion ---------- */
+
+  const MOTION = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Sections fade up the first time they scroll into view. Only what the
+  // page rendered at boot takes part; anything painted later (a filter on
+  // /all/) just appears. The CSS hides nothing unless html.motion is set.
+  function revealOnScroll() {
+    if (!MOTION || !('IntersectionObserver' in window)) return;
+    const els = document.querySelectorAll(
+      'main .section-head, main .prose, main .hero, main .timeline li, main .contact-body, main .post, main .about, main .grid > .card');
+    if (!els.length) return;
+    document.documentElement.classList.add('motion');
+    const io = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.08 });
+    els.forEach(el => {
+      // Stagger siblings a little: cards in a row, steps in the timeline.
+      const sibs = el.parentElement ? [...el.parentElement.children] : [];
+      const i = sibs.indexOf(el);
+      if (el.matches('.card, .timeline li')) el.style.setProperty('--d', (i % 6) * 0.06 + 's');
+      el.classList.add('reveal');
+      io.observe(el);
+    });
+  }
+
+  // A soft light follows the cursor over cards (see .card::after in the CSS).
+  function cursorLight() {
+    if (!matchMedia('(hover: hover)').matches) return;
+    let raf = 0, ev = null;
+    document.addEventListener('pointermove', e => {
+      ev = e;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const el = ev.target.closest && ev.target.closest('.card, .hero');
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', (ev.clientX - r.left) + 'px');
+        el.style.setProperty('--my', (ev.clientY - r.top) + 'px');
+      });
+    }, { passive: true });
   }
 
   /* ---------- boot ---------- */
@@ -233,6 +273,8 @@ const Alloy = (() => {
     state.games = state.games || [];
     await render(state);
     renderFooter();
+    revealOnScroll();
+    cursorLight();
   }
 
   return { boot, cardHTML, artHTML, artStyle, esc, initials, search, get state() { return state; } };

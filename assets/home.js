@@ -4,15 +4,11 @@
 
 const NEWS_URL = '/data/news.json';
 
-const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true" class="mark">
-  <defs><linearGradient id="mk" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/>
-  </linearGradient></defs>
-  <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#mk)"/>
-  <path d="M10 22 L16 9 L22 22" stroke="#0b0d14" stroke-width="3"
-        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M12.5 18 h7" stroke="#0b0d14" stroke-width="3" stroke-linecap="round"/>
-</svg>`;
+// The logo, plus a layer masked to its shape that a highlight sweeps across.
+const MARK = `<div class="mark" aria-hidden="true">
+  <img src="/assets/brand/logo.webp" alt="" width="560" height="455">
+  <span class="sheen"></span>
+</div>`;
 
 function newsHTML(posts, games) {
   if (!posts.length) return '';
@@ -64,7 +60,7 @@ Alloy.boot(async ({ games, site }) => {
     <section class="masthead">
       <div class="wrap masthead-inner">
         ${MARK}
-        <h1>${Alloy.esc(site.name || 'Alloy Studios')}</h1>
+        <h1 class="chrome-text">${Alloy.esc(site.name || 'Alloy Studios')}</h1>
         <p class="lede">${Alloy.esc(site.tagline || '')}</p>
         <p class="intro">${Alloy.esc(site.intro || '')}</p>
         <div class="cta">
@@ -101,7 +97,7 @@ Alloy.boot(async ({ games, site }) => {
           <div class="section-head"><h2>What's next</h2></div>
           <ol class="timeline">
             ${site.roadmap.map(step => `
-              <li>
+              <li class="${/^shipped/i.test(step.status || '') ? 'done' : 'wip'}">
                 <span class="status">${Alloy.esc(step.status || '')}</span>
                 <h3>${Alloy.esc(step.title || '')}</h3>
                 <p>${Alloy.esc(step.detail || '')}</p>
