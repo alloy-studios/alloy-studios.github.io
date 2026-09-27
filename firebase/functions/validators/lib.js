@@ -36,7 +36,7 @@ const arr = (v, maxLen, fn) => (Array.isArray(v) ? v.slice(0, maxLen).map(fn) : 
  */
 function grow(prev, next, perSecond, ctx, burst = 0) {
   if (prev == null || ctx.first) return next;
-  const ceiling = prev + perSecond * ctx.elapsedSec + burst;
+  const ceiling = ceilingFor(prev, next, perSecond * ctx.elapsedSec + burst);
   return Math.max(prev, Math.min(next, ceiling));
 }
 
@@ -46,7 +46,18 @@ function grow(prev, next, perSecond, ctx, burst = 0) {
  */
 function gain(prev, next, perSecond, ctx, burst = 0) {
   if (prev == null || ctx.first || next <= prev) return next;
-  return Math.min(next, prev + perSecond * ctx.elapsedSec + burst);
+  return Math.min(next, ceilingFor(prev, next, perSecond * ctx.elapsedSec + burst));
+}
+
+/**
+ * elapsedSec is real time, so it is almost never whole — and a rate times a
+ * fractional time is a fractional ceiling. For whole-number quantities
+ * (prestiges, scores, coins) the ceiling is floored, or a clamped save would
+ * hand the game back 12.05 prestiges.
+ */
+function ceilingFor(prev, next, allowance) {
+  const c = prev + allowance;
+  return Number.isInteger(prev) && Number.isInteger(next) ? Math.floor(c) : c;
 }
 
 /** True if the player has claimed this reward id from an Alloy event. */

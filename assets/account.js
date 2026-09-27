@@ -137,11 +137,25 @@
       var q = saveQ[gameId] || (saveQ[gameId] = { data: null, waiters: [], timer: 0, last: 0 });
       q.data = data;
       q.waiters.push(resolve);
-      var due = q.last + ((opts && opts.now) ? SAVE_MIN_GAP_MS : SAVE_EVERY_MS);
       clearTimeout(q.timer);
+      // Page already hidden (tab closing, navigating away): send now or never.
+      if (document.visibilityState === "hidden") return flushSave(gameId);
+      var due = q.last + ((opts && opts.now) ? SAVE_MIN_GAP_MS : SAVE_EVERY_MS);
       q.timer = setTimeout(function () { flushSave(gameId); }, Math.max(0, due - Date.now()));
     });
   }
+
+  // Coalesced saves and event counts wait on timers, which die with the page.
+  // "Hidden" is the last moment a browser reliably lets a request finish, so
+  // everything pending goes out then. pagehide is the backstop.
+  function flushAll() {
+    Object.keys(saveQ).forEach(function (id) { clearTimeout(saveQ[id].timer); flushSave(id); });
+    Object.keys(evQ).forEach(function (id) { clearTimeout(evQ[id].timer); flushEvent(id); });
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") flushAll();
+  });
+  addEventListener("pagehide", flushAll);
 
   function flushSave(gameId) {
     var q = saveQ[gameId];
@@ -208,6 +222,7 @@
       if (kind === "score") q.best = Math.max(q.best, v); else q.add += v;
       q.waiters.push(resolve);
       clearTimeout(q.timer);
+      if (document.visibilityState === "hidden") return flushEvent(eventId);
       q.timer = setTimeout(function () { flushEvent(eventId); },
         Math.max(0, q.last + PROGRESS_EVERY_MS - Date.now()));
     });

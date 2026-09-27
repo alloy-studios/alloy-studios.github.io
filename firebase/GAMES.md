@@ -21,6 +21,14 @@ const AA = (() => {
 **The game must work fully without it.** Keep your existing localStorage save —
 that is the guest save and the offline save. Alloy is a sync layer on top.
 
+**Prefix every localStorage key with your game's name** (`redwater.save`,
+`flashpoint_progress`). Every game runs on the same origin,
+`alloy-studios.github.io`, so localStorage is shared between all of them — a bare
+`save` or `highscore` key will be overwritten by another game.
+
+Don't write to the cloud until your first `AA.load` has finished. Otherwise a
+slow load can let an empty device upload over a real account.
+
 Your game never loads Firebase, never shows a login screen, and never talks to
 a database. If it has its own account system today, remove it.
 
@@ -32,8 +40,8 @@ a database. If it has its own account system today, remove it.
 | `AA.user()` | `{uid, name}` or `null` | Synchronous. |
 | `AA.onChange(fn)` | unsubscribe fn | `fn(user)` on sign-in, sign-out, name change. |
 | `AA.signIn()` | — | Opens the site's sign-in window. |
-| `AA.load(gameId)` | Promise → `{data, rewards, verified}` or `null` | `null` for guests and for "no cloud save yet". |
-| `AA.save(gameId, data, {now})` | Promise → `{ok, data}` or `{ok:false, error}` | Throttled to one call per 20 s per game. Pass `{now:true}` at checkpoints (end of a run, a purchase, a level-up). `data` in the reply is what the server actually stored — adopt it. |
+| `AA.load(gameId)` | Promise → `{data, rewards, verified}` or `null` | `data` is `null` when the account has no cloud save for this game yet — `rewards` is still there. The whole result is `null` only for guests or when the account server is unreachable. |
+| `AA.save(gameId, data, {now})` | Promise → `{ok, data}` or `{ok:false, error}` | Routine calls coalesce to one per 20 s per game. `{now:true}` skips that wait, down to the server's floor of one save per ~4.5 s — use it at checkpoints (end of a run, a purchase, a level-up). Anything pending is sent automatically when the page is hidden or closed, so you don't need your own unload handler. `data` in the reply is what the server actually stored — adopt it. |
 | `AA.events(gameId)` | Promise → event list | Each has `live`, `metric`, `type`, `tiers`, and (signed in) `state: {progress, best, total, top, claimed}`. |
 | `AA.progress(eventId, n)` | Promise | Adds `n` to a personal/community event counter. Batched every 10 s. |
 | `AA.score(eventId, value)` | Promise | Submits a run's score to a leaderboard event (best-of). |
@@ -108,6 +116,13 @@ Rules for writing one:
 - **Derive rates from your code, not from feel.** Orbit Dash's 3000 points/s
   comes from its spawn intervals and multipliers — the comment in
   `orbit-dash.js` shows the working. Put yours in a comment the same way.
+- **Only declare event metrics that have an honest ceiling.** Things bound by
+  a timer, a spawn interval or a cooldown qualify ("one prestige per 9.5 s",
+  "one boss per 20 s"). In incremental games, currency, distance and score
+  compound without limit, so they have no physical maximum. Leave them out
+  rather than invent a number: a guess either lets cheaters win or clamps honest
+  endgame players. A game with only one or two timer-bound metrics is fine, and
+  so is `events: {}`. Speed Simulator's validator is the worked example.
 - **Clamp, don't reject.** A slightly-too-tight rate should cost an honest
   player a sliver, not their whole save. `Reject` is for garbage.
 - **`grow`** for things that only go up (best score, lifetime stats, levels).

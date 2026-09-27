@@ -19,6 +19,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const { validatorFor, Reject } = require("./validators");
 
 admin.initializeApp();
@@ -39,9 +40,21 @@ const MIN_PROGRESS_GAP_MS = 3000;
 const SHARDS = 10;          // community totals are split so writes never queue on one doc
 const TOP_N = 50;
 const NAME_RE = /^[A-Za-z0-9_]{3,16}$/;
-// Speed Simulator still saves to its legacy users/{uid} doc. Set true once
-// its game saves through alloySave, to stop mirroring (and save two reads per session).
-const SPEED_SIM_ON_ALLOY = false;
+// Speed Simulator's pre-Alloy saves live in users/{uid}. While its old build is
+// live those docs keep changing, so they are mirrored into Alloy every session.
+// Set LEGACY_FROZEN = true once the Alloy build of Speed Simulator is live: the
+// legacy docs can no longer change, so each player is mirrored one last time and
+// then skipped. Never remove the mirroring itself — a player who has not visited
+// since the switch still needs their old save carried across.
+const LEGACY_FROZEN = false;
+
+// One-off gifts: reward ids granted to a specific player on their next session,
+// keyed by the SHA-256 of their trimmed, lower-cased sign-in email so no address
+// sits in this public repo. Idempotent — granted once, never duplicated.
+const GIFTS = {
+  // Speed Simulator's gift account — the SHINOBI chassis (decided by Fatih).
+  "1dd9c872d0a9e2fda0e754a8e53d73ef91e8cc975b63d3478838c788d02d4820": { "speed-simulator": ["shinobi"] },
+};
 const RESERVED = ["admin", "alloy", "moderator", "staff", "official", "support", "system"];
 
 // ---------------------------------------------------------------- helpers ---
@@ -60,6 +73,11 @@ function gameIdOf(id) {
 }
 
 const playerRef = (uid) => db.collection("players").doc(uid);
+
+function emailHash(email) {
+  if (typeof email !== "string" || !email) return "";
+  return crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+}
 const ms = (ts) => (ts && typeof ts.toMillis === "function" ? ts.toMillis() : 0);
 
 // ----------------------------------------------------------------- events ---
@@ -137,11 +155,9 @@ exports.alloySession = onCall(CALL, async (req) => {
   const update = { lastSeen: Timestamp.fromMillis(now), sessionStart: Timestamp.fromMillis(now) };
   if (!snap.exists) update.createdAt = Timestamp.fromMillis(now);
 
-  // Until Speed Simulator saves through Alloy itself, it keeps writing its old
-  // users/{uid} document — so the Alloy copy must follow it, not snapshot it
-  // once, or progress made in between would be lost at the switch-over.
-  // Flip SPEED_SIM_ON_ALLOY to true (and redeploy) once it has moved over.
-  if (!SPEED_SIM_ON_ALLOY) {
+  // Keep the Alloy copy of an old Speed Simulator save in step with the legacy
+  // doc (not a one-time snapshot), until the game saves through Alloy itself.
+  if (!p.speedSimDone) {
     const saveRef = ref.collection("saves").doc("speed-simulator");
     const [legacy, cur] = await Promise.all([db.collection("users").doc(uid).get(), saveRef.get()]);
     const curD = cur.exists ? cur.data() : null;
@@ -153,6 +169,19 @@ exports.alloySession = onCall(CALL, async (req) => {
         delete data.updatedAt;
         // Already validated by the old saveProgress function when it was written.
         await saveRef.set({ data, rev: ((curD && curD.rev) || 0) + 1, verified: true, updatedAt: legacyAt, migratedFrom: "users" });
+      }
+    }
+    if (LEGACY_FROZEN || alloyOwned) update.speedSimDone = true;
+  }
+
+  const gift = GIFTS[emailHash(req.auth.token && req.auth.token.email)];
+  if (gift) {
+    for (const [gameId, ids] of Object.entries(gift)) {
+      const have = ((p.rewards || {})[gameId]) || [];
+      const missing = ids.filter((id) => !have.includes(id));
+      if (missing.length) {
+        update.rewards = update.rewards || {};
+        update.rewards[gameId] = FieldValue.arrayUnion(...missing);
       }
     }
   }
@@ -225,19 +254,25 @@ exports.alloySave = onCall(CALL, async (req) => {
     const [s, p] = await Promise.all([tx.get(ref), tx.get(playerRef(uid))]);
     const prev = s.exists ? s.data() : null;
     const last = prev ? ms(prev.updatedAt) : 0;
-    if (prev && now - last < MIN_SAVE_GAP_MS) {
+    if (prev && !prev.migratedFrom && now - last < MIN_SAVE_GAP_MS) {
       throw new HttpsError("resource-exhausted", "Saving too often.");
     }
+    // A save copied in from a legacy system was never part of a chain of saves
+    // this server witnessed, and may be months stale. Comparing against it would
+    // clamp an honest player back to it — or, with a hard jump check, reject
+    // every save they ever make, since a rejected save never replaces it. So the
+    // game's first native save is treated as a first save: absolute caps only.
+    const witnessed = prev && !prev.migratedFrom ? prev : null;
     const ctx = {
       now,
-      first: !prev,
-      elapsedSec: prev ? (now - last) / 1000 : 0,
+      first: !witnessed,
+      elapsedSec: witnessed ? (now - last) / 1000 : 0,
       rewards: ((p.exists && p.data().rewards) || {})[gameId] || [],
     };
 
     let clean;
     try {
-      clean = v.clean(prev ? prev.data : null, data, ctx);
+      clean = v.clean(witnessed ? witnessed.data : null, data, ctx);
     } catch (e) {
       if (e instanceof Reject) throw new HttpsError("invalid-argument", e.message);
       throw e;
