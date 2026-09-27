@@ -246,6 +246,84 @@ main { flex: 1 1 auto; }
   font-size: 14.5px; line-height: 1.65; max-width: 64ch;
 }
 
+/* ---------- Alloy account ---------- */
+
+.acct { position: relative; flex: 0 0 auto; }
+.acct-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 34px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--accent); background: rgba(124, 92, 255, .14);
+  color: var(--text); font: inherit; font-size: 13.5px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+  transition: background .15s;
+}
+.acct-btn:hover { background: rgba(124, 92, 255, .26); }
+.acct-me { border-color: var(--line); background: var(--bg-elev-2); }
+.acct-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); flex: 0 0 auto; }
+.acct-wait { width: 84px; border-color: var(--line); background: var(--bg-elev-2); animation: acctPulse 1.2s ease-in-out infinite; }
+@keyframes acctPulse { 50% { opacity: .45; } }
+
+.acct-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 70;
+  min-width: 230px; padding: 6px;
+  background: var(--bg-elev); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+}
+.acct-who { padding: 10px 10px 12px; border-bottom: 1px solid var(--line-soft); margin-bottom: 4px; }
+.acct-who b { display: block; font-size: 14px; }
+.acct-who span { display: block; font-size: 12px; color: var(--text-faint); margin-top: 3px; word-break: break-all; }
+.acct-who .acct-warn { color: #f0906d; }
+.acct-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 10px; border: 0; border-radius: 6px; background: none;
+  color: var(--text-dim); font: inherit; font-size: 13.5px; cursor: pointer;
+}
+.acct-menu button:hover { background: var(--bg-elev-2); color: var(--text); }
+
+.sheet-card.acct-card { width: min(420px, 100%); }
+.acct-body { padding: 18px 22px 22px; display: flex; flex-direction: column; }
+.acct-body form { display: flex; flex-direction: column; }
+.acct-body label {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 12.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 12px;
+}
+.acct-body input {
+  height: 40px; padding: 0 12px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  font: inherit; font-size: 14.5px; outline: none;
+}
+.acct-body input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 92, 255, .18); }
+.acct-hint { margin: -6px 0 12px; font-size: 12px; color: var(--text-faint); }
+.acct-note { margin: 0 0 14px; font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
+.acct-err { margin: 0 0 10px; min-height: 1em; font-size: 13px; color: #f0906d; }
+.acct-err.ok { color: var(--accent-2); }
+.acct-err:empty { display: none; }
+.acct-body .btn.acct-go { align-self: stretch; width: 100%; justify-content: center; margin-top: 2px; }
+.acct-google {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  height: 42px; border-radius: 999px; border: 1px solid var(--line);
+  background: #fff; color: #1f1f1f; font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer;
+}
+.acct-google svg { width: 18px; height: 18px; }
+.acct-google:hover { filter: brightness(.96); }
+.acct-or { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--text-faint); font-size: 12px; }
+.acct-or::before, .acct-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.acct-link {
+  margin-top: 12px; border: 0; background: none; padding: 0;
+  color: var(--accent-2); font: inherit; font-size: 13px; cursor: pointer; align-self: center;
+}
+.acct-link:hover { text-decoration: underline; }
+.acct-legal { margin: 18px 0 0; font-size: 11px; line-height: 1.5; color: var(--text-faint); text-align: center; }
+.acct-legal a { color: var(--text-dim); text-decoration: underline; }
+.acct-body button:disabled, .acct-body input:disabled { opacity: .6; cursor: default; }
+/* The reCAPTCHA badge is replaced by the attribution text in the sign-in window,
+   which is what Google's terms allow. */
+.grecaptcha-badge { visibility: hidden; }
+
+@media (max-width: 620px) {
+  .acct-btn { height: 32px; padding: 0 11px; font-size: 12.5px; max-width: 120px; }
+}
+
 /* ---------- Update log dialog ---------- */
 
 button.see-all {

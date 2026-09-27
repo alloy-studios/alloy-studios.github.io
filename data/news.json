@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-09-27",
+      "title": "Alloy accounts are rolling out",
+      "body": "There is now a Sign in button at the top of every page. One Alloy account works in every game, so progress follows you between devices instead of living in one browser. Orbit Dash is the first game on it; the rest of the catalogue moves over one at a time. Speed Simulator players: your existing login carries over, and so does your progress. Every save is checked on our server before it's kept, and accounts are what will power limited-time events.",
+      "game": "orbit-dash"
+    },
+    {
       "date": "2026-09-26",
       "title": "Counting visits, without cookies",
       "body": "The site now keeps simple visit counts with GoatCounter, so we can see which games people actually find. It uses no cookies and collects no personal data - just page views, referring sites and rough location - which is also why there is no consent popup.",

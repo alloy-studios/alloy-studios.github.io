@@ -121,7 +121,8 @@ const Alloy = (() => {
       <nav class="header-nav">
         <a class="header-link" href="/">Home</a>
         <a class="header-link" href="/all/">All games</a>
-      </nav>`;
+      </nav>
+      <div class="acct" id="acct"></div>`;
 
     // Mark the tab you are on. Every game page counts as neither.
     const path = location.pathname.replace(/index\.html$/, '');
@@ -131,6 +132,8 @@ const Alloy = (() => {
 
     document.body.prepend(el);
     wireSearch(el);
+    // account.js (loaded before this file) owns the sign-in button
+    if (window.AlloyAccount) window.AlloyAccount._mount(el.querySelector('#acct'));
   }
 
   function wireSearch(header) {

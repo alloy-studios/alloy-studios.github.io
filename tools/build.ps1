@@ -51,7 +51,7 @@ if (-not (Test-Path $previewDir)) { New-Item -ItemType Directory -Path $previewD
 Write-Utf8 (Join-Path $previewDir 'index.html') $wrapper
 
 # Wrapper folders left behind by games that are no longer in the manifest.
-$reserved = @('assets', 'data', 'games', 'tools', 'preview', 'all')
+$reserved = @('assets', 'data', 'games', 'tools', 'preview', 'all', 'firebase')
 $stale = Get-ChildItem -Path $Root -Directory |
   Where-Object { $reserved -notcontains $_.Name -and $_.Name -notlike '.*' } |
   Where-Object { -not $ids.Contains($_.Name) } |

@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// The browser never reads or writes Alloy data directly. Every read and write
+// goes through a Cloud Function in functions/index.js, which runs with admin
+// rights and bypasses these rules — so the rules only need to say "no" to
+// everyone else. Editing a game's code in DevTools cannot touch the database.
+//
+// This file is now the single source of truth for the project's rules. Do not
+// deploy rules from the Speed Simulator folder any more; it would overwrite
+// this one.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // LEGACY: Speed Simulator's pre-Alloy saves. The current Speed Simulator
+    // build still reads these directly. Alloy copies each one into
+    // players/{uid}/saves/speed-simulator on the player's first Alloy session.
+    // Delete this block once Speed Simulator has moved to Alloy saves.
+    match /users/{uid} {
+      allow read:  if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

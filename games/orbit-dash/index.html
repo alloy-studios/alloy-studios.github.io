@@ -154,6 +154,59 @@ const TOL  = 3.0;                 // how close to a ring counts as "on" it
 
 let S, best = +(localStorage.getItem('orbitdash.best.v2') || 0);
 
+/* ---------- Alloy account ----------
+   Optional. The site shell provides window.AlloyAccount to this iframe; with
+   no account, or when this file is opened on its own, everything stays local.
+   The server re-checks every number we send (firebase/functions/validators/
+   orbit-dash.js), so nothing here needs to be trusted. */
+const AA = (() => {
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+const cloud = { signedIn: false, synced: false };
+let liveEvents = [];
+
+function keepBest(v) {
+  if (v > best) {
+    best = v;
+    try { localStorage.setItem('orbitdash.best.v2', best); } catch (_) {}
+  }
+}
+
+async function pullCloud() {
+  if (!AA) return;
+  cloud.signedIn = !!AA.user();
+  cloud.synced = false;
+  liveEvents = [];
+  if (!cloud.signedIn) return;
+  const r = await AA.load('orbit-dash');
+  const theirs = r && r.data ? Math.floor(r.data.best) || 0 : 0;
+  if (theirs >= best) keepBest(theirs);
+  else {
+    const res = await AA.save('orbit-dash', { best }, { now: true });
+    if (!res || !res.ok) return;
+  }
+  cloud.synced = !!r;
+  liveEvents = (await AA.events('orbit-dash')).filter(e => e.live);
+}
+
+function pushRun(runScore, runGates) {
+  if (!AA || !AA.user()) return;
+  AA.save('orbit-dash', { best }, { now: true }).then(res => {
+    cloud.synced = !!(res && res.ok);
+    if (cloud.synced) keepBest(res.data.best);
+  });
+  for (const e of liveEvents) {
+    if (e.metric === 'gates' && runGates > 0) AA.progress(e.id, runGates);
+    if (e.metric === 'score' && runScore > 0) {
+      if (e.type === 'leaderboard') AA.score(e.id, runScore);
+      else AA.progress(e.id, runScore);
+    }
+  }
+}
+
+if (AA) { AA.ready.then(pullCloud); AA.onChange(pullCloud); }
+
 function reset() {
   S = {
     state: 'title',               // title | run | dead
@@ -161,7 +214,7 @@ function reset() {
     spin: 1.15,
     trail: [],
     debris: [], gates: [], marks: [], sparks: [],
-    t: 0, score: 0, chain: 1, chainT: 0,
+    t: 0, score: 0, chain: 1, chainT: 0, runGates: 0,
     spring: 0, transit: 0, transitHeld: false,
     trauma: 0, hitstop: 0,
     gateClock: 0, debrisClock: 0,
@@ -270,6 +323,7 @@ function sim(dt) {
     const d = angDiff(g.ang, S.ang);
     if (Math.abs(d) < g.span && Math.abs(RING[g.ring] - S.r) < TOL) {
       g.live = false;
+      S.runGates++;
       S.chain = Math.min(9.9, S.chain + .34);
       S.chainT = 2.4;
       S.score += 55 * S.chain;
@@ -323,8 +377,8 @@ function die() {
   S.trauma = 1; S.hitstop = .11;
   for (let i = 0; i < 26; i++) burst(S.ang, S.r, P.brassLt);
   S.marks.push({ ang: S.ang, r: S.r, life: 1, kind: 'smudge' });
-  best = Math.max(best, Math.floor(S.score));
-  try { localStorage.setItem('orbitdash.best.v2', best); } catch (_) {}
+  keepBest(Math.floor(S.score));
+  pushRun(Math.floor(S.score), S.runGates);
 }
 
 function angDiff(a, b) { return ((a - b + Math.PI * 3) % (Math.PI * 2)) - Math.PI; }
@@ -707,7 +761,7 @@ function drawDead() {
   X.textAlign = 'center';
   X.fillStyle = 'rgba(6,18,32,.74)'; X.fillRect(0, 0, W, H);
 
-  const cw = Math.min(W - u * 14, u * 66), ch = u * 38;
+  const cw = Math.min(W - u * 14, u * 66), ch = u * (AA ? 42 : 38);
   const x0 = cx - cw / 2, y0 = cy - ch / 2;
   X.fillStyle = 'rgba(8,22,37,.94)'; X.fillRect(x0, y0, cw, ch);
   X.strokeStyle = 'rgba(210,85,60,.6)'; X.lineWidth = 1.6;
@@ -731,10 +785,19 @@ function drawDead() {
   X.font = `500 ${u * 1.9}px ${MONO}`;
   X.fillText('BEST ' + best, cx, y0 + u * 30.4);
 
+  if (AA) {
+    const line = !cloud.signedIn ? 'SIGN IN, TOP RIGHT, TO KEEP YOUR BEST'
+      : cloud.synced ? 'SAVED TO YOUR ALLOY ACCOUNT'
+      : 'ALLOY ACCOUNT — NOT SYNCED';
+    X.fillStyle = cloud.signedIn && cloud.synced ? P.verd : P.inkMid;
+    X.font = `500 ${u * 1.55}px ${MONO}`;
+    X.fillText(line, cx, y0 + u * 34);
+  }
+
   if (S.t > .6) {
     X.fillStyle = P.brass;
     X.font = `600 ${u * 2.3}px ${MONO}`;
-    X.fillText('PRESS TO RE-WIND', cx, y0 + u * 35.2);
+    X.fillText('PRESS TO RE-WIND', cx, y0 + u * (AA ? 39.2 : 35.2));
   }
 }
 

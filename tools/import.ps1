@@ -79,7 +79,7 @@ $dest = Join-Path $Root "games\$Id"
 $isUpdate = Test-Path $dest
 if ($isUpdate) { Remove-Item $dest -Recurse -Force }
 
-robocopy $gameRoot $dest /E /XD .git .github .claude .vscode node_modules /XF .DS_Store README.md LICENSE .gitignore /NFL /NDL /NJH /NJS /NP | Out-Null
+robocopy $gameRoot $dest /E /XD .git .github .claude .vscode node_modules alloy /XF .DS_Store README.md LICENSE .gitignore /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed with code $LASTEXITCODE" }
 $global:LASTEXITCODE = 0
 Write-Host "$(if ($isUpdate) { 'Updated' } else { 'Copied' }) $(if ($Repo) { "$Repo (GitHub)" } else { $gameRoot })"
