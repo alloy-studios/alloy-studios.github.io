@@ -3,13 +3,14 @@
  * Neon Speed Simulator - Alloy Accounts validator.
  *
  * Starts from the rule-for-rule port of the original saveProgress Cloud Function
- * (protected/functions/index.js) and keeps every bound it had:
+ * (protected/functions/index.js) and keeps its bounds:
  *   - every field bounded, malformed numbers rejected
  *   - prestige never goes backwards
- *   - prestige never rises more than +50 in one save
+ *   - prestige rise bounded - the old crude "+50 per save" is replaced by a real
+ *     time-based rate, and survives only as the fallback if that rate is off
  * and adds the checks the game's own code makes provable, each mirroring a rule
  * the game already enforces, so an honest save can never trip one:
- *   - prestige rises at most 1 per 9.5 s (see RATES)
+ *   - prestige rises at most 1 per 9.5 s of server time (see RATES)
  *   - equipped skin must be one this save has actually unlocked (skinUnlocked)
  *   - secretSkins limited to the real secret ids, de-duplicated
  *   - each upgrade level <= baseMaxLevel + prestiges (the shop's own cap)
@@ -19,10 +20,17 @@
  * a rejected save never replaces `prev`, so the game keeps sending the same data
  * and is rejected again, forever. Any Reject an honest save can reach is a
  * permanent, silent lockout - the player still sees "SAVED AS ...". The original
- * saveProgress rejected over-cap numbers and +50 prestige jumps; both are now
- * clamps. That gives a cheater nothing new - sending exactly the cap was always
+ * saveProgress rejected over-cap numbers and +50 prestige jumps; neither rejects
+ * now. That gives a cheater nothing new - sending exactly the cap was always
  * accepted - and it removes two honest lockouts: a player who plays offline, or
  * as a guest, and then signs in more than 50 prestiges ahead of their cloud save.
+ *
+ * The +50 is gone entirely while the rate is on. It was a time-less stand-in for a
+ * rate limit, and next to grow() it was only ever the TIGHTER bound for honest
+ * catch-up: 30 min offline allows ~190 prestiges by rate but 50 by the clamp, and
+ * the game adopts the server's reply, so the player would lose the rest for good.
+ * It bounded nothing a cheater cares about either - saves are allowed every few
+ * seconds, so +50 per save is unbounded over time. grow() is the real bound.
  *
  * The save shape is UNCHANGED from the legacy users/{uid} document - the same 12
  * fields - so saves the site mirrored across before the switch load as they are.
@@ -145,14 +153,18 @@ module.exports = {
       if (clean[k] === null) throw new Reject("bad " + k);
     }
 
-    // --- the original saveProgress bounds on prestige, now clamps ---
+    // --- prestige: never backwards, and bounded by real server time ---
     if (prev && typeof prev.prestiges === "number") {
       if (clean.prestiges < prev.prestiges) clean.prestiges = prev.prestiges;
-      if (clean.prestiges > prev.prestiges + 50) clean.prestiges = prev.prestiges + 50;
-    }
-
-    if (ENFORCE_PRESTIGE_RATE && prev && typeof prev.prestiges === "number") {
-      clean.prestiges = grow(prev.prestiges, clean.prestiges, RATES.prestiges, ctx, 1);
+      if (ENFORCE_PRESTIGE_RATE) {
+        // A missing elapsedSec would make grow() return NaN and silently corrupt
+        // prestige for good; treat it as "no time has passed" instead.
+        const t = Number.isFinite(ctx.elapsedSec) ? ctx.elapsedSec : 0;
+        clean.prestiges = grow(prev.prestiges, clean.prestiges, RATES.prestiges,
+                               Object.assign({}, ctx, { elapsedSec: t }), 1);
+      } else if (clean.prestiges > prev.prestiges + 50) {
+        clean.prestiges = prev.prestiges + 50;   // crude time-less fallback
+      }
     }
 
     // --- the shop's own cap on upgrade levels ---

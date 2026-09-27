@@ -56,7 +56,9 @@ function gain(prev, next, perSecond, ctx, burst = 0) {
  * hand the game back 12.05 prestiges.
  */
 function ceilingFor(prev, next, allowance) {
-  const c = prev + allowance;
+  // A NaN allowance (a missing elapsedSec) would make the ceiling NaN, and
+  // Math.min/max would then write NaN into the save for good. Treat it as 0.
+  const c = prev + (Number.isFinite(allowance) ? allowance : 0);
   return Number.isInteger(prev) && Number.isInteger(next) ? Math.floor(c) : c;
 }
 
