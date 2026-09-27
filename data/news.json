@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-09-26",
+      "title": "Counting visits, without cookies",
+      "body": "The site now keeps simple visit counts with GoatCounter, so we can see which games people actually find. It uses no cookies and collects no personal data - just page views, referring sites and rough location - which is also why there is no consent popup.",
+      "game": null
+    },
+    {
       "date": "2026-09-22",
       "title": "Every game has a real thumbnail",
       "body": "The generated colour tiles are gone. Every card in the library now shows a frame rendered from the game itself - staged mid-play, no text, built to still read at card size. Alloy Mind has also been retired from the catalogue.",
