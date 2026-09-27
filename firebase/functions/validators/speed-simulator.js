@@ -3,22 +3,33 @@
  * Neon Speed Simulator - Alloy Accounts validator.
  *
  * Starts from the rule-for-rule port of the original saveProgress Cloud Function
- * (protected/functions/index.js) and keeps EVERY check it had:
- *   - every field clamped to a hard limit, malformed numbers rejected
+ * (protected/functions/index.js) and keeps every bound it had:
+ *   - every field bounded, malformed numbers rejected
  *   - prestige never goes backwards
- *   - prestige never jumps more than +50 in one save
- * and adds the checks the game's own code makes provable, each of which mirrors a
- * rule the game already enforces - so an honest save can never trip one:
+ *   - prestige never rises more than +50 in one save
+ * and adds the checks the game's own code makes provable, each mirroring a rule
+ * the game already enforces, so an honest save can never trip one:
+ *   - prestige rises at most 1 per 9.5 s (see RATES)
  *   - equipped skin must be one this save has actually unlocked (skinUnlocked)
  *   - secretSkins limited to the real secret ids, de-duplicated
  *   - each upgrade level <= baseMaxLevel + prestiges (the shop's own cap)
+ *
+ * CLAMP, DON'T REJECT. Only garbage (non-numbers, negatives) is rejected. A value
+ * that is merely too big is clamped to its bound. This matters more than it looks:
+ * a rejected save never replaces `prev`, so the game keeps sending the same data
+ * and is rejected again, forever. Any Reject an honest save can reach is a
+ * permanent, silent lockout - the player still sees "SAVED AS ...". The original
+ * saveProgress rejected over-cap numbers and +50 prestige jumps; both are now
+ * clamps. That gives a cheater nothing new - sending exactly the cap was always
+ * accepted - and it removes two honest lockouts: a player who plays offline, or
+ * as a guest, and then signs in more than 50 prestiges ahead of their cloud save.
  *
  * The save shape is UNCHANGED from the legacy users/{uid} document - the same 12
  * fields - so saves the site mirrored across before the switch load as they are.
  */
 const { Reject, grow, owns } = require("./lib");
 
-const LIMITS = { prestiges: 100000, level: 100000, energy: 1e12, upgradeLevel: 500 };
+const LIMITS = { prestiges: 100000, level: 100000, energy: 1e12, xp: 1e12, xpNeeded: 1e12 };
 
 /*
  * RATES - derived from index.html, not from feel.
@@ -51,17 +62,18 @@ const LIMITS = { prestiges: 100000, level: 100000, energy: 1e12, upgradeLevel: 5
 const RATES = { prestiges: 1 / 9.5, wraithOutruns: 1 / 20 };
 
 /*
- * Prestige RATE limit - ON.
- * It was built OFF because `prev` could be a stale mirror of the legacy
- * users/{uid} doc. The server (alloySave) now never passes a mirrored save as
- * `prev`: the game's first native save arrives with prev = null and
- * ctx.first = true, bounded by absolute caps only. Every `prev` this sees is a
- * save the server itself accepted, so the rate is safe from the first save on.
+ * Prestige RATE limit - ON. It was held off while legacy users/{uid} saves were
+ * mirrored in, because a stale mirror as `prev` would clamp an honest player's
+ * first native save back to it. alloySave no longer passes a mirrored save as
+ * prev: the first native save arrives with prev = null and ctx.first = true.
  */
 const ENFORCE_PRESTIGE_RATE = true;
 
 // index.html `upgrades`: all six have baseMaxLevel 30, and the shop caps a level at
-// baseMaxLevel + prestiges (window.buyUpgrade).
+// baseMaxLevel + prestiges (window.buyUpgrade). That is the ONLY bound: the
+// original saveProgress also capped levels at 500 and turned anything above it
+// into 0, which would have wiped an upgrade outright for a player past 470
+// prestiges, whose shop cap is higher than 500.
 const UPGRADE_BASE_MAX = 30;
 
 // index.html `skins`: id -> prestige requirement. admin_god is deliberately absent -
@@ -80,11 +92,14 @@ const SECRET_SKINS = ["jackpot", "nullspace", "apex", "infinity"];
 // Server-issued, never stored in secretSkins: the gift account's reward id.
 const GIFT_REWARD = "shinobi";
 
-/** Integer in [0, max], or null if it is not one. */
-function strict(v, max) {
+/**
+ * Whole number in [0, max]. null for garbage (not a finite number, or negative);
+ * a value above max is CLAMPED to max, never rejected - see the header.
+ */
+function whole(v, max) {
   const n = Number(v);
-  if (!Number.isFinite(n) || n < 0 || n > max) return null;
-  return Math.floor(n);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.min(Math.floor(n), max);
 }
 
 /** Quest state is client-shaped: plain object, few keys, primitives only. */
@@ -107,17 +122,18 @@ module.exports = {
   clean(prev, d, ctx) {
     ctx = ctx || {};
     const clean = {
-      prestiges: strict(d.prestiges, LIMITS.prestiges),
-      level: strict(d.level, LIMITS.level),
-      energy: strict(d.energy, LIMITS.energy),
-      xp: strict(d.xp, 1e12),
-      xpNeeded: strict(d.xpNeeded, 1e12),
+      prestiges: whole(d.prestiges, LIMITS.prestiges),
+      level: whole(d.level, LIMITS.level),
+      energy: whole(d.energy, LIMITS.energy),
+      xp: whole(d.xp, LIMITS.xp),
+      xpNeeded: whole(d.xpNeeded, LIMITS.xpNeeded),
       skin: typeof d.skin === "string" && d.skin.length < 32 ? d.skin : "classic",
       secretSkins: Array.isArray(d.secretSkins)
         ? [...new Set(d.secretSkins.filter((s) => SECRET_SKINS.includes(s)))]
         : [],
+      // garbage entries become 0, exactly as before; the real cap is applied below
       upgrades: Array.isArray(d.upgrades)
-        ? d.upgrades.slice(0, 32).map((v) => strict(v, LIMITS.upgradeLevel) ?? 0)
+        ? d.upgrades.slice(0, 32).map((v) => whole(v, Infinity) ?? 0)
         : [],
       tutorialDone: !!d.tutorialDone,
       infinityQuest: cleanQuest(d.infinityQuest),
@@ -129,10 +145,10 @@ module.exports = {
       if (clean[k] === null) throw new Reject("bad " + k);
     }
 
-    // --- the original saveProgress checks, unchanged ---
+    // --- the original saveProgress bounds on prestige, now clamps ---
     if (prev && typeof prev.prestiges === "number") {
       if (clean.prestiges < prev.prestiges) clean.prestiges = prev.prestiges;
-      if (clean.prestiges > prev.prestiges + 50) throw new Reject("implausible prestige jump");
+      if (clean.prestiges > prev.prestiges + 50) clean.prestiges = prev.prestiges + 50;
     }
 
     if (ENFORCE_PRESTIGE_RATE && prev && typeof prev.prestiges === "number") {

@@ -123,8 +123,14 @@ Rules for writing one:
   rather than invent a number: a guess either lets cheaters win or clamps honest
   endgame players. A game with only one or two timer-bound metrics is fine, and
   so is `events: {}`. Speed Simulator's validator is the worked example.
-- **Clamp, don't reject.** A slightly-too-tight rate should cost an honest
-  player a sliver, not their whole save. `Reject` is for garbage.
+- **Clamp, don't reject — a reachable `Reject` is a permanent lockout.** A
+  rejected save never replaces the stored one. So if any honest path can hit a
+  `Reject`, every later save is compared against the same old save and rejected
+  too, silently and forever. Honest paths include offline play, playing as a
+  guest before signing in, and very long sessions. Over-cap or too-fast values
+  must be **clamped** to the cap. `Reject` is only for garbage: non-numbers,
+  negatives, wrong types. Speed Simulator's validator found two such lockouts in
+  its own legacy rules. Read it before writing yours.
 - **`grow`** for things that only go up (best score, lifetime stats, levels).
   **`gain`** for spendable balances (may drop freely, may only rise at a rate).
 - **Event rewards** arrive as reward ids in `ctx.rewards`; only let a save
