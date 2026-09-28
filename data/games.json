@@ -149,7 +149,8 @@
       "accent": "#fbbf24",
       "controls": "WASD to move, mouse to aim, Q to dash, 1 ki blast, 2 special, hold C to charge, T to transform",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/aura-fighters.webp"
+      "thumb": "/assets/thumbs/aura-fighters.webp",
+      "rev": "20260927-2021"
     },
     {
       "id": "tcg-cardshop-simulator",
