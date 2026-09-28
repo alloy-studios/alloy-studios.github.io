@@ -304,7 +304,8 @@
       "accent": "#f43f5e",
       "controls": "Mouse to stock, price and serve",
       "added": "2026-09-11",
-      "thumb": "/assets/thumbs/shoeshopsimulator.webp"
+      "thumb": "/assets/thumbs/shoeshopsimulator.webp",
+      "rev": "20260927-2019"
     },
     {
       "id": "redwater",
