@@ -66,7 +66,10 @@
       "controls": "Mouse to aim and fire, F to inspect, crates and trade-up in the menus",
       "added": "2026-09-08",
       "thumb": "/assets/thumbs/meridian.png",
-      "rev": "20260927-1449"
+      "rev": "20260927-1449",
+      "formerly": [
+        "rivalforge"
+      ]
     },
     {
       "id": "port-vesper",
@@ -97,7 +100,10 @@
       "controls": "WASD move, mouse aim, click cutlass, Q E R Devil Fruit, Space dash, F talk, M chart",
       "added": "2026-09-08",
       "thumb": "/assets/thumbs/grand-line.webp",
-      "rev": "20260927-1444"
+      "rev": "20260927-1444",
+      "formerly": [
+        "blox-fruits-2d"
+      ]
     },
     {
       "id": "leveling-the-system",
@@ -224,19 +230,21 @@
       "thumb": "/assets/thumbs/orbit-dash.webp"
     },
     {
-      "id": "multiversefighters",
-      "title": "Multiverse Fighters",
-      "tagline": "Twelve fighters. Twelve realms. One ring.",
-      "description": "A 2D fighter with twelve characters pulled from twelve different realms - shinobi, soul reapers, machines, Olympians, cartoons - each with their own normals, specials and an ultimate with its own charge stance and camera. Five opponent levels that run your exact code, so the AI can never do anything you cannot.",
+      "id": "umbra",
+      "title": "Umbra",
+      "tagline": "A duel of shadows.",
+      "description": "A 2D fighter played entirely in silhouette: eight fighters in pure black, each lit by one colour - glowing eyes, a burning blade edge, a hammer head. Chain lights into heavies and specials, block high and low, and land an ultimate to cut away to a short cinematic of close-ups, slow motion and two-tone impact frames. Versus CPU, two players on one keyboard, or training.",
       "tags": [
         "fighting",
-        "action",
-        "anime"
+        "action"
       ],
-      "accent": "#a78bfa",
-      "controls": "A/D move, Space jump, W/S aim, Shift dash, J and K attack, L special, U ultimate",
+      "accent": "#e04848",
+      "controls": "A/D move, S crouch, W or Space jump, J light, K heavy, L special, I throw, U ultimate, Shift dash, Esc pause",
       "added": "2026-09-10",
-      "thumb": "/assets/thumbs/multiversefighters.webp"
+      "formerly": [
+        "multiversefighters"
+      ],
+      "rev": "20260927-2015"
     },
     {
       "id": "flytale",

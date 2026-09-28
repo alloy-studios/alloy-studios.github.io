@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-09-28",
+      "title": "Multiverse Fighters becomes Umbra",
+      "body": "Multiverse Fighters has been rebuilt from scratch as Umbra, a duel of shadows: eight fighters in pure black silhouette, each lit by a single colour, with cinematic ultimates, blocking high and low, throws and cancels. Play the CPU at four difficulties, a friend on one keyboard, or the training dummy. Old links to Multiverse Fighters now take you straight to Umbra.",
+      "game": "umbra"
+    },
+    {
       "date": "2026-09-27",
       "title": "Fixed: the account button kept loading",
       "body": "If you were signed in, the account button in the top right could stay on its loading shimmer forever after opening a page, even though your account was working underneath. It now shows your player name as soon as sign-in finishes.",

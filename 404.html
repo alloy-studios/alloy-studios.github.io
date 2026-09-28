@@ -19,6 +19,15 @@
 <script src="/assets/shell.js"></script>
 <script>
 Alloy.boot(({ games }) => {
+  // A game that was renamed keeps its old address working: "formerly" in
+  // games.json lists the ids it used to have.
+  const seg = location.pathname.split('/').filter(Boolean);
+  const moved = seg.length && games.find(g => (g.formerly || []).includes(seg[0].toLowerCase()));
+  if (moved) {
+    location.replace('/' + moved.id + '/' + seg.slice(1).join('/') + location.search + location.hash);
+    return;
+  }
+
   // If the URL looks like a game name, offer the closest matches first.
   const guess = decodeURIComponent(location.pathname.split('/').filter(Boolean)[0] || '')
     .replace(/[-_]+/g, ' ');
