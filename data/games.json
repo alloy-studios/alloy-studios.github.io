@@ -293,7 +293,8 @@
       "accent": "#8b5cf6",
       "controls": "WASD move, mouse aim, click to cast, 1-4 spell slots, Shift to blink, E to commune, C for the Grimoire",
       "added": "2026-09-11",
-      "thumb": "/assets/thumbs/elementalis.webp"
+      "thumb": "/assets/thumbs/elementalis.webp",
+      "rev": "20260929-0642"
     },
     {
       "id": "shoeshopsimulator",
