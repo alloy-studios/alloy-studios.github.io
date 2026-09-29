@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-28",
+      "title": "Umbra: limited-time guest fighters, saved to your account",
+      "body": "Umbra's story mode has made way for special fighters. The first two are limited-time guests: each one is playable while their event runs, and clearing their path during the event keeps them for good. Your wins, cleared paths and kept guests now sync to your Alloy account, so a guest you earned is still yours on any device, even after the event ends.",
+      "game": "umbra"
+    },
+    {
+      "date": "2026-09-28",
       "title": "Foil & Fortune and Abyssal Dredging join Alloy accounts",
       "body": "Your card shop and your dredging rig now sync to your Alloy account. In Foil & Fortune that means your cash, binder, graded slabs, vault, staff and upgrades; in Abyssal Dredging your cargo, upgrades, Pressure Cores, Descents and Collection. Sign in and the progress already in this browser uploads the first time. Both games also report to Alloy events. Sole & Co. and Aura Fighters get the check against unofficial copies; neither keeps anything between visits, so there is nothing to save.",
       "game": null

@@ -20,6 +20,7 @@ const REGISTRY = {
   "neon-survivor-legends": require("./neon-survivor-legends"),
   "tcg-cardshop-simulator": require("./tcg-cardshop-simulator"),
   "abyssal-dredging": require("./abyssal-dredging"),
+  "umbra": require("./umbra"),
 };
 
 function validatorFor(gameId) {
