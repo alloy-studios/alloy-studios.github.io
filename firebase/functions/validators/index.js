@@ -18,6 +18,7 @@ const REGISTRY = {
   "redwater": require("./redwater"),
   "leveling-the-system": require("./leveling-the-system"),
   "neon-survivor-legends": require("./neon-survivor-legends"),
+  "tcg-cardshop-simulator": require("./tcg-cardshop-simulator"),
 };
 
 function validatorFor(gameId) {

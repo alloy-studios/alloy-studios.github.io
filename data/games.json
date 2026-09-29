@@ -165,7 +165,8 @@
       "accent": "#d946ef",
       "controls": "WASD to move around the shop, click to interact",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/tcg-cardshop-simulator.webp"
+      "thumb": "/assets/thumbs/tcg-cardshop-simulator.webp",
+      "rev": "20260928-2155"
     },
     {
       "id": "abyssal-dredging",
