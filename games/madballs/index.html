@@ -1,4 +1,28 @@
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "madballs";                                     // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You\u2019re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <title>MADBALLS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
@@ -244,6 +268,11 @@ kbd{background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.16) 48%,transparent 62%);
   background-size:250% 100%;animation:holo 3.2s linear infinite}
 @keyframes holo{to{background-position:-250% 0}}
+
+/* Alloy account sync status (only rendered inside the Alloy site) */
+.alloy-sync{margin-top:12px;font-size:10.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;
+  color:#7d8cb0;text-align:center}
+.alloy-sync.ok{color:#52e07a}
 </style>
 <div id="app">
   <canvas id="cv"></canvas>
@@ -7003,6 +7032,230 @@ function drawCrateArt(cv, crate, t, opts = {}) {
   x.restore();
 }
 
+/* ============================ src/72-alloy.js ============================ */
+'use strict';
+/* =========================================================
+   ALLOY ACCOUNTS — optional cloud sync.
+   The site shell provides window.AlloyAccount to this iframe. With no
+   account, or when this file is opened on its own, AA is null and the game
+   runs entirely on its local save (madballs.save.v1), exactly as before.
+   The server re-checks every number we send (alloy/validator.js), so
+   nothing here needs to be trusted.
+   ========================================================= */
+const ALLOY_ID = 'madballs';
+const AA = (() => {
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+
+const Alloy = {
+  signedIn: false,
+  loaded: false,      // first AA.load has finished - nothing is written before this
+  failed: false,
+  rev: 0,             // payload counter, echoed back by the server
+  sent: new Map(),    // rev -> payload, for saves not yet answered
+  events: [],
+  pullId: 0,          // bumps on every sign-in change, so stale replies are ignored
+
+  /* The synced part of the save. `muted` stays a per-device preference. */
+  pack() {
+    const s = G.save;
+    return {
+      rev: ++this.rev,
+      coins: Math.max(0, Math.floor(s.coins || 0)),
+      inv: Object.assign({}, s.inv),
+      equipped: s.equipped,
+      pity: s.pity || 0, mythicPity: s.mythicPity || 0, transPity: s.transPity || 0,
+      opened: s.opened || 0,
+      unlocked: s.unlocked || 1,
+      best: Object.assign({}, s.best),
+      firstCrate: !!s.firstCrate
+    };
+  },
+
+  /* On start and on every sign-in change: take the cloud save if there is
+     one, otherwise upload this device's save. */
+  async pull() {
+    if (!AA) return;
+    const id = ++this.pullId;
+    const user = AA.user();
+    this.signedIn = !!user;
+    this.loaded = false; this.failed = false;
+    this.sent.clear(); this.events = [];
+    this.paintAll();
+    if (!user) return;
+    let r = null;
+    try { r = await AA.load(ALLOY_ID); } catch (_) { r = null; }
+    if (id !== this.pullId) return;                          // signed out or switched meanwhile
+    if (!r) { this.failed = true; this.paintAll(); return; } // unreachable: stay local, never write
+    this.loaded = true;
+    if (r.data) this.adopt(r.data);
+    else await this.push(true);                              // empty account: upload this save
+    try {
+      const ev = await AA.events(ALLOY_ID);
+      if (id === this.pullId) this.events = (ev || []).filter(e => e && e.live);
+    } catch (_) { }
+    this.paintAll();
+  },
+
+  /* Checkpoint save. Called from G.store(), which the game only calls at
+     checkpoints: a level ending, a crate, the free crate, an equip. */
+  push(now = true) {
+    if (!AA || !this.loaded || !AA.user()) return Promise.resolve();
+    const p = this.pack();
+    this.sent.set(p.rev, p);
+    const id = this.pullId;
+    return AA.save(ALLOY_ID, p, { now }).then(
+      res => { if (id === this.pullId) this.reply(res); },
+      () => { if (id === this.pullId) { this.failed = true; this.paintAll(); } });
+  },
+
+  /* Coalesced saves all resolve with the reply to the newest payload, so a
+     reply is matched to its payload by `rev`, handled once, and every older
+     payload it supersedes is forgotten. */
+  reply(res) {
+    if (!res || !res.ok || !res.data) { this.failed = true; this.paintAll(); return; }
+    this.failed = false;
+    const d = res.data, base = this.sent.get(d.rev);
+    for (const k of [...this.sent.keys()]) if (k <= d.rev) this.sent.delete(k);
+    if (base) this.correct(base, d);
+    this.paintAll();
+  },
+
+  /* The server's reply is what exists - but the player may have played on
+     while it was in flight. So a value the server lowered is taken off the
+     LIVE value as a difference (and off any payload still in flight, so the
+     same cut is never applied twice), instead of overwriting new progress. */
+  correct(base, d) {
+    const s = G.save, pending = [...this.sent.values()];
+    let changed = false;
+    const get = (o, path) => {
+      let a = o;
+      for (const k of path) a = a == null ? undefined : a[k];
+      return Number(a) || 0;
+    };
+    const put = (o, path, v, dropZero) => {
+      let a = o;
+      for (let i = 0; i < path.length - 1; i++) a = a[path[i]] = a[path[i]] || {};
+      const k = path[path.length - 1];
+      if (dropZero && v <= 0) delete a[k]; else a[k] = v;
+    };
+    const lower = (path, min, dropZero) => {
+      const cut = get(base, path) - get(d, path);
+      if (!(cut > 0)) return;
+      put(s, path, Math.max(min, get(s, path) - cut), dropZero);
+      for (const q of pending) put(q, path, Math.max(min, get(q, path) - cut), dropZero);
+      changed = true;
+    };
+    // things that only grow: the server may hold more (another device) - take it
+    const raise = (path, dropZero) => {
+      const v = get(d, path);
+      if (v > get(s, path)) { put(s, path, v, dropZero); changed = true; }
+    };
+
+    for (const k of ['coins', 'pity', 'mythicPity', 'transPity']) lower([k], 0, false);
+    lower(['opened'], 0, false); raise(['opened'], false);
+    lower(['unlocked'], 1, false); raise(['unlocked'], false);
+    const keys = (a, b) => [...new Set([...Object.keys(a || {}), ...Object.keys(b || {})])];
+    for (const id of keys(base.inv, d.inv)) { lower(['inv', id], 0, true); raise(['inv', id], true); }
+    for (const k of keys(base.best, d.best)) { lower(['best', k], 0, true); raise(['best', k], true); }
+    if (d.firstCrate && !s.firstCrate) { s.firstCrate = true; changed = true; }
+    if (d.equipped !== base.equipped && s.equipped === base.equipped) { s.equipped = d.equipped; changed = true; }
+
+    if (changed) this.commit();
+  },
+
+  /* Replace the synced fields with the account's save (on load). */
+  adopt(d) {
+    const s = G.save;
+    s.coins = d.coins; s.inv = Object.assign({}, d.inv); s.equipped = d.equipped;
+    s.pity = d.pity; s.mythicPity = d.mythicPity; s.transPity = d.transPity;
+    s.opened = d.opened; s.unlocked = d.unlocked;
+    s.best = Object.assign({}, d.best); s.firstCrate = !!d.firstCrate;
+    this.rev = Math.max(this.rev, d.rev | 0);
+    this.commit();
+  },
+
+  /* Write the corrected save locally (not back to the cloud) and redraw. */
+  commit() {
+    const s = G.save;
+    if (!s.inv || !Object.keys(s.inv).length) s.inv = { pebble: 1 };
+    if (!s.inv[s.equipped]) s.equipped = s.inv.pebble ? 'pebble' : Object.keys(s.inv)[0];
+    G.skin = SKIN_BY_ID[s.equipped] || DEFAULT_SKIN;
+    writeSave(s);
+    UI.syncHud();
+    if (G.state !== 'menu' && UI.refreshSkinBadge) UI.refreshSkinBadge();
+    const cur = UI.cur;
+    if (cur === 'menu') UI.showMenu();
+    else if (cur === 'shop') UI.showShop();
+    else if (cur === 'collection') UI.showCollection();
+    else if (cur === 'levels') UI.showLevels();
+  },
+
+  /* Event counters. Only metrics alloy/validator.js declares. */
+  progress(metric, n) {
+    if (!AA || !this.signedIn || !(n > 0)) return;
+    for (const e of this.events) if (e.metric === metric && e.type !== 'leaderboard') AA.progress(e.id, n);
+  },
+
+  /* ---------- the small sync line ---------- */
+  line() {
+    if (!this.signedIn) return ['Sign in, top right, to keep your progress', false];
+    if (this.failed) return ['Can’t reach your Alloy account — saved on this device', false];
+    if (!this.loaded) return ['Connecting to your Alloy account…', false];
+    return ['Saved to your Alloy account', true];
+  },
+  paint(anchor) {
+    if (!AA || !anchor || !anchor.parentNode) return;
+    let el = anchor.parentNode.querySelector(':scope > .alloy-sync');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'alloy-sync';
+      anchor.insertAdjacentElement('afterend', el);
+    }
+    const [text, ok] = this.line();
+    el.textContent = text;
+    el.classList.toggle('ok', ok);
+  },
+  paintAll() {
+    if (!AA) return;
+    const [text, ok] = this.line();
+    document.querySelectorAll('.alloy-sync').forEach(el => { el.textContent = text; el.classList.toggle('ok', ok); });
+  }
+};
+
+/* Hook the game at the points that matter, without touching its files. */
+(function () {
+  const store = G.store;
+  G.store = function () { store.call(this); Alloy.push(true); };
+
+  const destroy = G.destroyBody;
+  G.destroyBody = function (body) {
+    const popped = !!(body && body.game && body.game.enemy && !body.game.dead);
+    destroy.call(this, body);
+    if (popped) Alloy.progress('madballsPopped', 1);
+  };
+
+  const cleared = G.onCleared;
+  G.onCleared = function () {
+    const first = this.state !== 'done';
+    cleared.call(this);
+    if (first) Alloy.progress('levelsCleared', 1);
+  };
+
+  const openCrate = UI.openCrate;
+  UI.openCrate = function (crate) { openCrate.call(this, crate); Alloy.progress('cratesOpened', 1); };
+
+  const showMenu = UI.showMenu;
+  UI.showMenu = function () { showMenu.call(this); Alloy.paint(document.querySelector('#menu .tip')); };
+  const showShop = UI.showShop;
+  UI.showShop = function () { showShop.call(this); Alloy.paint(document.querySelector('#shop .pity')); };
+  const showEnd = UI.showEnd;
+  UI.showEnd = function (win, data) { showEnd.call(this, win, data); Alloy.paint(document.querySelector('.end-card .end-rows')); };
+
+  if (AA) { AA.ready.then(() => Alloy.pull(), () => { }); AA.onChange(() => Alloy.pull()); }
+})();
+
 /* ============================ src/80-main.js ============================ */
 'use strict';
 (function boot() {
@@ -7019,7 +7272,11 @@ function drawCrateArt(cv, crate, t, opts = {}) {
     }
     G.init(cv);
     UI.init();
-    if (typeof ADMIN !== 'undefined') ADMIN.init();   // absent in the public build
+    // The admin panel grants coins and skins, so it never runs on the live site:
+    // only on localhost or a local file, where AA is null and nothing syncs.
+    const local = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ||
+      location.protocol === 'file:';
+    if (typeof ADMIN !== 'undefined' && local) ADMIN.init();   // absent in the public build
     // first interaction unlocks audio
     const unlock = () => { SFX.init(); SFX.resume(); window.removeEventListener('pointerdown', unlock); };
     window.addEventListener('pointerdown', unlock);

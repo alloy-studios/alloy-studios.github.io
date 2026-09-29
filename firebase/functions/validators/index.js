@@ -22,6 +22,7 @@ const REGISTRY = {
   "abyssal-dredging": require("./abyssal-dredging"),
   "umbra": require("./umbra"),
   "port-vesper": require("./port-vesper"),
+  "madballs": require("./madballs"),
 };
 
 function validatorFor(gameId) {

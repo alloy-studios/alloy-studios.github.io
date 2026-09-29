@@ -279,7 +279,8 @@
       "accent": "#fb923c",
       "controls": "Drag from the slingshot to fire, Space or click mid-flight for your skin's ability",
       "added": "2026-09-10",
-      "thumb": "/assets/thumbs/madballs.webp"
+      "thumb": "/assets/thumbs/madballs.webp",
+      "rev": "20260929-0654"
     },
     {
       "id": "elementalis",
