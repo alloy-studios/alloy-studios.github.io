@@ -214,7 +214,8 @@
       "accent": "#a855f7",
       "controls": "A/D or arrows to move, W, Up or Space to jump",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/cosmic-climb.webp"
+      "thumb": "/assets/thumbs/cosmic-climb.webp",
+      "rev": "20260929-1845"
     },
     {
       "id": "orbit-dash",

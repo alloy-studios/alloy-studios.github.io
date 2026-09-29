@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "cosmic-climb";                                 // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>COSMIC CLIMB</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -124,6 +148,12 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
   font-family:var(--disp);font-size:19px;letter-spacing:.1em;border:3px solid var(--ink);
   box-shadow:6px 6px 0 var(--ink)}
 #go:active{transform:translate(6px,6px);box-shadow:0 0 0 var(--ink)}
+#syncLine{margin-top:10px;font-family:var(--disp);font-size:9.5px;letter-spacing:.14em;
+  text-align:center;opacity:.55}
+#syncLine::before{content:"";display:inline-block;width:7px;height:7px;margin-right:7px;
+  border:2px solid var(--ink);vertical-align:-1px}
+#syncLine.ok{opacity:1;color:var(--teal)}
+#syncLine.ok::before{background:var(--teal);border-color:var(--teal)}
 #foot{margin-top:10px;font-size:9.5px;letter-spacing:.1em;text-align:center;opacity:.5;
   font-family:var(--disp)}
 
@@ -215,6 +245,7 @@ body.touch #tape{bottom:100px}
     <div id="cardTitle" hidden></div>
     <p id="cardSub"></p>
     <div id="stats" hidden></div>
+    <div id="syncLine" hidden></div>
     <div id="legend"></div>
     <div id="keys"></div>
     <button id="go">START THE CLIMB</button>
@@ -388,14 +419,32 @@ const SFX={
   charge:()=>tone(1400,0.5,"sine",0.05,2100),
 };
 
+/* ------------------------------------------------------------------ storage
+   Every Alloy game shares one origin, so keys carry the game's name. Storage
+   can throw inside a sandboxed iframe or with site data blocked — it must
+   never take the game down with it. */
+const GAME_ID="cosmic-climb";
+const LS_BEST="cosmicclimb.best", LS_SCORE="cosmicclimb.bestscore";
+function lsGet(k){try{return localStorage.getItem(k);}catch(_){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,String(v));}catch(_){}}
+function lsNum(k){const n=Math.floor(+lsGet(k));return Number.isFinite(n)&&n>0?n:0;}
+// One-time move off the pre-Alloy keys ("cc_" was too generic for a shared
+// origin). Keep the higher value, and only drop the old key once the new one
+// reads back — a failed write must never cost a player their record.
+[["cc_best",LS_BEST],["cc_bestscore",LS_SCORE]].forEach(([from,to])=>{
+  if(lsGet(from)==null)return;
+  const v=Math.max(lsNum(from),lsNum(to));
+  lsSet(to,v);
+  if(lsNum(to)===v){try{localStorage.removeItem(from);}catch(_){}}
+});
+
 /* -------------------------------------------------------------------- state */
 let W=0,H=0,DPR=1,ready=false;
 const IN={l:false,r:false,u:false,d:false,jumpBuf:0,dashReq:false,surgeReq:false,jumpHeld:false};
 const S={
   mode:"menu", t:0, camY:0, camTarget:0,
   trauma:0, missreg:2, flash:0, hitstop:0, redPulse:0,
-  meters:0, best:+(localStorage.getItem("cc_best")||0),
-  bestScore:+(localStorage.getItem("cc_bestscore")||0),
+  meters:0, best:lsNum(LS_BEST), bestScore:lsNum(LS_SCORE), newRecord:false,
   score:0, dust:0, chain:0, chainT:0, maxChain:0, flow:0,
   plats:[], motes:[], debris:[], pulsars:[], parts:[], gates:[], bodies:[], stars:[], clouds:[],
   p:null, collapseY:0, collapseGrace:2.2, edge:[], finT:0, runT:0,
@@ -588,16 +637,103 @@ function die(){
   if(S.mode!=="play")return;
   S.mode="dead"; S.trauma=1; S.flash=0.35; SFX.die();
   burst(S.p.x+16,S.p.y+20,VERM,34,340);
-  if(S.meters>S.best){S.best=Math.round(S.meters);localStorage.setItem("cc_best",S.best);}
-  if(S.score>S.bestScore){S.bestScore=Math.round(S.score);localStorage.setItem("cc_bestscore",S.bestScore);}
+  recordRun(false);
   setTimeout(()=>showCard("dead"),900);
 }
 function finish(){
   S.mode="final"; S.finT=0; S.trauma=0.6; SFX.win();
   burst(S.p.x+16,S.p.y+20,"#ffffff",40,420);
-  if(S.meters>S.best){S.best=Math.round(S.meters);localStorage.setItem("cc_best",S.best);}
-  if(S.score>S.bestScore){S.bestScore=Math.round(S.score);localStorage.setItem("cc_bestscore",S.bestScore);}
+  recordRun(true);
 }
+/* The end of a run is the checkpoint: local record first, then the cloud. */
+function recordRun(won){
+  const m=Math.round(S.meters), sc=Math.round(S.score);
+  S.newRecord=m>0&&m>S.best;              // judged before the best moves
+  keepBest(m,sc);
+  pushRun(won,m,sc);
+}
+/* Records only ever go up — locally, and when adopting anything from the cloud. */
+function keepBest(b,s){
+  b=Math.floor(+b)||0; s=Math.floor(+s)||0;
+  let changed=false;
+  if(b>S.best){S.best=b;lsSet(LS_BEST,b);changed=true;}
+  if(s>S.bestScore){S.bestScore=s;lsSet(LS_SCORE,s);changed=true;}
+  return changed;
+}
+
+/* ------------------------------------------------------------ Alloy account
+   Optional. On alloy-studios.github.io the site shell hands this iframe
+   window.AlloyAccount. Opened on its own, AA is null and everything stays in
+   localStorage exactly as before. The server re-checks every number we send
+   (alloy/validator.js), so nothing here has to be trusted. */
+const AA=(()=>{
+  try{return window.parent!==window?window.parent.AlloyAccount||null:null;}
+  catch(_){return null;}
+})();
+const cloud={state:"guest",loaded:false,gen:0};   // guest|loading|saving|synced|error
+let liveEvents=[], cardKind="menu";
+
+async function pullCloud(){
+  if(!AA)return;
+  const gen=++cloud.gen;                     // a newer sign-in/out supersedes this pass
+  cloud.loaded=false; liveEvents=[];
+  cloud.state=AA.user()?"loading":"guest"; renderSync();
+  if(cloud.state==="guest")return;
+  let r=null;
+  try{r=await AA.load(GAME_ID);}catch(_){}
+  if(gen!==cloud.gen)return;
+  if(!r){cloud.state="error";renderSync();return;}   // unreachable: stay local, write nothing
+  const d=r.data||{};
+  const cb=Math.floor(+d.best)||0, cs=Math.floor(+d.bestScore)||0;
+  if(keepBest(cb,cs)&&cardKind==="menu"&&!overlay.hidden)showCard("menu");
+  cloud.loaded=true;
+  // Upload when the cloud is empty or this device holds a better record
+  // (a guest run before signing in, or play while the server was down).
+  if(!r.data||S.best>cb||S.bestScore>cs)await pushSave(gen);
+  else{cloud.state="synced";renderSync();}
+  try{
+    const ev=await AA.events(GAME_ID);
+    if(gen===cloud.gen)liveEvents=(Array.isArray(ev)?ev:[]).filter(e=>e&&e.live);
+  }catch(_){}
+}
+async function pushSave(gen){
+  if(!AA||!AA.user()||!cloud.loaded)return;  // never write before the first load lands
+  cloud.state="saving"; renderSync();
+  let res=null;
+  try{res=await AA.save(GAME_ID,{best:S.best,bestScore:S.bestScore},{now:true});}catch(_){}
+  if(gen!==cloud.gen)return;
+  const ok=!!(res&&res.ok);
+  // Adopt what the server stored, but only upward. Coalesced saves reply with
+  // the latest payload, so a reply can land after a newer run already beat
+  // it; taking the max can never roll that run back.
+  if(ok&&res.data)keepBest(res.data.best,res.data.bestScore);
+  cloud.state=ok?"synced":"error"; renderSync();
+}
+function pushRun(won,m,sc){
+  if(!AA||!AA.user())return;
+  if(!cloud.loaded){pullCloud();return;}     // first load never landed: retry; it uploads if we're ahead
+  pushSave(cloud.gen);
+  const per={score:sc,meters:m,dust:S.dust,summits:won?1:0};
+  for(const e of liveEvents){
+    const v=per[e.metric];
+    if(!(v>0))continue;
+    try{e.type==="leaderboard"?AA.score(e.id,v):AA.progress(e.id,v);}catch(_){}
+  }
+}
+const SYNC_TEXT={
+  guest:"SIGN IN, TOP RIGHT, TO KEEP YOUR BEST",
+  loading:"CONNECTING TO YOUR ALLOY ACCOUNT…",
+  saving:"SAVING TO YOUR ALLOY ACCOUNT…",
+  synced:"SAVED TO YOUR ALLOY ACCOUNT",
+  error:"ALLOY ACCOUNT — NOT SYNCED",
+};
+function renderSync(){
+  const el=document.getElementById("syncLine"); if(!el)return;
+  el.hidden=!AA||cardKind==="pause";
+  el.textContent=SYNC_TEXT[cloud.state]||"";
+  el.classList.toggle("ok",cloud.state==="synced");
+}
+if(AA){AA.ready.then(()=>pullCloud(),()=>{}); AA.onChange(()=>pullCloud());}
 
 /* --------------------------------------------------------------- particles */
 function burst(x,y,c,n=12,sp=220,shape="dot"){
@@ -1476,6 +1612,7 @@ const KEYS=`
 function showCard(kind){
   const mark=$("markWrap"),title=$("cardTitle"),sub=$("cardSub"),
         stats=$("stats"),leg=$("legend"),keys=$("keys"),go=$("go"),foot=$("foot");
+  cardKind=kind;
   mark.hidden=false;title.hidden=true;stats.hidden=true;
   leg.innerHTML="";keys.innerHTML="";
   if(kind==="menu"){
@@ -1496,7 +1633,7 @@ function showCard(kind){
     foot.textContent="ESC TO RESUME · R TO RESTART";
   } else if(kind==="dead"){
     mark.innerHTML="";mark.hidden=true;title.hidden=false;
-    title.textContent=S.meters>=S.best&&S.meters>0?"NEW RECORD":"OVERPRINTED";
+    title.textContent=S.newRecord?"NEW RECORD":"OVERPRINTED";
     sub.textContent=deathLine();
     stats.hidden=false;
     stats.innerHTML=
@@ -1514,6 +1651,7 @@ function showCard(kind){
     go.textContent="CLIMB AGAIN";
     foot.textContent="EDITION 001 · COMPLETE";
   }
+  renderSync();
   overlay.hidden=false;
 }
 function cell(l,v,sm){return`<div><span class="lbl">${l}</span><span class="num${sm?" sm":""}">${v}</span></div>`;}
@@ -1595,8 +1733,10 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 
-/* ---- test hook: the preview pane never runs rAF, so drive it manually ---- */
-window.__t={
+/* ---- test hook: the preview pane never runs rAF, so drive it manually.
+   Localhost only: it can warp and overwrite state, so anywhere a record could
+   reach an Alloy account it would be a cheat rather than a tool. ---- */
+if(location.hostname==="localhost"||location.hostname==="127.0.0.1")window.__t={
   reset:(play=true)=>resetRun(play),
   step:(n,dt)=>{for(let i=0;i<(n||1);i++)tick(dt||1/60);},
   forceSize:(w,h)=>applySize(w,h),
