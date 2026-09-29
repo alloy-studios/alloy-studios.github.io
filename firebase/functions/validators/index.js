@@ -25,6 +25,7 @@ const REGISTRY = {
   "madballs": require("./madballs"),
   "hardburn": require("./hardburn"),
   "cosmic-climb": require("./cosmic-climb"),
+  "echoes": require("./echoes"),
 };
 
 function validatorFor(gameId) {

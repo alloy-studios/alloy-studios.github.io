@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-29",
+      "title": "Every game is on Alloy now",
+      "body": "The last three games have moved over. Echoes keeps the tracks you've recovered and your best clear times, and Cosmic Climb keeps your best altitude and best score, both synced to your Alloy account. Flytale gets the check against unofficial copies; every visit starts at Chapter 1, so there is nothing to save. That completes the move: fourteen games save to your account, all twenty refuse to run as copies on other sites, and the next step is the first limited-time events.",
+      "game": null
+    },
+    {
+      "date": "2026-09-29",
       "title": "Hardburn saves to your Alloy account",
       "body": "Your Hardburn credits, scrap, airframe collection, pity counters and personal bests on every course now sync to your Alloy account, so your hangar follows you to any device. Sign in and the progress already in this browser uploads the first time. Hardburn also reports targets destroyed to Alloy events.",
       "game": "hardburn"

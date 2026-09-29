@@ -19,7 +19,7 @@
       {
         "status": "In development",
         "title": "Alloy accounts and events",
-        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Twelve games are on it so far - Orbit Dash, Speed Simulator, Neon Survivor Legends, Meridian, Rank Zero, Redwater, Foil & Fortune, Abyssal Dredging, Umbra, Port Vesper, Madballs and Hardburn - and the last few follow soon."
+        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Accounts are now in every game that keeps progress - fourteen of them. The first limited-time events are next."
       },
       {
         "status": "In development",
@@ -135,7 +135,8 @@
       "accent": "#64748b",
       "controls": "WASD move, mouse aim, F lamp, Space echo pulse, RMB focus beam, C hold breath",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/echoes.webp"
+      "thumb": "/assets/thumbs/echoes.webp",
+      "rev": "20260929-1847"
     },
     {
       "id": "aura-fighters",

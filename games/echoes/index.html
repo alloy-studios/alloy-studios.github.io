@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "echoes";                                       // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#04060a">
 <title>ECHOES</title>
@@ -191,6 +215,11 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;background:v
 .blurb b{color:var(--bone);font-weight:400}
 .blurb .g{color:var(--phos)} .blurb .a{color:var(--lamp)} .blurb .r{color:var(--alarm)}
 
+.sync{font-size:9.5px;letter-spacing:.24em;color:var(--bone-far);margin:0 0 20px;min-height:14px;text-transform:uppercase}
+.sync:empty{display:none}
+.sync.ok{color:var(--phos-mid)}
+.sync a{color:var(--phos);cursor:pointer;border-bottom:1px solid var(--phos-dim)}
+
 #dCause{font-size:11.5px;letter-spacing:.22em;color:var(--alarm);margin-bottom:8px}
 #dTip{font-size:10.5px;letter-spacing:.12em;color:var(--bone-far);margin-bottom:26px;max-width:460px;line-height:2}
 .stats{font-size:10px;letter-spacing:.2em;color:var(--bone-far);line-height:2.1;margin-bottom:24px}
@@ -308,6 +337,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;background:v
 <div class="screen" id="scrTracks">
   <div class="mark" data-t="TRACKS" style="font-size:clamp(44px,10vw,104px)">TRACKS</div>
   <p class="sub">Select a recovered section</p>
+  <p class="sync" data-sync></p>
   <div class="stack" style="margin-top:14px">
     <button class="btn" data-track="1">01 &mdash; The Drowned Floor<small>Three sluices, and the water is still coming up. Something down there does not come back on sonar.</small><span class="tag">DRAIN</span></button>
     <button class="btn" data-track="2">02 &mdash; The Chorus<small>Seven figures. Six are recordings. Get four voices onto tape without touching the seventh.</small><span class="tag">RECORD</span></button>
@@ -368,6 +398,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;background:v
   <div class="mark" data-t="RECOVERED" style="font-size:clamp(34px,7.6vw,84px)">RECOVERED</div>
   <p class="sub" id="clSub">Track complete</p>
   <div class="stats" id="clStats"></div>
+  <p class="sync" data-sync></p>
   <div class="rowb"><button class="btn" id="clNext">Next track</button><button class="btn ghost" id="clQuit">Shelf</button></div>
 </div>
 
@@ -376,6 +407,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;background:v
   <p class="sub">All three tracks recovered</p>
   <p class="blurb" style="text-align:center;max-width:520px" id="winText"></p>
   <div class="stats" id="wStats"></div>
+  <p class="sync" data-sync></p>
   <div class="rowb" style="margin-top:14px"><button class="btn" id="wAgain">Play again</button><button class="btn ghost" id="wQuit">Shelf</button></div>
 </div>
 
@@ -414,7 +446,8 @@ const SAVE = { cleared: [false, false, false], best: [0, 0, 0], seen: {} };
 function loadSave() {
   try {
     const a = JSON.parse(localStorage.getItem('echoes.set') || 'null'); if (a) Object.assign(SETTINGS, a);
-    const b = JSON.parse(localStorage.getItem('echoes.save') || 'null'); if (b) Object.assign(SAVE, b);
+    const b = JSON.parse(localStorage.getItem('echoes.save') || 'null');
+    if (b) { const p = normProgress(b); SAVE.cleared = p.cleared; SAVE.best = p.best; }
   } catch (e) {}
 }
 function storeSave() {
@@ -423,6 +456,110 @@ function storeSave() {
     localStorage.setItem('echoes.save', JSON.stringify(SAVE));
   } catch (e) {}
 }
+
+/* ---------- Alloy account ----------
+   Optional. On alloy-studios.github.io the site shell gives this iframe
+   window.AlloyAccount; opened on its own, AA is null and everything stays local.
+   Only progress syncs: which tracks are recovered, and the best time on each.
+   Settings are per-device and stay in echoes.set. The server re-checks every
+   value (alloy/validator.js), so nothing here needs to be trusted. */
+const AA = (() => {
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+const AA_ID = 'echoes';
+const aa = { loaded: false, state: 'guest', sent: null, gen: 0 };
+
+/* the synced shape: three flags, three times in seconds (0 = no time yet) */
+function normProgress(o) {
+  const c = o && Array.isArray(o.cleared) ? o.cleared : [];
+  const b = o && Array.isArray(o.best) ? o.best : [];
+  const out = { v: 1, cleared: [], best: [] };
+  for (let i = 0; i < 3; i++) {
+    const t = Number(b[i]);
+    out.best[i] = Number.isFinite(t) && t > 0 ? Math.round(t * 100) / 100 : 0;
+    out.cleared[i] = c[i] === true || out.best[i] > 0;
+  }
+  return out;
+}
+/* progress only moves forward: a track stays recovered, a best time only improves */
+function betterOf(a, b, i, out) {
+  const x = a.best[i], y = b.best[i];
+  out.best[i] = x > 0 && y > 0 ? Math.min(x, y) : (x || y);
+  out.cleared[i] = a.cleared[i] || b.cleared[i] || out.best[i] > 0;
+}
+function mergeProgress(a, b) {
+  const out = { v: 1, cleared: [], best: [] };
+  for (let i = 0; i < 3; i++) betterOf(a, b, i, out);
+  return out;
+}
+function takeProgress(p) {
+  SAVE.cleared = p.cleared.slice(); SAVE.best = p.best.slice();
+  storeSave();
+  refreshTracks();
+}
+/* A reply is what the server stored, so adopt it - that is how a clamp sticks.
+   But coalesced saves all resolve with the reply to the LATEST payload, so any
+   track that moved on locally since that payload went out keeps the better of
+   the two instead of being rolled back. Returns 'moved' if we are now ahead. */
+function aaAdopt(res) {
+  if (!res || !res.ok || !res.data) return false;
+  const srv = normProgress(res.data), now = normProgress(SAVE), sent = aa.sent;
+  const out = { v: 1, cleared: [], best: [] };
+  let moved = false;
+  for (let i = 0; i < 3; i++) {
+    const changed = !sent || now.best[i] !== sent.best[i] || now.cleared[i] !== sent.cleared[i];
+    if (changed) { betterOf(now, srv, i, out); if (out.best[i] !== srv.best[i] || out.cleared[i] !== srv.cleared[i]) moved = true; }
+    else { out.best[i] = srv.best[i]; out.cleared[i] = srv.cleared[i]; }
+  }
+  takeProgress(out);
+  return moved ? 'moved' : true;
+}
+function aaPush(now) {
+  if (!AA) return;
+  if (!AA.user()) { aa.state = 'guest'; refreshSync(); return; }
+  if (!aa.loaded) { aaSync(); return; }          // never write before the first load has finished
+  const payload = normProgress(SAVE);
+  aa.sent = payload;
+  aa.state = 'saving'; refreshSync();
+  AA.save(AA_ID, payload, { now: !!now }).then(res => {
+    const r = aaAdopt(res);
+    if (r === 'moved') { aaPush(true); return; }
+    aa.state = r ? 'synced' : 'unsynced'; refreshSync();
+  }, () => { aa.state = 'unsynced'; refreshSync(); });
+}
+async function aaSync() {
+  if (!AA) return;
+  const gen = ++aa.gen;
+  aa.loaded = false;
+  if (!AA.user()) { aa.state = 'guest'; refreshSync(); return; }
+  aa.state = 'saving'; refreshSync();
+  let r = null;
+  try { r = await AA.load(AA_ID); } catch (_) { r = null; }
+  if (gen !== aa.gen) return;                     // superseded by a newer sign-in state
+  if (!r) { aa.state = 'unsynced'; refreshSync(); return; }   // unreachable: stay local, write nothing
+  aa.loaded = true;
+  const local = normProgress(SAVE);
+  const cloud = r.data ? normProgress(r.data) : null;
+  const merged = cloud ? mergeProgress(local, cloud) : local;
+  takeProgress(merged);
+  if (!cloud || JSON.stringify(merged) !== JSON.stringify(cloud)) aaPush(true);  // cloud empty or behind
+  else { aa.state = 'synced'; refreshSync(); }
+}
+function refreshSync() {
+  const els = document.querySelectorAll('[data-sync]');
+  let html = '', ok = false;
+  if (AA) {
+    if (!AA.user()) html = '<a data-signin>Sign in</a> to keep your recovered tracks';
+    else if (aa.state === 'synced') { html = 'Saved to your Alloy account'; ok = true; }
+    else if (aa.state === 'saving') html = 'Syncing with your Alloy account';
+    else html = 'Alloy account &mdash; not synced';
+  }
+  els.forEach(el => { el.innerHTML = html; el.classList.toggle('ok', ok); });
+}
+if (AA) document.addEventListener('click', e => {
+  if (e.target && e.target.closest && e.target.closest('[data-signin]')) AA.signIn();
+});
 
 const DIFF = [
   { id: 'FAINT',  spd: .80, drain: .62, cell: .70, hear: .80, grace: 2 },
@@ -3977,12 +4114,14 @@ function winTrack() {
   const prev = SAVE.best[G.lvl - 1];
   if (!prev || G.elapsed < prev) SAVE.best[G.lvl - 1] = G.elapsed;
   storeSave();
+  aaPush(true);
   AU.stopBed(); AU.tape('stop'); AU.ui('ok');
   FX.flash = .8;
   El.hud.classList.remove('on'); El.touch.classList.remove('on');
   const mm = s => String((s / 60) | 0).padStart(2, '0') + ':' + String((s | 0) % 60).padStart(2, '0');
   El.clSub.textContent = LEVELS[G.lvl].tag + ' — ' + LEVELS[G.lvl].name;
   El.clStats.innerHTML = 'RUN TIME <b>' + mm(G.elapsed) + '</b><br>BEST <b>' + mm(SAVE.best[G.lvl - 1]) + '</b><br>LUCIDITY LEFT <b>' + Math.round(player.lucid) + '%</b><br>CELL LEFT <b>' + Math.round(player.cell) + '%</b>';
+  refreshSync();
   setTimeout(() => {
     if (G.lvl >= 3) {
       El.winText.innerHTML = 'The tape runs out here. Whatever was recording it did not stop when you did &mdash; it simply ran out of reel.';
@@ -4329,6 +4468,7 @@ function showScreen(id) {
   if (id === 'scrTracks') refreshTracks();
 }
 function refreshTracks() {
+  refreshSync();
   document.querySelectorAll('[data-track]').forEach(b => {
     const n = +b.dataset.track;
     const done = SAVE.cleared[n - 1];
@@ -4609,11 +4749,12 @@ function boot() {
   addEventListener('resize', resize);
   addEventListener('orientationchange', () => setTimeout(resize, 220));
   refreshTracks();
+  if (AA) { AA.ready.then(aaSync); AA.onChange(aaSync); }
   requestAnimationFrame(frame);
 }
 
-/* ---------- headless drive hook: the preview pane never fires rAF ---------- */
-window.__t = {
+/* ---------- headless drive hook: local dev servers only ---------- */
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') window.__t = {
   reset: n => startTrack(n || 1),
   step: (n, dt) => { for (let i = 0; i < (n || 1); i++) tick(dt || 1 / 60); },
   forceSize: (w, h) => applySize(w, h),
