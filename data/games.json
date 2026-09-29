@@ -264,7 +264,8 @@
       "accent": "#38bdf8",
       "controls": "Arrows or WASD to fly, Z to confirm, X to cancel, M to mute",
       "added": "2026-09-10",
-      "thumb": "/assets/thumbs/flytale.png"
+      "thumb": "/assets/thumbs/flytale.png",
+      "rev": "20260929-1838"
     },
     {
       "id": "madballs",
