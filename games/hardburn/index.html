@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "hardburn";                                     // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>HARDBURN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -169,7 +193,7 @@ canvas#cv{position:fixed;inset:0;width:100%;height:100%;display:block;background
     </div>
   </div>
   <div class="foot" style="margin-top:22px">
-    <div class="stamp">RANGE CONTROL — ALL RUNS RECORDED</div>
+    <div class="stamp" id="syncShell">RANGE CONTROL — ALL RUNS RECORDED</div>
     <div class="stamp" id="shellstat"></div>
   </div>
 </div></div>
@@ -228,6 +252,7 @@ canvas#cv{position:fixed;inset:0;width:100%;height:100%;display:block;background
       <button class="btn" data-go="roll">SUPPLY DROP</button>
       <button class="btn" data-go="shell">RANGE CONTROL</button>
     </div>
+    <div class="stamp" id="syncRes" style="margin-top:14px"></div>
   </div>
 </div></div>
 
@@ -618,7 +643,100 @@ function load() {
   try { const r = JSON.parse(localStorage.getItem(SAVE_KEY)); if (r && r.owned) return Object.assign({}, DEF_SAVE, r); } catch (e) { }
   return JSON.parse(JSON.stringify(DEF_SAVE));
 }
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SV)); } catch (e) { } }
+/* ------------------------------------------------------ Alloy account ---- */
+/* Optional sync layer. On alloy-studios.github.io the site shell hands this
+   iframe window.AlloyAccount; opened on its own, AA is null and everything
+   stays in localStorage exactly as before. The server re-checks every value
+   (alloy/validator.js), so nothing sent from here needs to be trusted. */
+const AA = (() => {
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+const GAME_ID = 'hardburn', ACCT_KEY = 'hardburn.acct';
+/* A PB per course seed is kept forever, and any word is a seed, so the map
+   grows without limit. Keep the best BEST_CAP: it bounds localStorage (shared
+   by every game on the site) and keeps the cloud save under the validator's
+   maxBytes. Losing a low PB only means re-flying that course pays again. */
+const BEST_CAP = 2000;
+const cloud = { user: null, loaded: false, synced: false, failed: false, rev: 0, events: [] };
+
+function trimBest() {
+  const k = Object.keys(SV.best || {});
+  if (k.length <= BEST_CAP) return;
+  k.sort((a, b) => SV.best[b] - SV.best[a]);
+  const keep = {};
+  for (let i = 0; i < BEST_CAP; i++) keep[k[i]] = SV.best[k[i]];
+  SV.best = keep;
+}
+function saveLocal() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SV)); } catch (e) { } }
+/* every mutation of SV goes through here; checkpoint = end of run, purchase, equip */
+function save(checkpoint) {
+  trimBest();
+  cloud.rev++;
+  saveLocal();
+  pushCloud(!!checkpoint);
+}
+function pushCloud(now) {
+  if (!AA || !cloud.loaded || !cloud.user) return;     // never write before the first load
+  const rev = cloud.rev;
+  AA.save(GAME_ID, JSON.parse(JSON.stringify(SV)), { now }).then(res => {
+    if (!res || !res.ok) { cloud.synced = false; cloud.failed = true; refreshSync(); return; }
+    cloud.synced = true; cloud.failed = false;
+    /* Saves coalesce, and a reply can land after more progress was made. Only
+       adopt the server's copy if nothing has changed since THIS payload left —
+       otherwise a newer save is on its way and its reply will be adopted. */
+    if (rev === cloud.rev && res.data) adopt(res.data);
+    refreshSync();
+  }, () => { cloud.synced = false; cloud.failed = true; refreshSync(); });
+}
+function adopt(d) {
+  SV = Object.assign(JSON.parse(JSON.stringify(DEF_SAVE)), d);
+  saveLocal();
+  if (typeof refreshUI === 'function') refreshUI();
+}
+const progressOf = s => (Number(s && s.runs) || 0) + (Number(s && s.rolls) || 0);
+async function syncCloud() {
+  if (!AA) return;
+  const u = AA.user();
+  cloud.user = u; cloud.loaded = false; cloud.synced = false; cloud.failed = false; cloud.events = [];
+  refreshSync();
+  if (!u) return;
+  let r = null;
+  try { r = await AA.load(GAME_ID); } catch (_) { }
+  const now = AA.user();
+  if (!now || now.uid !== u.uid) return;               // signed out or switched while loading
+  if (!r) { cloud.failed = true; refreshSync(); return; }   // unreachable: stay local, write nothing
+  let acct = null;
+  try { acct = localStorage.getItem(ACCT_KEY); } catch (_) { }
+  cloud.loaded = true;
+  /* The account's save wins, unless this device's save descends from THIS
+     account and is at least as far along (offline play since the last sync).
+     A guest's or another account's local save never overwrites a real one. */
+  if (r.data && !(acct === u.uid && progressOf(SV) >= progressOf(r.data))) {
+    adopt(r.data);
+    cloud.synced = true;
+  } else {
+    cloud.rev++;
+    pushCloud(true);                                   // empty account, or this device is ahead
+  }
+  try { localStorage.setItem(ACCT_KEY, u.uid); } catch (_) { }
+  refreshSync();
+  try { cloud.events = (await AA.events(GAME_ID)).filter(e => e.live); } catch (_) { cloud.events = []; }
+}
+function syncText() {
+  if (!AA) return '';
+  if (!cloud.user) return 'SIGN IN (TOP RIGHT) TO KEEP YOUR PROGRESS';
+  if (cloud.synced) return 'SAVED TO YOUR ALLOY ACCOUNT';
+  if (cloud.failed) return 'NOT SAVED TO YOUR ACCOUNT YET — WILL RETRY';
+  return 'SYNCING WITH YOUR ALLOY ACCOUNT…';
+}
+function refreshSync() {
+  const t = syncText();
+  const a = document.getElementById('syncShell'), b = document.getElementById('syncRes');
+  if (a) a.textContent = t || 'RANGE CONTROL — ALL RUNS RECORDED';
+  if (b) b.textContent = t;
+}
+if (AA) { AA.ready.then(syncCloud); AA.onChange(syncCloud); }
 function equipped() { return SKIN_BY_ID[SV.equip] || SKINS[0]; }
 </script>
 <script>
@@ -2149,7 +2267,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 /* deterministic step hook — the preview pane does not run rAF */
-window.__t = {
+/* Test hook — LOCALHOST ONLY. give/giveAll grant airframes and credits, and
+   with cloud saves a grant reachable from DevTools would follow the player to
+   every device, so it must not exist on the live site or as a local file. */
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') window.__t = {
   step: (n, dt) => { for (let i = 0; i < (n || 1); i++) tick(dt || 1 / 60); },
   forceSize: (w, h) => applySize(w, h),
   fly: (seed, diff) => startRun(seed || 'TITAN', diff == null ? 1 : diff),
@@ -2327,7 +2448,7 @@ function buildHangar() {
   const eq = $('hgEquip');
   eq.disabled = !owned || SV.equip === sk.id;
   eq.textContent = !owned ? 'NOT ISSUED' : (SV.equip === sk.id ? 'EQUIPPED' : 'EQUIP ' + sk.name);
-  eq.onclick = () => { if (SV.owned[sk.id]) { SV.equip = sk.id; save(); buildHangar(); refreshUI(); toast('EQUIPPED ' + sk.name, rgb(rc.c)); } };
+  eq.onclick = () => { if (SV.owned[sk.id]) { SV.equip = sk.id; save(true); buildHangar(); refreshUI(); toast('EQUIPPED ' + sk.name, rgb(rc.c)); } };
   const ownN = SKINS.filter(s => SV.owned[s.id]).length;
   $('hgStat').textContent = ownN + ' OF ' + SKINS.length + ' AIRFRAMES ISSUED · ' +
     SKINS.filter(s => SV.owned[s.id] && s.ab).length + ' WITH SKIN SYSTEMS';
@@ -2373,7 +2494,7 @@ function doRoll(n, force, costCred, costScrap) {
   out.sort((a, b) => b.sk.rar - a.sk.rar);
   ROLL.pack = n > 1 ? out : null;
   beginReveal(out[0]);
-  save(); refreshUI();
+  save(true); refreshUI();                        // checkpoint: purchase
 }
 function revealDone() {
   const sk = ROLL.sk, rc = RAR[sk.rar];
@@ -2469,7 +2590,10 @@ function finishRun() {
   if (isPB) SV.best[key] = score;
   SV.cred += cred; SV.runs++; if (RUN.win) SV.kills++;
   if (score > SV.bestEver) SV.bestEver = score;
-  save();
+  save(true);                                    // checkpoint: end of run
+  if (AA && cloud.user && RUN.win)                // 'targets' is the one event metric declared
+    for (const e of cloud.events) if (e.metric === 'targets') AA.progress(e.id, 1);
+  refreshSync();
   const row = (k, v, cls) => '<div class="row ' + (cls || '') + '"><span>' + k + '</span><b>' + v + '</b></div>';
   const n = v => Math.round(v).toLocaleString('en-US');
   $('resTitle').textContent = RUN.win ? 'Target Destroyed' : (P.hull <= 0 ? 'Airframe Lost' : 'Run Aborted');
@@ -2514,6 +2638,7 @@ function buildLaunch() {
 
 /* ================================================================= glue === */
 function refreshUI() {
+  refreshSync();
   const n = v => Math.round(v).toLocaleString('en-US');
   const ownN = SKINS.filter(s => SV.owned[s.id]).length;
   $('mCred').textContent = n(SV.cred) + ' CR';

@@ -23,6 +23,7 @@ const REGISTRY = {
   "umbra": require("./umbra"),
   "port-vesper": require("./port-vesper"),
   "madballs": require("./madballs"),
+  "hardburn": require("./hardburn"),
 };
 
 function validatorFor(gameId) {

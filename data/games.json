@@ -19,7 +19,7 @@
       {
         "status": "In development",
         "title": "Alloy accounts and events",
-        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Eleven games are on it so far - Orbit Dash, Speed Simulator, Neon Survivor Legends, Meridian, Rank Zero, Redwater, Foil & Fortune, Abyssal Dredging, Umbra, Port Vesper and Madballs - and the last few follow soon."
+        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Twelve games are on it so far - Orbit Dash, Speed Simulator, Neon Survivor Legends, Meridian, Rank Zero, Redwater, Foil & Fortune, Abyssal Dredging, Umbra, Port Vesper, Madballs and Hardburn - and the last few follow soon."
       },
       {
         "status": "In development",
@@ -343,7 +343,8 @@
       "accent": "#e2e8f0",
       "controls": "Space to launch and hold for thrust, mouse to aim, WASD to swing the airframe, X to realign, E grapple, Shift hard burn",
       "added": "2026-09-19",
-      "thumb": "/assets/thumbs/hardburn.webp"
+      "thumb": "/assets/thumbs/hardburn.webp",
+      "rev": "20260929-1600"
     },
     {
       "id": "ratswithwings",
