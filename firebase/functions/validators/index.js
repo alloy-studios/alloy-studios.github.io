@@ -21,6 +21,7 @@ const REGISTRY = {
   "tcg-cardshop-simulator": require("./tcg-cardshop-simulator"),
   "abyssal-dredging": require("./abyssal-dredging"),
   "umbra": require("./umbra"),
+  "port-vesper": require("./port-vesper"),
 };
 
 function validatorFor(gameId) {

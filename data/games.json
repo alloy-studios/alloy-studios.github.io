@@ -84,7 +84,8 @@
       "accent": "#ef4444",
       "controls": "WASD to move or drive, mouse to aim, E to enter a car, R to rob, Space to handbrake",
       "added": "2026-09-08",
-      "thumb": "/assets/thumbs/port-vesper.webp"
+      "thumb": "/assets/thumbs/port-vesper.webp",
+      "rev": "20260929-0653"
     },
     {
       "id": "grand-line",

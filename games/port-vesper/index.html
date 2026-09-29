@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Alloy Studios home check - keep this the FIRST script in <head>. */
+(function () {
+  var GAME = "port-vesper";                                  // this game's id on the site
+  var h = location.hostname;
+  var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+  var stranger = false;
+  try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+  catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+  if (home && !stranger) return;
+  var url = "https://alloy-studios.github.io/" + GAME + "/";
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+    'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+    '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+    '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+    '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+    'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+    'Play it at alloy-studios.github.io</a></div></body>';
+  if (window.stop) window.stop();                            // stop the rest of the page loading
+  throw new Error("Alloy Studios: not on the home site");
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -211,6 +235,8 @@
   .gob:hover{background:var(--steel-dim);color:var(--bone)}
   #bigmap canvas{border:1px solid #222b38;background:#070a0f;max-width:93vw;max-height:88vh;
     box-shadow:0 30px 100px rgba(0,0,0,.85)}
+  #syncline{display:none;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--steel)}
+  #syncline.ok{color:var(--dispatch)}
   #iosHint{display:none;max-width:430px;font-family:var(--mono);font-size:9.5px;line-height:1.8;
     color:var(--steel-dim);letter-spacing:.06em;border:1px solid #161e28;padding:10px 14px}
   #iosHint b{color:var(--dispatch)}
@@ -391,6 +417,7 @@
       <button id="go">WORK THE NIGHT</button>
       <button class="gob" id="goLoad">CONTINUE</button>
     </div>
+    <div id="syncline"></div>
     <div id="iosHint">on iPhone tap <b>Share</b> &rarr; <b>Add to Home Screen</b>, then launch from there for true fullscreen</div>
   </div>
 </div>
@@ -1868,6 +1895,7 @@ function respawn(){
   clearWanted(); player.dead = 0; player.car = null; player.reloadT = 0;
   cam.x = player.x; cam.y = player.y; cam.trauma = 0;
   if(heliActive) heliActive.leaving = 0.1;
+  save(true);
 }
 
 /* ================================== gunplay ================================== */
@@ -2145,6 +2173,7 @@ function bankDrift(){
     const cash = Math.min(600, Math.floor(pts/22));
     addMoney(cash); player.respect += 0.25;
     if(pts > player.bestDrift) player.bestDrift = pts;
+    cloudMetric('driftPoints', pts, pts);
     toast('BANKED ' + pts + ' STYLE  ·  ' + money(cash));
     sfx.cash();
   }
@@ -2954,8 +2983,11 @@ function barShop(s){
     {n:'A DRINK', d:'+20 health, -a little accuracy for a while', p:money(40),
      fn:()=>{ if(buy(40)){ player.hp = Math.min(player.maxhp, player.hp+20); player.drunk = 22;
                            toast('CHEERS'); closePanel(); } }},
-    {n:'ASK AROUND', d:'someone always knows where a good car is parked', p:money(200),
+    {n:'ASK AROUND', d: tipWait() > 0 ? 'nobody has heard anything new. try again in ' + tipWait() + 's'
+                                        : 'someone always knows where a good car is parked',
+     p:money(200), dis: tipWait() > 0,
      fn:()=>{ if(buy(200)){
+        player.tipAt = Date.now();
         const want = chopList[0];
         toast('SOMEONE SAW A ' + CARS[want.k].name + ' NEARBY');
         spawnWantedCar(want.k); closePanel(); } }},
@@ -2963,6 +2995,9 @@ function barShop(s){
      fn:()=>{ if(buy(600)){ player.respect += 2; toast('RESPECT +2'); closePanel(); } }}
   ]);
 }
+/* One tip per minute. Without it the bar could be farmed for a want-listed car
+   every few seconds, and the chop shop pays up to $177k for a hyper. */
+function tipWait(){ return Math.max(0, Math.ceil(60 - (Date.now() - (player.tipAt||0))/1000)); }
 function dinerShop(s){
   const own = player.props.diner;
   openPanel(s.name, own ? 'Your booth. Your coffee. Your terrible hours.'
@@ -3008,8 +3043,11 @@ function garageShop(s){
   }
   const v = nearestCar(player.x, player.y, 150);
   const rows = [
-    {n:'SLEEP UNTIL EVENING', d:'heal up, bank your property income, advance the night',
-     p:'FREE', cls:'free', fn:()=>{ sleepNight(); closePanel(); }},
+    {n:'SLEEP UNTIL EVENING',
+     d: isDaytime() ? 'heal up, bank your property income, advance the night'
+                    : 'you work nights. come back once it is light out (05:00)',
+     p: isDaytime() ? 'FREE' : 'NIGHT', cls: isDaytime() ? 'free' : '', dis: !isDaytime(),
+     fn:()=>{ sleepNight(); closePanel(); }},
     {n:'RESTOCK ALL AMMO', d: player.owned.length > 1 ? 'top up everything you own' : 'buy a gun first',
      p:money(560), dis: player.owned.length < 2,
      fn:()=>{ if(buy(560)){ for(const i of player.owned){ const w = WEAPONS[i];
@@ -3038,13 +3076,16 @@ function bars(n){ return '■'.repeat(n) + '□'.repeat(3-n); }
 function chopShop(s){
   const v = player.car || nearestCar(player.x, player.y, 130);
   if(!v){ toast('BRING A CAR'); return; }
-  const want = chopList.find(c => c.k === v.type);
+  /* An owned car is resale, not an order: no want-list premium and no perk. At
+     the premium a hyper bought for $165k sold here for ~$178k, an infinite loop. */
+  const want = !v.owned && chopList.find(c => c.k === v.type);
   const base = (v.def.price || 6000);
   const cond = 0.45 + 0.5*(v.hp/v.maxhp);
   let pay = Math.floor(base * 0.42 * cond * (want ? want.mult : 0.8));
-  if(player.perks.ray) pay = Math.floor(pay*1.35);
+  if(player.perks.ray && !v.owned) pay = Math.floor(pay*1.35);
   const rows = [
-    {n:'SELL THIS ' + v.def.name, d: want ? 'ON THE WANT LIST · premium paid' : 'no order for this one · base rate',
+    {n:'SELL THIS ' + v.def.name, d: want ? 'ON THE WANT LIST · premium paid'
+        : v.owned ? 'your own car · resale rate, no premium' : 'no order for this one · base rate',
      p: money(pay), cls: want?'free':'',
      fn:()=>{
        addMoney(pay);
@@ -3124,6 +3165,8 @@ function finishRob(s){
   crime(spec.stars, 'ARMED ROBBERY', {always:true, x:s.x, y:s.y});
   for(const p of peds) if(p.kind==='civ' && dist(p.x,p.y,s.x,s.y) < 540) p.panic = 9;
   player.robTarget = null; player.robT = 0;
+  cloudMetric('robberies', 1);
+  save(true);
   if(job && job.t === 'heist' && job.kind === s.type && !job.have) jobProgress();
 }
 
@@ -3136,7 +3179,8 @@ function openPhone(){
   if(player.dead) return;
   phoneOpen = true; paused = true;
   const L = $('phList'); L.innerHTML = '';
-  $('phS').innerHTML = 'RESPECT <b>' + Math.floor(player.respect) + '</b> · ' + money(player.money)
+  $('phS').innerHTML = (AA ? cloudStatus() + '<br>' : '') +
+    'RESPECT <b>' + Math.floor(player.respect) + '</b> · ' + money(player.money)
     + (job ? ' · <b>JOB ACTIVE</b>' : '');
   for(const c of CONTACTS){
     const unl = contactUnlocked(c), done = contactDone(c);
@@ -3290,8 +3334,9 @@ function jobDone(){
       if(c.id==='odessa') player.props.club = true;
     }
   }
+  cloudMetric('jobs', 1);
   clearJob();
-  save();
+  save(true);
 }
 function jobFail(why){
   if(!job) return;
@@ -3421,7 +3466,13 @@ function nightlyIncome(){
   if(player.props.docks) n *= 2;
   return n;
 }
+/* Sleeping jumps the clock to 20:30, so allowing it only between 05:00 and 20:00
+   means one sleep per in-game day: >= 510 game minutes at 1.35 per real second,
+   ~378 s of real time. It used to be free to repeat, which paid property income
+   on every click and reset every robbery cooldown. */
+function isDaytime(){ return time >= 300 && time < 1200; }
 function sleepNight(){
+  if(!isDaytime()) return;
   const inc = nightlyIncome();
   player.hp = player.maxhp;
   player.nightsWorked++;
@@ -3431,41 +3482,246 @@ function sleepNight(){
   for(const s of shops) s.robbed = 0;
   if(inc > 0){ addMoney(inc); toast('NIGHT ' + player.nightsWorked + ' — PROPERTY PAID ' + money(inc)); }
   else toast('NIGHT ' + player.nightsWorked);
-  save();
+  save(true);
 }
 
-/* ---------------------------------- save ----------------------------------- */
-const SAVE_KEY = 'portvesper.save.v2';
-function save(){
-  try{
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      money:player.money, respect:player.respect, hp:player.hp, maxhp:player.maxhp, armor:player.armor,
-      owned:player.owned, ammo:player.ammo, mag:player.mag, wep:player.wep,
-      props:player.props, perks:player.perks, progress, hostility,
-      kills:player.kills, stolen:player.stolen, crimes:player.crimes,
-      bestDrift:player.bestDrift, nights:player.nightsWorked,
-      x:player.x, y:player.y, time
-    }));
-  }catch(e){}
+/* saving and account sync live in 07b_cloud.js */
+
+/* ================================================================================
+   07b · SAVES & ALLOY ACCOUNT SYNC
+   --------------------------------------------------------------------------------
+   localStorage is the guest save and the offline save, and the game works fully
+   on it alone. On alloy-studios.github.io the site shell hosts this file in an
+   iframe and exposes window.AlloyAccount; when it is there, the account is a sync
+   layer on top. Opened as a file, AA is null and none of the cloud code runs.
+
+   The server re-checks every field (alloy/validator.js) and replies with what it
+   actually stored. Nothing here has to be trusted.
+   ================================================================================ */
+
+const SAVE_KEY = 'portvesper.save.v2';        // already prefixed with the game's name
+const GAME_ID  = 'port-vesper';
+
+const AA = (() => {
+  try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+  catch (_) { return null; }
+})();
+
+const cloud = {
+  uid: null,          // the account this session is attached to (null: guest)
+  loaded: false,      // the first AA.load for this uid has finished. No writes before it,
+                      // or a slow load could let an empty device upload over a real account.
+  synced: false,      // the last round-trip succeeded
+  fresh: false,       // the player confirmed NEW NIGHT: overwrite the account, don't adopt it
+  gen: 0,             // bumps on every account change so a stale reply can never land
+  seq: 0,             // tags each payload; the validator echoes it back (see adoptReply)
+  sent: new Map(),    // seq -> the payload that carried it
+  events: []
+};
+
+/* ------------------------------- local save ------------------------------- */
+function snapshot(){
+  const [px,py] = pPos();
+  return {
+    v:1,
+    money:Math.floor(player.money), respect:player.respect,
+    hp:Math.round(player.hp), maxhp:player.maxhp, armor:Math.round(player.armor),
+    owned:player.owned.slice(), ammo:Object.assign({}, player.ammo), mag:Object.assign({}, player.mag),
+    wep:player.wep,
+    props:Object.assign({}, player.props), perks:Object.assign({}, player.perks),
+    progress:Object.assign({}, progress), hostility:Object.assign({}, hostility),
+    kills:player.kills, stolen:player.stolen, crimes:player.crimes,
+    bestDrift:player.bestDrift, nights:player.nightsWorked, tipAt:player.tipAt||0,
+    x:Math.round(px), y:Math.round(py), time:Math.round(time)
+  };
 }
-function hasSave(){ try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; } }
-function load(){
-  try{
-    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if(!d) return false;
-    player.money = d.money; player.respect = d.respect;
-    player.hp = d.hp; player.maxhp = d.maxhp || 100; player.armor = d.armor || 0;
-    player.owned = d.owned; player.ammo = d.ammo; player.mag = d.mag || player.mag; player.wep = d.wep;
-    player.props = d.props || {lockup:true}; player.perks = d.perks || {};
-    player.kills = d.kills||0; player.stolen = d.stolen||0; player.crimes = d.crimes||0;
-    player.bestDrift = d.bestDrift||0; player.nightsWorked = d.nights||1;
-    for(const k in d.progress) progress[k] = d.progress[k];
-    for(const k in (d.hostility||{})) hostility[k] = d.hostility[k];
-    const sp = clearSpot(d.x, d.y);
+function writeLocal(d){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(d)); }catch(_){} }
+function readLocal(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(_){ return null; } }
+function hasSave(){ try{ return !!localStorage.getItem(SAVE_KEY); }catch(_){ return false; } }
+
+/* Put a save into the live game. `keepPlace` leaves position, clock and health
+   alone — that is the mode used when adopting a server correction mid-play. */
+function applyData(d, keepPlace){
+  if(!d || typeof d !== 'object') return false;
+  const n = (v, dflt) => (typeof v === 'number' && isFinite(v)) ? v : dflt;
+  player.money = Math.max(0, n(d.money, 0));
+  player.respect = Math.max(0, n(d.respect, 0));
+  player.maxhp = clamp(n(d.maxhp, 100), 100, 150);
+  if(!keepPlace){ player.hp = clamp(n(d.hp, player.maxhp), 1, player.maxhp); player.armor = clamp(n(d.armor, 0), 0, 100); }
+  else player.hp = Math.min(player.hp, player.maxhp);
+  if(Array.isArray(d.owned)) player.owned = d.owned.filter(i => WEAPONS[i]).sort((a,b)=>a-b);
+  if(player.owned.indexOf(0) < 0) player.owned.unshift(0);
+  if(d.ammo) for(const k in player.ammo) player.ammo[k] = Math.max(0, n(d.ammo[k], 0));
+  if(d.mag)  for(const w of WEAPONS) player.mag[w.id] = Math.max(0, n(d.mag[w.id], 0));
+  if(!keepPlace || player.owned.indexOf(player.wep) < 0)
+    player.wep = player.owned.indexOf(d.wep) >= 0 ? d.wep : player.owned[player.owned.length-1];
+  if(player.reloadOf >= 0 && player.owned.indexOf(player.reloadOf) < 0){ player.reloadT = 0; player.reloadOf = -1; }
+  for(const k in progress) progress[k] = clamp(Math.floor(n(d.progress && d.progress[k], 0)), 0, 99);
+  for(const k in hostility) hostility[k] = clamp(n(d.hostility && d.hostility[k], 0), 0, 1);
+  /* perks and the two granted properties are consequences of contract progress,
+     so they are derived from it rather than trusted as stored flags */
+  player.perks = {};
+  for(const c of CONTACTS) if(progress[c.id] >= c.jobs.length) player.perks[c.id] = true;
+  player.props = Object.assign({}, d.props || {}, {lockup:true});
+  player.props.docks = !!player.perks.duke;
+  if(player.perks.odessa) player.props.club = true;
+  player.kills = n(d.kills,0); player.stolen = n(d.stolen,0); player.crimes = n(d.crimes,0);
+  player.bestDrift = n(d.bestDrift,0); player.nightsWorked = Math.max(1, n(d.nights,1));
+  player.tipAt = n(d.tipAt, 0);
+  if(!keepPlace){
+    const sp = clearSpot(n(d.x, player.x), n(d.y, player.y));
     player.x = sp.x; player.y = sp.y; cam.x = sp.x; cam.y = sp.y;
-    time = d.time || 21*60;
-    return true;
-  }catch(e){ return false; }
+    time = clamp(n(d.time, 21*60), 0, 1439);
+  }
+  return true;
+}
+function load(){ return applyData(readLocal(), false); }
+
+/* Every save goes to localStorage; if an account is attached it also goes up.
+   `now` marks a checkpoint (job paid, robbery, purchase, sleep) and skips the
+   20 s coalescing wait. */
+function save(now){
+  const d = snapshot();
+  writeLocal(d);
+  pushCloud(d, !!now);
+}
+
+/* --------------------------------- cloud ---------------------------------- */
+function cloudStatus(){
+  if(!AA) return '';
+  if(!cloud.uid) return 'SIGN IN, TOP RIGHT, TO KEEP YOUR PROGRESS';
+  if(!cloud.loaded) return 'ALLOY ACCOUNT — CONNECTING';
+  if(cloud.synced) return 'SAVED TO YOUR ALLOY ACCOUNT';
+  /* signed in, nothing on either side yet: not an error, just nothing to send */
+  return cloud.seq === 0 ? 'ALLOY ACCOUNT — READY' : 'ALLOY ACCOUNT — NOT SYNCED';
+}
+function renderSync(){
+  const e = document.getElementById('syncline'); if(!e) return;
+  const t = cloudStatus();
+  e.textContent = t; e.style.display = t ? 'block' : 'none';
+  e.className = (cloud.uid && cloud.synced) ? 'ok' : '';
+}
+
+async function cloudSync(){
+  if(!AA) return;
+  let u = null; try{ u = AA.user(); }catch(_){}
+  const uid = u ? u.uid : null;
+  /* onChange also fires on a name change; only a different account means a reload */
+  if(uid === cloud.uid && (cloud.loaded || !uid)){ renderSync(); return; }
+  const gen = ++cloud.gen;
+  cloud.uid = uid; cloud.loaded = false; cloud.synced = false; cloud.events = []; cloud.sent.clear();
+  renderSync();
+  if(!uid) return;
+
+  let r = null;
+  try{ r = await AA.load(GAME_ID); }catch(_){ r = null; }
+  if(gen !== cloud.gen) return;                // signed out or switched account meanwhile
+  if(!r){ renderSync(); return; }              // unreachable: stay local, never write blind
+  cloud.loaded = true;
+
+  if(r.data && !cloud.fresh){
+    /* the account's save wins over this device's */
+    writeLocal(r.data);
+    if(started){
+      applyData(r.data, false);
+      player.car = null; clearJob();
+      toast('LOADED YOUR ALLOY SAVE');
+    }
+    refreshTitle();
+    cloud.synced = true;
+  } else if(started){
+    save(true);                                // empty account, or a confirmed new game
+  } else if(hasSave()){
+    pushCloud(readLocal(), true);              // first sign-in: this device's save goes up
+  }
+  renderSync();
+  try{ cloud.events = ((await AA.events(GAME_ID)) || []).filter(e => e && e.live); }catch(_){}
+}
+
+function pushCloud(data, now){
+  if(!AA || !cloud.uid || !cloud.loaded || !data) return;
+  const seq = ++cloud.seq;
+  const payload = Object.assign({}, data, {seq});
+  cloud.sent.set(seq, payload);
+  if(cloud.sent.size > 16) cloud.sent.delete(cloud.sent.keys().next().value);
+  const gen = cloud.gen;
+  let p;
+  try{ p = AA.save(GAME_ID, payload, now ? {now:true} : undefined); }catch(_){ return; }
+  Promise.resolve(p).then(res => {
+    if(gen !== cloud.gen) return;
+    cloud.synced = !!(res && res.ok);
+    if(cloud.synced && res.data) adoptReply(res.data);
+    renderSync();
+  }, () => { if(gen === cloud.gen){ cloud.synced = false; renderSync(); } });
+}
+
+/* ADOPTING THE SERVER'S REPLY WITHOUT ROLLING BACK PROGRESS.
+
+   Routine saves coalesce, and every coalesced promise resolves with the reply to
+   the LATEST payload — which may be older than what the player holds now, since
+   play carried on while it was in flight. Replacing live state with the reply
+   would throw that newer progress away.
+
+   So each payload carries a `seq`, the validator echoes it, and we compare the
+   reply with the exact payload it answers. Whatever the server took away — money
+   clamped, a weapon it would not accept — is taken away from the CURRENT state as
+   a difference. Anything earned since the payload left is untouched. */
+const NO_ADOPT = {x:1, y:1, time:1, seq:1, v:1, hp:1, armor:1, wep:1, tipAt:1};
+function deltaMerge(cur, sent, got, top){
+  if(typeof sent === 'number'){
+    if(typeof cur !== 'number' || typeof got !== 'number' || !(got < sent)) return cur;
+    return Math.max(0, cur - (sent - got));
+  }
+  if(typeof sent === 'boolean') return (sent === true && got !== true) ? false : cur;
+  if(Array.isArray(sent)){
+    if(!Array.isArray(cur)) return cur;
+    const kept = Array.isArray(got) ? got : [];
+    return cur.filter(x => !(sent.indexOf(x) >= 0 && kept.indexOf(x) < 0));
+  }
+  if(sent && typeof sent === 'object' && cur && typeof cur === 'object'){
+    const out = Object.assign({}, cur);
+    for(const k of Object.keys(sent)){
+      if(top && NO_ADOPT[k]) continue;
+      if(!(k in cur)) continue;
+      out[k] = deltaMerge(cur[k], sent[k], got && typeof got === 'object' ? got[k] : undefined, false);
+    }
+    return out;
+  }
+  return cur;
+}
+function adoptReply(got){
+  const sent = cloud.sent.get(got.seq);
+  if(!sent) return;
+  for(const k of Array.from(cloud.sent.keys())) if(k <= got.seq) cloud.sent.delete(k);
+  const cur = snapshot();
+  const merged = deltaMerge(cur, sent, got, true);
+  if(JSON.stringify(merged) === JSON.stringify(cur)) return;   // nothing was clamped
+  applyData(merged, true);
+  writeLocal(snapshot());
+}
+
+/* Event metrics the validator declares with a physical ceiling. */
+function cloudMetric(metric, n, score){
+  if(!AA || !cloud.uid || !cloud.loaded) return;
+  for(const e of cloud.events){
+    if(e.metric !== metric) continue;
+    try{
+      if(e.type === 'leaderboard'){ if(score !== undefined) AA.score(e.id, score); }
+      else if(n > 0) AA.progress(e.id, n);
+    }catch(_){}
+  }
+}
+
+/* Title buttons follow whatever save exists, local or freshly pulled down. */
+function refreshTitle(){
+  const has = hasSave();
+  const go = document.getElementById('go'), gl = document.getElementById('goLoad');
+  if(!go || !gl) return;
+  gl.style.display = has ? '' : 'none';
+  if(has && !started){
+    go.textContent = 'NEW NIGHT';
+    if(gl.nextSibling !== go) gl.parentNode.insertBefore(gl, go);
+  }
 }
 
 /* ================================================================================
@@ -5371,7 +5627,11 @@ function feed(text, cls){
 }
 
 /* ---------------------------------- panels ---------------------------------- */
-function closePanel(){ panelOpen = null; paused = false; $('panel').style.display = 'none'; }
+function closePanel(){
+  const was = panelOpen;
+  panelOpen = null; paused = false; $('panel').style.display = 'none';
+  if(was && started && !player.dead) save(true);     // purchases happen in panels
+}
 function openPanel(title, sub, rows){
   panelOpen = title; paused = true;
   $('pTitle').textContent = title; $('pSub').innerHTML = sub;
@@ -6041,7 +6301,16 @@ addEventListener('blur', ()=>{ for(const k in keys) keys[k] = false; mouse.down 
 })();
 
 /* ------------------------------- menu wiring -------------------------------- */
+let newArm = 0;
 $('go').onclick = ()=>{
+  /* With a save on this device (or pulled from the account) a new game would
+     overwrite it, so it takes a second press. */
+  if(hasSave() && !newArm){
+    newArm = 1; $('go').textContent = 'SURE? THIS WIPES YOUR SAVE';
+    setTimeout(()=>{ newArm = 0; if(!started) $('go').textContent = 'NEW NIGHT'; }, 3500);
+    return;
+  }
+  if(hasSave()) cloud.fresh = true;
   $('start').style.display = 'none';
   if(IS_TOUCH) goFullscreen();
   initAudio();
@@ -6049,6 +6318,7 @@ $('go').onclick = ()=>{
   toast('RENT IS DUE FRIDAY. FIGURE IT OUT.');
   radio('DISPATCH: QUIET NIGHT SO FAR. LET US KEEP IT THAT WAY.', '');
   radio('TIP: PRESS [TAB] FOR CONTACTS AND WORK.', 'good');
+  save(true);
 };
 $('goLoad').onclick = ()=>{
   if(!load()){ toast('NO SAVE FOUND'); }
@@ -6063,8 +6333,13 @@ $('phClose').onclick = closePhone;
 $('panel').onclick = e=>{ if(e.target.id === 'panel') closePanel(); };
 $('phone').onclick = e=>{ if(e.target.id === 'phone') closePhone(); };
 $('bigmap').onclick = ()=>{ mapOpen = false; $('bigmap').style.display = 'none'; };
-if(!hasSave()) $('goLoad').style.display = 'none';
+refreshTitle();
 setInterval(()=>{ if(started && !player.dead) save(); }, 25000);
+/* the page being hidden is the last chance to write the local save; AA sends
+   any pending cloud save on its own */
+addEventListener('visibilitychange', ()=>{ if(document.hidden && started && !player.dead) save(); });
+if(AA){ AA.ready.then(cloudSync, ()=>{}); AA.onChange(()=>{ cloudSync(); }); }
+renderSync();
 
 /* =================================== update ================================== */
 function update(dt){
@@ -6219,6 +6494,11 @@ function render(){
     ctx.font = '500 12px "IBM Plex Mono", monospace';
     ctx.fillText(player.bustedFlag ? 'BOOKED AT THE NEAREST PRECINCT' : 'PICKED UP BY VESPER GENERAL',
                  W/2, H/2+44);
+    if(AA){
+      ctx.fillStyle = (cloud.uid && cloud.synced) ? '#3df0a8' : '#6d7f93';
+      ctx.font = '500 10px "IBM Plex Mono", monospace';
+      ctx.fillText(cloudStatus(), W/2, H/2+66);
+    }
     ctx.textAlign = 'left';
   }
 }
@@ -6272,7 +6552,8 @@ requestAnimationFrame(frame);
 /* --------------------------- deterministic test hook ------------------------- */
 /* The browser preview pane does not run requestAnimationFrame, so the simulation
    has to be steppable from outside or every screenshot is frame one. */
-globalThis.__t = {
+const DEV_HOST = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+if(DEV_HOST) globalThis.__t = {
   step(n, dt){ for(let i=0;i<(n||1);i++) tick(dt||1/60); },
   forceSize(w,h){ applySize(w,h); },
   start(){ $('start').style.display='none'; started = true; },
