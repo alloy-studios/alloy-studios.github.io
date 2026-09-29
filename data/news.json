@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-28",
+      "title": "Foil & Fortune and Abyssal Dredging join Alloy accounts",
+      "body": "Your card shop and your dredging rig now sync to your Alloy account. In Foil & Fortune that means your cash, binder, graded slabs, vault, staff and upgrades; in Abyssal Dredging your cargo, upgrades, Pressure Cores, Descents and Collection. Sign in and the progress already in this browser uploads the first time. Both games also report to Alloy events. Sole & Co. and Aura Fighters get the check against unofficial copies; neither keeps anything between visits, so there is nothing to save.",
+      "game": null
+    },
+    {
+      "date": "2026-09-28",
       "title": "Multiverse Fighters becomes Umbra",
       "body": "Multiverse Fighters has been rebuilt from scratch as Umbra, a duel of shadows: eight fighters in pure black silhouette, each lit by a single colour, with cinematic ultimates, blocking high and low, throws and cancels. Play the CPU at four difficulties, a friend on one keyboard, or the training dummy. Old links to Multiverse Fighters now take you straight to Umbra.",
       "game": "umbra"

@@ -2,6 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+    /* Alloy Studios home check - keep this the FIRST script in <head>. */
+    (function () {
+      var GAME = "abyssal-dredging";                             // this game's id on the site
+      var h = location.hostname;
+      var home = h === "alloy-studios.github.io" || h === "localhost" || h === "127.0.0.1" || location.protocol === "file:";
+      var stranger = false;
+      try { stranger = window.top !== window.self && window.top.location.hostname !== h; }
+      catch (e) { stranger = true; }                             // can't read the parent: someone else's page
+      if (home && !stranger) return;
+      var url = "https://alloy-studios.github.io/" + GAME + "/";
+      document.documentElement.innerHTML =
+        '<head><meta charset="utf-8"><title>Alloy Studios</title></head>' +
+        '<body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;' +
+        'background:#0b0d14;color:#eef1f7;font:16px/1.5 system-ui,sans-serif;text-align:center">' +
+        '<div><p style="margin:0 0 10px;font-size:22px;font-weight:700">This game is by Alloy Studios</p>' +
+        '<p style="margin:0 0 24px;color:#9aa3b8">You’re playing an unofficial copy. The real one is free.</p>' +
+        '<a href="' + url + '" target="_top" rel="noopener" style="display:inline-block;padding:11px 22px;' +
+        'border-radius:999px;background:#7c5cff;color:#fff;text-decoration:none;font-weight:600">' +
+        'Play it at alloy-studios.github.io</a></div></body>';
+      if (window.stop) window.stop();                            // stop the rest of the page loading
+      throw new Error("Alloy Studios: not on the home site");
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Abyssal Dredging</title>
     <!--
@@ -373,6 +397,17 @@
         }
         .sr-k { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; letter-spacing: 0.22em; color: var(--bone-dim); }
         #currency-amount { font-family: 'Share Tech Mono', monospace; font-size: 1.05rem; color: var(--lamp); text-shadow: 0 0 14px rgba(255,178,94,0.35); }
+        /* Alloy account sync state - only shown when the site provides an account */
+        .acct-status {
+            font-family: 'Share Tech Mono', monospace; font-size: 0.48rem; letter-spacing: 0.14em;
+            background: none; border: 1px solid transparent; border-radius: 2px; padding: 2px 6px;
+            color: var(--bone-dim); cursor: default; white-space: nowrap;
+        }
+        .acct-status[hidden] { display: none; }
+        .acct-status.guest { color: var(--lamp); border-color: rgba(255,178,94,0.35); cursor: pointer; }
+        .acct-status.guest:hover { border-color: var(--lamp); }
+        .acct-status.ok { color: #7fd4e8; }
+        .acct-status.err { color: #c98a68; }
         #rank-line { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; letter-spacing: 0.1em; color: var(--bone-dim); padding: 2px 2px 0; flex: 0 0 auto; }
         #rank-line b { color: #c39bec; font-weight: normal; }
 
@@ -1024,6 +1059,7 @@
             <div class="fold" onclick="game.toggleDock('right')">Cargo Hold</div>
             <div class="dock-head">
                 <span class="dock-title">Rig Cargo Hold</span>
+                <button id="acct-status" class="acct-status" hidden onclick="cloudStatusClick()"></button>
             </div>
             <div class="dock-body">
                 <div id="scrap-readout">
@@ -2038,6 +2074,29 @@
                 });
             }
 
+            // Clip to the water using the REAL wave line, not the flat mean waterline.
+            // Clipping to a flat rect let every underwater layer leak a hard-edged
+            // band into the sky wherever a crest rose above the mean - obvious in a
+            // storm, where the wave amplitude nearly doubles.
+            clipBelow(ctx) {
+                ctx.beginPath();
+                ctx.moveTo(-30, this.waveY(-30));
+                for (let x = -30; x <= this.W + 30; x += 7) ctx.lineTo(x, this.waveY(x));
+                ctx.lineTo(this.W + 30, this.H + 30);
+                ctx.lineTo(-30, this.H + 30);
+                ctx.closePath(); ctx.clip();
+            }
+
+            // The mirror of it, for things that live in the air (the lamp shaft).
+            clipAbove(ctx) {
+                ctx.beginPath();
+                ctx.moveTo(-30, this.waveY(-30));
+                for (let x = -30; x <= this.W + 30; x += 7) ctx.lineTo(x, this.waveY(x));
+                ctx.lineTo(this.W + 30, -30);
+                ctx.lineTo(-30, -30);
+                ctx.closePath(); ctx.clip();
+            }
+
             // wave height at x
             waveY(x) {
                 const amp = this.heavyStorm ? 1.9 : 1;
@@ -2203,7 +2262,7 @@
                 const ctx = this.ctx, W = this.W, H = this.H, span = H - this.WL;
                 const base = this.WL + span * 0.925;
                 ctx.save();
-                ctx.beginPath(); ctx.rect(-30, this.WL, W + 60, H - this.WL + 30); ctx.clip();
+                this.clipBelow(ctx);
 
                 // backscatter: a faint cold haze hanging over the field. Without it
                 // the wrecks are black shapes on a black ground and simply vanish.
@@ -2272,7 +2331,7 @@
                 // The only colour alive in the deep, and it is not warm.
                 const ctx = this.ctx, span = this.H - this.WL;
                 ctx.save();
-                ctx.beginPath(); ctx.rect(-30, this.WL, this.W + 60, this.H - this.WL + 30); ctx.clip();
+                this.clipBelow(ctx);
                 ctx.globalCompositeOperation = 'lighter';
                 for (let i = 0; i < 16; i++) {
                     const rnd = seeded(i * 7919 + 13);
@@ -2296,7 +2355,7 @@
             drawJellies() {
                 const ctx = this.ctx;
                 ctx.save();
-                ctx.beginPath(); ctx.rect(-30, this.WL, this.W + 60, this.H - this.WL + 30); ctx.clip();
+                this.clipBelow(ctx);
                 for (const j of this.jellies) {
                     const squeeze = 1 + Math.sin(j.ph) * 0.16;
                     ctx.save(); ctx.translate(j.x, j.y);
@@ -2325,7 +2384,7 @@
                 if (!this.leviathan) return;
                 const ctx = this.ctx, L = this.leviathan;
                 ctx.save();
-                ctx.beginPath(); ctx.rect(-30, this.WL, this.W + 60, this.H - this.WL + 30); ctx.clip();
+                this.clipBelow(ctx);
                 ctx.translate(L.x, L.y); ctx.scale(L.dir, 1);
                 // darker than the water it swims through, with the faintest cold rim
                 ctx.beginPath();
@@ -2349,7 +2408,7 @@
             drawSnow() {
                 const ctx = this.ctx;
                 ctx.save();
-                ctx.beginPath(); ctx.rect(-30, this.WL, this.W + 60, this.H - this.WL + 30); ctx.clip();
+                this.clipBelow(ctx);
                 for (const p of this.snow) {
                     ctx.fillStyle = `rgba(176,204,214,${p.a * 0.72})`;
                     ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
@@ -2397,6 +2456,7 @@
             drawRain() {
                 const ctx = this.ctx;
                 ctx.save();
+                this.clipAbove(ctx);                 // rain stops at the water, not past it
                 ctx.lineWidth = 1; ctx.lineCap = 'round';
                 for (const d of this.rain) {
                     const k = d.len / 1000;
@@ -2560,9 +2620,11 @@
                 const flick = 0.86 + Math.sin(this.t * 7.3) * 0.05 + Math.sin(this.t * 19.1) * 0.03;
                 // Light cone, feathered: three nested wedges of falling alpha so the
                 // edge dissolves into the rain instead of ending on a hard line.
+                ctx.save();
+                this.clipAbove(ctx);
                 for (let k = 0; k < 3; k++) {
                     const spread = 1 + k * 0.42, a = (0.13 / (1 + k * 1.15)) * flick;
-                    const cone = ctx.createLinearGradient(this.lampX, this.lampY, this.lampX + 60 * s, this.WL + 40);
+                    const cone = ctx.createLinearGradient(0, this.lampY, 0, this.WL + 40);
                     cone.addColorStop(0, 'rgba(255,190,116,' + a + ')');
                     cone.addColorStop(0.65, 'rgba(255,172,92,' + (a * 0.35) + ')');
                     cone.addColorStop(1, 'rgba(255,165,84,0)');
@@ -2573,6 +2635,7 @@
                     ctx.lineTo(this.lampX - 74 * s * spread, this.WL + 26);
                     ctx.closePath(); ctx.fill();
                 }
+                ctx.restore();
                 // bulb bloom
                 const bl = ctx.createRadialGradient(this.lampX, this.lampY, 0, this.lampX, this.lampY, 44 * s);
                 bl.addColorStop(0, `rgba(255,214,164,${0.95 * flick})`);
@@ -2599,7 +2662,7 @@
                 if (this.netY <= this.WL) return;
                 const ctx = this.ctx, { top, bot } = this.cablePoints();
                 ctx.save();
-                ctx.beginPath(); ctx.rect(-30, this.WL, this.W + 60, this.H - this.WL + 30); ctx.clip();
+                this.clipBelow(ctx);
                 ctx.strokeStyle = 'rgba(112,136,146,0.6)'; ctx.lineWidth = 2.2;
                 ctx.beginPath(); ctx.moveTo(top.x, this.WL); ctx.lineTo(bot.x, bot.y); ctx.stroke();
                 this.drawNet(bot.x, bot.y, true);
@@ -2781,6 +2844,155 @@
         };
 
         /* ============================================================================
+           ALLOY ACCOUNT
+           ----------------------------------------------------------------------------
+           Optional. On alloy-studios.github.io the site shell hands this iframe
+           window.AlloyAccount. Opened on its own, AA is null and the game keeps its
+           local save exactly as before - that is the guest and offline save. The
+           server re-checks every number sent (alloy/validator.js), so nothing here
+           has to be trusted.
+           ============================================================================ */
+        const GAME_ID = 'abyssal-dredging';
+        const SAVE_KEY = 'abyssal-dredging.save';
+        const OWNER_KEY = 'abyssal-dredging.owner';   // uid whose cloud save this device's save belongs to
+        const LEGACY_SAVE_KEY = 'abyssalSave';        // pre-Alloy key, unprefixed
+
+        const AA = (() => {
+            try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
+            catch (_) { return null; }
+        })();
+
+        const store = {
+            get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+            set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+            del(k) { try { localStorage.removeItem(k); } catch (_) {} },
+        };
+        // Every game on the site shares one origin, so keys carry the game's name.
+        // Move the old unprefixed save across once, so current players keep it.
+        if (store.get(SAVE_KEY) === null && store.get(LEGACY_SAVE_KEY) !== null) {
+            store.set(SAVE_KEY, store.get(LEGACY_SAVE_KEY));
+            if (store.get(SAVE_KEY) !== null) store.del(LEGACY_SAVE_KEY);
+        }
+
+        /** JSON with sorted keys, so two saves compare by content and not key order. */
+        function canonical(v) {
+            if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
+            if (v && typeof v === 'object') {
+                return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canonical(v[k])).join(',') + '}';
+            }
+            return JSON.stringify(v);
+        }
+
+        // state: 'guest' | 'syncing' | 'saved' | 'error'
+        const cloud = { ready: false, state: 'syncing', gen: 0, sent: [], stored: null, seen: new WeakSet(), events: [] };
+
+        function renderCloudState() {
+            const el = document.getElementById('acct-status');
+            if (!el) return;
+            if (!AA) { el.hidden = true; return; }
+            const look = {
+                guest:   ['SIGN IN TO SYNC', 'guest', 'Sign in to keep your progress on every device'],
+                syncing: ['SYNCING\u2026', 'busy', 'Talking to your Alloy account'],
+                saved:   ['\u2601 SAVED TO ALLOY', 'ok', 'Your progress is saved to your Alloy account'],
+                error:   ['NOT SYNCED', 'err', 'Your Alloy account is unreachable - progress is kept on this device'],
+            }[cloud.state] || ['NOT SYNCED', 'err', ''];
+            el.hidden = false;
+            el.textContent = look[0];
+            el.className = 'acct-status ' + look[1];
+            el.title = look[2];
+        }
+        function setCloudState(s) { cloud.state = s; renderCloudState(); }
+        function cloudStatusClick() { if (AA && cloud.state === 'guest') AA.signIn(); }
+
+        function remember(payload) {
+            cloud.sent.push(canonical(payload));
+            if (cloud.sent.length > 16) cloud.sent.shift();
+        }
+
+        // Adopt what the server actually stored - but only when it differs from
+        // every payload we recently sent. Saves coalesce and every waiter gets the
+        // reply to the LATEST payload, so comparing against a call's own data would
+        // roll back dredges that finished while the request was in flight. An honest
+        // save comes back unchanged (the validator is idempotent), so this only
+        // fires when the server really corrected something.
+        function adoptReply(res) {
+            if (res && typeof res === 'object') {
+                if (cloud.seen.has(res)) return !!res.ok;
+                cloud.seen.add(res);
+            }
+            if (!res || !res.ok || !res.data) { setCloudState('error'); return false; }
+            const canon = canonical(res.data);
+            if (!cloud.sent.includes(canon)) game.applyProgress(res.data, true);
+            cloud.stored = canon;
+            setCloudState('saved');
+            return true;
+        }
+
+        /** Routine saves coalesce to one per 20 s; {now:true} at checkpoints. */
+        function cloudPush(opts) {
+            if (!AA || !cloud.ready || !AA.user()) return;
+            const payload = game.cloudPayload();
+            const canon = canonical(payload);
+            if (canon === cloud.stored && !(opts && opts.now)) return;   // nothing new to store
+            remember(payload);
+            const gen = cloud.gen;
+            AA.save(GAME_ID, payload, opts && opts.now ? { now: true } : undefined)
+                .then(res => { if (gen === cloud.gen) adoptReply(res); });
+        }
+
+        /** Counters for live Alloy events. The validator declares these metrics. */
+        function reportEvent(metric, n) {
+            if (!AA || !cloud.ready || !(n > 0)) return;
+            for (const e of cloud.events) {
+                if (e.metric === metric && e.type !== 'leaderboard') AA.progress(e.id, n);
+            }
+        }
+
+        async function sync() {
+            const gen = ++cloud.gen;
+            cloud.ready = false;
+            cloud.events = [];
+            if (!AA) return;
+            const user = AA.user();
+            if (!user) { setCloudState('guest'); return; }
+            setCloudState('syncing');
+
+            let r = null;
+            try { r = await AA.load(GAME_ID); } catch (_) { r = null; }
+            if (gen !== cloud.gen) return;
+            // Unreachable: keep playing locally and write nothing. The first load
+            // must finish before any upload, or a slow load could let an empty
+            // device overwrite a real account.
+            if (!r) { setCloudState('error'); return; }
+
+            // "Mine" = this device's save is this account's, or has never been synced
+            // (guest progress). Only then may it be uploaded over a cloud save that
+            // exists - a different account's local progress never overwrites yours.
+            const owner = store.get(OWNER_KEY);
+            const mine = owner === null || owner === user.uid;
+            const localWins = !r.data || (mine && game.isAheadOf(r.data));
+            if (!localWins) game.applyProgress(r.data, mine);
+            store.set(OWNER_KEY, user.uid);
+            cloud.ready = true;
+
+            if (localWins) {
+                const payload = game.cloudPayload();
+                remember(payload);
+                let res = null;
+                try { res = await AA.save(GAME_ID, payload, { now: true }); } catch (_) { res = null; }
+                if (gen !== cloud.gen) return;
+                if (!adoptReply(res)) return;
+            } else {
+                cloud.stored = canonical(game.cloudPayload());
+                setCloudState('saved');
+            }
+
+            try { cloud.events = ((await AA.events(GAME_ID)) || []).filter(e => e.live); }
+            catch (_) { cloud.events = []; }
+            if (gen !== cloud.gen) cloud.events = [];
+        }
+
+        /* ============================================================================
            ENGINE
            ============================================================================ */
         class AbyssalDredging {
@@ -2938,8 +3150,14 @@
             }
 
             /* ---------------- persistence ---------------- */
-            saveGame() {
-                localStorage.setItem('abyssalSave', JSON.stringify({
+            // Local first, always. Then the cloud copy, if an account is attached.
+            saveGame(opts) {
+                this.saveLocal();
+                cloudPush(opts);
+            }
+
+            saveLocal() {
+                store.set(SAVE_KEY, JSON.stringify({
                     inventory: this.inventory, upgrades: this.upgrades,
                     autoScrapEnabled: this.autoScrapEnabled, autoScrapThreshold: this.autoScrapThreshold,
                     lifetimeScrapEarned: this.lifetimeScrapEarned,
@@ -2950,8 +3168,68 @@
                 }));
             }
 
+            /* The cloud save: progress only. UI preferences stay on the device -
+               a phone should not inherit a desktop's panel layout. Shape and field
+               names are what alloy/validator.js checks. */
+            cloudPayload() {
+                const inv = {};
+                for (const k of Object.keys(this.inventory)) if (this.inventory[k] > 0) inv[k] = this.inventory[k];
+                return {
+                    v: 1,
+                    inv,
+                    up: { winch: this.upgrades.winch, lures: this.upgrades.lures, capacity: this.upgrades.capacity },
+                    life: this.lifetimeScrapEarned || 0,
+                    cores: this.pressureCores || 0,
+                    desc: this.totalDescents || 0,
+                    disc: Object.keys(this.discoveredItems),
+                };
+            }
+
+            /* Take progress from the cloud (or a server correction). Discoveries are
+               merged, never dropped, unless this device's save belongs to another
+               account. */
+            applyProgress(d, mergeDisc) {
+                const lvl = (v, id) => Math.max(0, Math.min(UPGRADES_DEF[id].maxLevel, Math.floor(Number(v)) || 0));
+                const up = d.up || {};
+                this.inventory = Object.assign({}, d.inv || {});
+                this.upgrades = { winch: lvl(up.winch, 'winch'), lures: lvl(up.lures, 'lures'), capacity: lvl(up.capacity, 'capacity') };
+                this.lifetimeScrapEarned = Number(d.life) || 0;
+                this.pressureCores = Number(d.cores) || 0;
+                this.totalDescents = Number(d.desc) || 0;
+                const disc = mergeDisc ? Object.assign({}, this.discoveredItems) : {};
+                for (const name of d.disc || []) disc[name] = true;
+                this.discoveredItems = disc;
+                this.recalcScrap(false);
+                this.saveLocal();
+                this.updateUI();
+            }
+
+            /* Net worth: scrap + what the hold would crush for + scrap spent on the
+               current upgrade levels. The same measure the validator rate-limits. */
+            worthOf(inv, up) {
+                let w = 0;
+                for (const name of Object.keys(inv || {})) {
+                    const r = this.findRarity(name);
+                    w += (inv[name] || 0) * (r.id === 'common' ? 1 : r.crushYield);
+                }
+                for (const id of Object.keys(UPGRADES_DEF)) {
+                    const def = UPGRADES_DEF[id];
+                    for (let i = 0; i < ((up && up[id]) || 0); i++) w += Math.floor(def.baseCost * Math.pow(def.costMult, i));
+                }
+                return w;
+            }
+
+            /** Descents, then Pressure Cores, then net worth. */
+            isAheadOf(d) {
+                const mine = this.cloudPayload();
+                const a = [mine.desc, mine.cores, this.worthOf(mine.inv, mine.up)];
+                const b = [Number(d.desc) || 0, Number(d.cores) || 0, this.worthOf(d.inv, d.up)];
+                for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i];
+                return false;
+            }
+
             loadGame() {
-                const saved = localStorage.getItem('abyssalSave');
+                const saved = store.get(SAVE_KEY);
                 if (!saved) return;
                 try {
                     const d = JSON.parse(saved);
@@ -3034,7 +3312,7 @@
                 const cost = this.getUpgradeCost(id);
                 if (this.scrapCount >= cost && this.upgrades[id] < UPGRADES_DEF[id].maxLevel) {
                     this.deductScrap(cost); this.upgrades[id]++;
-                    this.saveGame(); this.updateUI();
+                    this.saveGame({ now: true }); this.updateUI();
                     this.scene.shake(0.3);
                 }
             }
@@ -3188,7 +3466,10 @@
                 });
 
                 this.performAutoScrap();
-                this.recalcScrap(); this.saveGame(); this.updateUI();
+                // A Legendary-or-better find is a checkpoint worth saving right away.
+                const bigFind = pulls.some(p => (RARITY_WEIGHT[p.rarity.id] || 0) >= RARITY_WEIGHT.legendary);
+                this.recalcScrap(); this.saveGame(bigFind ? { now: true } : undefined); this.updateUI();
+                if (pulls.length) { reportEvent('dredges', 1); reportEvent('pulls', pulls.length); }
 
                 if (cutsceneEvent) {
                     this.triggerCutscene(cutsceneEvent);
@@ -3504,7 +3785,8 @@
                 this.totalDescents += 1;
                 this.inventory = {}; this.scrapCount = 0; this.lifetimeScrapEarned = 0;
                 this.upgrades = { winch: 0, lures: 0, capacity: 0 };
-                this.closeDescendModal(); this.saveGame(); this.updateUI();
+                this.closeDescendModal(); this.saveGame({ now: true }); this.updateUI();
+                reportEvent('descents', 1);
                 this.scene.shake(0.9);
 
                 const entry = document.createElement('div');
@@ -3537,6 +3819,12 @@
 
         const game = new AbyssalDredging();
 
+        if (AA) {
+            renderCloudState();
+            AA.ready.then(() => sync(), () => setCloudState('error'));
+            AA.onChange(() => sync());
+        }
+
         /* ============================================================================
            RENDER LOOP - split so the sim can be stepped deterministically from
            outside (the desktop preview pane never fires requestAnimationFrame).
@@ -3555,7 +3843,9 @@
         }
         requestAnimationFrame(frame);
 
-        window.__t = {
+        // Test hook for local development only: it can summon an abyssal storm
+        // (luck x3), so it must not exist on the live site.
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') window.__t = {
             step: (n, dt) => { for (let i = 0; i < (n || 1); i++) tick(dt || 1 / 60); },
             forceSize: (w, h) => game.scene.applySize(w, h),
             dredge: () => game.startDredge(),
