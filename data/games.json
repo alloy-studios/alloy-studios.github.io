@@ -355,7 +355,8 @@
       "accent": "#60a5fa",
       "controls": "Mouse to fly, click to bomb, eat to reload, coo to summon the flock",
       "added": "2026-09-19",
-      "thumb": "/assets/thumbs/ratswithwings.webp"
+      "thumb": "/assets/thumbs/ratswithwings.webp",
+      "rev": "20260929-0641"
     }
   ]
 }
