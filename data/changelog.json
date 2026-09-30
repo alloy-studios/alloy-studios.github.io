@@ -1,6 +1,35 @@
 {
   "entries": [
     {
+      "game": "redwater",
+      "title": "Redwater - Golden Hour",
+      "date": "2026-09-29",
+      "summary": "A full visual rework to a three-quarter view, and a river that finally runs where the bridges are.",
+      "sections": [
+        {
+          "heading": "New look",
+          "items": [
+            "The whole frontier is redrawn in a three-quarter view: standing characters with outfits and animation, lit terrain, flowing water, and buildings and props with real depth.",
+            "All 20 guns are redrawn side-on, with new muzzle flashes, bullets and impacts. Abilities and awakenings got new effects to match.",
+            "Night now has proper lighting, and the HUD, menus, title and duel screens are all new."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "The river used to run straight through the Calloway homestead, with an NPC standing mid-stream, and none of the bridges were actually on the water. The river is rerouted.",
+            "Bridges are now built wherever a road or the railway crosses the river - four in all, and all of them are on the map. Every one was walked both ways, on foot and on horseback."
+          ]
+        },
+        {
+          "heading": "Your progress",
+          "items": [
+            "Nothing about your save changed. Money, level, perks, guns and story progress carry straight over, on this device and on your Alloy account."
+          ]
+        }
+      ]
+    },
+    {
       "game": "orbit-dash",
       "title": "Orbit Dash - Orrery",
       "date": "2026-09-19",

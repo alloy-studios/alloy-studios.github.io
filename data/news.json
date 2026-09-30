@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-09-29",
+      "title": "Redwater gets a new look",
+      "body": "Redwater has been redrawn from the ground up in a three-quarter view: characters with outfits and animation, all 20 guns redrawn with new shooting effects, lit terrain, flowing water and proper night lighting. The river no longer runs through the Calloway homestead, and there are now four bridges wherever a road or the railway crosses it. Your save carries straight over.",
+      "game": "redwater"
+    },
+    {
+      "date": "2026-09-29",
       "title": "Every game is on Alloy now",
       "body": "The last three games have moved over. Echoes keeps the tracks you've recovered and your best clear times, and Cosmic Climb keeps your best altitude and best score, both synced to your Alloy account. Flytale gets the check against unofficial copies; every visit starts at Chapter 1, so there is nothing to save. That completes the move: fourteen games save to your account, all twenty refuse to run as copies on other sites, and the next step is the first limited-time events.",
       "game": null
