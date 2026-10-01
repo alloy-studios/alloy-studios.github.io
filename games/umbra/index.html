@@ -4846,6 +4846,8 @@ function rasenCut(A,D){const col=A.ch.col,RS=NARUTO_RS;
  const grin=Q('ninja',{fx:[14,-14],y:4,lean:-.05,hd:-.12,aF:[2.6,2.4,0],aB:[.6,1.9,0]});
  const clone=(x,face,quiet)=>{const c=puppet(A.ch,A.side);c.x=x;c.y=0;c.face=face;c.pose=copyPose(c.P.stance);c.hot=.6;CINE.extra.push(c);if(!quiet)poof(x,-90,1.2);return c;};
  const gone=c=>{const i=CINE.extra.indexOf(c);if(i>=0){CINE.extra.splice(i,1);poof(c.x,c.y-90,1.1);}};
+ /* the sphere sits in his palm: just past the fingertips, along the forearm */
+ const palmBall=(f,R,k)=>{const s=trailSeg(f,{seg:'aF'}),dx=s[1][0]-s[0][0],dy=s[1][1]-s[0][1],L=Math.hypot(dx,dy)||1;return[s[1][0]+dx/L*R*k,s[1][1]+dy/L*R*k];};
  /* where f must stand for its hand to be at (x,y) in pose p */
  const reach=(f,p,x,y)=>{const q=f.pose,fx=f.x,fy=f.y;f.pose=p;f.x=0;f.y=0;f.ry=0;const h=CU.hand(f);f.pose=q;f.x=fx;f.y=fy;return[x-h[0],y-h[1]];};
  const camTo=(S,x,y,z,dt,k)=>{if(S.cx==null){S.cx=x;S.cy=y;S.cz=z;}const a=Math.min(1,dt*(k||8));S.cx=lerp(S.cx,x,a);S.cy=lerp(S.cy,y,a);S.cz=lerp(S.cz,z,a);CU.cam(S.cx,S.cy,S.cz,0);};
@@ -4913,23 +4915,23 @@ function rasenCut(A,D){const col=A.ch.col,RS=NARUTO_RS;
   {d:1.9,noShadow:1,speed:[[0,1],[.4,.2,'o'],[.55,.2],[.68,1,'i'],[1.9,1]],bg:bgStageTint('#020408',.45),impCol:RS,
    enter(S){CINE.extra.length=0;CU.at(D,110,-420,-1);D.pose=D.P.down;D.vy=0;CU.at(A,-140,-760,1);A.pose=cockBack;A.hotNow=1;S.hit=0;S.gnd=0;S.imp=-9;S.R=46;S.cx=null;S.ft=-1;},
    upd(u,t,S,dt){A.hot=1;A.hotNow=1;
-     const ch=CU.chest(D),sx=ch[0]-6,sy=ch[1]-S.R*.55;   // where the sphere meets them
+     const ch=CU.chest(D),sx=ch[0]-6,sy=ch[1]-S.R*.55;   // where his palm brings the sphere down onto them
      if(!S.gnd){const pose=clipPose({k:[[0,cockBack],[.16,dive2,'o'],[.4,dive,'i'],[1,dive]]},t,A);
        if(S.hit){const w=gameT;pose.lF[0]+=Math.sin(w*19)*.18;pose.lB[0]+=Math.sin(w*19+2.2)*.2;pose.lF[1]+=Math.sin(w*23)*.15;pose.hd+=Math.sin(w*31)*.05;pose.lean+=Math.sin(w*27)*.04;pose.aB[0]+=Math.sin(w*17)*.15;}
-       const o=reach(A,pose,sx,sy-S.R*.7);
+       const o=reach(A,pose,sx,sy-S.R*.6);
        if(!S.hit){const k=E.i2(clamp(t/.4,0,1));A.x=lerp(-140,o[0],k);A.y=lerp(-760,o[1],k);A.ghostT=.03;}else{A.x=o[0]+rnd(2,-2);A.y=o[1]+rnd(2,-2);}
-       A.pose=pose;S.hx=sx;S.hy=sy;}
+       A.pose=pose;const b=palmBall(A,S.R,.6);S.hx=b[0];S.hy=b[1];}
      if(!S.hit){const w=gameT,p=copyPose(D.P.down);p.aF[0]+=Math.sin(w*6)*.35;p.aB[0]+=Math.sin(w*5+1)*.3;p.lF[0]+=Math.sin(w*4.5)*.25;p.hd+=Math.sin(w*3)*.15;p.rot+=Math.sin(w*2.5)*.08;D.pose=p;D.y=-420-Math.sin(clamp(t/.4,0,1)*PI*.5)*24;}
      if(t>=.4&&!S.hit){S.hit=1;D.pose=D.P.down;S.imp=t;SFX.impact();shake(20);D.vy=200;D.shk=.12;}
      if(S.hit&&!S.gnd){D.vy+=2600*dt;D.y=Math.min(0,D.y+D.vy*dt);D.shk=.06+rnd(.06);
-       if(rnd()<.9){const a=rnd(PI)+PI*.0;pt({x:sx+Math.cos(a)*S.R,y:sy+Math.sin(a)*S.R*.6,vx:Math.cos(a)*rnd(900,300),vy:-rnd(500,100),l:.35,s:rnd(2.4,1),c:rnd()<.5?RS:'#ffffff',t:'spark',g:900,dr:.5});}
+       if(rnd()<.9){const a=rnd(PI)+PI*.0;pt({x:S.hx+Math.cos(a)*S.R,y:S.hy+Math.sin(a)*S.R*.6,vx:Math.cos(a)*rnd(900,300),vy:-rnd(500,100),l:.35,s:rnd(2.4,1),c:rnd()<.5?RS:'#ffffff',t:'spark',g:900,dr:.5});}
        if(D.y>=0){S.gnd=1;S.bt=gameT;S.gx=D.x;S.ft=t;S.f0=[A.x,A.y];D.pose=D.P.down;
          SFX.impact();SFX.boom(1.4);shake(32);for(let i=0;i<34;i++)pt({x:D.x+rnd(80,-80),y:-4,vx:rnd(900,-900),vy:-rnd(1100,250),l:rnd(1.3,.6),s:rnd(9,3),c:INK,t:'rock',g:2100,dr:.8});}}
      // off them with a back flip, and down into a skid
      if(S.gnd){const lt=t-S.ft,fl=.5;
        if(lt<fl){CU.arc(A,S.f0,[S.gx-240,0],150,E.o(lt/fl));A.ghostT=.03;}else{if(!S.ld){S.ld=1;dust(A.x,10,-1,1.2);SFX.land(.9);A.vx=-260;}A.y=0;A.vx*=Math.pow(.02,dt);A.x+=A.vx*dt;}
        CU.keys(A,lt,[[0,dive],[.1,tuck(-1.3),'o'],[.24,tuck(-3.5)],[.38,tuck(-5.3)],[fl,landC,'o'],[fl+.5,landC]]);}
-     const fy=S.gnd?-150:Math.min(-170,lerp(A.y,D.y,.6)-50),fx=S.gnd?(S.gx-120):lerp(A.x,D.x,.6)+20;camTo(S,fx,fy,S.gnd?1.02:lerp(.95,1.3,E.io(seg01(t,.1,.42))),dt,S.gnd?4:10);},
+     const fy=S.gnd?-150:Math.min(-170,lerp(A.y-90,D.y,.42)-20),fx=S.gnd?(S.gx-120):lerp(A.x,D.x,.5)+20;camTo(S,fx,fy,S.gnd?1.02:lerp(.72,1.3,E.io(seg01(t,.12,.42))),dt,S.gnd?4:10);},
    impDyn(S,t){const k=t-S.imp;return k<0?null:k<.04?'w':k<.08?'ai':k<.11?'b':null;},
    glow(g){const S=CINE.S;if(!S.gnd)rasenganFX(g,S.hx,S.hy,S.R*(1+.08*Math.sin(gameT*30)),gameT,1);
      else{const k=gameT-S.bt,a=Math.max(0,1-k/1.4),R=lerp(60,620,E.o(Math.min(1,k*1.4)));spiralFX(g,S.gx,-4,R,gameT,a);rasenganFX(g,S.gx,-30,46*(1-Math.min(1,k*2)),gameT,a);
