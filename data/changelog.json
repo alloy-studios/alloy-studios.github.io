@@ -18,7 +18,20 @@
           "heading": "Fixes",
           "items": [
             "The river used to run straight through the Calloway homestead, with an NPC standing mid-stream, and none of the bridges were actually on the water. The river is rerouted.",
-            "Bridges are now built wherever a road or the railway crosses the river - four in all, and all of them are on the map. Every one was walked both ways, on foot and on horseback."
+            "Bridges are now built wherever a road or the railway crosses the river - four in all, and all of them are on the map. Every one was walked both ways, on foot and on horseback.",
+            "Two story jobs, Two Offers and The Redwater Ledger, had nobody to give them and never started. They now start as soon as they unlock, and saves that were stuck on them move on by themselves.",
+            "Kill jobs work properly: targets appear where the job says, any kill counts no matter who lands it, kills made before you arrive count, and the marker follows the targets.",
+            "Respawning at Doc Perry's no longer leaves you lying down, untargetable and eventually invisible.",
+            "Boot Hill dialogue no longer pages one letter per click, and every conversation can be left with Esc.",
+            "The Widow's Lookout cairn is no longer walled in by boulders; every one of the 35 interaction spots was checked to be reachable.",
+            "The map edge holds, walking out of a door leaves the room, and you and your horse animate while moving.",
+            "Fixed a diagonal seam some Windows graphics cards drew across the screen during full-screen colour effects."
+          ]
+        },
+        {
+          "heading": "Balance",
+          "items": [
+            "Bounties are easier: smaller, weaker gangs whose fire is slower and less accurate."
           ]
         },
         {

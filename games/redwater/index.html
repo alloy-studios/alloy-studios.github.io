@@ -722,8 +722,10 @@ function buildPlaces(){
 
   // widow's lookout — scenic, gives a legendary clue
   const L=poi('lookout');
-  for(let i=0;i<14;i++){ const a=i/14*TAU;
-    addProp(L.x+Math.cos(a)*120, L.y+Math.sin(a)*100,'boulder',1+rnd(.8),true,24); }
+  // a crescent of boulders on the drop side, open to the west where the trail comes
+  // in — a full ring left the cairn unreachable (boulders 49 apart, 58 wide)
+  for(let i=0;i<10;i++){ const a=-1.95+i/9*3.9;
+    addProp(L.x+Math.cos(a)*130, L.y+Math.sin(a)*105,'boulder',.85+rnd(.45),true,24); }
   addProp(L.x,L.y,'sign',1.2,false,0);
   addSpot(L.x, L.y, 50,'lookout','WIDOW&rsquo;S LOOKOUT');
 }
@@ -980,16 +982,20 @@ function strokePoly(c,pl,ox,oy,bw,bh,width,style,cap){
 // ripples — is inked at full resolution over the top. Baked once per chunk.
 const TS_ = 4;                                         // world units per height sample
 const _tsm = document.createElement('canvas'); _tsm.width=_tsm.height=CH/TS_; const _tsx=_tsm.getContext('2d');
-const _offCache = new Map();
+// keyed by the polyline itself: four roads leave town from the same point, and a
+// key built from the first point handed all of them the first road's ruts
+const _offCache = new WeakMap();
 function offsetPoly(pl, d){
-  const key=pl.length+':'+pl[0][0]+':'+pl[0][1]+':'+d; let o=_offCache.get(key); if(o) return o;
+  let m=_offCache.get(pl); if(!m){ m=new Map(); _offCache.set(pl,m); }
+  let o=m.get(d); if(o) return o;
   o=[];
   for(let i=0;i<pl.length;i++){
     const a=pl[Math.max(0,i-1)], b=pl[Math.min(pl.length-1,i+1)];
     const dx=b[0]-a[0], dy=b[1]-a[1], L=Math.hypot(dx,dy)||1;
     o.push([pl[i][0]-dy/L*d, pl[i][1]+dx/L*d]);
   }
-  _offCache.set(key,o); return o;
+  if(m.size<24) m.set(d,o);           // river rocks ask for random offsets: don't hoard them
+  return o;
 }
 function smooth01(a,b,v){ const t=clamp((v-a)/(b-a),0,1); return t*t*(3-2*t); }
 function heightAt(x,y){
@@ -2789,6 +2795,7 @@ let _pn = [];
 // [centre y, half width, half height]. Riders sit higher, beasts lower.
 function hitBox(e){
   if(e.kind==='horse') return [e.y-20, 20, 14];
+  if(e===P){ const lift=P.mounted?16:0; return [P.y-(17+lift), 9, 15]; }   // you are harder to hit than you look
   if(e.team==='beast') return e.kind==='deer'? [e.y-18,12,11] : [e.y-10,11,8];
   const sc=figScale(e), lift=(e===P&&P.mounted)?16:0;
   return [e.y-(18*sc+lift), e.r+2, 21*sc];
@@ -2900,7 +2907,9 @@ function drawBullets(){
   for(const b of bullets){ i_++;
     const n=b.tr.length/2; if(n<2) continue;
     const hx=w2sx(b.x), hy=w2sy(b.y);
-    const k=Math.min(n-1,6), tx=w2sx(b.tr[(n-1-k)*2]), ty=w2sy(b.tr[(n-1-k)*2+1]);
+    // a tail of fixed length in time, never longer than the path actually flown
+    const tl=Math.min(b.spd*(b.big?0.06:0.032), Math.hypot(b.x-b.tr[0],b.y-b.tr[1]));
+    const tx=w2sx(b.x-Math.cos(b.a)*tl), ty=w2sy(b.y-Math.sin(b.a)*tl);
     const col = b.fire? '#ff7a1e' : b.col;
     const w = b.w*(b.big?1.6:1);
     ctx.globalAlpha=bullets.length>40? .14 : .24; ctx.strokeStyle=col; ctx.lineWidth=w*2.6*z;
@@ -3030,6 +3039,7 @@ function nearestFoeOf(own,x,y,rad){
 // ---- movement & collision ----------------------------------------------
 let _mn=[];
 function moveEnt(e,dx,dy){
+  const ox=e.x, oy=e.y, wasOut=oy<INDOORS_Y;
   // Movement is eight-way and bridges are not: pushing into a deck's edge
   // steers you along the deck instead of stopping you at the rail.
   if((dx||dy) && e.y<INDOORS_Y){ const b=bridgeAt(e.x,e.y);
@@ -3038,7 +3048,14 @@ function moveEnt(e,dx,dy){
       if(Math.abs(along)>L*.2){ const sg=along>0?1:-1; dx=c*L*sg*.92; dy=s*L*sg*.92; } } }
   if(dx) { e.x+=dx; resolveX(e,dx); }
   if(dy) { e.y+=dy; resolveY(e,dy); }
-  e.x=clamp(e.x,12,WORLD.w-12); e.y=clamp(e.y,12,WORLD.h-12);
+  e.x=clamp(e.x,12,WORLD.w-12);
+  // the county ends at MAP_H; below it is the strip the rooms are kept in
+  if(wasOut){ e.y=clamp(e.y,12,MAP_H-14); return; }
+  e.y=clamp(e.y,INDOORS_Y,WORLD.h-12);
+  if(inRoom(e.x,e.y)) return;
+  const R=inRoom(ox,oy);
+  if(e===P && R && e.y>=R.y+R.h/2-1 && Math.abs(e.x-R.x)<R.doorW/2+4){ exitRoom(); return; }   // walked out the door
+  e.x=ox; e.y=oy;                                            // nobody else leaves a room
 }
 function resolveX(e,dx){
   if(e===P && window.DBG && DBG.noclip) return;
@@ -3133,7 +3150,7 @@ function alertNear(e,rad,from){
   for(const o of ents){ if(o===e||o.dead||o.hp<=0) continue;
     if(o.team!==e.team) continue;
     if(dist2(o.x,o.y,e.x,e.y)<rad*rad && o.state!=='combat'){
-      o.target=from; o.state='combat'; o.alert=1; o.stT=rnd(0,.35);
+      o.target=from; o.state='combat'; o.alert=1; o.stT=rnd(0,.35); o.fireT=Math.max(o.fireT,rnd(.6,1.2));
     }
   }
 }
@@ -3162,8 +3179,8 @@ function kill(e, from){
     P.awaken=Math.min(P.awakenMax,P.awaken+(e.boss?28:9)*(P.perks.iron?1.6:1));
     const coin = Math.round(e.loot*(P.perks.scav?1.5:1));
     if(coin>0){ P.money+=coin; addFloat(e.x,e.y-26,'$'+coin,C.gold,14); sfxAt('coin',e.x,e.y,{vol:.4}); }
-    onKill(e);
   }
+  if(e!==P) onKill(e, from===P);
   sfxAt('boom',e.x,e.y,{vol:.25});
 }
 function igniteAt(x,y,pow){
@@ -3210,13 +3227,13 @@ function aiShoot(e, tx, ty, d){
   if(!losCached(e,e.x,e.y,tx,ty)) return;
   e.fireT = 1/(g.rof*(e.boss?1.05:0.50));
   e.magN--;
-  const acc = e.boss? 0.75 : 2.0;
+  const acc = e.boss? 0.95 : 2.6;
   const base = angTo(e.x,aimFrom(e),tx,ty-FIG_SH+3);
   const mz=muzzleAt(e,base);
   for(let i=0;i<g.pel;i++){
     fireBullet({ x:mz[0], y:mz[1],
       a: base + rnd(-1,1)*g.spr*acc + rnd(-.05,.05),
-      spd: g.spd*.82, dmg: g.dmg*(e.boss?1.1:0.50), own:e,
+      spd: g.spd*.82, dmg: g.dmg*(e.boss?0.95:0.42), own:e,
       rng:g.rng, col:'#ffb070', w:1.6, life:1.2 });
   }
   muzzle(e, base, g);
@@ -3269,8 +3286,8 @@ function updateAI(e,d){
   if(host && e.state!=='combat'){
     const sight = e.boss?720:520;
     if(dp<sight && losCached(e,e.x,e.y,pl.x,pl.y)){
-      e.seen += d*(dp<230?3.6:1.7);
-      if(e.seen>1){ e.state='combat'; e.target=pl; e.alert=1; alertNear(e,300,pl);
+      e.seen += d*(dp<230?3.0:1.4);
+      if(e.seen>1){ e.state='combat'; e.target=pl; e.alert=1; e.fireT=Math.max(e.fireT,rnd(.7,1.2)); alertNear(e,300,pl);
         if(e.team==='law'&&P.wanted>0) toastOnce('lawSpot','THE LAW HAS SEEN YOU','Lose them, or fight.',C.law); }
     } else e.seen=Math.max(0,e.seen-d);
   }
@@ -4560,6 +4577,25 @@ function startQ(id){
   toast('NEW JOB — '+qq.title, qq.steps[0].text, C.gold);
   sfx('chime');
   if(qq.onStart) qq.onStart();
+  armStep(id);
+}
+// Put the quarry where the job says it is. Only for "N of a kind near X" steps:
+// named men and tagged gangs are placed by the job's own onStart.
+function armStep(id){
+  const qq=q(id); if(!qq||qq.state!=='active') return;
+  const s=step(qq); if(!s||s.t!=='kill'||!s.near||s.who||s.tag) return;
+  let have=0; for(const e of ents) if(e.questFor===id && !e.dead && e.hp>0) have++;
+  const need=Math.max(0,(s.n||1)-qq.prog-have);
+  for(let i=0;i<need;i++){
+    let x=0,y=0,t=0;
+    do { const a=rnd(TAU), d=rnd(80, s.near[2]*.35); x=s.near[0]+Math.cos(a)*d; y=s.near[1]+Math.sin(a)*d; t++; }
+    while(t<30 && (inRiver(x,y) || BUILDINGS.some(function(b){ return rectHit(b,x,y,20); })));
+    let e;
+    if(s.kind==='coyote') e=makeEnt({x:x,y:y,team:'beast',kind:'coyote',hp:28,spd:98,r:8,loot:0,name:'COYOTE'});
+    else { const tm=s.team||'outlaw';
+      e=makeEnt({x:x,y:y,team:tm,kind:tm,name:npcName(),hp:70,gun:pick(['rusted','navy','coach']),spd:74,loot:rndi(8,24)}); e.renegade=true; }
+    e.questFor=id; e.home=[s.near[0],s.near[1]]; nudgeFree(e);
+  }
 }
 function advQ(id){
   const qq=q(id); if(!qq||qq.state!=='active') return;
@@ -4568,6 +4604,7 @@ function advQ(id){
   if(qq.cur>=qq.steps.length){ doneQ(id); return; }
   toast('OBJECTIVE', qq.steps[qq.cur].text, C.gold);
   sfx('ui',{f:660});
+  armStep(id);
 }
 function doneQ(id){
   const qq=q(id); qq.state='done';
@@ -4585,8 +4622,15 @@ function doneQ(id){
   sfx('chime');
   if(qq.onDone) qq.onDone();
   if(qq.next) offerQ(qq.next);
+  startGiverless();
   if(qq.board) reportEvent('bounties',1);       // law bounties and Kane's jobs alike
   checkpoint();
+}
+// TWO OFFERS and THE LEDGER have nobody to hand them out: they only ever reached
+// "offered" and sat there, so the story stopped after Halloran's freight and the
+// finale never began. A job with no giver now starts the moment it unlocks.
+function startGiverless(){
+  for(const id in QUESTS){ const qq=QUESTS[id]; if(qq.state==='avail' && !qq.giver) startQ(id); }
 }
 function giveGun(id){
   if(P.guns.indexOf(id)>=0){ P.money+=200; return; }
@@ -4600,18 +4644,32 @@ function giveGun(id){
 }
 
 // ---- objective progress hooks ------------------------------------------
-function onKill(e){
+// Does this death belong to that kill step? A named man or a tagged gang counts
+// wherever they fall and whoever drops them — a job must never become
+// impossible because the target wandered, was dragged, or was shot by the law.
+// Plain "kill N of a kind" counts anything of that kind you put down, anywhere.
+function killMatches(s, e, id, byPlayer){
+  if(e.questFor===id) return true;
+  if(s.who) return e.npcId===s.who;
+  if(s.tag) return e.campTag===s.tag;
+  if(!byPlayer || !(s.team||s.kind)) return false;
+  if(s.team && e.team!==s.team) return false;
+  if(s.kind && e.kind!==s.kind) return false;
+  return true;
+}
+function onKill(e, byPlayer){
+  if(byPlayer===undefined) byPlayer=true;
   for(const id of activeQ.slice()){
-    const qq=q(id), s=step(qq); if(!s) continue;
-    if(s.t==='kill'){
-      let ok=false;
-      if(s.team && e.team===s.team) ok=true;
-      if(s.kind && e.kind===s.kind) ok=true;
-      if(s.tag && e.campTag===s.tag) ok=true;
-      if(s.who && e.npcId===s.who) ok=true;
-      if(s.near && dist(e.x,e.y,s.near[0],s.near[1])>s.near[2]) ok=false;
-      if(ok){ qq.prog++; if(qq.prog>=(s.n||1)) advQ(id);
-        else toast(qq.title, qq.prog+' / '+s.n+'  '+s.text, C.gold); }
+    const qq=q(id); if(!qq||qq.state!=='active') continue;
+    let s=step(qq); if(!s) continue;
+    // a gang can be fought before you reach the spot: its first body walks you
+    // past the ride-there step instead of being thrown away
+    const nx=qq.steps[qq.cur+1];
+    if(s.t==='goto' && nx && nx.t==='kill' && killMatches(nx,e,id,byPlayer)){ advQ(id); s=step(qq); if(!s) continue; }
+    if(s.t==='kill' && killMatches(s,e,id,byPlayer)){
+      qq.prog++;
+      if(qq.prog>=(s.n||1)) advQ(id);
+      else toast(qq.title, qq.prog+' / '+s.n+'  '+s.text, C.gold);
     }
   }
   // bounty targets
@@ -4627,10 +4685,26 @@ function checkGoto(){
     if(s.t==='survive'){ qq.prog+=dt; if(qq.prog>=s.dur) advQ(id); }
   }
 }
+let _qmT=-1, _qmV=null;
 function questMark(){
+  if(_qmT===now) return _qmV;
+  _qmT=now; _qmV=questMark_(); return _qmV;
+}
+function questMark_(){
   if(!tracked) return null;
   const qq=q(tracked); if(!qq||qq.state!=='active') return null;
   const s=step(qq); if(!s) return null;
+  if(s.t==='kill'){
+    // the quarry placed for this job first; failing that, anything that would count
+    for(const tier of [0,1]){
+      let best=null, bd=(tier===0||s.who||s.tag)? 1e12 : 3000*3000;
+      for(const e of ents){ if(e.dead||e.hp<=0||e===P) continue;
+        const mine = e.questFor===tracked || (s.who? e.npcId===s.who : s.tag? e.campTag===s.tag : false);
+        if(tier===0? !mine : !killMatches(s,e,tracked,true)) continue;
+        const d=dist2(P.x,P.y,e.x,e.y); if(d<bd){ bd=d; best=e; } }
+      if(best) return [best.x,best.y];
+    }
+  }
   if(s.x!=null) return [s.x,s.y];
   if(s.t==='talk' && named[s.who] && !named[s.who].dead) return [named[s.who].x, named[s.who].y];
   if(s.t==='kill' && s.near) return [s.near[0],s.near[1]];
@@ -4840,7 +4914,7 @@ function makeBountyOffer(i, outlawSide){
   const r=mulberry(boardSeed*977+i*131);
   const places=POI.filter(function(p){return p.kind!=='town';});
   const pl=places[(r()*places.length)|0];
-  const n=2+Math.floor(r()*4)+Math.floor(P.lvl*0.4);
+  const n=2+Math.floor(r()*3)+Math.floor(P.lvl*0.25);
   const pay=Math.round((90+r()*140)*(1+P.lvl*0.22)*(outlawSide?1.25:1));
   const nm = BOUNTY_TITLES[(r()*BOUNTY_TITLES.length)|0];
   const id = 'board_'+(boardSeed)+'_'+i;
@@ -4861,10 +4935,11 @@ function makeBountyOffer(i, outlawSide){
       for(let k=0;k<n;k++){
         const a=r()*TAU, dd=60+r()*220;
         const e=makeEnt({x:clamp(pl.x+Math.cos(a)*dd,40,WORLD.w-40), y:clamp(pl.y+Math.sin(a)*dd,40,WORLD.h-40),
-          team:crew, kind:crew, name:npcName(), hp:70+P.lvl*9,
-          gun:pick(['rusted','navy','coach','trapper','lever','cattle','varmint']), spd:78, loot:rndi(10,40)});
+          team:crew, kind:crew, name:npcName(), hp:60+P.lvl*7,
+          gun:pick(P.lvl<4? ['rusted','navy','coach','trapper'] : P.lvl<7? ['navy','peace','coach','trapper','lever'] : ['peace','coach','lever','cattle','varmint']),
+          spd:74, loot:rndi(10,40)});
         e.renegade=true; e.campTag=tag;
-        if(k===0 && !outlawSide){ e.name=nm; e.boss=true; e.hp=e.maxhp=180+P.lvl*24; e.duelist=true; e.loot=pay>>1; }
+        if(k===0 && !outlawSide){ e.name=nm; e.boss=true; e.hp=e.maxhp=140+P.lvl*18; e.duelist=true; e.loot=pay>>1; }
       }
     }
   });
@@ -4885,7 +4960,10 @@ let mode = 'title';
 let dlg = null, shop = null, board = null, duel = null;
 
 function say(name, title, lines, opts){
-  dlg = { name:name, title:title||'', lines:lines, li:0, opts:opts||[{t:'Leave it',fn:closeDlg}], t:0 };
+  // a bare string used to be walked one LETTER per click (Boot Hill: ninety clicks)
+  if(!Array.isArray(lines)) lines=[String(lines==null?'':lines)];
+  if(!opts || !opts.length) opts=[{t:'Leave it',fn:closeDlg}];
+  dlg = { name:name, title:title||'', lines:lines, li:0, opts:opts, t:0 };
   mode='dialog'; sfx('ui',{f:400});
 }
 function closeDlg(){ dlg=null; mode='play'; }
@@ -5716,6 +5794,7 @@ function drawDialog(){
       if(btn(x+26, by0+i*(bh+6), w-52, bh, '—  '+o.t, true)) { o.fn(); return; }
     }
   }
+  body('ESC — leave', x+w-26, y+26, 10, 'rgba(33,26,28,.45)', 'right');
   if(press('Escape')) closeDlg();
 }
 
@@ -6310,7 +6389,7 @@ function drawCineOverlay(){
 //  baked ONCE into offscreen layers and blitted, and the passes that only ever
 //  darkened are folded into a single tint.
 // ==========================================================================
-let fxW=0, fxH=0, vigLayer=null, hurtLayer=null, grainLayer=null;
+let fxW=0, fxH=0, vigLayer=null, hurtLayer=null, grainLayer=null, monoCv=null;
 const GRAIN_PAD = 128;
 
 function buildFxLayers(){
@@ -6340,8 +6419,8 @@ function buildFxLayers(){
     const lg=lc.getContext('2d');
     const im=lg.createImageData(W,H), dta=im.data;
     for(let i=0;i<dta.length;i+=4){
-      const g2 = 200 + (Math.random()*55|0);
-      dta[i]=dta[i+1]=dta[i+2]=g2; dta[i+3]=255;
+      const v=Math.random(), lit=v>.5;
+      dta[i]=dta[i+1]=dta[i+2]= lit? 255 : 20; dta[i+3]=(Math.abs(v-.5)*2)*38|0;
     }
     lg.putImageData(im,0,0);
     grainLayer.push(lc);
@@ -6356,28 +6435,23 @@ function post(){
 
   // --- ONE tint pass covers indoors lamplight and night/dusk alike
   if(inside){
-    ctx.save(); ctx.globalCompositeOperation='multiply';
-    ctx.globalAlpha=.30; ctx.fillStyle='#7a5638'; ctx.fillRect(0,0,W,H);
-    ctx.restore();
+    ctx.globalAlpha=.24; ctx.fillStyle='#2a1a10'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
   } else if(d<1){
-    ctx.save(); ctx.globalCompositeOperation='multiply';
-    ctx.globalAlpha=(1-d)*0.80;
-    ctx.fillStyle = dayT>0.5 ? '#42354f' : '#2f3a58';   // the old screen pass folded in
-    ctx.fillRect(0,0,W,H);
-    ctx.restore();
+    ctx.globalAlpha=(1-d)*0.70;
+    ctx.fillStyle = dayT>0.5 ? '#12132e' : '#0b1636';
+    ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
   }
   // --- golden hour, only inside the dawn/dusk windows
   const gh = clamp(1-Math.abs(dayT-0.30)/0.10,0,1)+clamp(1-Math.abs(dayT-0.76)/0.10,0,1);
   if(gh>0.02 && !inside){
-    ctx.save(); ctx.globalCompositeOperation='overlay';
-    ctx.globalAlpha=gh*0.26; ctx.fillStyle='#e07a2a'; ctx.fillRect(0,0,W,H);
-    ctx.restore();
+    ctx.globalAlpha=gh*0.11; ctx.fillStyle='#ff8a2a'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
   }
   // --- the sun has a side: warm where it comes from, cooler in the lee
   if(!inside && d>0.05){
     const lx0 = sun.dx>0? 0 : W, g2=ctx.createLinearGradient(lx0,0,W-lx0,H*.6);
-    g2.addColorStop(0,'rgba(255,186,104,'+(0.30*d).toFixed(3)+')'); g2.addColorStop(1,'rgba(80,100,160,'+(0.22*d).toFixed(3)+')');
-    ctx.save(); ctx.globalCompositeOperation='soft-light'; ctx.fillStyle=g2; ctx.fillRect(0,0,W,H); ctx.restore();
+    g2.addColorStop(0,'rgba(255,176,96,'+(0.09*d).toFixed(3)+')'); g2.addColorStop(.5,'rgba(255,176,96,0)');
+    g2.addColorStop(1,'rgba(60,80,140,'+(0.08*d).toFixed(3)+')');
+    ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
   }
   // --- additive lights. Skip the whole pass when nothing is lit — at midday
   // with no fires or legendaries that is a free screen back every frame.
@@ -6390,17 +6464,15 @@ function post(){
 
   // --- ult grades (rare, so they can afford the real blend modes)
   if(grade.mono>0){
-    ctx.save(); ctx.globalCompositeOperation='saturation';
-    ctx.globalAlpha=grade.mono; ctx.fillStyle='#808080'; ctx.fillRect(0,0,W,H);
-    ctx.globalCompositeOperation='multiply'; ctx.globalAlpha=grade.mono*.35;
-    ctx.fillStyle='#c9b79a'; ctx.fillRect(0,0,W,H); ctx.restore();
+    // the world goes to ink: a grey copy of the frame laid over it (a filter,
+    // not a read-back blend — see the note on the night pass)
+    if(!monoCv || monoCv.width!==cv.width || monoCv.height!==cv.height){ monoCv=document.createElement('canvas'); monoCv.width=cv.width; monoCv.height=cv.height; }
+    const mc=monoCv.getContext('2d'); mc.filter='grayscale(1) sepia(.25) contrast(1.15)';
+    mc.clearRect(0,0,monoCv.width,monoCv.height); mc.drawImage(cv,0,0); mc.filter='none';
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.globalAlpha=clamp(grade.mono,0,1); ctx.drawImage(monoCv,0,0); ctx.restore();
   }
-  if(grade.red>0 || grade.gold>0){
-    ctx.save(); ctx.globalCompositeOperation='overlay';
-    if(grade.red>0){ ctx.globalAlpha=grade.red*0.35; ctx.fillStyle='#b3241a'; ctx.fillRect(0,0,W,H); }
-    if(grade.gold>0){ ctx.globalAlpha=grade.gold*0.30; ctx.fillStyle=C.gold; ctx.fillRect(0,0,W,H); }
-    ctx.restore();
-  }
+  if(grade.red>0){ ctx.globalAlpha=grade.red*0.16; ctx.fillStyle='#b3241a'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+  if(grade.gold>0){ ctx.globalAlpha=grade.gold*0.14; ctx.fillStyle=C.gold; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
   // --- hurt flush: a blit at varying alpha, not a gradient rebuilt per frame
   if(P && P.hp>0 && P.hp/P.maxhp<0.34 && mode==='play'){
     const p=(1-P.hp/P.maxhp);
@@ -6411,9 +6483,7 @@ function post(){
   // --- vignette, then grain under 'overlay' exactly as before
   ctx.drawImage(vigLayer,0,0);
   fxFrame=(fxFrame+1)%3;
-  ctx.save(); ctx.globalCompositeOperation='overlay'; ctx.globalAlpha=0.055;
-  ctx.drawImage(grainLayer[fxFrame],0,0);
-  ctx.restore();
+  ctx.globalAlpha=0.5; ctx.drawImage(grainLayer[fxFrame],0,0); ctx.globalAlpha=1;
   // --- fade
   if(fadeT>0){ ctx.fillStyle='rgba(12,9,11,'+clamp(Math.sin(clamp(fadeT,0,1.2)/1.2*Math.PI),0,1).toFixed(3)+')';
     ctx.fillRect(0,0,W,H); }
@@ -6451,6 +6521,14 @@ function renderWorld(){
   for(const e of ents){ if(e.x<x0||e.x>x1||e.y<y0||e.y>y1) continue;
     if(e===P && P.mounted) continue; drawList.push(e); }
   for(const pk of pickups){ if(pk.x<x0||pk.x>x1||pk.y<y0||pk.y>y1) continue; drawList.push(pk); }
+  // Indoors, only this room exists: the others share the strip and used to show
+  // through the dark around it.
+  const room = indoors()? (inRoom(P.x,P.y) || nearestRoom(P.x,P.y)) : null;
+  if(room){
+    const rx0=room.x-room.w/2-WALL_T-2, rx1=room.x+room.w/2+WALL_T+2, ry0=room.y-room.h/2-WALL_T-2, ry1=room.y+room.h/2+WALL_T+2;
+    for(let i=drawList.length-1;i>=0;i--){ const o=drawList[i];
+      if(o.x<rx0||o.x>rx1||o.y<ry0||o.y>ry1) drawList.splice(i,1); }
+  }
 
   // PASS 1 — every shadow into one layer at full ink, then laid down once at one
   // strength: overlapping shadows no longer stack into darker blots, and each
@@ -6497,8 +6575,20 @@ function renderWorld(){
   drawBeams();
   drawParts();
   drawFloats();
+  if(room) maskRoom(room);
   if(cine) drawCineOverlay();
   renderLights();
+}
+function nearestRoom(x,y){ let b=null,bd=1e18; for(const R of ROOMS){ const d=dist2(x,y,R.x,R.y); if(d<bd){ bd=d; b=R; } } return b; }
+// black out everything but this room (its walls, and the wall faces standing up off them)
+function maskRoom(R){
+  const x0=w2sx(R.x-R.w/2-WALL_T-1), x1=w2sx(R.x+R.w/2+WALL_T+1);
+  const y0=w2sy(R.y-R.h/2-WALL_T-WALL_H-2), y1=w2sy(R.y+R.h/2+WALL_T+2);
+  ctx.fillStyle='#0d0a0c';
+  ctx.fillRect(-10,-10,W+20,y0+10); ctx.fillRect(-10,y1,W+20,H-y1+10);
+  ctx.fillRect(-10,y0,x0+10,y1-y0); ctx.fillRect(x1,y0,W-x1+10,y1-y0);
+  for(let i=0;i<lightN;i++){ const L=lights[i];                // and their lamps
+    if(L.x<R.x-R.w/2-40||L.x>R.x+R.w/2+40||L.y<R.y-R.h/2-80||L.y>R.y+R.h/2+40) L.a=0; }
 }
 
 // ==========================================================================
@@ -6513,7 +6603,7 @@ function updateEnts(d){
     e.hitT=Math.max(0,e.hitT-d);
     if(e.dead){
       e.dieT+=d;
-      if(e.dieT>34){ ents.splice(i,1); }
+      if(e.dieT>34 && e!==P){ ents.splice(i,1); }
       continue;
     }
     if(e.hp<=0){ kill(e,null); continue; }
@@ -6524,11 +6614,11 @@ function updateEnts(d){
       if(e.kx||e.ky){ moveEnt(e,e.kx*d,e.ky*d);
         const f=Math.pow(.02,d); e.kx*=f; e.ky*=f;
         if(Math.abs(e.kx)<2)e.kx=0; if(Math.abs(e.ky)<2)e.ky=0; }
-      e.vx=(e.x-px0)/Math.max(d,1e-4); e.vy=(e.y-py0)/Math.max(d,1e-4);
+      // speed was set by updatePlayer from your input; keep it for the walk cycle
       continue;
     }
     if(e.kind==='horse'){
-      if(e.rider){ e.vx=(e.x-px0)/Math.max(d,1e-4); e.vy=(e.y-py0)/Math.max(d,1e-4); continue; }
+      if(e.rider) continue;            // ridden: updatePlayer already set its speed
       e.stT-=d;
       if(e.state==='flee'){ const a=angTo(P.x,P.y,e.x,e.y);
         moveEnt(e,Math.cos(a)*220*d,Math.sin(a)*220*d); e.aim=a;
@@ -6758,7 +6848,14 @@ function newGame(){
   toast('REDWATER','Dust, tin, and a rusted six.',C.gold);
   sfx('drone',{f:58,dur:3});
 }
+function revive(){
+  // a death marks you as a body: fallen, faded, ignored by every gun. Undo all of it.
+  P.dead=false; P.dieT=0; P.noHit=false; P.hatOff=false; P.flash=0; P.burn=0; P.stun=0;
+  P.hitT=0; P.kx=P.ky=0; P.vx=P.vy=0; P.rollT=0; P.iframe=1.5; P.markT=0;
+  if(ents.indexOf(P)<0) ents.push(P);
+}
 function respawn(){
+  revive();
   P.hp=P.maxhp; P.stam=P.maxstam;
   P.money=Math.max(0,Math.round(P.money*0.6));
   P.wanted=Math.max(0,P.wanted-2);
@@ -6831,7 +6928,8 @@ function applySave(data){
   for(const id of (data.active||[])) if(QUESTS[id]) activeQ.push(id);
   tracked=data.tracked||activeQ[0]||null;
   // re-arm any active quest that spawns its own trouble
-  for(const id of activeQ.slice()){ const qq=QUESTS[id]; if(qq&&qq.onStart) qq.onStart(); }
+  for(const id of activeQ.slice()){ const qq=QUESTS[id]; if(qq&&qq.onStart) qq.onStart(); armStep(id); }
+  startGiverless();                               // unsticks rides saved while stalled
   refreshQuestMarks();
   cam.x=P.x; cam.y=P.y;
   mode='play'; fadeT=1.2;
