@@ -454,6 +454,8 @@ function drawBackCloth(c){
   if(H==='twintails'){for(const[k,x,y]of[['twA',-.7,-.55],['twB',-.2,-.85]]){
       const P=chain(k,headPt(x,y),7,8.5*S,{g:1100,drag:2.6,bias:80,wind:140,back:.4});
       fp(c,cc=>tubePath(cc,P,P.map((_,i)=>lerp(5,1.5,i/6)*S*(i===1?1.25:1)),1),k==='twA'?RS.ink:RS.far);}}
+  if(ch.headband){for(const[k,y,w]of[['hbA',-.42,2.2],['hbB',-.2,1.9]]){const P=chain(k,headPt(-.98,y),5,7.5*S,{g:700,drag:2.4,bias:200,wind:300,fq:8,back:.85,lift:.05});
+      fp(c,cc=>tubePath(cc,P,P.map((_,i)=>lerp(w,1.2,i/4)*S)),k==='hbA'?RS.ink:RS.far);}}
   if(ch.scarf){const an=TP(-5,-55),P=chain('scarf',an,8,9*S,{g:500,drag:2.2,bias:260,wind:420,fq:9,back:.8,lift:.15});
     fp(c,cc=>tubePath(cc,P,P.map((_,i)=>lerp(4.5,3,i/7)*S)));ragged(c,P,P.map(()=>3*S),2);}
   if(ch.sash){const an=TP(-10,-2),P=chain('sash',an,5,9*S,{g:900,drag:2.4,bias:120,wind:180,back:.5});
@@ -492,6 +494,15 @@ function drawHeadgear(c,r){
     fp(c,cc=>{  // bangs hanging over the brow, then big spikes swept up and back
       const s=[[.92,.12],[1.18,.1],[.96,-.18],[1.28,-.44],[.8,-.64],[.66,-1.58],[.24,-1.0],[-.24,-2.0],[-.44,-.96],[-1.3,-1.76],[-.92,-.6],[-2.08,-.92],[-1.14,-.18],[-2.02,.24],[-1.1,.26],[-1.6,.88],[-.8,.56],[-.66,.62]];
       s.forEach((p,i)=>{const k=Math.max(0,-p[0]-.6),x=(p[0]-sw*k)*r,y=(p[1]+sw*k*.25)*r;i?cc.lineTo(x,y):cc.moveTo(x,y);});cc.closePath();});}
+  if(ch.hair==='yuji'){const sw=(RS.opt.sway||0)*.08;
+    fp(c,cc=>{  // short spikes on top, the sides cut close
+      const s=[[.9,-.22],[1.14,-.5],[.78,-.6],[.92,-1.12],[.44,-.86],[.34,-1.42],[-.04,-.94],[-.3,-1.36],[-.48,-.88],[-.9,-1.16],[-.8,-.58],[-1.12,-.5],[-.96,-.18],[-.2,-.3]];
+      s.forEach((p,i)=>{const x=(p[0]-sw*Math.max(0,-p[1]-.6))*r,y=p[1]*r;i?cc.lineTo(x,y):cc.moveTo(x,y);});cc.closePath();});}
+  if(ch.hair==='naruto'){const sw=(RS.opt.sway||0)*.12;
+    fp(c,cc=>{  // spikes thrown out in every direction
+      const s=[[.94,-.06],[1.3,-.3],[.86,-.5],[1.2,-.98],[.6,-.82],[.62,-1.56],[.16,-1.0],[-.2,-1.7],[-.42,-.96],[-1.06,-1.46],[-.86,-.62],[-1.72,-.82],[-1.06,-.16],[-1.66,.3],[-.98,.3],[-1.22,.82],[-.62,.56]];
+      s.forEach((p,i)=>{const k=Math.max(0,-p[0]-.6),q=i%2?1:1.14,x=(p[0]*q-sw*k)*r,y=(p[1]*q+sw*k*.3)*r;i?cc.lineTo(x,y):cc.moveTo(x,y);});cc.closePath();});}
+  if(ch.headband)fp(c,cc=>{cc.moveTo(-1.04*r,-.52*r);cc.lineTo(1.06*r,-.4*r);cc.lineTo(1.07*r,-.1*r);cc.lineTo(-1.02*r,-.22*r);cc.closePath();});
   if(ch.blindfold&&!RS.opt.unveil)fp(c,cc=>{cc.rect(-1.08*r,-.16*r,2.22*r,.44*r);});
   if(ch.hat){                                   // witch hat: wide brim, tall crooked cone
     fp(c,cc=>{cc.ellipse(.05*r,-.62*r,1.9*r,.34*r,-.12,0,TAU);});
@@ -510,6 +521,7 @@ function drawHeadgear(c,r){
 function drawHead(c){
   const {ch,S,K}=RS,r=SK.HR*S*(ch.helm?1.12:1);
   fp(c,cc=>segPath(cc,add2(K.neck,K.up,-5*S),add2(K.head,dirA(K.ha),.5*r),5.6*S*RS.gw,5.4*S*RS.gw,5*S*RS.gw));
+  if(ch.hoodie)fp(c,cc=>{const p=TP(-9.5,-55),q=TP(-6,-61);cc.ellipse(p[0],p[1],7.6*S,6.2*S,-.35,0,TAU);cc.moveTo(q[0]+5*S,q[1]);cc.ellipse(q[0],q[1],5*S,4.4*S,0,0,TAU);});   // a hood bunched at the nape
   if(ch.collar)fp(c,cc=>{const a=TP(-11,-52),b=TP(-9,-68),d=TP(-2,-62),e=TP(3,-54);cc.moveTo(a[0],a[1]);cc.lineTo(b[0],b[1]);cc.quadraticCurveTo(TP(-5,-64)[0],TP(-5,-64)[1],d[0],d[1]);cc.lineTo(e[0],e[1]);cc.closePath();});
   c.save();c.translate(K.head[0],K.head[1]);c.rotate(K.ha);
   if(!ch.hood)fp(c,cc=>headPath(cc,r,ch.fem));
@@ -519,6 +531,7 @@ function drawHead(c){
   const e1=[ex[0]*r,ey*r],e2=[ex[1]*r,(ey-.02)*r];
   RS.eyes=[toBody(c,e1),toBody(c,e2)];
   const col=RS.accent,hot=RS.opt.hot||0,type=ch.eyes;
+  if(ch.headband)glow(g=>{g.globalAlpha=.6+hot*.3;g.fillStyle=mixC(col,'#ffffff',.55);g.fillRect(.56*r,-.39*r,.44*r,.05*r);g.globalAlpha=1;});
   glow(g=>{
     if(ch.blindfold&&!RS.opt.unveil){   // behind the cloth: light seeping along the band
       g.globalAlpha=.45+hot*.35;g.drawImage(glowSprite(col),-.3*r,-.35*r,1.7*r,.9*r);
@@ -1255,6 +1268,7 @@ function drawStageFront(X){
    Directions are in facing space: +1 = toward the opponent.
    ======================================================================= */
 const GRAV=2900,ARENA=820,MAXSEP=620,BUF_T=.16;
+const CRIT={};   // per-fighter critical hits: CRIT[id](attacker, victim, hit, point) -> damage multiplier, for hits marked crit
 let FTR=[],PROJ=[],hitstop=0,gameT=0,slowmo=1;
 const WSEGS={odachi:[[4,0,104,-6,8]],daggers:[[4,0,34,-1,8]],hammer:[[48,0,92,0,24],[0,0,48,0,6]],staff:[[-38,0,118,0,9]],
   scythe:[[0,0,74,0,7],[72,4,10,60,11]],spear:[[-40,0,140,0,8]]};
@@ -1416,7 +1430,8 @@ function applyHit(a,d,h,pt,proj){
   const counter=isStartup(d);
   const comboOn=d.st==='hit'||d.st==='thrown'||(!d.ground&&d.st!=='move');
   a.combo=comboOn?a.combo+1:1;if(!comboOn)a.comboDmg=0;
-  let dmg=H.dmg*a.ch.pow*prorate(a.combo)*(counter?1.2:1);dmg=Math.round(dmg);
+  let dmg=H.dmg*a.ch.pow*prorate(a.combo)*(counter?1.2:1);
+  if(H.crit&&CRIT[a.ch.id])dmg*=CRIT[a.ch.id](a,d,H,pt);dmg=Math.round(dmg);
   d.hp=Math.max(0,d.hp-dmg);d.redT=.9;a.comboDmg+=dmg;a.stats.dmg+=dmg;a.stats.maxCombo=Math.max(a.stats.maxCombo,a.combo);a.comboT=1.2;
   a.meter=Math.min(100,a.meter+dmg*.09+(H.cine?0:2));d.meter=Math.min(100,d.meter+dmg*.06);
   const air=!d.ground||H.lift||H.kd==='launch';
@@ -2024,6 +2039,7 @@ function slashLine(x,y,an,len,col,life,w){
 }
 function hitFX(x,y,dir,col,pow,kind){
   const big=pow>1;
+  if(kind==='rasen'){sparks(x,y,big?14:5,'#bfe8ff',big?620:340,undefined,0,big?2.4:1.6,.22);if(big){ring(x,y,'#7fd0ff',10,130,.32,5);ring(x,y,'#ffffff',6,70,.2,3);}ink(x,y,big?8:2,dir,big?460:240);return;}
   if(kind==='blue'){ring(x,y,'#9cc4ff',44,5,.16,2.5);sparks(x,y,big?10:5,'#bcd8ff',380,undefined,0,2,.25);ink(x,y,big?10:4,dir,300);return;}
   burstFX(x,y,dir,col,pow);
   sparks(x,y,big?22:12,col,big?900:620,dir>0?0:PI,1.1,big?3.6:2.8,.4);
@@ -2357,6 +2373,8 @@ function drawFighter(f,dt,inkOver){
   X.save();X.translate(f.x+sh,f.y+f.ry);X.scale(f.face,1);
   if(f.alpha<1)X.globalAlpha=f.alpha;
   if(f.ch.aura&&!inkOver)auraFX(f,dt,CINE&&f.auraK?f.auraK:1);
+  else if(f.ghosts.length&&!inkOver){drawGhosts(f,1);if(f.alpha>0){G.save();G.setTransform(X.getTransform());G.globalCompositeOperation='destination-out';   // afterimage light stays off the body itself
+    drawBody(G,f.ch,f.pose,1,gameT,{lite:1,nosim:1,cloth:f.cloth,inkCol:'#000',unveil:f.unveil});G.restore();}}
   const air=!f.ground||f.ry<-2||f.st==='air'||(f.st==='move'&&f.mv&&f.mv.air);
   const r=drawBody(X,f.ch,f.pose,1,gameT,{g:G,cloth:f.cloth,dt:hitstop>0?0:dt,vx:clamp(vx*f.face,-2500,2500),vy:clamp(vy,-2500,2500),plant:!air&&f.st!=='down'&&f.st!=='ko',hot:f.hot,sway:clamp(vx*f.face/600,-1,1),unveil:f.unveil,
     inkCol:inkOver,farCol:inkOver});
@@ -2366,7 +2384,7 @@ function drawFighter(f,dt,inkOver){
   recordTrails(f,r.eyes);
 }
 function drawGhosts(f,own){
-  if(!f.ghosts.length||(f.ch.aura&&!own))return;G.save();worldXf(G);const dk=mixC(f.ch.col,'#000000',.55);
+  if(!f.ghosts.length||!own)return;G.save();worldXf(G);const dk=mixC(f.ch.col,'#000000',.55);
   for(const g of f.ghosts){const u=g.t/(g.l||.26);G.save();G.translate(g.x,g.y);G.scale(g.face,1);G.globalAlpha=(g.ui?.3:.13)*(1-u);
     drawBody(G,f.ch,g.pose,1,gameT,{lite:1,nosim:1,cloth:f.cloth,inkCol:g.ui?'#8fa8d8':dk});G.restore();}
   G.restore();
@@ -3177,6 +3195,7 @@ function figFront(c,g,ch,o){
   c.lineTo(2.5,hipY+9);c.lineTo(hpX*.9,hipY+5);c.lineTo(hpX,hipY-2);c.quadraticCurveTo(hpX+.5,hipY-12,waX,waY);c.quadraticCurveTo(waX+1,chestY+12,chX,chestY-2);
   c.quadraticCurveTo(shX+1.5,shY+6,shX-1,shY-1);c.quadraticCurveTo(shX*.55,shY-4.5,nkX,shY-5);c.lineTo(nkX,headY+hr*.95);c.closePath();c.fill();
   if(fem&&!back){c.beginPath();c.ellipse(-chX*.45,chestY+3,chX*.42,5.5,0,0,TAU);c.ellipse(chX*.45,chestY+3,chX*.42,5.5,0,0,TAU);c.fill();}
+  if(ch.hoodie){c.beginPath();c.ellipse(0,shY-1,13,6,0,PI,TAU);c.fill();if(back){c.beginPath();c.ellipse(0,shY+6,11,9,0,0,TAU);c.fill();}}   // the hood bunched round the neck
   if(ch.collar&&!back){c.beginPath();c.moveTo(-8,shY+2);c.lineTo(-11,shY-15);c.lineTo(-4.5,shY-7);c.lineTo(4.5,shY-7);c.lineTo(11,shY-15);c.lineTo(8,shY+2);c.fill();}
   if(ch.collar&&back){c.beginPath();c.moveTo(-10,shY);c.lineTo(-11,shY-16);c.quadraticCurveTo(0,shY-19,11,shY-16);c.lineTo(10,shY);c.fill();}
   if(ch.sash){c.beginPath();c.moveTo(-waX-.5,hipY-9);c.lineTo(waX+.5,hipY-9);c.lineTo(waX,hipY-3);c.lineTo(-waX,hipY-3);c.fill();limb(c,[[waX-3,hipY-6],[waX+2,hipY+14],[waX+4+Math.sin(t*3)*3,hipY+34]],[3,3,2.5]);}
@@ -3221,6 +3240,16 @@ function figFront(c,g,ch,o){
     c.beginPath();const s=[[-.92,.14],[-1.95,-.1],[-1.04,-.48],[-2.15,-1.0],[-.98,-.92],[-1.5,-1.86],[-.52,-1.18],[-.56,-2.2],[-.06,-1.24],[.3,-2.26],[.4,-1.18],[1.2,-2.0],[.9,-.96],[2.1,-1.16],[1.06,-.52],[1.96,-.06],[.92,.14],
       [.8,-.34],[.52,-.02],[.3,-.4],[0,-.08],[-.3,-.42],[-.52,-.02],[-.8,-.34]];
     s.forEach((p,i)=>{const x=p[0]*hr,y=p[1]*hr;i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.fill();}
+  if(ch.hair==='yuji'){  // a short spiky crown, sides cut close, a fringe of points over the brow
+    c.beginPath();const s=[[-.92,-.2],[-1.14,-.56],[-.84,-.74],[-.96,-1.24],[-.46,-1.0],[-.3,-1.46],[0,-1.06],[.3,-1.5],[.46,-1.0],[.92,-1.26],[.84,-.74],[1.14,-.56],[.92,-.2],
+      [.62,-.44],[.38,-.22],[.14,-.48],[-.12,-.24],[-.38,-.46],[-.62,-.26]];
+    s.forEach((p,i)=>{const x=p[0]*hr,y=p[1]*hr;i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.fill();}
+  if(ch.hair==='naruto'){  // spikes all the way round
+    c.beginPath();const n=18;for(let i=0;i<=n;i++){const u=i/n,a=PI*.92+u*PI*1.16,rr=i%2?1.04:1.8+.12*Math.sin(u*9)+(Math.abs(u-.5)>.4?-.14:0);
+      const x=Math.cos(a)*rr*hr,y=Math.sin(a)*rr*hr-hr*.08;i?c.lineTo(x,y):c.moveTo(x,y);}c.closePath();c.fill();}
+  if(ch.headband){c.fillRect(-hr*1.03,-hr*.5,hr*2.06,hr*.32);
+    if(!back)G2(q=>{q.globalAlpha=.7+hot*.3;q.fillStyle=mixC(col,'#ffffff',.55);q.fillRect(-hr*.34,-hr*.46,hr*.68,hr*.05);q.globalAlpha=1;});
+    else for(const s of[-1,1]){const sw=Math.sin(t*3+s)*3;limb(c,[[s*hr*.3,-hr*.34],[s*(hr*.5+2)+sw*.3,hr*.8],[s*(hr*.6+4)+sw,hr*2.2]],[2.6,2.2,1.2]);}}
   if(ch.blindfold&&bf>0){const by=hr*.08+(1-bf)*hr*1.35;c.fillRect(-hr*1.02,by-hr*.21,hr*2.04,hr*.42);
     if(!back)G2(q=>{q.globalAlpha=bf*(.45+hot*.35);q.drawImage(glowSprite(col),-hr*1.1,by-hr*.5,hr*2.2,hr);q.globalAlpha=bf*.9;q.fillStyle=mixC(col,'#ffffff',.45);q.fillRect(-hr*.9,by+hr*.17,hr*1.8,hr*.05);q.globalAlpha=1;});}
   if(ch.helm){ // a rounded war helm with cheek guards, horns sweeping out and up
@@ -4351,6 +4380,395 @@ PATHS.goku={hero:'goku',kicker:'LIMITED TIME',title:'A GOOD FIGHT',chord:[110,16
   end:[['goku','Man, that was fun! You shadows are pretty strong.'],['goku','I should get back before someone yells at me for skipping training.'],['goku','Let\'s fight again sometime!','l']]};
 
 /* =======================================================================
+   YUJI — limited-time guest (Yuji Itadori, from Jujutsu Kaisen), drawn as
+   a shadow: short spiky hair cut close at the sides, a hood bunched under
+   a high collar. He fights with his fists.
+   DIVERGENT FIST: the punch lands, and a beat later his cursed energy lands
+   behind it. BLACK FLASH: any of his punches can land in the same instant
+   as his cursed energy and hit two and a half times as hard. The deeper
+   he is into a combo, and the more of them he has landed this round, the
+   likelier the next one is.
+   Specials: DIVERGENT FIST · MANJI KICK · RISING KNEE. Ultimate: BLACK FLASH.
+   ======================================================================= */
+const YUJI_COL='#ff4f6d',YUJI_CE='#7fc8ff';
+ROSTER.push({id:'yuji',name:'YUJI',title:'The Vessel',col:YUJI_COL,
+  h:1.0,w:1.04,hair:'yuji',hoodie:1,collar:1,eyes:'slit',wep:'none',stance:'brawl',move:'run',stage:'dusk',
+  hp:1000,spd:1.1,pow:1.06,
+  bio:'Hits hard, hits twice, and once in a while hits so hard the air turns black.'});
+SPECIAL.yuji={kind:'limited',from:'2026-10-01',to:'2026-11-16',keep:1};
+SNAMES.yuji=['DIVERGENT FIST','MANJI KICK','RISING KNEE'];ULT_NAMES.yuji='BLACK FLASH';ULT_NOTE.yuji='ANY PUNCH CAN BE A BLACK FLASH';
+PREF.yuji=105;ZONER.yuji=.05;LPOSE.yuji='guard';
+
+/* ---------------- stance: up on his toes, fists loose and high ---------------- */
+SD.brawl={fx:[24,-22],y:12,lean:.16,ch:.06,hd:.1,aF:[.9,1.95,0],aB:[.62,2.15,0]};STANCE.brawl=SP(SD.brawl);
+BLK.brawl={aF:[1.3,2.5,0],aB:[1.1,2.55,0]};
+WIN.yuji=SP({fx:[12,-12],y:3,lean:-.02,hd:-.12,aF:[1.45,2.55,0],aB:[.08,.3,0]});
+
+/* ---------------- BLACK FLASH ----------------
+   a crit on any hit marked crit. 8% to start, +5% per hit already in the combo (up to six), +12% for every
+   Black Flash he has landed this round, never above 55%. */
+CRIT.yuji=(a,d,H,pt)=>{
+  if(a.bfRound!==GAME.round){a.bfRound=GAME.round;a.bfZone=0;}
+  const chance=Math.min(.55,.08+.05*Math.min(6,Math.max(0,a.combo-1))+.12*(a.bfZone||0));
+  if(rnd()>=chance)return 1;
+  a.bfZone=(a.bfZone||0)+1;a.meter=Math.min(100,a.meter+25);
+  blackFlashFX(pt[0],pt[1],sgn(d.x-a.x)||a.face,a);
+  return 2.5;
+};
+/* lightning that is black: jagged bolts thrown out from one point, ink on the dark layer, red at the edges in the light */
+function bfBolts(c,x,y,R,seed,col,w,n){c.lineCap='round';c.lineJoin='round';
+  for(let i=0;i<(n||9);i++){const an=hash(seed+i*3.7)*TAU,L=R*(.45+hash(seed+i*1.9)*.7),k=6;
+    c.strokeStyle=col;c.lineWidth=w*(1-i/((n||9)*1.6));c.beginPath();c.moveTo(x,y);
+    for(let j=1;j<=k;j++){const u=j/k,jit=(hash(seed+i*7.1+j*2.3)-.5)*L*.35*(1-u*.3);c.lineTo(x+Math.cos(an)*L*u-Math.sin(an)*jit,y+Math.sin(an)*L*u+Math.cos(an)*jit);}
+    c.stroke();
+    if(hash(seed+i*5.3)>.45){const j0=2+(hash(seed+i)*3|0),u=j0/k,bx=x+Math.cos(an)*L*u,by=y+Math.sin(an)*L*u,a2=an+(hash(seed+i*9)-.5)*1.6,L2=L*.4;
+      c.lineWidth=w*.45;c.beginPath();c.moveTo(bx,by);c.lineTo(bx+Math.cos(a2)*L2*.5+(hash(seed+i*4)-.5)*10,by+Math.sin(a2)*L2*.5);c.lineTo(bx+Math.cos(a2)*L2,by+Math.sin(a2)*L2);c.stroke();}}}
+function blackFlashFX(x,y,dir,a){
+  const col=a.ch.col,seed=(gameT*61|0)%997;
+  // the frame goes two-tone for a beat: black on red, then red on black
+  POST.imp={bg:'#0a0003',ink:col};setTimeout(()=>{POST.imp={bg:col,ink:'#000000'};},55);setTimeout(()=>{POST.imp=null;},110);
+  hitstop=Math.max(hitstop,.2);shake(16);camPunch&&camPunch(.08);
+  effs.push({t:0,l:.5,d(c,p){c.globalAlpha=1-p;bfBolts(c,x,y,150*(.7+p*.6),seed,'#000000',9*(1-p*.5));}});
+  effs.push({t:0,l:.5,glow:1,d(c,p){c.globalCompositeOperation='lighter';c.globalAlpha=(1-p)*.6;c.drawImage(glowSprite(col),x-120,y-120,240,240);
+    c.globalAlpha=(1-p)*.95;bfBolts(c,x,y,150*(.7+p*.6),seed,col,7*(1-p*.5));c.globalCompositeOperation='destination-out';c.globalAlpha=1;bfBolts(c,x,y,150*(.7+p*.6),seed,'#000',3.5*(1-p*.5));}});
+  ring(x,y,col,10,170,.4,7);ring(x,y,'#000000',6,120,.3,10,undefined,false);sparks(x,y,18,col,760,dir>0?0:PI,1.2,2.6,.35);ink(x,y,10,dir,520);
+  fxText('BLACK FLASH',a);SFX.impact&&SFX.impact();SFX.crack&&SFX.crack();tn(.5,{w:'sawtooth',f0:90,f1:40,g:.12});
+}
+/* the second impact of a Divergent Fist: cursed energy arriving after the fist */
+function divergentFX(x,y,dir){ring(x,y,YUJI_CE,6,110,.32,6);ring(x,y,'#ffffff',4,60,.2,3);sparks(x,y,10,YUJI_CE,520,dir>0?0:PI,.9,2,.3);
+  effs.push({t:0,l:.25,glow:1,d(c,p){c.globalCompositeOperation='lighter';c.globalAlpha=(1-p)*.8;c.drawImage(glowSprite(YUJI_CE),x-70,y-70,140,140);}});
+  SFX.boom&&SFX.boom(.45);}
+
+/* ---------------- moves ---------------- */
+{const s='brawl',GP=o=>Q(s,o),GA=o=>Q('air',o),GC=o=>CR(s,o);
+ const dfWind=GP({fx:[20,-30],y:22,lean:-.05,aF:[-.4,2.2,0],gF:0,aB:[1.0,2.3,0]}),dfHit=GP({fx:[54,-28],y:24,lean:.55,ch:.12,aF:[1.58,0,0],gF:0,aB:[.5,2.3,0]});
+ MOVES.yuji={
+ L1:{cls:'L',d:.2,k:[[0,'stance'],[.04,GP({lean:.1,aF:[.6,2.1,0],aB:[.6,2.2]}),'o'],[.08,GP({fx:[34,-22],lean:.32,aF:[1.58,0,0],aB:[.5,2.3]}),'s'],[.2,'stance','io']],
+   rm:[[0,0],[.08,12,0,'s'],[.2,14]],hits:[H_(.04,.1,{seg:'aF',dmg:28,hs:.26,kb:110,fx:'blunt',crit:1})],can:[.06,.18]},
+ L2:{cls:'L',d:.26,k:[[0,GP({fx:[34,-22],lean:.32,aF:[1.58,0,0],aB:[.5,2.3]})],[.05,GP({lean:.06,aF:[.6,2.2,0],aB:[-.2,2.0,0]}),'o'],
+   [.1,GP({fx:[40,-20],lean:.48,ch:.12,aB:[1.55,0,0],aF:[.5,2.3,0]}),'s'],[.26,'stance','io']],
+   rm:[[0,0],[.1,16,0,'s'],[.26,18]],hits:[H_(.05,.12,{seg:'aB',dmg:32,hs:.28,kb:140,fx:'blunt',crit:1})],can:[.08,.24]},
+ L3:{cls:'L',d:.44,k:[[0,'stance'],[.1,GP({fx:[14,-8],y:16,lean:-.3,aF:[1.0,2.0,0],aB:[.8,2.2],kF:[1.0,-2.3,0]}),'o'],
+   [.16,GP({fx:[14,-4],y:10,lean:-.55,ch:-.2,aF:[.2,1.6,0],aB:[-.4,1.2,0],kF:[2.1,-.02,0],pt:1}),'s'],[.28,GP({fx:[14,-4],y:12,lean:-.5,ch:-.15,aF:[.2,1.6,0],aB:[-.4,1.2,0],kF:[1.95,-.1,0],pt:1}),'o'],[.44,'stance','io']],
+   rm:[[0,0],[.16,22,0,'s'],[.44,26]],hits:[H_(.11,.19,{seg:'lF',r:13,dmg:50,kb:290,hs:.42,fx:'blunt'})],can:[.14,.38]},
+ H:{cls:'H',d:.52,k:[[0,'stance'],[.12,GP({fx:[22,-30],y:20,lean:-.12,aF:[-.3,2.2,0],aB:[.9,2.3]}),'o'],
+   [.18,GP({fx:[56,-30],y:24,lean:.6,ch:.12,aF:[1.58,0,0],aB:[.4,2.3]}),'s'],[.34,GP({fx:[56,-30],y:24,lean:.58,ch:.1,aF:[1.55,.05,0],aB:[.4,2.3]}),'o'],[.52,'stance','io']],
+   rm:[[0,0],[.12,-6],[.18,40,0,'s'],[.52,44]],hits:[H_(.13,.21,{seg:'aF',r:16,dmg:80,kb:330,hs:.5,fx:'blunt',crit:1})],hot:[.1,.34],can:[.2,.44]},
+ FH:{cls:'H',d:.6,k:[[0,'stance'],[.2,GP({fx:[14,-6],y:6,lean:-.35,ch:-.1,aF:[1.0,2.0,0],aB:[.4,1.6],kF:[3.0,-.05,0],pt:1}),'o'],
+   [.3,GP({fx:[16,-6],y:18,lean:.3,aF:[.8,2.0,0],aB:[.4,1.6],kF:[1.05,-.1,0],pt:.6}),'i2'],[.4,GP({fx:[40,-10],y:30,lean:.4}),'o'],[.6,'stance','io']],
+   rm:[[0,0],[.2,10],[.3,30,0,'i2'],[.6,32]],hits:[H_(.22,.32,{seg:'lF',r:14,dmg:72,lvl:'ovh',kb:200,hs:.46,fx:'blunt'})],can:[.32,.5]},
+ cL:{cls:'L',d:.22,crouch:1,k:[[0,'crouch'],[.04,GC({aF:[.6,2.0,0]}),'o'],[.08,GC({fx:[36,-24],lean:.5,aF:[1.35,0,0]}),'s'],[.22,'crouch','io']],
+   rm:[[0,0],[.08,8,0,'s'],[.22,8]],hits:[H_(.04,.1,{seg:'aF',dmg:24,lvl:'low',hs:.22,kb:90,fx:'blunt',crit:1})],can:[.06,.2]},
+ cH:{cls:'H',d:.5,crouch:1,k:[[0,'crouch'],[.08,GC({y:52,lean:.5,aF:[.6,1.6,0],aB:[.4,1.8],kF:[.6,-2.0,0]}),'o'],
+   [.16,GP({fx:[20,-28],y:64,lean:.55,ch:.1,aF:[.5,1.4,0],aB:[.2,1.6],kF:[1.58,-.02,0],pt:1}),'s'],[.3,GP({fx:[20,-28],y:64,lean:.55,ch:.1,aF:[.5,1.4,0],aB:[.2,1.6],kF:[1.5,-.06,0],pt:1}),'o'],[.5,'crouch','io']],
+   rm:[[0,0],[.16,10,0,'s'],[.5,10]],hits:[H_(.1,.25,{seg:'lF',r:13,dmg:64,lvl:'low',kd:1,kb:160,hs:.6,fx:'blunt'})],can:[.25,.4],on:[[.12,f=>dust(f.x+50*f.face,8,f.face,.8)]]},
+ jL:{cls:'L',air:1,d:.3,k:[[0,'jump'],[.05,GA({lF:[1.6,-2.6,0],lB:[.1,-.9,0],aF:[.8,2.0,0],aB:[.4,2.0]}),'o'],[.1,GA({lean:.2,lF:[1.95,-2.6,0],lB:[.1,-.9,0],aF:[.8,2.0,0],aB:[.4,2.0]}),'s'],[.3,GA({lF:[1.8,-2.5,0],lB:[.1,-.9,0]}),'o']],
+   hits:[H_(.05,.16,{seg:'lF',r:14,dmg:36,lvl:'ovh',hs:.34,fx:'blunt'})],can:[.08,.3]},
+ jH:{cls:'H',air:1,d:.44,k:[[0,'jump'],[.1,GA({lean:-.2,aF:[2.6,1.2,0],aB:[.6,2.0,0],lF:[.9,-1.6,0],lB:[.2,-1.0,0]}),'o'],
+   [.16,GA({lean:.4,aF:[1.0,.05,0],aB:[.4,2.0,0],lF:[.9,-1.6,0],lB:[.1,-1.0,0]}),'s'],[.44,GA({lean:.4,aF:[.95,.1,0],aB:[.4,2.0,0],lF:[.9,-1.6,0],lB:[.1,-1.0,0]}),'o']],
+   hits:[H_(.12,.3,{seg:'aF',r:18,dmg:62,lvl:'ovh',hs:.46,spike:1,fx:'blunt',crit:1})],can:[.18,.44]},
+ // DIVERGENT FIST — the fist, then the cursed energy a beat behind it
+ S:{cls:'S',d:.58,k:[[0,'stance'],[.1,dfWind,'o'],[.16,dfHit,'s'],[.4,GP({fx:[54,-28],y:24,lean:.55,ch:.1,aF:[1.55,.05,0],gF:0,aB:[.5,2.3,0]}),'l'],[.58,'stance','io']],
+   rm:[[0,0],[.1,-4],[.16,44,0,'s'],[.58,46]],hot:[.1,.42],after:[.1,.18],
+   hits:[H_(.12,.2,{seg:'aF',r:17,dmg:46,kb:60,hs:.55,stop:.08,fx:'blunt',crit:1})],
+   on:[[.33,f=>{if(!f.landed)return;const o=opp(f);if(o.st!=='hit')return;const c=CU.chest(o);divergentFX(c[0],c[1],f.face);
+       applyHit(f,o,{cls:'S',dmg:44,kb:380,lift:260,kd:1,hs:.6,stop:.1,fx:'blunt',crit:1},c);}]]},
+ // MANJI KICK — in fast, and round
+ FS:{cls:'S',d:.62,k:[[0,'stance'],[.08,GP({fx:[30,-30],y:30,lean:.5,aF:[-1.0,.6,0],aB:[-1.2,.5,0]}),'o'],
+   [.2,GP({fx:[16,-4],y:12,lean:-.5,ch:-.2,aF:[.2,1.4,0],aB:[-.6,1.0,0],kF:[2.2,-.02,0],pt:1}),'s'],[.38,GP({fx:[16,-4],y:12,lean:-.48,ch:-.15,aF:[.2,1.4,0],aB:[-.6,1.0,0],kF:[2.1,-.08,0],pt:1}),'o'],[.62,'stance','io']],
+   rm:[[0,0],[.08,40],[.2,130,0,'s'],[.62,136]],after:[.06,.24],hot:[.06,.42],
+   hits:[H_(.16,.3,{seg:'lF',r:16,dmg:80,kb:420,lift:300,kd:1,hs:.55,fx:'blunt'})]},
+ // RISING KNEE — straight up through whatever is above him
+ BS:{cls:'S',d:.62,k:[[0,'stance'],[.05,GP({fx:[24,-24],y:34,lean:.35,aF:[.8,2.2,0],aB:[.6,2.3]}),'o'],
+   [.16,GA({lean:-.1,aF:[.5,2.4,0],aB:[.3,2.4,0],lF:[2.0,-2.5,0],lB:[.1,-.6,0],pt:.9}),'s'],[.34,GA({lean:-.05,aF:[.5,2.4,0],aB:[.3,2.4,0],lF:[1.8,-2.4,0],lB:[.1,-.7,0],pt:.9}),'l'],
+   [.52,GP({y:30,lean:.3}),'i'],[.62,'stance','io']],
+   rm:[[0,0,0],[.05,0,0],[.16,22,-140,'s'],[.34,18,-130,'l'],[.52,14,0,'i'],[.62,14,0]],inv:[0,.14],hot:[.05,.38],
+   hits:[H_(.06,.22,{seg:'lF',r:18,dmg:88,lift:980,kd:'launch',hs:.8,kb:90,fx:'blunt'})]},
+ U:{cls:'U',d:.56,k:[[0,'stance'],[.1,dfWind,'o'],[.18,dfHit,'s'],[.56,'stance','io']],
+   rm:[[0,0],[.1,0],[.18,150,0,'s'],[.56,152]],after:[.08,.22],inv:[.06,.2],
+   hits:[H_(.1,.24,{seg:'aF',r:26,dmg:40,cine:1,hs:1,kb:0})]},
+ };}
+
+/* ---------------- ultimate: BLACK FLASH ---------------- */
+CUTS.yuji=(A,D)=>bfCut(A,D);
+function bfCut(A,D){const col=A.ch.col;
+ const punch=Q('brawl',{fx:[58,-30],y:24,lean:.6,ch:.12,aF:[1.58,0,0],aB:[.4,2.3,0]}),wind=Q('brawl',{fx:[22,-32],y:22,lean:-.1,aF:[-.4,2.2,0],aB:[1.0,2.3,0]});
+ const down=Q('air',{lean:.55,aF:[.8,.05,0],aB:[.4,2.0,0],lF:[.9,-1.4,0],lB:[.2,-1.0,0]});
+ // an impact frame of its own: red on black, black on red, with the lightning drawn into it
+ const flashImp=(S,t)=>{const k=t-S.imp;return k<0?null:k<.035?'ai':k<.07?'a':k<.1?'ai':null;};
+ const boltsInto=(X,imp)=>{const S=CINE.S;if(!S.hx)return;X.save();bfBolts(X,S.hx,S.hy,320,S.seed,imp.ink,12,12);X.restore();};
+ return{title:'BLACK FLASH',dmg:330,hits:9,impCol:col,shots:[
+  // 1 — his fist closes; the air around it starts to crackle
+  {d:1.2,draw(X,G,u,t){const W=V.W,H=V.H;stageBack(X,G,STG.id,{y:-220,z:2.2,haze:.08});X.fillStyle='rgba(0,0,0,.6)';X.fillRect(0,0,W,H);
+     const r=sil(X,G,A.ch,W*.5,H*1.42,H/128*(1+u*.04),{pose:'guard',hot:.1+.2*seg01(u,.4,.6),rim:mixC(col,'#ffffff',.3),rimDx:1.4,t}),k=seg01(u,.3,1);
+     if(k>0)for(const[hi,h]of r.hands.entries()){const sd=Math.floor(t*14)+hi*31,R=H*.16*k*(hi?1:.7);
+       X.save();X.globalAlpha=k;bfBolts(X,h[0],h[1],R,sd,'#000000',4,6);X.restore();
+       G.save();G.globalCompositeOperation='lighter';G.globalAlpha=k*.8;bfBolts(G,h[0]+1,h[1]-1,R,sd,col,1.6,6);G.globalAlpha=k*.3;G.drawImage(glowSprite(col),h[0]-R,h[1]-R,R*2,R*2);G.restore();}},
+   ev:[[.1,()=>SFX.heart()],[.5,()=>{nz(.6,{type:'highpass',f0:3000,g:.08});tn(.8,{w:'sawtooth',f0:60,f1:90,g:.05});}]]},
+  // 2 — in close: jab, cross
+  {d:.8,bg:bgStageTint('#0a0004',.45),
+   enter(S){CU.at(A,-60,0,1);CU.at(D,60,0,-1);A.pose=copyPose(A.P.stance);D.pose=copyPose(D.P.stance);POST.letter=1;S.k=-1;},
+   upd(u,t,S){const i=t<.3?0:1;if(i!==S.k){S.k=i;const c=CU.chest(D);hitFX(c[0],c[1],1,col,1,'blunt');SFX.hit(.7,'blunt');D.pose=i?D.P.hurtH:D.P.hurtM;D.shk=.1;}
+     CU.clip(A,i?'L2':'L1',(i?.1:.08)+(t%.3)*.2);A.x=lerp(-60,-30,u);A.ghostT=.03;CU.cam(lerp(0,10,u),-120,lerp(1.7,1.9,u),0);}},
+  // 3 — slow, the fist coming in; then it lands in the same instant as the cursed energy
+  {d:1.5,speed:[[0,.6],[.35,.12,'o'],[.5,.12],[.62,1,'i'],[1.5,1]],bg:bgStageTint('#0a0004',.55),impCol:col,
+   enter(S){CU.at(A,-40,0,1);CU.at(D,52,0,-1);A.pose=wind;D.pose=D.P.hurtM;S.imp=-9;S.hit=0;S.seed=37;S.hx=0;},
+   upd(u,t,S,dt){const k=E.i2(clamp(t/.5,0,1));A.pose=mixPose(wind,punch,k);A.x=lerp(-40,-12,k);
+     if(t<.5){const h=CU.hand(A);if(rnd()<.6){const a=rnd(TAU);pt({x:h[0]+Math.cos(a)*40,y:h[1]+Math.sin(a)*40,vx:-Math.cos(a)*160,vy:-Math.sin(a)*160,l:.2,s:rnd(2,1),c:col,t:'spark',g:0});}}
+     if(t>=.5&&!S.hit){S.hit=1;S.imp=t;const h=CU.hand(A);S.hx=h[0]+6;S.hy=h[1];S.bt=gameT;SFX.impact();SFX.crack();shake(26);tn(.6,{w:'sawtooth',f0:80,f1:30,g:.14});D.vx=1300;D.vy=-260;D.y=-1;}
+     if(S.hit){D.vx*=Math.pow(.15,dt);fly(D,dt,1600,1);D.pose=D.y<-4?D.P.tumble:D.P.down;}
+     CU.cam(lerp(0,S.hit?160:10,E.o(seg01(u,.4,1))),-120,lerp(2.1,1.2,E.o(seg01(u,.35,1))),S.hit?Math.sin(t*40)*.01:0);},
+   impDyn:flashImp,impExtra:boltsInto,
+   glow(g){const S=CINE.S;if(!S.hit)return;const k=gameT-S.bt,a=Math.max(0,1-k/.9);if(a<=0)return;g.save();g.globalCompositeOperation='lighter';
+     g.globalAlpha=a*.6;g.drawImage(glowSprite(col),S.hx-200,S.hy-200,400,400);g.globalAlpha=a;bfBolts(g,S.hx,S.hy,260*(1+k),S.seed,col,10,11);
+     g.globalCompositeOperation='destination-out';g.globalAlpha=1;bfBolts(g,S.hx,S.hy,260*(1+k),S.seed,'#000',5,11);g.restore();},
+   over(X){const S=CINE.S;if(!S.hit)return;const k=gameT-S.bt,a=Math.max(0,1-k/.7);if(a<=0)return;X.save();X.globalAlpha=a;bfBolts(X,S.hx,S.hy,260*(1+k),S.seed,'#000000',9,11);X.restore();}},
+  // 4 — he goes after them, and the zone opens: everything is slow and clear
+  {d:1.0,bg:bgStageTint('#0a0004',.5),
+   enter(S){CU.at(D,260,-40,-1);D.pose=D.P.tumble;CU.at(A,120,0,1);S.k=0;},
+   upd(u,t,S,dt){A.x=lerp(120,200,E.o(seg01(u,0,.35)));A.ghostT=t<.35?.03:0;
+     if(t<.35)A.pose=Q('brawl',{fx:[40,-36],y:30,lean:.6,aF:[-1.0,.6,0],aB:[-1.2,.5,0]});else CU.clip(A,'FS',.2+(t-.35)*.3);
+     if(t>.4&&!S.k){S.k=1;const c=CU.chest(D);hitFX(c[0],c[1],1,col,2,'blunt');SFX.hit(1,'blunt');shake(10);}
+     D.y=S.k?lerp(-40,-260,E.o(seg01(t,.4,1))):-40;D.x=S.k?lerp(260,300,seg01(t,.4,1)):260;D.pose=D.P.tumble;
+     CU.cam(lerp(180,240,u),lerp(-140,-220,u),1.15,0);}},
+  // 5 — from above: the second one
+  {d:1.4,speed:[[0,1],[.3,.15,'o'],[.42,.15],[.52,1,'i'],[1.4,1]],bg:bgStageTint('#0a0004',.6),impCol:col,noShadow:1,
+   enter(S){CU.at(D,300,-260,-1);D.pose=D.P.tumble;CU.at(A,220,-420,1);A.pose=down;S.imp=-9;S.hit=0;S.seed=71;S.hx=0;S.gnd=0;},
+   upd(u,t,S,dt){if(!S.hit){const k=E.i2(clamp(t/.42,0,1));A.x=lerp(220,270,k);A.y=lerp(-420,-330,k);A.ghostT=.03;}
+     if(t>=.42&&!S.hit){S.hit=1;S.imp=t;const h=CU.hand(A);S.hx=h[0];S.hy=h[1];S.bt=gameT;SFX.impact();SFX.crack();shake(30);D.vy=1800;D.vx=60;}
+     if(S.hit&&!S.gnd){D.y+=D.vy*dt;D.x+=D.vx*dt;D.pose=D.P.tumble;if(D.y>=0){D.y=0;S.gnd=1;D.pose=D.P.down;SFX.boom(1.2);shake(24);
+         for(let i=0;i<26;i++)pt({x:D.x+rnd(60,-60),y:-4,vx:rnd(700,-700),vy:-rnd(900,200),l:rnd(1.2,.5),s:rnd(8,3),c:INK,t:'rock',g:2000,dr:.8});
+         crack&&crack(D.x,1.2,col,0);}}
+     if(S.hit){A.y=Math.min(0,A.y+600*dt);}
+     CU.cam(lerp(270,300,u),lerp(-330,-200,E.io(u)),lerp(1.6,1.0,E.o(seg01(u,.35,1))),0);},
+   impDyn:flashImp,impExtra:boltsInto,
+   glow(g){const S=CINE.S;if(!S.hit)return;const k=gameT-S.bt,a=Math.max(0,1-k/.9);if(a<=0)return;g.save();g.globalCompositeOperation='lighter';
+     g.globalAlpha=a*.6;g.drawImage(glowSprite(col),S.hx-240,S.hy-240,480,480);g.globalAlpha=a;bfBolts(g,S.hx,S.hy,340*(1+k),S.seed,col,12,12);
+     g.globalCompositeOperation='destination-out';g.globalAlpha=1;bfBolts(g,S.hx,S.hy,340*(1+k),S.seed,'#000',6,12);g.restore();},
+   over(X){const S=CINE.S;if(!S.hit)return;const k=gameT-S.bt,a=Math.max(0,1-k/.7);if(a<=0)return;X.save();X.globalAlpha=a;bfBolts(X,S.hx,S.hy,340*(1+k),S.seed,'#000000',11,12);X.restore();}},
+  // 6 — he lands and lets out a breath
+  {d:1.2,bg:bgStageTint('#0a0004',.3),
+   enter(S){CU.at(D,310,0,-1);D.pose=D.P.down;CU.at(A,200,-120,1);POST.letter=1;},
+   upd(u,t){A.y=Math.min(0,lerp(-120,0,E.i(seg01(u,0,.3))));A.pose=u<.3?Q('air',{lean:.1,aF:[.6,1.2,0],aB:[.3,1.2,0],lF:[.4,-.6,0],lB:[-.1,-.5,0]}):breathe(A,A.P.win);
+     if(rnd()<.3){const c=CU.hand(A);pt({x:c[0],y:c[1],vx:rnd(20,-20),vy:-rnd(80,30),l:.6,s:rnd(1.6,.8),c:col,t:'spark',g:-40});}
+     CU.cam(lerp(220,250,u),-140,lerp(1.25,1.35,u),0);}},
+ ]};}
+
+/* ---------------- his path ---------------- */
+PLATE.yujiArrive=(X,G,u,t,ctx)=>{const W=V.W,H=V.H;stageBack(X,G,ctx.stage,{y:-180,z:1.4,haze:.2});
+  sil(X,G,chOf('yuji'),W*.5,H*.96+u*H*.05,H/330*(1+u*.22),{pose:'guard',hot:.5,rim:mixC(YUJI_COL,'#ffffff',.3),rimDx:1.2,t});};
+PATHS.yuji={hero:'yuji',kicker:'LIMITED TIME',title:'A PROPER DEATH',chord:[87.3,130.8,174.6,220],
+  blurb:'A kid with a hood under his collar walks into a world of shadows, looking for the thing that keeps making them. He does not plan to let anyone die badly on the way.',
+  intro:[['narr','A boy walked out of the dust where the sun never sets.','yujiArrive'],['yuji','Okay. Weird place. Weird people. Same deal, though.','yujiArrive'],
+    ['yuji','Whatever\'s going on here, I\'ll punch it until it stops.','l']],
+  fights:[
+   {op:'ashen',stage:'dusk',pre:[['ashen','You smell of something that should be dead.'],['yuji','Yeah, I get that a lot.','l']],win:[['ashen','...You hit like two people.'],['yuji','Kind of the point.']]},
+   {op:'morrow',stage:'marsh',pre:[['morrow','Curses? Child, I invented curses.','l'],['yuji','Great. Then you know how this ends.']]},
+   {op:'vex',stage:'bamboo',pre:[['vex','You will not see me coming.','e'],['yuji','I don\'t need to see you. I just need to hit you once.']]},
+   {op:'grim',stage:'grave',pre:[['grim','Every soul comes to my gate.'],['yuji','Sure. Just not today, and not alone.','l']],win:[['grim','You fight for the dead?'],['yuji','I fight so they get a proper one.']]},
+  ],
+  end:[['yuji','That\'s four. Nobody hurt who didn\'t start it.'],['yuji','I should probably get back before my teacher notices.'],['yuji','He definitely already noticed.','l']]};
+
+/* =======================================================================
+   NARUTO — limited-time guest (Naruto Uzumaki, from Naruto), drawn as a
+   shadow: hair spiked out in every direction, a headband whose tails fly
+   behind him, a low ninja stance.
+   Specials: RASENGAN, a spinning sphere driven into you · SHADOW CLONES,
+   two copies of him that run in, hit once and vanish in smoke ·
+   SUBSTITUTION, a counter: what you hit is a log, and he is behind you.
+   Ultimate: RASENGAN, after his clones have kicked you into the sky.
+   ======================================================================= */
+const NARUTO_COL='#ffa31a',NARUTO_RS='#7fd0ff';
+ROSTER.push({id:'naruto',name:'NARUTO',title:'The Loudest Ninja',col:NARUTO_COL,
+  h:.98,w:1.0,hair:'naruto',headband:1,collar:1,eyes:'slit',wep:'none',stance:'ninja',move:'run',stage:'bamboo',
+  hp:980,spd:1.14,pow:1.02,
+  bio:'Never gives up, never goes back on his word, and never once has fought alone.'});
+SPECIAL.naruto={kind:'limited',from:'2026-10-01',to:'2026-11-16',keep:1};
+SNAMES.naruto=['RASENGAN','SHADOW CLONES','SUBSTITUTION'];ULT_NAMES.naruto='RASENGAN';
+PREF.naruto=140;ZONER.naruto=.35;LPOSE.naruto='stand';
+
+/* ---------------- stance: low, wide, one hand out ---------------- */
+SD.ninja={fx:[28,-30],y:24,lean:.32,ch:.1,hd:-.05,aF:[.75,1.65,0],aB:[.1,.7,0],gF:2,gB:2};STANCE.ninja=SP(SD.ninja);
+BLK.ninja={aF:[1.3,2.4,0],aB:[1.05,2.5,0]};
+WIN.naruto=SP({fx:[10,-12],y:2,lean:-.06,hd:-.18,aF:[2.95,.2,0],aB:[.15,.4,0]});
+
+/* ---------------- smoke, logs, the sphere ---------------- */
+/* the puff a clone or a substitution leaves: pale smoke on the dark layer, so it hides what is behind it */
+function poof(x,y,s){s=s||1;const seed=(gameT*97|0)%991;
+  effs.push({t:0,l:.55,d(c,p){const a=(1-p)*(1-p);c.fillStyle='#d9d2c4';
+    for(let i=0;i<9;i++){const an=hash(seed+i*2.1)*TAU,d=(10+hash(seed+i)*26)*s*(.5+p),r=(16+hash(seed+i*3.3)*14)*s*(.6+p*.8);c.globalAlpha=a*.85;c.beginPath();c.arc(x+Math.cos(an)*d,y+Math.sin(an)*d*.8-p*14*s,r,0,TAU);c.fill();}}});
+  effs.push({t:0,l:.3,glow:1,d(c,p){c.globalCompositeOperation='lighter';c.globalAlpha=(1-p)*.35;c.drawImage(glowSprite('#ffffff'),x-60*s,y-60*s,120*s,120*s);}});
+  nz(.25,{type:'lowpass',f0:1800,f1:400,g:.12});}
+/* a log, where he was standing a moment ago */
+function logFX(x,y,face){effs.push({t:0,l:.8,d(c,p){const a=p<.7?1:1-(p-.7)/.3;c.globalAlpha=a;c.translate(x,y-70+p*p*70);c.rotate(face*p*.9);c.fillStyle=INK;
+    c.beginPath();c.ellipse(0,-34,15,8,0,0,TAU);c.fill();c.fillRect(-15,-34,30,78);c.beginPath();c.ellipse(0,44,15,8,0,0,TAU);c.fill();
+    c.beginPath();c.moveTo(14,-6);c.lineTo(30,-18);c.lineTo(32,-12);c.lineTo(15,4);c.fill();}});}
+/* RASENGAN: a sphere of spinning light, a hard shell, streaks whipping round inside it */
+function rasenganFX(g,x,y,R,t,a){if(R<=.5||a<=0)return;g.save();g.globalCompositeOperation='lighter';
+  g.globalAlpha=.55*a;g.drawImage(glowSprite(NARUTO_RS),x-R*2.6,y-R*2.6,R*5.2,R*5.2);
+  const sg=g.createRadialGradient(x,y,0,x,y,R);sg.addColorStop(0,rgba('#ffffff',.95*a));sg.addColorStop(.35,rgba('#dff4ff',.7*a));sg.addColorStop(.8,rgba(NARUTO_RS,.35*a));sg.addColorStop(1,rgba(NARUTO_RS,0));
+  g.globalAlpha=1;g.fillStyle=sg;g.beginPath();g.arc(x,y,R,0,TAU);g.fill();
+  g.lineCap='round';for(let i=0;i<12;i++){const r=R*(.3+hash(i*2.7)*.62),a0=t*(16+hash(i)*10)+hash(i*5.1)*TAU,L=1.2+hash(i*3.9)*1.4;
+    g.globalAlpha=a*(.5+.4*hash(i*7));g.strokeStyle=i%3?'#e8f8ff':NARUTO_RS;g.lineWidth=Math.max(1,R*(.03+hash(i*8)*.04));
+    g.beginPath();g.ellipse(x,y,r,r*(.35+.5*hash(i*11)),hash(i*13)*PI+t*2,a0,a0+L);g.stroke();}
+  g.globalAlpha=a;g.strokeStyle='#f2fbff';g.lineWidth=Math.max(1.2,R*.05);g.beginPath();g.arc(x,y,R*.96,0,TAU);g.stroke();
+  g.fillStyle='#ffffff';g.beginPath();g.arc(x,y,R*.28,0,TAU);g.fill();g.restore();}
+/* a spiral torn into the ground where it lands */
+function spiralFX(g,x,y,R,t,a){if(a<=0)return;g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
+  for(let k=0;k<6;k++){g.globalAlpha=a*.8;g.strokeStyle=k%2?'#e8f8ff':NARUTO_RS;g.lineWidth=2+R*.012;g.beginPath();
+    for(let i=0;i<=40;i++){const u=i/40,an=k/6*TAU+u*4.2+t*6,r=R*u;const px=x+Math.cos(an)*r,py=y+Math.sin(an)*r*.32;i?g.lineTo(px,py):g.moveTo(px,py);}g.stroke();}
+  g.globalAlpha=a*.6;g.drawImage(glowSprite(NARUTO_RS),x-R,y-R*.5,R*2,R);g.restore();}
+/* a clone running in: the same silhouette, a sprinter's stride, and a kick when it gets there */
+const NIN_RUN=[SP({fx:[36,-30],fy:[2,14],y:16,lean:.66,ch:.1,hd:-.35,aF:[-1.0,.4,0],aB:[-1.2,.35,0]}),SP({fx:[-26,32],fy:[14,0],y:18,lean:.66,ch:.1,hd:-.35,aF:[-1.15,.4,0],aB:[-1.05,.35,0]})];
+const NIN_KICK=SP({fx:[14,-8],y:10,lean:-.4,ch:-.15,aF:[-.3,.9,0],aB:[-.9,.6,0]});NIN_KICK.lF=[2.0,-.05,0];NIN_KICK.pt=1;
+function shadowClone(f,k){
+  const p=spawnProj(f,{kind:'clone',v:520+k*90,r:24,life:1.15,h:{dmg:34,hs:.36,bs:.24,kb:200,stop:.07,cls:'S',chip:1,fx:'blunt'},
+    seg(p){return[[p.x,p.y-150,p.x,p.y-50,24]];},
+    upd(p,dt){p.near=Math.abs(opp(p.own).x-p.x)<95;if(p.near)p.vx*=Math.pow(.02,dt);},
+    die(p){poof(p.x,p.y-90,1);},
+    draw(c,g,p){const run=mixPose(NIN_RUN[0],NIN_RUN[1],.5+.5*Math.sin(p.t*20+k)),pose=p.near?mixPose(run,NIN_KICK,.85):run;
+      c.save();c.translate(p.x,p.y);c.scale(p.dir,1);drawBody(c,p.own.ch,pose,1,gameT,{g,nosim:1,plant:!p.near,cloth:p.cloth,hot:.3});c.restore();}});
+  p.x=f.x+(30+k*40)*f.face;p.y=0;p.vy=0;p.cloth={};poof(p.x,-90,1.1);
+}
+function substitute(g,a,pt,proj){
+  logFX(g.x,g.y,g.face);poof(g.x,g.y-90,1.2);SFX.dash&&SFX.dash();
+  if(proj){proj.life=0;proj.spent=1;g.x=clamp(g.x-70*g.face,-ARENA,ARENA);g.inv=.25;g.st='idle';g.t=0;g.mv=null;return;}
+  const s=a.face;g.x=clamp(a.x-s*72,-ARENA,ARENA);g.face=s;g.lx=g.x;poof(g.x,g.y-90,1);g.inv=.2;doMove(g,'CT');
+}
+
+/* ---------------- moves ---------------- */
+{const s='ninja',GP=o=>Q(s,o),GA=o=>Q('air',o),GC=o=>CR(s,o);
+ const seal=GP({fx:[18,-22],y:12,lean:.05,hd:.05,aF:[.75,2.25,0],gF:2,aB:[.85,2.15,0],gB:2});
+ const palm=GP({fx:[48,-30],y:24,lean:.48,ch:.08,aF:[1.55,0,0],gF:1,aB:[1.35,.45,0],gB:1});
+ MOVES.naruto={
+ L1:{cls:'L',d:.2,k:[[0,'stance'],[.04,GP({lean:.2,aF:[.7,1.8,0],gF:0,aB:[.3,1.0]}),'o'],[.08,GP({fx:[38,-28],lean:.42,aF:[1.58,0,0],gF:0,aB:[.2,1.0]}),'s'],[.2,'stance','io']],
+   rm:[[0,0],[.08,12,0,'s'],[.2,14]],hits:[H_(.04,.1,{seg:'aF',dmg:26,hs:.26,kb:110,fx:'blunt'})],can:[.06,.18]},
+ L2:{cls:'L',d:.26,k:[[0,GP({fx:[38,-28],lean:.42,aF:[1.58,0,0],gF:0})],[.05,GP({lean:.2,aF:[.5,1.8,0],gF:0,aB:[-.3,1.6,0],gB:0}),'o'],
+   [.1,GP({fx:[42,-24],lean:.5,ch:.12,aB:[1.55,0,0],gB:0,aF:[.4,1.8,0],gF:0}),'s'],[.26,'stance','io']],
+   rm:[[0,0],[.1,14,0,'s'],[.26,16]],hits:[H_(.05,.12,{seg:'aB',dmg:30,hs:.28,kb:140,fx:'blunt'})],can:[.08,.24]},
+ L3:{cls:'L',d:.44,k:[[0,'stance'],[.1,GP({fx:[14,-8],y:16,lean:-.3,aF:[.9,1.6,0],aB:[.5,1.4],kF:[1.0,-2.3,0]}),'o'],
+   [.16,GP({fx:[14,-4],y:10,lean:-.55,ch:-.2,aF:[-.4,.6,0],aB:[-.8,.5,0],kF:[2.1,-.02,0],pt:1}),'s'],[.28,GP({fx:[14,-4],y:12,lean:-.5,ch:-.15,aF:[-.4,.6,0],aB:[-.8,.5,0],kF:[1.95,-.1,0],pt:1}),'o'],[.44,'stance','io']],
+   rm:[[0,0],[.16,20,0,'s'],[.44,24]],hits:[H_(.11,.19,{seg:'lF',r:13,dmg:48,kb:290,hs:.42,fx:'blunt'})],can:[.14,.38]},
+ H:{cls:'H',d:.54,k:[[0,'stance'],[.12,GP({fx:[22,-32],y:26,lean:-.1,aF:[-.4,2.1,0],gF:0,aB:[.7,1.4]}),'o'],
+   [.18,GP({fx:[58,-32],y:28,lean:.62,ch:.12,aF:[1.58,0,0],gF:0,aB:[-.6,1.0]}),'s'],[.34,GP({fx:[58,-32],y:28,lean:.6,ch:.1,aF:[1.55,.05,0],gF:0,aB:[-.5,1.0]}),'o'],[.54,'stance','io']],
+   rm:[[0,0],[.12,-6],[.18,44,0,'s'],[.54,48]],hits:[H_(.13,.21,{seg:'aF',r:16,dmg:80,kb:330,hs:.5,fx:'blunt'})],hot:[.1,.34],can:[.2,.44]},
+ FH:{cls:'H',d:.6,k:[[0,'stance'],[.2,GP({fx:[14,-6],y:6,lean:-.35,ch:-.1,aF:[.9,1.5,0],aB:[-.6,1.0],kF:[3.0,-.05,0],pt:1}),'o'],
+   [.3,GP({fx:[16,-6],y:18,lean:.3,aF:[.4,1.4,0],aB:[-.5,1],kF:[1.05,-.1,0],pt:.6}),'i2'],[.4,GP({fx:[40,-10],y:30,lean:.4}),'o'],[.6,'stance','io']],
+   rm:[[0,0],[.2,10],[.3,30,0,'i2'],[.6,32]],hits:[H_(.22,.32,{seg:'lF',r:14,dmg:70,lvl:'ovh',kb:200,hs:.46,fx:'blunt'})],can:[.32,.5]},
+ cL:{cls:'L',d:.22,crouch:1,k:[[0,'crouch'],[.04,GC({aF:[.6,1.8,0],gF:0}),'o'],[.08,GC({fx:[36,-24],lean:.5,aF:[1.35,0,0],gF:0}),'s'],[.22,'crouch','io']],
+   rm:[[0,0],[.08,8,0,'s'],[.22,8]],hits:[H_(.04,.1,{seg:'aF',dmg:24,lvl:'low',hs:.22,kb:90,fx:'blunt'})],can:[.06,.2]},
+ cH:{cls:'H',d:.5,crouch:1,k:[[0,'crouch'],[.08,GC({y:52,lean:.5,aF:[.6,.5,0],aB:[.2,.6],kF:[.6,-2.0,0]}),'o'],
+   [.16,GP({fx:[20,-28],y:64,lean:.55,ch:.1,aF:[.35,.2,0],gF:2,aB:[-.3,.4],kF:[1.58,-.02,0],pt:1}),'s'],[.3,GP({fx:[20,-28],y:64,lean:.55,ch:.1,aF:[.35,.2,0],gF:2,aB:[-.3,.4],kF:[1.5,-.06,0],pt:1}),'o'],[.5,'crouch','io']],
+   rm:[[0,0],[.16,10,0,'s'],[.5,10]],hits:[H_(.1,.25,{seg:'lF',r:13,dmg:64,lvl:'low',kd:1,kb:160,hs:.6,fx:'blunt'})],can:[.25,.4],on:[[.12,f=>dust(f.x+50*f.face,8,f.face,.8)]]},
+ jL:{cls:'L',air:1,d:.3,k:[[0,'jump'],[.05,GA({lF:[1.6,-2.6,0],lB:[.1,-.9,0],aF:[.5,1.8,0],aB:[-.6,.8]}),'o'],[.1,GA({lean:.2,lF:[1.95,-2.6,0],lB:[.1,-.9,0],aF:[.5,1.8,0],aB:[-.6,.8]}),'s'],[.3,GA({lF:[1.8,-2.5,0],lB:[.1,-.9,0]}),'o']],
+   hits:[H_(.05,.16,{seg:'lF',r:14,dmg:36,lvl:'ovh',hs:.34,fx:'blunt'})],can:[.08,.3]},
+ jH:{cls:'H',air:1,d:.46,k:[[0,'jump'],[.1,GA({lean:-.2,lF:[.6,-2.2,0],lB:[.2,-1.2,0],aF:[.9,1.6,0],aB:[-.5,.8]}),'o'],
+   [.16,GA({lean:.3,lF:[1.0,-.05,0],lB:[-.3,-1.6,0],aF:[.3,1.2,0],aB:[-1.2,.6],pt:1}),'s'],[.46,GA({lean:.3,lF:[.95,-.1,0],lB:[-.3,-1.6,0],aF:[.3,1.2,0],aB:[-1.2,.6],pt:1}),'o']],
+   hits:[H_(.1,.3,{seg:'lF',r:15,dmg:60,lvl:'ovh',hs:.46,spike:1,fx:'blunt'})],can:[.16,.46]},
+ // RASENGAN — in fast with the sphere out in front, grinding, then it throws you
+ S:{cls:'S',d:.66,k:[[0,'stance'],[.1,GP({fx:[22,-32],y:22,lean:.1,aF:[.9,1.6,0],gF:1,aB:[1.0,1.5,0],gB:1}),'o'],[.2,palm,'s'],[.46,palm,'l'],[.66,'stance','io']],
+   rm:[[0,0],[.1,0],[.2,110,0,'s'],[.46,120],[.66,124]],hot:[.08,.5],
+   hits:[H_(.18,.38,{seg:'aF',r:24,dmg:11,multi:.07,hs:.32,kb:12,stop:.03,fx:'rasen'}),H_(.4,.46,{seg:'aF',r:28,dmg:46,kb:520,lift:300,kd:1,hs:.6,stop:.1,fx:'rasen'})],
+   on:[[.04,f=>{SFX.charge&&SFX.charge(.4);effs.push({t:0,l:.5,glow:1,d(c,p){if(f.st!=='move'||f.mk!=='S')return;const h=trailSeg(f)[1];rasenganFX(c,h[0]+12*f.face,h[1],lerp(8,22,E.o(Math.min(1,p*3))),gameT,1);}});}],
+       [.4,f=>{if(f.landed){const h=trailSeg(f)[1];ring(h[0],h[1],NARUTO_RS,10,140,.4,6);ring(h[0],h[1],'#ffffff',6,80,.25,3);SFX.boom&&SFX.boom(.6);}}]]},
+ // SHADOW CLONES — the seal, a puff of smoke, and two of him running in
+ FS:{cls:'S',d:.5,k:[[0,'stance'],[.08,seal,'o'],[.36,seal,'l'],[.5,'stance','io']],hot:[.08,.36],
+   on:[[.24,f=>{if(PROJ.filter(p=>p.own===f&&p.kind==='clone').length>=2)return;shadowClone(f,0);shadowClone(f,1);}]]},
+ // SUBSTITUTION — hit him now and you hit a log
+ BS:{cls:'S',d:.55,k:[[0,'stance'],[.04,seal,'o'],[.45,seal,'l'],[.55,'stance','io']],
+   ctr:[.04,.45],hot:[.04,.45],onCtr:(g,a,pt,proj)=>substitute(g,a,pt,proj),on:[[.04,f=>{tn(.25,{w:'triangle',f0:900,f1:1300,g:.03});}]]},
+ // the kick from behind, after a substitution
+ CT:{cls:'S',d:.46,k:[[0,GP({fx:[20,-24],y:20,lean:.3})],[.08,GP({fx:[14,-4],y:10,lean:-.55,ch:-.2,aF:[-.4,.6,0],aB:[-.8,.5,0],kF:[2.1,-.02,0],pt:1}),'s'],
+   [.26,GP({fx:[14,-4],y:12,lean:-.5,ch:-.15,aF:[-.4,.6,0],aB:[-.8,.5,0],kF:[1.95,-.1,0],pt:1}),'o'],[.46,'stance','io']],
+   rm:[[0,0],[.08,30,0,'s'],[.46,34]],inv:[0,.22],hot:[0,.3],
+   hits:[H_(.06,.16,{seg:'lF',r:18,dmg:70,kb:460,lift:320,kd:1,hs:.6,fx:'blunt'})]},
+ U:{cls:'U',d:.56,k:[[0,'stance'],[.1,GP({fx:[20,-34],y:26,lean:-.1,aF:[-.3,2.0,0],gF:1,aB:[.5,1.4]}),'o'],[.18,palm,'s'],[.56,'stance','io']],
+   rm:[[0,0],[.1,0],[.18,150,0,'s'],[.56,152]],after:[.08,.22],inv:[.06,.2],
+   hits:[H_(.1,.24,{seg:'aF',r:26,dmg:40,cine:1,hs:1,kb:0})]},
+ };}
+
+/* ---------------- ultimate: RASENGAN ---------------- */
+CUTS.naruto=(A,D)=>rasenCut(A,D);
+function rasenCut(A,D){const col=A.ch.col,RS=NARUTO_RS;
+ const kickUp=Q('ninja',{fx:[10,-20],y:16,lean:-.5,ch:-.2,aF:[-.4,.7,0],aB:[-.8,.6,0],kF:[2.8,-.05,0],pt:1});
+ const hold=Q('air',{lean:.2,aF:[1.25,.15,0],gF:1,aB:[1.15,.5,0],gB:1,lF:[.9,-1.6,0],lB:[.2,-1.0,0]});
+ const drive=Q('air',{lean:.6,aF:[.7,.05,0],gF:1,aB:[.6,.4,0],gB:1,lF:[.6,-1.0,0],lB:[-.2,-.9,0]});
+ const shape=Q('air',{lean:-.1,aF:[1.6,1.2,0],gF:1,aB:[1.4,1.4,0],gB:1,lF:[.9,-1.6,0],lB:[.2,-1.0,0]});
+ const clone=(x,face)=>{const c=puppet(A.ch,A.side);c.x=x;c.y=0;c.face=face;c.pose=copyPose(c.P.stance);c.hot=.6;CINE.extra.push(c);poof(x,-90,1.2);return c;};
+ const gone=c=>{const i=CINE.extra.indexOf(c);if(i>=0){CINE.extra.splice(i,1);poof(c.x,c.y-90,1.1);}};
+ return{title:'RASENGAN',dmg:340,hits:12,impCol:RS,shots:[
+  // 1 — the seal, his hands together in front of him; then smoke
+  {d:1.1,draw(X,G,u,t){const W=V.W,H=V.H;stageBack(X,G,STG.id,{y:-220,z:2.2,haze:.1});X.fillStyle='rgba(0,0,0,.5)';X.fillRect(0,0,W,H);
+     const k=E.o(seg01(u,0,.3)),r=sil(X,G,A.ch,W*.5,H*1.42,H/128*(1+u*.04),{pose:'stand',over:{L:[lerp(.2,.42,k),lerp(.2,2.15,k)],R:[lerp(.2,.42,k),lerp(.2,2.15,k)]},hot:.15,rim:mixC(col,'#ffffff',.35),rimDx:1.4,t});
+     const hx=(r.hands[0][0]+r.hands[1][0])/2,hy=(r.hands[0][1]+r.hands[1][1])/2;
+     if(k>=1&&u<.72){G.save();G.globalCompositeOperation='lighter';G.globalAlpha=.4+.3*Math.sin(t*30);G.drawImage(glowSprite(col),hx-H*.12,hy-H*.12,H*.24,H*.24);G.restore();}
+     const p=seg01(u,.72,1);if(p>0){X.save();X.fillStyle='#d9d2c4';for(let i=0;i<16;i++){const an=hash(i*2.3)*TAU,d=H*(.06+hash(i)*.32)*p,rr=H*(.07+hash(i*3.1)*.09)*(.5+p);X.globalAlpha=Math.min(1,p*2)*.92;X.beginPath();X.arc(hx+Math.cos(an)*d,hy-H*.1+Math.sin(an)*d,rr,0,TAU);X.fill();}X.restore();}},
+   ev:[[.1,()=>tn(.3,{w:'triangle',f0:600,f1:900,g:.04})],[.75,()=>nz(.4,{type:'lowpass',f0:1800,f1:300,g:.2})]]},
+  // 2 — smoke everywhere, and when it clears there are five of him
+  {d:1.2,bg:bgStageTint('#020408',.35),
+   enter(S){CU.at(A,-220,0,1);CU.at(D,80,0,-1);A.pose=copyPose(A.P.stance);D.pose=copyPose(D.P.stance);POST.letter=1;
+     S.cl=[clone(-60,1),clone(230,-1),clone(-140,1),clone(320,-1)];poof(A.x,-90,1.3);},
+   upd(u,t,S){for(const c of S.cl)c.pose=breathe(c,c.P.stance);A.pose=breathe(A,A.P.stance);D.face=Math.sin(t*5)>0?-1:1;D.pose=D.P.stance;
+     CU.cam(lerp(40,50,u),-150,lerp(.95,1.02,u),0);}},
+  // 3 — they kick them into the sky, one after another
+  {d:1.4,bg:bgStageTint('#020408',.35),noShadow:1,
+   enter(S){CU.at(D,80,0,-1);S.k=-1;S.ys=[-70,-170,-270,-360];},
+   upd(u,t,S,dt){const slot=.3,i=Math.min(3,(t/slot)|0),lt=(t-i*slot)/slot,c=S.cl[i];
+     if(i!==S.k){if(S.k>=0)gone(S.cl[S.k]);S.k=i;c.x=D.x-(i%2?-1:1)*46;c.face=i%2?-1:1;c.y=i?S.ys[i-1]+40:0;
+       const h=CU.chest(D);hitFX(h[0],h[1]+20,c.face,col,i===3?2:1,'blunt');SFX.hit(i===3?1:.7,'blunt');D.shk=.08;}
+     c.pose=kickUp;c.ghostT=.03;c.ground=c.y<0?0:1;D.y=lerp(i?S.ys[i-1]:0,S.ys[i],E.o(Math.min(1,lt*2)));D.pose=D.P.tumble;
+     if(t>=1.25&&S.cl[3]&&CINE.extra.includes(S.cl[3]))gone(S.cl[3]);
+     A.x=lerp(-220,0,E.io(u));A.vx=220;A.pose=gaitPose(A,1,dt);
+     CU.cam(80,lerp(-150,-380,E.io(u)),lerp(1.0,.9,u),0);}},
+  // 4 — above them: the sphere forming in his palm, a clone's hands shaping it
+  {d:1.4,noShadow:1,noFront:1,bg:bgStageTint('#020408',.55),
+   enter(S){CINE.extra.length=0;CU.at(D,90,-360,-1);D.pose=D.P.tumble;CU.at(A,-30,-560,1);A.pose=hold;S.c=clone(10,-1);S.c.y=-560;S.c.ground=0;S.c.pose=shape;S.R=0;},
+   upd(u,t,S,dt){A.pose=breathe(A,hold);S.c.pose=shape;A.hot=1;D.y=lerp(-360,-380,u);
+     const h=CU.hand(A);S.hx=h[0]+12;S.hy=h[1]-4;S.R=lerp(6,46,E.o(seg01(t,.05,1.2)));
+     if(rnd()<.8){const a=rnd(TAU),r=rnd(160,70);pt({x:S.hx+Math.cos(a)*r,y:S.hy+Math.sin(a)*r,vx:-Math.cos(a)*r*3,vy:-Math.sin(a)*r*3,l:.3,s:rnd(2.2,1),c:rnd()<.5?RS:'#ffffff',t:'spark',g:0,dr:.6});}
+     CU.cam(lerp(-10,10,u),lerp(-660,-650,u),lerp(1.5,1.75,E.io(u)),0);},
+   glow(g){const S=CINE.S;if(S.hx!==undefined)rasenganFX(g,S.hx,S.hy,S.R,gameT,1);},
+   ev:[[.05,()=>SFX.charge(1.3)],[.4,()=>tn(1,{w:'sine',f0:300,f1:900,g:.06,wet:1})]]},
+  // 5 — down, and into them, and into the ground
+  {d:1.7,noShadow:1,speed:[[0,1],[.36,.2,'o'],[.5,.2],[.62,1,'i'],[1.7,1]],bg:bgStageTint('#020408',.45),impCol:RS,
+   enter(S){CINE.extra.length=0;CU.at(D,110,-380,-1);D.pose=D.P.tumble;CU.at(A,20,-520,1);A.pose=drive;S.hit=0;S.gnd=0;S.imp=-9;S.R=46;},
+   upd(u,t,S,dt){A.pose=drive;A.hot=1;
+     if(!S.hit){const k=E.i2(clamp(t/.36,0,1));A.x=lerp(20,60,k);A.y=lerp(-520,-430,k);}
+     if(t>=.36&&!S.hit){S.hit=1;S.imp=t;SFX.impact();shake(20);}
+     if(S.hit&&!S.gnd){D.y=Math.min(0,D.y+1500*dt);A.y=D.y-50;A.x=D.x-50;D.pose=D.P.tumble;D.shk=.1;
+       if(D.y>=0){S.gnd=1;S.bt=gameT;S.gx=D.x;D.pose=D.P.down;A.y=0;A.x=D.x-70;A.pose=Q('ninja',{fx:[40,-30],y:40,lean:.6,aF:[.9,.05,0],gF:1,aB:[.5,.5,0]});
+         SFX.impact();SFX.boom(1.4);shake(32);for(let i=0;i<34;i++)pt({x:D.x+rnd(80,-80),y:-4,vx:rnd(900,-900),vy:-rnd(1100,250),l:rnd(1.3,.6),s:rnd(9,3),c:INK,t:'rock',g:2100,dr:.8});}}
+     const h=CU.hand(A);S.hx=h[0]+10;S.hy=h[1];
+     const fy=S.gnd?-170:Math.min(-170,(A.y+D.y)/2-110);S.cy=S.cy===undefined?fy:lerp(S.cy,fy,Math.min(1,dt*10));
+     CU.cam(lerp(60,90,u),S.cy,S.gnd?lerp(1.15,1.0,u):1.3,0);},
+   impDyn(S,t){const k=t-S.imp;return k<0?null:k<.04?'w':k<.08?'ai':k<.11?'b':null;},
+   glow(g){const S=CINE.S;if(!S.gnd)rasenganFX(g,S.hx,S.hy,S.R*(1+.08*Math.sin(gameT*30)),gameT,1);
+     else{const k=gameT-S.bt,a=Math.max(0,1-k/1.4),R=lerp(60,620,E.o(Math.min(1,k*1.4)));spiralFX(g,S.gx,-4,R,gameT,a);rasenganFX(g,S.gx,-30,46*(1-Math.min(1,k*2)),gameT,a);
+       g.save();g.globalCompositeOperation='lighter';g.globalAlpha=a*.5;g.drawImage(glowSprite(RS),S.gx-R,-R*.6,R*2,R*1.2);g.restore();}},
+   under(X){const S=CINE.S;if(!S.gnd)return;const k=Math.min(1,(gameT-S.bt)*3);X.fillStyle='#020306';X.beginPath();X.ellipse(S.gx,6,150*k,24*k,0,0,PI);X.fill();}},
+  // 6 — the smoke clears; he is still grinning
+  {d:1.2,bg:bgStageTint('#020408',.3),
+   enter(S){CU.at(D,S.gx||110,0,-1);D.pose=D.P.down;CU.at(A,(S.gx||110)-150,0,1);A.pose=copyPose(A.P.win);POST.letter=1;poof(A.x-60,-90,1.2);poof(A.x+30,-90,1);},
+   upd(u,t){A.pose=breathe(A,A.P.win);CU.cam(lerp((CINE.S.gx||110)-110,(CINE.S.gx||110)-80,u),-140,lerp(1.2,1.3,u),0);}},
+ ]};}
+
+/* ---------------- his path ---------------- */
+PLATE.narutoArrive=(X,G,u,t,ctx)=>{const W=V.W,H=V.H;stageBack(X,G,ctx.stage,{y:-180,z:1.4,haze:.2});
+  sil(X,G,chOf('naruto'),W*.5,H*.96+u*H*.05,H/330*(1+u*.22),{pose:'stand',hot:.5,rim:mixC(NARUTO_COL,'#ffffff',.35),rimDx:1.2,t});
+  const p=clamp(1-u*3,0,1);if(p>0){X.save();X.fillStyle='#d9d2c4';for(let i=0;i<12;i++){const an=hash(i*2.3)*TAU,d=H*.12*(1-p*.6),r=H*(.05+hash(i*3.1)*.05);X.globalAlpha=p*.9;X.beginPath();X.arc(W*.5+Math.cos(an)*d,H*.62+Math.sin(an)*d,r,0,TAU);X.fill();}X.restore();}};
+PATHS.naruto={hero:'naruto',kicker:'LIMITED TIME',title:'THE LONG WAY ROUND',chord:[98,123.5,146.8,196],
+  blurb:'A loud kid in a headband shows up in a puff of smoke, takes one look at a world of shadows, and decides to make friends with all of it. The hard way.',
+  intro:[['narr','Something went off in the bamboo with a bang and a lot of smoke.','narutoArrive'],['naruto','Whoa! Everybody here is all dark and serious.','narutoArrive'],
+    ['naruto','That\'s fine. I\'ll beat every one of you, and then we\'ll be friends.','l']],
+  fights:[
+   {op:'vex',stage:'bamboo',pre:[['vex','A ninja who announces himself. Bold.','e'],['naruto','Yeah! Hiding is boring!']],win:[['vex','...You never stopped getting up.'],['naruto','Nope. Never do.']]},
+   {op:'rin',stage:'blossom',pre:[['rin','Get out of my petals.','l'],['naruto','Not till I win!']]},
+   {op:'bolt',stage:'storm',pre:[['bolt','Heard you never quit. Let\'s test that.'],['naruto','Finally, somebody fun!','l']],win:[['bolt','You\'re as stubborn as me.'],['naruto','More!']]},
+   {op:'goliath',stage:'forge',pre:[['goliath','Go home, boy.','l'],['naruto','Make me!']],win:[['goliath','...How many of you were there?'],['naruto','Enough!']]},
+  ],
+  end:[['naruto','Four for four! See? Told you.'],['naruto','You guys are tough. I like that.'],['naruto','Next time I\'m bringing ramen.','l']]};
+
+/* =======================================================================
    MAIN — input, match flow, scenes, loop.
    ======================================================================= */
 const GAME={scene:'title',mode:'cpu',fighting:false,round:1,timer:99,slow:1,phase:'',phaseT:0,ann:null,over:false,diff:1,demo:false,paused:false};
@@ -4491,10 +4909,14 @@ function sceneTitle(rdt){
   const items=['PATHS','VERSUS CPU','VERSUS PLAYER','TRAINING'];menuItems(items,V.W/2,V.H*.58,15,32,'center');
   // limited guests are on: say so, and say how long for, one under the other
   const evs=liveEvents();if(evs.length){const it=MENU.items[0];txt('LIMITED',V.W/2+62*S,it.y+it.h*.72,7.5,{w:700,track:2,c:evs[0].col});
-    evs.forEach((ev,i)=>{const st=spec(ev),sp=SPECIAL[ev.id],y=i*76*S;
+    if(evs.length<=2)evs.forEach((ev,i)=>{const st=spec(ev),sp=SPECIAL[ev.id],y=i*76*S;
       X.fillStyle=ev.col;X.fillRect(28*S,30*S+y,2*S,58*S);
       txt('LIMITED TIME',40*S,42*S+y,8.5,{w:700,track:2,c:ev.col});txt(ev.name,40*S,68*S+y,22,{w:200,track:2});
-      txt(st.note+(sp.keep?st.kept?'   ·   YOURS TO KEEP':'   ·   CLEAR THE PATH TO KEEP '+ev.name:''),40*S,86*S+y,8,{w:600,track:2,c:'#9a9aa8'});});}
+      txt(st.note+(sp.keep?st.kept?'   ·   YOURS TO KEEP':'   ·   CLEAR THE PATH TO KEEP '+ev.name:''),40*S,86*S+y,8,{w:600,track:2,c:'#9a9aa8'});});
+    else{txt('LIMITED TIME',40*S,42*S,8.5,{w:700,track:2,c:'#c8c4bc'});   // three or more at once: one compact row each
+      evs.forEach((ev,i)=>{const st=spec(ev),sp=SPECIAL[ev.id],y=52*S+i*34*S;X.fillStyle=ev.col;X.fillRect(28*S,y,2*S,28*S);
+        txt(ev.name,40*S,y+14*S,15,{w:300,track:2});
+        txt(st.note+(sp.keep?st.kept?'   ·   YOURS TO KEEP':'   ·   CLEAR THE PATH TO KEEP':''),40*S,y+26*S,7,{w:600,track:2,c:'#9a9aa8'});});}}
   txt('A D  MOVE   ·   W  JUMP   ·   S  CROUCH   ·   J  LIGHT   ·   K  HEAVY   ·   L  SPECIAL   ·   I  THROW   ·   U  ULTIMATE   ·   HOLD BACK TO BLOCK',V.W/2,V.H-26*S,8.5,{w:500,al:'center',c:'#777784',track:1});
   txt('M  SOUND '+(AU.on?'ON':'OFF'),V.W-24*S,24*S,8.5,{w:600,al:'right',c:'#777784',track:2});
   const sn=syncNote();if(sn)txt(sn,V.W-24*S,40*S,7.5,{w:600,al:'right',c:'#5f5f6c',track:2});

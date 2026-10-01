@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-10-01",
+      "title": "Two more guest fighters in Umbra",
+      "body": "Umbra has two new limited-time guests, available from today until 15 November. Each has a path of their own: clear it while the event runs and that fighter is yours to keep, saved to your Alloy account and still there after the event ends. The earlier two guests are still around too - the first one leaves on 26 October.",
+      "game": "umbra"
+    },
+    {
       "date": "2026-09-29",
       "title": "Redwater gets a new look",
       "body": "Redwater has been redrawn from the ground up in a three-quarter view: characters with outfits and animation, all 20 guns redrawn with new shooting effects, lit terrain, flowing water and proper night lighting. The river no longer runs through the Calloway homestead, and there are now four bridges wherever a road or the railway crosses it. Two story jobs that never started now do, kill jobs count properly, bounties are easier, and a long list of smaller bugs is gone - the full list is in the update log. Your save carries straight over, and saves that were stuck in the story move on by themselves.",
