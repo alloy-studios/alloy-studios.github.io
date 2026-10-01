@@ -90,9 +90,11 @@ const BEST_MAX = 3;
 const LIMITED = {
   gojo: { from: "2026-09-26", to: "2026-10-27" },
   goku: { from: "2026-09-28", to: "2026-11-09" },
+  yuji: { from: "2026-10-01", to: "2026-11-16" },
+  naruto: { from: "2026-10-01", to: "2026-11-16" },
 };
 // the game's PATHS table
-const PATHS = ["gojo", "goku"];
+const PATHS = ["gojo", "goku", "yuji", "naruto"];
 // the game's unlockable fighters: id -> { type: "wins" | "ults" | "diff" | "path", n, id }
 const UNLOCK = {};
 
