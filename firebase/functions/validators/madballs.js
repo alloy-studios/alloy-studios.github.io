@@ -16,7 +16,7 @@
  *               transcendent; at cap-1 the next crate is forced to that tier
  *   opened      lifetime crates opened (display)
  *   unlocked    levels unlocked, 1..14
- *   best        { "L0".."L13": best score } (display only)
+ *   best        { "L0".."L23": best score } (display only)
  *   firstCrate  the one-time free welcome crate has been claimed
  *
  * `muted` is a per-device preference and is deliberately not synced.
@@ -112,7 +112,7 @@ const SKINS = {
   house: 6,
 };
 const SKIN_IDS = Object.keys(SKINS);
-const LEVELS = 14;                                           // LEVELS.length
+const LEVELS = 34;                                           // LEVELS.length
 const PITY_CAPS = { pity: 14, mythicPity: 70, transPity: 180 }; // PITY_LEG / _MYTH / _TRANS
 const CHEAPEST_CRATE = 550;                                  // WOODEN CRATE
 
@@ -139,7 +139,7 @@ function readInv(v) {
 }
 
 module.exports = {
-  // An honest save is ~1 KB: 37 skin counts, 14 bests and a dozen scalars,
+  // An honest save is ~1 KB: 37 skin counts, 34 bests and a dozen scalars,
   // even with every number at its absolute cap it stays under 2 KB.
   maxBytes: 8 * 1024,
 
