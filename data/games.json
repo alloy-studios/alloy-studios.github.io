@@ -254,20 +254,22 @@
       "rev": "20261001-1904"
     },
     {
-      "id": "flytale",
-      "title": "Flytale",
-      "tagline": "A short story, told by a fly.",
-      "description": "A six-chapter story told from a fly's point of view, drawn in hard 1-bit pixel art on a fixed 28-colour palette. The sink, the ant picket line, an ambush you can only survive, the moth at the hall lamp, the spider's toll booth, then the kitchen - where the man works through eight weapons before his bare hands.",
+      "id": "tomorrowless",
+      "title": "Tomorrowless",
+      "tagline": "It is always 11:59 in Hushwood.",
+      "description": "It is always 11:59 in Hushwood. A pixel RPG where midnight never comes: spare or fight your way through the town, uncover why the clock stopped, and face bosses whose attacks break out of the box. Four routes, four endings.",
       "tags": [
-        "adventure",
-        "story",
-        "cozy"
+        "rpg",
+        "adventure"
       ],
-      "accent": "#38bdf8",
-      "controls": "Arrows or WASD to fly, Z to confirm, X to cancel, M to mute",
-      "added": "2026-09-10",
-      "thumb": "/assets/thumbs/flytale.png",
-      "rev": "20260929-1838"
+      "accent": "#f0b030",
+      "controls": "Arrow keys move, Z confirm, X cancel, C menu, M mute",
+      "added": "2026-10-04",
+      "rev": "20261004-2110",
+      "formerly": [
+        "flytale"
+      ],
+      "thumb": "/assets/thumbs/tomorrowless.webp"
     },
     {
       "id": "madballs",
