@@ -19,12 +19,12 @@
       {
         "status": "In development",
         "title": "Alloy accounts and events",
-        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Accounts are now in every game that keeps progress - fourteen of them. The first limited-time events are next."
+        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Accounts are now in every game that keeps progress - fifteen of them. The first limited-time events are next."
       },
       {
         "status": "In development",
         "title": "New games",
-        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out; more are in the works."
+        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out, Tomorrowless and Speed Simulator 2 followed; more are in the works."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
@@ -201,6 +201,22 @@
       "added": "2026-09-08",
       "thumb": "/assets/thumbs/speed-simulator.webp",
       "rev": "20260927-1411"
+    },
+    {
+      "id": "speed-simulator-2",
+      "title": "Speed Simulator 2",
+      "tagline": "Break every gate. Outrun the Wraith.",
+      "description": "A whole new game, not an update to the original. Fly out through four ring-shaped regions, break each speed gate to get in, and collect orbs to level up and buy upgrades. Fly greedily in the wild regions and the Wraith comes for you. Ten ships to unlock, each with its own wake and ability.",
+      "tags": [
+        "incremental",
+        "arcade",
+        "space"
+      ],
+      "accent": "#6ff0ff",
+      "controls": "Hold mouse or WASD to fly, Shift or right mouse to boost, Space ability, Tab upgrades, Esc pause",
+      "added": "2026-10-06",
+      "thumb": "/assets/thumbs/speed-simulator-2.webp",
+      "rev": "20261006-2222"
     },
     {
       "id": "cosmic-climb",
