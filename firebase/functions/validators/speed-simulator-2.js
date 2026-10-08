@@ -10,16 +10,17 @@
  * a non-object save, or a core number that is not a finite, non-negative
  * number. Everything merely too big, too fast or unknown is clamped or dropped.
  */
-const { grow, Reject } = require("./lib");
+const { grow, gain, Reject } = require("./lib");
 
-const LIMITS = { level: 100000, prestiges: 100000, big: 1e15 };
+const LIMITS = { level: 100000, prestiges: 100000, big: 1e15, wisps: 1e7 };
 
 // Ids the game knows (js/ships/*.js, js/regions/*.js, SS.TIERS, SS.SECRETS).
-// deadair / maw / hollow are Halloween event ships, given to everyone who plays
-// while the event is active (SS.EVENTS in js/core.js). Accepted as sent like
-// the rest; to make them provably event-earned later, issue them as Alloy event
-// rewards and require owns(ctx, id) here.
-const SHIPS = ["lance", "claw", "drill", "frost", "needle", "magnet", "prism", "deadair", "maw", "hollow"];
+// fizz .. astral come only from the Rift (the game's gacha, js/rift.js), and
+// deadair / maw / hollow are its LIMITED tier, in the pool only while the
+// Halloween event runs. Pulls are rolled on the client, so ships are accepted
+// as sent like the rest (see "trusted" in the report: cosmetic + one ability).
+const SHIPS = ["lance", "claw", "drill", "frost", "needle", "magnet", "prism",
+  "fizz", "blossom", "gala", "cog", "sumi", "astral", "deadair", "maw", "hollow"];
 const REGIONS = ["shallows", "gale", "wells", "storm"];
 const WILD = ["gale", "wells", "storm"];                  // regions with a Wraith
 const TIERS = ["mote", "surge", "mega", "nova"];
@@ -54,6 +55,25 @@ const LEVEL_BASE_CAP = 20, LEVEL_PER_PRESTIGE = 5;
  * physical per-second maximum to write down. Absolute caps only.
  */
 const RATES = { prestiges: 1 / 6, wraithEscapes: 1 / 20 };
+
+/*
+ * WISPS - the Rift's currency (js/rift.js EARN and FLIGHT_S; change together).
+ * Energy can't buy them. They come only from:
+ *   +1 per 30 s of flight   (rift.tick, fed the game's dt, which never runs
+ *                            faster than real time)              -> 1/30 per s
+ *   +5  per Wraith escape   (stats.escapes, itself limited to 1 per 20 s)
+ *   +25 per prestige        (prestiges, limited to 1 per 6 s)
+ *   +10 per goal, +20 per secret, +15 per region - each id is earned once, and
+ *                            discoveries only ever grow (unioned with prev below,
+ *                            so dropping one and re-adding it earns nothing).
+ * The game adds each reward in the same tick as its cause, before any save, so
+ * a save that carries the wisps also carries the new goal / secret / region /
+ * escape / prestige. Pulls never raise the balance: each costs 10 and a
+ * duplicate refunds at most 10 (SS.RARITY in js/core.js). So the ceiling per
+ * save is
+ *   prev + elapsed/30 + 5*dEscapes + 25*dPrestiges + 10*dGoals + 20*dSecrets + 15*dRegions + 1.
+ */
+const WISPS = { perSecond: 1 / 30, escape: 5, prestige: 25, goal: 10, secret: 20, region: 15 };
 
 /** Whole number in [0, max]; null for garbage. Over max CLAMPS. */
 function whole(v, max) {
@@ -100,15 +120,20 @@ module.exports = {
 
     // discoveries: known ids only. Cosmetic or exploration state - events and
     // leaderboards never read saves, and requiring proof here would be exactly
-    // as easy to forge as the list itself.
-    out.ships = known(d.ships, SHIPS);
+    // as easy to forge as the list itself. The game never removes one (prestige
+    // keeps them all), so each list is unioned with prev: a discovery can't be
+    // dropped and re-earned for its wisps.
+    const pv = prev && typeof prev === "object" ? prev : {};
+    const pcx = pv.codex && typeof pv.codex === "object" ? pv.codex : {};
+    const keep = (was, now, ids) => [...new Set([...known(was, ids), ...known(now, ids)])];
+    out.ships = keep(pv.ships, d.ships, SHIPS);
     if (!out.ships.includes("lance")) out.ships.unshift("lance");
     out.ship = out.ships.includes(d.ship) ? d.ship : "lance";
-    out.regions = known(d.regions, REGIONS);
+    out.regions = keep(pv.regions, d.regions, REGIONS);
     if (!out.regions.includes("shallows")) out.regions.unshift("shallows");
     const cx = d.codex && typeof d.codex === "object" ? d.codex : {};
-    out.codex = { tiers: known(cx.tiers, TIERS), secrets: known(cx.secrets, SECRETS), wraiths: known(cx.wraiths, WILD) };
-    out.goals = known(d.goals, GOALS);
+    out.codex = { tiers: keep(pcx.tiers, cx.tiers, TIERS), secrets: keep(pcx.secrets, cx.secrets, SECRETS), wraiths: keep(pcx.wraiths, cx.wraiths, WILD) };
+    out.goals = keep(pv.goals, d.goals, GOALS);
 
     const st = d.stats && typeof d.stats === "object" ? d.stats : {};
     const ps = prev && prev.stats && typeof prev.stats === "object" ? prev.stats : null;
@@ -123,6 +148,22 @@ module.exports = {
     if (ps && typeof ps.escapes === "number") {
       out.stats.escapes = grow(ps.escapes, Math.max(out.stats.escapes, ps.escapes), RATES.wraithEscapes, c, 1);
     }
+
+    // wisps: may fall freely (pulls), may only rise by what this save earned
+    out.wisps = soft(d.wisps, LIMITS.wisps);
+    if (typeof pv.wisps === "number") {
+      const fresh = (now, was) => now.filter((x) => !(Array.isArray(was) ? was : []).includes(x)).length;
+      const earned =
+        WISPS.escape * Math.max(0, out.stats.escapes - (ps && typeof ps.escapes === "number" ? ps.escapes : out.stats.escapes)) +
+        WISPS.prestige * Math.max(0, out.prestiges - (typeof pv.prestiges === "number" ? pv.prestiges : out.prestiges)) +
+        WISPS.goal * fresh(out.goals, pv.goals) +
+        WISPS.secret * fresh(out.codex.secrets, pcx.secrets) +
+        WISPS.region * fresh(out.regions, pv.regions);
+      out.wisps = gain(pv.wisps, out.wisps, WISPS.perSecond, c, earned + 1);
+    }
+    // the Rift's counters: bookkeeping only (pity just picks which tier a roll may land in)
+    const rf = d.rift && typeof d.rift === "object" ? d.rift : {};
+    out.rift = { pulls: soft(rf.pulls, 1e7), pity: soft(rf.pity, 40) };
     return out;
   },
 

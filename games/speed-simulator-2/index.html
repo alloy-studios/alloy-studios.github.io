@@ -149,6 +149,53 @@ kbd { font: 600 10px var(--ui); letter-spacing: 0.08em; padding: 2px 5px; border
 .prestige-box p { margin: 0; color: var(--ink-dim); font-size: 13px; line-height: 1.55; }
 .prestige-box .btn.primary { background: var(--gold); }
 
+/* the Rift (gacha): wisps are lilac everywhere they appear */
+:root { --wisp: #c9a8ff; }
+.wallet.wisp { color: var(--wisp); }
+.rift-btn { position: relative; }
+.rift-btn .badge { display: inline-flex; align-items: center; margin-left: 10px; padding: 1px 7px; font: 700 11px var(--ui); letter-spacing: 0.06em; color: var(--wisp); border: 1px solid rgba(201, 168, 255, 0.45); }
+.rift-btn.ready { border-color: var(--wisp); box-shadow: 0 0 18px rgba(201, 168, 255, 0.35); }
+.rift-btn.ready .badge { background: var(--wisp); color: #1a0f2e; }
+.panel.rift { width: min(760px, 100%); background: linear-gradient(180deg, rgba(40, 22, 70, 0.35), transparent 40%), var(--panel); }
+.panel.rift h2 { color: #efe6ff; }
+.rift-banner { border: 1px solid var(--ev); background: linear-gradient(90deg, color-mix(in srgb, var(--ev) 22%, transparent), transparent); padding: 12px 16px; margin-bottom: 14px; display: grid; gap: 4px; }
+.rift-banner b { font: 800 15px var(--display); letter-spacing: 0.04em; color: var(--ev); }
+.rift-banner span { font: 700 14px var(--ui); letter-spacing: 0.14em; }
+.rift-banner em { font-style: normal; font-size: 12px; color: var(--ink-dim); }
+.rift-odds { display: grid; gap: 6px; margin-bottom: 16px; }
+.odd { display: grid; grid-template-columns: 104px 52px 1fr; gap: 12px; align-items: center; border-left: 3px solid var(--r); background: rgba(12, 24, 40, 0.55); padding: 8px 12px; }
+.odd b { font: 700 12px var(--ui); letter-spacing: 0.18em; color: var(--r); }
+.odd .pct { font: 700 14px var(--ui); color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+.odd .pool { display: flex; flex-wrap: wrap; gap: 6px; }
+.odd .pool i { font-style: normal; font-size: 12px; letter-spacing: 0.1em; padding: 2px 7px; border: 1px solid var(--line); color: var(--ink-dim); }
+.odd .pool i.own { color: var(--ink); border-color: var(--r); }
+.odd .pool i.own::after { content: ' ✓'; color: var(--r); }
+.rift-pull { display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.rift-pity { flex-basis: 100%; text-align: right; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
+.rift-pity b { color: var(--wisp); }
+.rift-pull .btn { display: inline-flex; gap: 14px; align-items: center; }
+.rift-pull .btn.primary { background: var(--wisp); color: #1a0f2e; }
+.rift-pull .cost svg, .rv-actions .cost svg { width: 14px; height: 14px; }
+.rift-earn { margin: 16px 0 0; font-size: 12px; line-height: 1.6; color: var(--ink-faint); }
+.rift-earn b { color: var(--wisp); }
+#reveal { position: fixed; inset: 0; z-index: 30; }
+#reveal-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
+.rv-info { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; pointer-events: none; animation: fadein 0.4s ease; padding: 0 16px; }
+.rv-rar { font: 700 14px var(--ui); letter-spacing: 0.4em; }
+.rv-info h2 { margin: 6px 0 2px; font: 900 clamp(30px, 6vw, 60px) var(--display); letter-spacing: 0.02em; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7); }
+.rv-info.ten h2 { font-size: clamp(22px, 3.6vw, 36px); }
+.rv-title { font-size: 13px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-dim); }
+.rv-note { margin-top: 10px; font-size: 14px; color: var(--ink-dim); }
+.rv-note b { color: var(--good); }
+.rv-actions { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 0 16px; animation: fadein 0.4s ease; }
+.rv-actions .btn { display: inline-flex; gap: 12px; align-items: center; }
+.rv-actions .btn.primary { background: var(--wisp); color: #1a0f2e; }
+.hud-tr .wisps { font: 700 16px var(--ui); color: var(--wisp); display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); margin-top: -4px; }
+.hud-tr .wisps svg { width: 14px; height: 14px; }
+.hud-tr .wisps.pop { animation: wpop 0.5s ease; }
+.toast.wisp { border-color: var(--wisp); } .toast.wisp b { color: var(--wisp); }
+@keyframes wpop { 30% { transform: scale(1.3); filter: brightness(1.6); } }
+
 /* codex */
 .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .tabs button { background: none; border: 1px solid var(--line); padding: 8px 14px; font: 600 13px var(--ui); letter-spacing: 0.14em; color: var(--ink-dim); }
@@ -281,6 +328,10 @@ body.touch kbd { display: none; }
   .ship-list li { flex: 1 1 40%; }
   .set-grid { grid-template-columns: 1fr; }
   .prestige-box { grid-template-columns: 1fr; }
+  .odd { grid-template-columns: 1fr auto; }
+  .odd .pool { grid-column: 1 / -1; }
+  .rv-info { bottom: 132px; }
+  .hud-tr .wisps { font-size: 13px; }
   .chase { top: 124px; min-width: 0; width: 200px; }
   .menu-help { display: none; }
   .logo-two { font-size: 30vw; left: auto; right: -0.1em; top: -0.62em; opacity: 0.6; }
@@ -309,6 +360,7 @@ body.touch kbd { display: none; }
   </div>
   <div class="hud-tr">
     <div class="energy"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span id="h-energy">0</span></div>
+    <div class="wisps" id="h-wisps-box" title="Wisps: spend them in the Rift (ESC)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.4 5.5 5.6 5.5 11.2A5.5 5.5 0 0 1 6.5 13.6c0-2.6 1.6-4 2.6-5.6.3 1.7 1.1 2.7 2.2 3C11 8.2 10.7 5 12 2z"/></svg><span id="h-wisps">0</span></div>
     <div class="level"><span>LV <b id="h-level">1</b></span><div class="xp"><i id="h-xp"></i></div></div>
     <button class="hud-btn" id="b-shop">UPGRADES<kbd>TAB</kbd></button>
     <button class="hud-btn prestige hidden" id="b-prestige">PRESTIGE READY<kbd>P</kbd></button>
@@ -342,6 +394,7 @@ body.touch kbd { display: none; }
     <div class="menu-sub" id="menu-summary"></div>
     <div class="menu-row">
       <button class="btn" id="b-hangar">HANGAR</button>
+      <button class="btn rift-btn" id="b-rift">THE RIFT<span class="badge" id="rift-badge"></span></button>
       <button class="btn" id="b-codex">CODEX</button>
       <button class="btn" id="b-settings">SETTINGS</button>
     </div>
@@ -403,12 +456,24 @@ body.touch kbd { display: none; }
   </div>
 </section>
 
+<section id="rift" class="screen dim hidden">
+  <div class="panel rift">
+    <header><h2>THE RIFT</h2><span class="wallet wisp"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.4 5.5 5.6 5.5 11.2A5.5 5.5 0 0 1 6.5 13.6c0-2.6 1.6-4 2.6-5.6.3 1.7 1.1 2.7 2.2 3C11 8.2 10.7 5 12 2z"/></svg><span id="rift-wisps">0</span></span><button class="x" data-close aria-label="Close">&times;</button></header>
+    <p class="sub">Spend wisps to pull a ship through. The ships in the Rift are found nowhere else.</p>
+    <div class="rift-banner hidden" id="rift-banner"></div>
+    <div class="rift-odds" id="rift-odds"></div>
+    <div class="rift-pull"><div class="rift-pity" id="rift-pity"></div><button class="btn" id="rift-10"></button><button class="btn primary" id="rift-1"></button></div>
+    <p class="rift-earn" id="rift-earn"></p>
+  </div>
+</section>
+
 <section id="pause" class="screen dim hidden">
   <div class="panel small">
     <header><h2>PAUSED</h2></header>
     <div class="stack">
       <button class="btn primary" id="p-resume">RESUME</button>
       <button class="btn" id="p-shop">UPGRADES</button>
+      <button class="btn rift-btn" id="p-rift">THE RIFT<span class="badge" id="p-rift-badge"></span></button>
       <button class="btn" id="p-settings">SETTINGS</button>
       <button class="btn" id="p-quit">MAIN MENU</button>
     </div>
@@ -417,6 +482,12 @@ body.touch kbd { display: none; }
 </section>
 
 <div id="prestige-fx" class="hidden"><div><h2 id="pfx-title">PRESTIGE</h2><p>Your discoveries stay with you</p></div></div>
+
+<div id="reveal" class="hidden">
+  <canvas id="reveal-canvas"></canvas>
+  <div class="rv-info hidden" id="rv-info"><div class="rv-rar" id="rv-rar"></div><h2 id="rv-name"></h2><div class="rv-title" id="rv-title"></div><div class="rv-note" id="rv-note"></div></div>
+  <div class="rv-actions hidden" id="rv-actions"><button class="btn" id="rv-again"></button><button class="btn" id="rv-equip">EQUIP</button><button class="btn primary" id="rv-ok">CONTINUE</button></div>
+</div>
 
 <div id="touch-ui"><button id="t-boost">BOOST</button><button id="t-ability">SKILL</button><button id="t-pause">II</button></div>
 
@@ -543,12 +614,26 @@ body.touch kbd { display: none; }
   };
   SS.WORLD_EDGE = 32000;   // beyond this lies the sealed Dark (a future region)
 
-  // Limited-time events. A ship with `event: 'halloween'` is given to every
-  // player who plays while the event is active, and stays theirs after it
-  // ends. Flip `active` (or add an end date check) to close an event.
+  // Limited-time events. A LIMITED ship with `event: 'halloween'` is in the
+  // Rift only while its event is active; whoever pulls it keeps it for good.
+  // Flip `active` (or add an end date check) to close an event.
   SS.EVENTS = {
     halloween: { name: 'Halloween', active: true, color: '#ff8a2a' },
   };
+
+  // The Rift (js/rift.js): ships with a `rarity` are only found there, pulled
+  // with WISPS. Weights are percentages; a tier with nothing in it (Limited
+  // outside an event) drops out and the rest are renormalised. `refund` is the
+  // wisps a duplicate gives back - NEVER more than one pull costs (10), or
+  // pulling could raise your balance and the validator's wisp ceiling breaks.
+  SS.RARITY = [
+    { id: 'common',   name: 'COMMON',   color: '#b9c6da', weight: 50, refund: 1 },
+    { id: 'uncommon', name: 'UNCOMMON', color: '#5dff9a', weight: 28, refund: 2 },
+    { id: 'rare',     name: 'RARE',     color: '#4fa2ff', weight: 14, refund: 4 },
+    { id: 'mythic',   name: 'MYTHIC',   color: '#c46bff', weight: 6,  refund: 7 },
+    { id: 'limited',  name: 'LIMITED',  color: '#ffb02e', weight: 2,  refund: 10 },
+  ];
+  SS.rarityOf = (sh) => SS.RARITY.find((r) => r.id === sh.rarity) || null;
 
   // Orb tiers - SS2's own family (not SS1's polygons): glossy BEADS of light,
   // ranked by how many MOONS orbit them (0-3) and by colour. A Nova is
@@ -676,6 +761,8 @@ body.touch kbd { display: none; }
     codex: { tiers: [], secrets: [], wraiths: [] },
     goals: [],
     stats: { orbs: 0, escapes: 0, catches: 0, bestSpeed: 0, maxLevel: 1, playtime: 0 },
+    wisps: 10,                       // the Rift's currency; a new save can pull once
+    rift: { pulls: 0, pity: 0 },     // pity: pulls since the last Mythic or better
   });
 
   const num = (v, min, max, dflt) => { v = Number(v); return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : dflt; };
@@ -705,6 +792,10 @@ body.touch kbd { display: none; }
     s.goals = ids(d.goals, SS.allGoalIds());
     const st = d.stats || {};
     for (const k in s.stats) s.stats[k] = num(st[k], 0, 1e15, s.stats[k]);
+    s.wisps = Math.floor(num(d.wisps, 0, 1e7, s.wisps));
+    const rf = d.rift || {};
+    s.rift.pulls = Math.floor(num(rf.pulls, 0, 1e7, 0));
+    s.rift.pity = Math.floor(num(rf.pity, 0, 1e3, 0));
     return s;
   };
 
@@ -1021,6 +1112,7 @@ body.touch kbd { display: none; }
   SS.progressUpdate = (dt, P) => {
     const s = SS.save;
     s.stats.playtime += dt;
+    SS.rift.tick(dt);
     if (P.speed > s.stats.bestSpeed) s.stats.bestSpeed = P.speed;
     SS.track('speed', P.speed);
     if (SS.hasSecret('ouroboros')) return;
@@ -1191,6 +1283,26 @@ body.touch kbd { display: none; }
   A.clank = () => { if (ok()) { tone(180, 0.4, { type: 'square', to: 90, gain: 0.07, filter: 'lowpass', cutoff: 1200 }); tone(520, 0.6, { gain: 0.04 }); tone(733, 0.6, { gain: 0.03 }); } };
   A.laser = () => { if (ok()) { const t = ac.currentTime; [0, 2, 4, 7, 9, 12, 14].forEach((s, i) => tone(mtof(72 + s), 0.5, { type: 'sine', gain: 0.03, when: t + i * 0.02, to: mtof(84 + s) })); } };
   A.chime = () => { if (ok()) { const t = ac.currentTime; [0, 4, 7].forEach((s, i) => tone(mtof(84 + s), 0.7, { gain: 0.03, when: t + i * 0.04 })); } };
+  // the Rift: a rising pull, a hint at 0.55 s (and 1.05 s for Mythic+), then the tear at 1.5 s - richer chords for rarer pulls
+  A.riftPull = (best) => {
+    if (!ok()) return;
+    const t = ac.currentTime;
+    noise(1.5, { f: 180, to: 3200, q: 2, gain: 0.07, attack: 1.2 });
+    tone(55, 1.55, { type: 'sawtooth', to: 220, gain: 0.05, filter: 'lowpass', cutoff: 700, attack: 0.9 });
+    if (best >= 1) tone(mtof(best >= 2 ? 84 : 79), 0.5, { type: 'triangle', gain: 0.05, when: t + 0.55 });
+    if (best >= 3) { tone(70, 0.6, { type: 'square', to: 40, gain: 0.08, filter: 'lowpass', cutoff: 500, when: t + 1.05 }); noise(0.4, { f: 600, q: 1, gain: 0.08, when: t + 1.05 }); }
+    noise(0.7, { f: 3000, to: 400, q: 0.6, gain: 0.12, when: t + 1.5 });
+    const root = [60, 62, 64, 65, 67][best];
+    [0, 7, 12, 16, 19, 24].slice(0, 2 + best).forEach((s, i) => tone(mtof(root + s), 1.6 + best * 0.3, { type: i % 2 ? 'sine' : 'triangle', gain: 0.045, when: t + 1.5 + i * 0.05 }));
+  };
+  // Rift ships
+  A.pop = (amt) => { if (ok()) { const a = amt || 1; tone(SS.rand(520, 820) / Math.sqrt(a), 0.09 * a, { to: 1500 / Math.sqrt(a), gain: 0.05 * Math.min(1.5, a) }); noise(0.04, { filter: 'highpass', f: 3500, gain: 0.03 * a }); } };
+  A.petals = () => { if (ok()) { const t = ac.currentTime; [0, 3, 7, 10, 14].forEach((s, i) => tone(mtof(74 + s), 0.9, { type: 'sine', gain: 0.025, when: t + i * 0.06, attack: 0.02 })); noise(0.8, { f: 1800, to: 900, q: 0.5, gain: 0.04, attack: 0.15 }); } };
+  A.crackle = (amt) => { if (ok()) { const t = ac.currentTime, a = amt || 1; tone(90, 0.4, { to: 40, gain: 0.12 * a }); for (let i = 0; i < 6 * a; i++) noise(0.03, { filter: 'highpass', f: 2500 + Math.random() * 3000, gain: 0.05, when: t + 0.1 + Math.random() * 0.5 }); } };
+  A.tick = () => { if (ok()) { tone(2400, 0.03, { type: 'square', gain: 0.02, filter: 'bandpass', cutoff: 2600 }); tone(1200, 0.06, { type: 'triangle', gain: 0.03 }); } };
+  A.brush = () => { if (ok()) { noise(0.5, { f: 900, to: 2600, q: 0.7, gain: 0.1, attack: 0.04 }); tone(mtof(57), 0.9, { type: 'triangle', gain: 0.05 }); } };
+  A.stars = () => { if (ok()) { const t = ac.currentTime; [0, 7, 12, 19, 24, 28].forEach((s, i) => tone(mtof(79 + s), 1.4, { type: 'sine', gain: 0.025, when: t + i * 0.09 })); } };
+  A.riftCard = (idx) => { if (ok()) tone(mtof(76 + idx * 3), 0.3 + idx * 0.1, { type: 'triangle', gain: 0.03 + idx * 0.01 }); };
 
   // Halloween ships
   A.staticBurst = (amt) => { if (ok()) noise(0.18 + 0.2 * (amt || 1), { filter: 'highpass', f: 2200, q: 0.3, gain: 0.08 * (amt || 1) }); };
@@ -4775,6 +4887,1187 @@ body.touch kbd { display: none; }
 })();
 </script>
 <script>
+/* SHIP - FIZZ, the Bubble. COMMON, from the Rift. It BLOWS BUBBLES.
+   - Wake: soap bubbles with thin-film rims (cyan, magenta, gold) and a white
+     highlight. They swell, wobble, drift and POP into droplets. Each fresh
+     bubble dimples the fabric under it.
+   - SPEED FORM (P.form): the bubbles are blown long - stretched along your
+     line - in pairs either side, over a frothing stream of foam.
+   - Real speed (P.mach): bubble rings - circles of small bubbles that burst
+     outward from the tail like smoke rings.
+   - BUBBLE TRAP: a giant bubble swells round you; every orb inside is caught in
+     a bubble and floats to you, and a Wraith inside is held.
+   Device (keep it unique): ROUND BUBBLES THAT POP. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#e6f8ff', accent: '#7fe9ff', glow: '#a8f2ff', pink: '#ff8ad8', gold: '#ffe08a' };
+  const MAX = 170, TRAP_R = 560;
+
+  function pop(b) {
+    for (let k = 0; k < 5; k++) { const a = Math.random() * SS.TAU, s = SS.rand(80, 200); SS.fx.spawn(b.x, b.y, Math.cos(a) * s, Math.sin(a) * s, k % 2 ? C.accent : '#ffffff', 0.35, 2 * b.zs, 0, 2.5); }
+  }
+
+  SS.registerShip({
+    id: 'fizz', order: 10, rarity: 'common', name: 'FIZZ', title: 'The Bubble',
+    desc: 'A glass bubble with a nozzle. It blows soap bubbles as it flies - they swell, wobble, drift and pop behind you.',
+    world: 'Dimples the fabric under every fresh bubble.',
+    ability: { name: 'BUBBLE TRAP', desc: 'A giant bubble swells round you: every orb inside floats to you, and a Wraith inside is held.', cd: 7,
+      use(fx, P) {
+        const R = TRAP_R, W = SS.wraith;
+        for (const o of SS.orbs) {
+          if (o.dead || o.grabbed || (o.x - P.x) ** 2 + (o.y - P.y) ** 2 > R * R) continue;
+          o.grabbed = true; fx.caught.push({ o, gen: o.gen, t: 0 });
+        }
+        if (W.near(P.x, P.y, R)) { W.stunFor(1.6); SS.fx.text(W.x, W.y - 60, 'BUBBLED', C.accent, 24); }
+        fx.trap = 0;
+        SS.audio.pop(1.6);
+      } },
+    unlock: null,
+    colors: C, tail: 12,
+    // a round, wobbling hum
+    voice: { wave1: 'sine', wave2: 'triangle', base: 170, ratio: 1.5, detune: 4, mix2: 0.4, filter: 'lowpass', q: 2, cutoff: 1300, cutoffRange: 1800, lfoRate: 9, lfoDepth: 0.05, noise: 0.06, noiseF: 3200, range: 1.1, gain: 0.95 },
+
+    init(fx) { fx.b = []; fx.acc = 0; fx.ring = 0; fx.caught = []; fx.trap = -1; fx.side = 1; },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form;
+      const back = 12 * kit.hullScale(SS.cam.zoom), ca = Math.cos(P.angle), sa = Math.sin(P.angle);
+      kit.lay(fx, 'acc', (34 - 10 * f) * zs, P, dt, (x, y, age) => {
+        if (r < 0.04) return;
+        x -= ca * back; y -= sa * back;
+        const pair = f > 0.15 ? 2 : 1;
+        for (let k = 0; k < pair; k++) {
+          const side = pair === 2 ? (k ? 1 : -1) : (fx.side = -fx.side), off = (pair === 2 ? 16 + 14 * f : SS.rand(0, 10)) * zs * side;
+          const sp = SS.rand(10, 40) * zs;
+          fx.b.push({ x: x - sa * off, y: y + ca * off, vx: -sa * side * sp, vy: ca * side * sp, t: -age, life: SS.rand(1.3, 2.2) * (1 + 0.3 * r),
+            r: SS.rand(10, 17 + 12 * r) * zs, a: P.angle, e: 1 + 1.3 * f, ph: Math.random() * 6, zs });
+        }
+      });
+      // real speed: a bubble ring every quarter second
+      fx.ring -= dt;
+      if (P.mach > 0.2 && fx.ring <= 0) {
+        fx.ring = 0.28;
+        const x = P.x - ca * back * 1.5, y = P.y - sa * back * 1.5;
+        for (let k = 0; k < 10; k++) {
+          const a = k / 10 * SS.TAU, s = 160 * zs;
+          fx.b.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: 0.9, r: 4 * zs, a: 0, e: 1, ph: k, zs });
+        }
+      }
+      for (let i = fx.b.length - 1; i >= 0; i--) {
+        const b = fx.b[i];
+        b.t += dt;
+        b.x += b.vx * dt; b.y += b.vy * dt;
+        b.vx *= 1 - dt * 1.2; b.vy *= 1 - dt * 1.2;
+        if (b.t > b.life) { if (Math.random() < 0.6) pop(b); fx.b.splice(i, 1); }
+      }
+      if (fx.b.length > MAX) fx.b.splice(0, fx.b.length - MAX);
+      // the fabric dimples under the freshest bubbles
+      for (let i = Math.max(0, fx.b.length - 28); i < fx.b.length; i += 2) {
+        const b = fx.b[i], g = Math.min(1, b.t * 3) * (1 - b.t / b.life);
+        if (g > 0) SS.world.dent(b.x, b.y, b.r * 3.2, b.r * 1.4 * g, 0);
+      }
+      // the trap
+      if (fx.trap >= 0) { fx.trap += dt; if (fx.trap > 1.1) fx.trap = -1; }
+      for (let i = fx.caught.length - 1; i >= 0; i--) {
+        const g = fx.caught[i], o = g.o;
+        g.t += dt;
+        if (o.gen !== g.gen || g.t > 1.8) { if (o.gen === g.gen) o.grabbed = false; fx.caught.splice(i, 1); continue; }
+        o.x += (P.vx + P.extX) * dt; o.y += (P.vy + P.extY) * dt;
+        const k = Math.min(1, dt * (2 + g.t * 9));
+        o.x += (P.x - o.x) * k; o.y += (P.y - o.y) * k;
+      }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const px = 1 / V.z, t = V.t, f = P.form;
+      ctx.globalCompositeOperation = 'lighter';
+      // speed form: foam frothing down the middle of the stream
+      if (f > 0.05) {
+        const tr = P.trail, n = Math.min(tr.length, (30 + 40 * f) | 0), zs = kit.zs();
+        ctx.fillStyle = 'rgba(220,250,255,' + 0.22 * f + ')';
+        ctx.beginPath();
+        for (let i = 2; i < n; i++) {
+          const p = tr[i], an = kit.perp(tr, i), o = (p.j - 0.5) * (6 + i * 0.5) * zs, rr = (1.2 + 2.6 * ((p.j * 7.3) % 1)) * zs * (1 - i / n);
+          const x = p.x + Math.cos(an) * o, y = p.y + Math.sin(an) * o;
+          ctx.moveTo(x + rr, y); ctx.arc(x, y, rr, 0, SS.TAU);
+        }
+        ctx.fill();
+      }
+      // bubbles: a faint skin, a cyan rim, a magenta and a gold band, a highlight
+      const lw = Math.max(px * 1.2, 1.6 * kit.zs());
+      for (const b of fx.b) {
+        const grow = SS.easeOut(b.t / 0.35), fade = 1 - SS.smooth((b.t - b.life * 0.75) / (b.life * 0.25));
+        const R = b.r * (0.4 + 0.6 * grow), wob = Math.sin(t * 9 + b.ph) * 0.07;
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.a);
+        ctx.scale(b.e * (1 + wob), (1 - wob) / Math.sqrt(b.e));
+        ctx.lineWidth = lw / Math.sqrt(b.e);
+        ctx.fillStyle = 'rgba(200,240,255,' + 0.09 * fade + ')';
+        ctx.beginPath(); ctx.arc(0, 0, R, 0, SS.TAU); ctx.fill();
+        ctx.strokeStyle = SS.rgba(C.accent, 0.7 * fade);
+        ctx.stroke();
+        ctx.lineWidth *= 1.5;      // thin-film bands, just inside the rim so they don't wash into it
+        ctx.strokeStyle = SS.rgba(C.pink, 0.75 * fade);
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.86, 0.3 + b.ph, 1.6 + b.ph); ctx.stroke();
+        ctx.strokeStyle = SS.rgba(C.gold, 0.65 * fade);
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.86, 2.2 + b.ph, 3 + b.ph); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,' + 0.85 * fade + ')';
+        ctx.lineWidth = lw * 1.8;
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.7, -2.5, -1.7); ctx.stroke();
+        ctx.restore();
+      }
+      // the trap: one huge bubble swelling round you
+      if (fx.trap >= 0) {
+        const k = SS.easeOut(fx.trap / 0.45), a = 1 - SS.smooth((fx.trap - 0.6) / 0.5), R = TRAP_R * k;
+        ctx.lineWidth = 3 * kit.zs();
+        ctx.strokeStyle = SS.rgba(C.accent, 0.6 * a); ctx.beginPath(); ctx.arc(P.x, P.y, R, 0, SS.TAU); ctx.stroke();
+        ctx.strokeStyle = SS.rgba(C.pink, 0.6 * a); ctx.beginPath(); ctx.arc(P.x, P.y, R, t, t + 1.4); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,' + 0.7 * a + ')'; ctx.beginPath(); ctx.arc(P.x, P.y, R * 0.8, -2.5, -1.6); ctx.stroke();
+      }
+      // orbs held in little bubbles on their way in
+      ctx.strokeStyle = SS.rgba(C.accent, 0.7);
+      ctx.lineWidth = Math.max(px, 1.2 * kit.zs());
+      ctx.beginPath();
+      for (const g of fx.caught) { const R = 22 * kit.zs(); ctx.moveTo(g.o.x + R, g.o.y); ctx.arc(g.o.x, g.o.y, R, 0, SS.TAU); }
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      // the nozzle
+      ctx.fillStyle = '#5f7f95';
+      ctx.beginPath(); ctx.moveTo(-6, -3.4); ctx.lineTo(-13, -4.6); ctx.lineTo(-13, 4.6); ctx.lineTo(-6, 3.4); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = C.accent; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(-13, 0, 1.4, 4.6, 0, 0, SS.TAU); ctx.stroke();
+      // little fins
+      ctx.fillStyle = '#8fb6cc';
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(-2, 8.5 * s); ctx.lineTo(-11, 12 * s); ctx.lineTo(-7, 6 * s); ctx.closePath(); ctx.fill(); }
+      // the bubble itself
+      const g = ctx.createRadialGradient(4, -3, 1, 2, 0, 11);
+      g.addColorStop(0, 'rgba(255,255,255,0.55)'); g.addColorStop(0.6, 'rgba(160,230,255,0.22)'); g.addColorStop(1, 'rgba(120,200,255,0.4)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(2, 0, 10, 0, SS.TAU); ctx.fill();
+      ctx.lineWidth = 1.1;
+      ctx.strokeStyle = C.accent; ctx.beginPath(); ctx.arc(2, 0, 10, 0, SS.TAU); ctx.stroke();
+      ctx.strokeStyle = C.pink; ctx.beginPath(); ctx.arc(2, 0, 10, 0.4 + t, 1.6 + t); ctx.stroke();
+      ctx.strokeStyle = C.gold; ctx.beginPath(); ctx.arc(2, 0, 10, 2.6 + t, 3.3 + t); ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(2, 0, 7, -2.6, -1.6); ctx.stroke();
+      // a pilot light inside, brighter with speed
+      ctx.globalCompositeOperation = 'lighter';
+      SS.drawGlow(ctx, C.glow, 2, 0, 5 + 5 * r + 5 * f, 0.6);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    onBoost(fx, P) { SS.audio.pop(1); },
+    onTurn(fx, P, sign) { for (let k = 0; k < 3; k++) fx.b.push({ x: P.x, y: P.y, vx: SS.rand(-80, 80), vy: SS.rand(-80, 80), t: 0, life: 1, r: 5 * kit.zs(), a: 0, e: 1, ph: k, zs: kit.zs() }); },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.accent, 4, 34, 0.35, 1.5); if (Math.random() < 0.3) SS.audio.pop(0.6); },
+    onTopSpeed(fx, P) { SS.audio.chime(); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.accent, 30, 500, 0.9, 3); },
+  });
+})();
+</script>
+<script>
+/* SHIP - SAKURA, the Blossom. COMMON, from the Rift. It SHEDS PETALS.
+   - Wake: cherry-blossom petals (notched teardrops) shed from the wings. They
+     tumble end over end, flutter sideways and drift down; each one that
+     settles sends a ripple ring out across the fabric.
+   - SPEED FORM (P.form): a petal storm - twice the petals, flung wide, curling
+     back into two spiralling streams.
+   - Real speed (P.mach): whole blossoms open along your line (five petals
+     spreading from a gold heart), then scatter.
+   - BLOOM: a great flower opens round you; its petals sweep every orb near you
+     in, and a Wraith in the flurry is dazzled.
+   Device (keep it unique): TUMBLING NOTCHED PETALS + settle ripples. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#ffe6f0', accent: '#ff8fc4', glow: '#ffb6d8', pale: '#fff3f8', heart: '#ffd36b' };
+  const MAX = 300;
+
+  /** One petal in local space: base at the origin, notched tip at +x. */
+  function petal(ctx, s) {
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(0.5 * s, -0.5 * s, s, -0.2 * s);
+    ctx.lineTo(0.86 * s, 0);
+    ctx.lineTo(s, 0.2 * s);
+    ctx.quadraticCurveTo(0.5 * s, 0.5 * s, 0, 0);
+  }
+  function shed(fx, x, y, vx, vy, s, life, curl, hot) {
+    fx.p.push({ x, y, vx, vy, t: 0, life, s, rot: Math.random() * SS.TAU, spin: SS.rand(-5, 5), flip: SS.rand(3, 7), ph: Math.random() * 6, curl, hot, rip: false });
+  }
+
+  SS.registerShip({
+    id: 'blossom', order: 11, rarity: 'common', name: 'SAKURA', title: 'The Blossom',
+    desc: 'A slender glider with petal wings. It sheds cherry blossom as it flies - petals tumble, flutter and drift down behind you.',
+    world: 'Every petal that settles ripples the fabric.',
+    ability: { name: 'BLOOM', desc: 'A great flower opens round you: its petals sweep every orb nearby in, and dazzle a Wraith in the flurry.', cd: 7,
+      use(fx, P) {
+        fx.bloom = 0.9;
+        const zs = kit.zs();
+        for (let k = 0; k < 40; k++) {
+          const a = k / 40 * SS.TAU + SS.rand(-0.1, 0.1), sp = SS.rand(500, 800);
+          shed(fx, P.x, P.y, Math.cos(a) * sp + P.vx * 0.5, Math.sin(a) * sp + P.vy * 0.5, SS.rand(14, 20) * zs, SS.rand(1.2, 1.8), (k % 2 ? 1 : -1) * 1.5, true);
+        }
+        const W = SS.wraith;
+        if (W.near(P.x, P.y, 420)) { W.stunFor(1.5); SS.fx.text(W.x, W.y - 60, 'DAZZLED', C.accent, 24); }
+        SS.audio.petals();
+      } },
+    unlock: null,
+    colors: C, tail: 14,
+    // a soft, breathy flute
+    voice: { wave1: 'sine', wave2: 'sine', base: 196, ratio: 2, detune: 3, mix2: 0.3, filter: 'lowpass', q: 1, cutoff: 1500, cutoffRange: 2400, lfoRate: 5, lfoDepth: 0.012, noise: 0.14, noiseF: 2600, range: 1.2, gain: 0.85 },
+
+    init(fx) { fx.p = []; fx.acc = 0; fx.flower = 0; fx.bloom = 0; fx.blooms = []; },
+
+    update(fx, P, dt) {
+      const zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form;
+      const ca = Math.cos(P.angle), sa = Math.sin(P.angle), back = 8 * kit.hullScale(SS.cam.zoom);
+      kit.lay(fx, 'acc', (15 - 5 * f) * zs, P, dt, (x, y) => {
+        if (r < 0.04) return;
+        for (const side of f > 0.15 ? [-1, 1] : [Math.random() < 0.5 ? -1 : 1]) {
+          const wx = x - ca * back - sa * side * 10 * zs, wy = y - sa * back + ca * side * 10 * zs;
+          const out = SS.rand(30, 90 + 160 * f) * zs;
+          shed(fx, wx, wy, -sa * side * out, ca * side * out, SS.rand(13, 19 + 8 * r) * zs, SS.rand(1.4, 2.4), side * (0.6 + 2.2 * f), f > 0.6);
+        }
+      });
+      // real speed: whole blossoms open along the line
+      fx.flower -= dt;
+      if (P.mach > 0.2 && fx.flower <= 0) {
+        fx.flower = 0.32;
+        fx.blooms.push({ x: P.x - ca * back * 3, y: P.y - sa * back * 3, t: 0, rot: Math.random() * SS.TAU, s: 16 * zs });
+      }
+      for (let i = fx.blooms.length - 1; i >= 0; i--) {
+        const b = fx.blooms[i];
+        b.t += dt;
+        if (b.t > 0.7) {          // scatter into loose petals
+          for (let k = 0; k < 5; k++) { const a = b.rot + k / 5 * SS.TAU, s = SS.rand(60, 140) * zs; shed(fx, b.x, b.y, Math.cos(a) * s, Math.sin(a) * s, b.s * 0.9, SS.rand(1, 1.6), k % 2 ? 1 : -1, true); }
+          fx.blooms.splice(i, 1);
+        }
+      }
+      // petals: drag, flutter, curl
+      for (let i = fx.p.length - 1; i >= 0; i--) {
+        const q = fx.p[i];
+        q.t += dt;
+        if (q.t > q.life) { fx.p.splice(i, 1); continue; }
+        const c = q.curl * dt, cx = Math.cos(c), sx = Math.sin(c);
+        const vx = q.vx * cx - q.vy * sx, vy = q.vx * sx + q.vy * cx;
+        const flut = Math.sin(q.t * 5 + q.ph) * 34 * zs * dt;      // side-to-side, like a falling leaf
+        q.vx = vx * (1 - dt * 1.6); q.vy = vy * (1 - dt * 1.6);
+        q.x += q.vx * dt + Math.cos(q.ph) * flut; q.y += q.vy * dt + Math.sin(q.ph) * flut;
+        q.rot += q.spin * dt;
+        if (!q.rip && q.t > 0.55) { q.rip = true; q.rt = 0; }
+      }
+      if (fx.p.length > MAX) fx.p.splice(0, fx.p.length - MAX);
+      // settled petals ripple the fabric: a ring that spreads and fades
+      let n = 0;
+      for (let i = fx.p.length - 1; i >= 0 && n < 16; i--) {
+        const q = fx.p[i];
+        if (!q.rip) continue;
+        const a = q.t - 0.55;
+        if (a > 0.9) continue;
+        n++;
+        SS.world.dent(q.x, q.y, (30 + a * 160) * zs, 10 * (1 - a / 0.9) * zs, 0);
+      }
+      if (fx.bloom > 0) { fx.bloom -= dt; SS.orbPulls.push({ x: P.x, y: P.y, r: 520, speed: 1100, eat: 50 }); }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const t = V.t, px = 1 / V.z;
+      // ripple rings where petals settled
+      ctx.lineWidth = Math.max(px, 0.8 * kit.zs());
+      ctx.strokeStyle = 'rgba(255,170,210,0.22)';
+      ctx.beginPath();
+      for (const q of fx.p) {
+        if (!q.rip) continue;
+        const a = q.t - 0.55;
+        if (a > 0.9) continue;
+        const R = (8 + a * 70) * q.s / 8;
+        ctx.moveTo(q.x + R, q.y); ctx.arc(q.x, q.y, R, 0, SS.TAU);
+      }
+      ctx.stroke();
+      // petals, tumbling: the flip squashes them across their width
+      for (const q of fx.p) {
+        const fade = Math.min(1, q.t * 6) * (1 - SS.smooth((q.t - q.life * 0.7) / (q.life * 0.3)));
+        const flip = Math.cos(q.t * q.flip + q.ph);
+        ctx.save();
+        ctx.translate(q.x, q.y);
+        ctx.rotate(q.rot);
+        ctx.scale(1, Math.max(0.3, Math.abs(flip)));
+        ctx.fillStyle = SS.rgba(q.hot ? '#ffc4df' : C.accent, 0.85 * fade);
+        ctx.beginPath(); petal(ctx, q.s); ctx.fill();
+        ctx.fillStyle = SS.rgba(flip > 0 ? C.pale : '#ffd6e8', 0.7 * fade);
+        ctx.beginPath(); petal(ctx, q.s * 0.6); ctx.fill();
+        ctx.restore();
+      }
+      // blossoms opening
+      for (const b of fx.blooms) {
+        const k = SS.easeOut(b.t / 0.4);
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.rot + b.t);
+        for (let i = 0; i < 5; i++) {
+          ctx.rotate(SS.TAU / 5);
+          ctx.fillStyle = SS.rgba(C.accent, 0.9); ctx.beginPath(); petal(ctx, b.s * k); ctx.fill();
+          ctx.fillStyle = SS.rgba(C.pale, 0.8); ctx.beginPath(); petal(ctx, b.s * k * 0.55); ctx.fill();
+        }
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, C.heart, 0, 0, b.s * 0.7, 0.9);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.restore();
+      }
+      if (fx.bloom > 0) {
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, C.glow, P.x, P.y, 520 * (1 - fx.bloom / 0.9) + 80, 0.25 * fx.bloom);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      // petal wings, swept back, beating gently
+      const beat = Math.sin(t * 5) * 0.08;
+      for (const s of [-1, 1]) {
+        ctx.save();
+        ctx.translate(2, 2 * s);
+        ctx.rotate(s * (2.45 + beat));
+        ctx.fillStyle = C.accent; ctx.beginPath(); petal(ctx, 17); ctx.fill();
+        ctx.fillStyle = C.pale; ctx.beginPath(); petal(ctx, 10); ctx.fill();
+        ctx.restore();
+      }
+      // the bud body
+      const g = ctx.createLinearGradient(0, -4, 0, 4);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#ffd1e4'); g.addColorStop(1, '#d9709f');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(19, 0);
+      ctx.bezierCurveTo(12, -5, -6, -5.5, -14, -1.5);
+      ctx.lineTo(-14, 1.5);
+      ctx.bezierCurveTo(-6, 5.5, 12, 5, 19, 0);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.5; ctx.stroke();
+      // the stamen at the nose, glowing gold
+      ctx.globalCompositeOperation = 'lighter';
+      SS.drawGlow(ctx, C.heart, 14, 0, 4 + 4 * r + 6 * f, 0.8);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = C.heart;
+      for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(16 + k * 1.2, (k - 1) * 1.4, 0.8, 0, SS.TAU); ctx.fill(); }
+    },
+
+    onBoost(fx, P) { SS.audio.whoosh(0.5); },
+    onTurn(fx, P, sign) {
+      const zs = kit.zs(), out = P.angle - sign * Math.PI / 2;
+      for (let k = 0; k < 5; k++) { const a = out + SS.rand(-0.5, 0.5), s = SS.rand(120, 260) * zs; shed(fx, P.x, P.y, Math.cos(a) * s, Math.sin(a) * s, 8 * zs, 1.4, sign, false); }
+    },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.accent, 4, 30, 0.3, 1.5); },
+    onTopSpeed(fx, P) { SS.audio.chime(); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.accent, 30, 500, 0.9, 3); },
+  });
+})();
+</script>
+<script>
+/* SHIP - GALA, the Firework. UNCOMMON, from the Rift. It SETS OFF FIREWORKS.
+   - Wake: a sparkler fuse crackling along your line, and every half-second a
+     shell launched off the tail that BURSTS into a chrysanthemum - stars flying
+     out on bright trails, slowing, sparkling out. Each burst thumps the fabric.
+   - SPEED FORM (P.form): shells come faster and bigger, and gold WILLOWS join
+     them - long trails that sag back along your path.
+   - Real speed (P.mach): RING shells - a perfect circle of stars - and white
+     glitter.
+   - GRAND FINALE: eight shells burst round you at once; every orb inside a
+     burst is yours, and a Wraith caught in one is dazzled.
+   Device (keep it unique): RADIAL STAR BURSTS from launched shells. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#ff4d5e', accent: '#ffd25e', glow: '#ffcf7a' };
+  const PAL = ['#ff5a6e', '#ffd25e', '#5dd6ff', '#9dff7a', '#d98bff', '#ffffff', '#ff9a3c'];
+  const LIFE = 1.5;
+
+  function burst(fx, x, y, R, kind, gx, gy, vx, vy) {
+    const n = kind === 'ring' ? 28 : kind === 'willow' ? 22 : 30;
+    const jit = new Float32Array(n * 2);
+    for (let k = 0; k < n; k++) { jit[k * 2] = kind === 'ring' ? 0 : SS.rand(-0.12, 0.12); jit[k * 2 + 1] = kind === 'ring' ? 1 : SS.rand(0.65, 1); }
+    const col = kind === 'willow' ? '#ffc35a' : SS.pick(PAL);
+    fx.bursts.push({ x, y, vx: vx || 0, vy: vy || 0, t: 0, R, n, kind, col, col2: Math.random() < 0.4 ? SS.pick(PAL) : col, gx, gy, jit, rot: Math.random() * SS.TAU, life: kind === 'willow' ? LIFE * 1.5 : LIFE });
+    if (fx.bursts.length > 14) fx.bursts.shift();
+  }
+  /** Where star k of burst b is at age a (decelerating outward, then sagging). */
+  function star(b, k, a, out) {
+    const ang = b.rot + k / b.n * SS.TAU + b.jit[k * 2], d = b.R * b.jit[k * 2 + 1] * (1 - Math.exp(-a * 3.2));
+    const sag = (b.kind === 'willow' ? 260 : 60) * a * a;
+    out.x = b.x + Math.cos(ang) * d + b.gx * sag;
+    out.y = b.y + Math.sin(ang) * d + b.gy * sag;
+  }
+  const A = { x: 0, y: 0 }, B = { x: 0, y: 0 };
+
+  SS.registerShip({
+    id: 'gala', order: 12, rarity: 'uncommon', name: 'GALA', title: 'The Firework',
+    desc: 'A striped rocket on a stick. It crackles like a sparkler and launches shells off its tail that burst into fireworks behind you.',
+    world: 'Every burst thumps the fabric.',
+    ability: { name: 'GRAND FINALE', desc: 'Eight shells burst round you at once: every orb inside a burst is yours, and a Wraith caught in one is dazzled.', cd: 8,
+      use(fx, P) {
+        const live = SS.G.state === 'play', W = SS.wraith, R = 205;
+        const pts = [[P.x, P.y]];
+        for (let k = 0; k < 8; k++) { const a = P.angle + k / 8 * SS.TAU; pts.push([P.x + Math.cos(a) * 340, P.y + Math.sin(a) * 340]); }
+        let hit = false;
+        for (const [x, y] of pts) {
+          burst(fx, x, y, R, Math.random() < 0.3 ? 'ring' : 'peony', 0, 0);
+          for (const o of SS.orbs) if (!o.dead && !o.grabbed && (o.x - x) ** 2 + (o.y - y) ** 2 < R * R) SS.collectOrb(o, P, live);
+          if (!hit && W.near(x, y, R)) { hit = true; W.stunFor(1.6); SS.fx.text(W.x, W.y - 60, 'DAZZLED', C.accent, 24); }
+        }
+        SS.fx.shake(0.35);
+        SS.audio.crackle(2);
+      } },
+    unlock: null,
+    colors: C, tail: 22,
+    // a fizzing fuse over a low whoosh
+    voice: { wave1: 'sawtooth', wave2: 'square', base: 92, ratio: 1.5, detune: 8, mix2: 0.3, filter: 'lowpass', q: 1.5, cutoff: 900, cutoffRange: 2200, lfoRate: 22, lfoDepth: 0.02, noise: 0.35, noiseF: 4200, range: 1.3, gain: 0.8 },
+
+    init(fx) { fx.bursts = []; fx.shells = []; fx.next = 0.4; fx.side = 1; },
+
+    update(fx, P, dt) {
+      const zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form, m = P.mach;
+      const ca = Math.cos(P.angle), sa = Math.sin(P.angle), back = 22 * kit.hullScale(SS.cam.zoom);
+      // launch a shell off the tail, angled out to one side
+      fx.next -= dt * (0.8 + 1.2 * r + 1.6 * f);
+      if (r > 0.08 && fx.next <= 0) {
+        fx.next = SS.rand(0.45, 0.7);
+        fx.side = -fx.side;
+        // launched out to the side, carrying most of the ship's speed, so it bursts alongside you
+        const a = P.angle + fx.side * SS.rand(1.2, 1.9), sp = SS.rand(380, 520) * zs;
+        const kind = m > 0.25 && Math.random() < 0.35 ? 'ring' : f > 0.4 && Math.random() < 0.45 ? 'willow' : 'peony';
+        fx.shells.push({ x: P.x - ca * back, y: P.y - sa * back, vx: Math.cos(a) * sp + P.vx * 0.7, vy: Math.sin(a) * sp + P.vy * 0.7, t: 0, fuse: SS.rand(0.25, 0.35), kind, R: (120 + 80 * r + 120 * f) * zs, gx: -ca, gy: -sa });
+      }
+      for (let i = fx.shells.length - 1; i >= 0; i--) {
+        const s = fx.shells[i];
+        s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 1 - dt * 0.8; s.vy *= 1 - dt * 0.8;
+        if (Math.random() < 0.7) SS.fx.spawn(s.x, s.y, SS.rand(-30, 30), SS.rand(-30, 30), '#ffe0a0', 0.25, 2 * zs, 0, 2);
+        if (s.t >= s.fuse) { burst(fx, s.x, s.y, s.R, s.kind, s.gx, s.gy, s.vx, s.vy); fx.shells.splice(i, 1); if (Math.random() < 0.4) SS.audio.crackle(0.4); }
+      }
+      for (let i = fx.bursts.length - 1; i >= 0; i--) {
+        const b = fx.bursts[i];
+        b.t += dt;
+        if (b.t > b.life) { fx.bursts.splice(i, 1); continue; }
+        b.x += b.vx * dt; b.y += b.vy * dt; b.vx *= 1 - dt * 1.1; b.vy *= 1 - dt * 1.1;   // the shell's drift carries the burst
+        if (b.t < 0.6) SS.world.dent(b.x, b.y, b.R * (0.6 + b.t * 1.5), b.R * 0.3 * (1 - b.t / 0.6), 0);   // the thump spreads out
+      }
+      // real speed: white glitter popping in the smoke
+      if (m > 0.2 && fx.bursts.length && Math.random() < m) {
+        const b = SS.pick(fx.bursts);
+        star(b, (Math.random() * b.n) | 0, b.t, A);
+        SS.fx.spawn(A.x, A.y, 0, 0, '#ffffff', 0.12, 3.5 * zs, 0, 0);
+      }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const t = V.t, zs = kit.zs(), px = 1 / V.z, r = Math.min(1.2, P.rise);
+      ctx.globalCompositeOperation = 'lighter';
+      // the sparkler fuse: glitter crackling along your line
+      const tr = P.trail, n = Math.min(tr.length, (14 + 34 * r) | 0);
+      for (let i = 1; i < Math.min(n, 12); i += 3) SS.drawGlow(ctx, '#ffb347', tr[i].x, tr[i].y, (26 - i) * zs, 0.35 * (1 - i / 12));
+      ctx.fillStyle = 'rgba(255,224,140,0.95)';
+      ctx.beginPath();
+      for (let i = 1; i < n; i++) {
+        const p = tr[i];
+        for (let k = 0; k < 2; k++) {
+          const j = k ? (p.j * 5.77) % 1 : p.j;
+          if (Math.sin(t * 37 + j * 97) < 0) continue;
+          const an = kit.perp(tr, i), o = (j - 0.5) * (10 + i * 0.9) * zs, s = (2 + 2.4 * ((j * 13.1) % 1)) * zs * (1 - i / n);
+          ctx.rect(p.x + Math.cos(an) * o - s / 2, p.y + Math.sin(an) * o - s / 2, s, s);
+        }
+      }
+      ctx.fill();
+      // shells climbing
+      for (const s of fx.shells) SS.drawGlow(ctx, '#ffe7b0', s.x, s.y, 10 * zs, 0.9);
+      // bursts: each star on a short bright trail, the tips sparkling out
+      for (const b of fx.bursts) {
+        const a = b.t, fade = 1 - SS.smooth((a - b.life * 0.55) / (b.life * 0.45)), tl = b.kind === 'willow' ? 0.35 : 0.13;
+        if (a < 0.12) SS.drawGlow(ctx, '#ffffff', b.x, b.y, b.R * 0.5, 0.5 * (1 - a / 0.12));
+        ctx.lineWidth = Math.max(px * 1.3, (b.kind === 'willow' ? 1.7 : 2.3) * zs);
+        for (let half = 0; half < 2; half++) {
+          ctx.strokeStyle = SS.rgba(half ? b.col2 : b.col, 0.85 * fade);
+          ctx.beginPath();
+          for (let k = half; k < b.n; k += 2) { star(b, k, Math.max(0, a - tl), A); star(b, k, a, B); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); }
+          ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,' + 0.8 * fade + ')';
+        ctx.beginPath();
+        for (let k = 0; k < b.n; k++) {
+          if (Math.sin(t * 29 + k * 7.7) < -0.3) continue;
+          star(b, k, a, B);
+          const s = 2.2 * zs;
+          ctx.rect(B.x - s / 2, B.y - s / 2, s, s);
+        }
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      // the stick
+      ctx.strokeStyle = '#a8794a'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(-8, 3.2); ctx.lineTo(-30, 3.2); ctx.stroke();
+      // fins
+      ctx.fillStyle = '#c9303f';
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(-4, 4.5 * s); ctx.lineTo(-12, 9 * s); ctx.lineTo(-11, 4 * s); ctx.closePath(); ctx.fill(); }
+      // the body: red and white stripes
+      ctx.save();
+      ctx.beginPath(); ctx.rect(-11, -4.5, 22, 9); ctx.clip();
+      for (let k = -2; k < 9; k++) {
+        ctx.fillStyle = k % 2 ? '#ffffff' : C.hull;
+        ctx.beginPath(); ctx.moveTo(-11 + k * 4, -4.5); ctx.lineTo(-7 + k * 4, -4.5); ctx.lineTo(-11 + k * 4, 4.5); ctx.lineTo(-15 + k * 4, 4.5); ctx.closePath(); ctx.fill();
+      }
+      const sh = ctx.createLinearGradient(0, -4.5, 0, 4.5);
+      sh.addColorStop(0, 'rgba(255,255,255,0.35)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.35)');
+      ctx.fillStyle = sh; ctx.fillRect(-11, -4.5, 22, 9);
+      ctx.restore();
+      // the gold nose cone
+      ctx.fillStyle = C.accent;
+      ctx.beginPath(); ctx.moveTo(11, -4.5); ctx.lineTo(21, 0); ctx.lineTo(11, 4.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff2c4';
+      ctx.beginPath(); ctx.moveTo(11, -4.5); ctx.lineTo(21, 0); ctx.lineTo(11, -1); ctx.closePath(); ctx.fill();
+      // the fuse, fizzing
+      ctx.globalCompositeOperation = 'lighter';
+      const fl = 0.7 + 0.3 * Math.sin(t * 40);
+      SS.drawGlow(ctx, C.glow, -12, 0, (5 + 6 * r + 8 * f) * fl, 0.9);
+      SS.drawGlow(ctx, '#ffffff', -12, 0, 2.5, 0.9);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    onBoost(fx, P) { fx.next = 0; SS.audio.whoosh(0.7); },
+    onTurn(fx, P, sign) { for (let k = 0; k < 4; k++) SS.fx.spawn(P.x, P.y, SS.rand(-200, 200), SS.rand(-200, 200), SS.pick(PAL), 0.4, 2, 1, 3); },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.accent, 4, 30, 0.3, 1.5); },
+    onTopSpeed(fx, P) { burst(fx, P.x, P.y, 200 * kit.zs(), 'ring', 0, 0); SS.audio.crackle(1); },
+    onRegion(fx, P) { for (let k = 0; k < 3; k++) burst(fx, P.x + SS.rand(-200, 200), P.y + SS.rand(-200, 200), 260, 'peony', 0, 0); },
+  });
+})();
+</script>
+<script>
+/* SHIP - TICKER, the Clockwork. UNCOMMON, from the Rift. It LAYS A GEAR TRAIN.
+   - Wake: brass and copper gears set down either side of your line, each one
+     meshing with the last - neighbours turn opposite ways - winding the fabric
+     round with them. They run down as they age and fall apart.
+   - SPEED FORM (P.form): a drive chain runs along the train, links racing, and
+     steam vents off the tail.
+   - Real speed (P.mach): the gears spin into blurs and throw sparks.
+   - GEARLOCK: the train locks and turns as one - every orb near a gear is
+     conveyed to you, and a Wraith near one is jammed.
+   Device (keep it unique): MESHING TOOTHED GEARS. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#d9a441', accent: '#ffcf6a', glow: '#ffd98a', copper: '#c8743a', steel: '#a7b3bf' };
+  const LIFE = 2.4, MAX = 90;
+
+  function gearPath(ctx, R, n) {
+    const r0 = R * 0.8;
+    ctx.beginPath();
+    for (let k = 0; k < n; k++) {
+      const a = k / n * SS.TAU, w = SS.TAU / n;
+      ctx.lineTo(Math.cos(a) * r0, Math.sin(a) * r0);
+      ctx.lineTo(Math.cos(a + w * 0.18) * R, Math.sin(a + w * 0.18) * R);
+      ctx.lineTo(Math.cos(a + w * 0.5) * R, Math.sin(a + w * 0.5) * R);
+      ctx.lineTo(Math.cos(a + w * 0.68) * r0, Math.sin(a + w * 0.68) * r0);
+    }
+    ctx.closePath();
+  }
+
+  SS.registerShip({
+    id: 'cog', order: 13, rarity: 'uncommon', name: 'TICKER', title: 'The Clockwork',
+    desc: 'A brass clockwork beetle with a key in its back. It sets down a train of meshing gears behind you that wind the fabric round.',
+    world: 'Winds the fabric: each gear twists it, neighbours opposite ways.',
+    ability: { name: 'GEARLOCK', desc: 'The gear train locks and turns as one: every orb near a gear is conveyed to you, and a Wraith near one is jammed.', cd: 7,
+      use(fx, P) {
+        const W = SS.wraith;
+        // reach: 200 units round every gear (the train is a few thousand units long, so
+        // this sweeps about what POLARITY / BLOOM do)
+        for (const o of SS.orbs) {
+          if (o.dead || o.grabbed) continue;
+          for (let i = 0; i < fx.g.length; i += 2) {
+            const g = fx.g[i], R = 200 + g.R * 2;
+            if ((o.x - g.x) ** 2 + (o.y - g.y) ** 2 < R * R) { o.grabbed = true; fx.belt.push({ o, gen: o.gen, t: 0 }); break; }
+          }
+        }
+        for (const g of fx.g) if (W.near(g.x, g.y, 220)) { W.stunFor(1.8); SS.fx.text(W.x, W.y - 60, 'JAMMED', C.accent, 24); break; }
+        fx.lock = 1;
+        SS.audio.clank();
+      } },
+    unlock: null,
+    colors: C, tail: 15,
+    // a ticking escapement over a wound-spring whirr
+    voice: { wave1: 'square', wave2: 'triangle', base: 110, ratio: 3, detune: 3, mix2: 0.4, filter: 'bandpass', q: 3, cutoff: 1100, cutoffRange: 1700, lfoRate: 12, lfoDepth: 0.03, noise: 0.15, noiseF: 2800, range: 1.2, gain: 0.8 },
+
+    init(fx) { fx.g = []; fx.acc = 0; fx.side = 1; fx.tick = 0; fx.belt = []; fx.lock = 0; fx.steam = 0; },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form;
+      const R = (13 + 6 * r + 6 * f) * zs, back = 12 * kit.hullScale(SS.cam.zoom), ca = Math.cos(P.angle), sa = Math.sin(P.angle);
+      fx.lock = Math.max(0, fx.lock - dt * 1.2);
+      kit.lay(fx, 'acc', R * 1.4, P, dt, (x, y, age) => {
+        if (r < 0.04) return;
+        fx.side = -fx.side;
+        const o = R * 0.7 * fx.side;
+        fx.g.push({ x: x - ca * back - sa * o, y: y - sa * back + ca * o, R, n: 10 + ((R / zs) > 18 ? 2 : 0), dir: fx.side, t: t - age, rot: Math.random(), cu: Math.random() < 0.35, spin: 2.2 + 3 * r + 4 * f });
+        fx.tick -= 1;
+        if (fx.tick <= 0) { fx.tick = 8; SS.audio.tick(); }
+      });
+      while (fx.g.length && t - fx.g[0].t > LIFE) fx.g.shift();
+      if (fx.g.length > MAX) fx.g.splice(0, fx.g.length - MAX);
+      // the gears wind the fabric, neighbours opposite ways, running down with age
+      for (let i = Math.max(0, fx.g.length - 24); i < fx.g.length; i += 2) {
+        const g = fx.g[i], run = 1 - (t - g.t) / LIFE;
+        SS.world.dent(g.x, g.y, g.R * 2.6, g.R * 0.9 * run * g.dir * (1 + fx.lock * 1.5), 2);
+      }
+      // speed form: steam off the tail
+      fx.steam -= dt;
+      if (f > 0.1 && fx.steam <= 0) {
+        fx.steam = 0.06 / f;
+        const a = P.angle + Math.PI + SS.rand(-0.4, 0.4), s = SS.rand(60, 140);
+        SS.fx.spawn(P.x - ca * back, P.y - sa * back, Math.cos(a) * s + P.vx * 0.2, Math.sin(a) * s + P.vy * 0.2, '#cfd8e2', 0.8, 9 * zs, 0, 2);
+      }
+      // real speed: sparks thrown where teeth meet
+      if (P.mach > 0.2 && fx.g.length > 2 && Math.random() < P.mach) {
+        const g = fx.g[fx.g.length - 1 - ((Math.random() * Math.min(10, fx.g.length - 1)) | 0)], a = Math.random() * SS.TAU;
+        SS.fx.spawn(g.x + Math.cos(a) * g.R, g.y + Math.sin(a) * g.R, Math.cos(a) * 300, Math.sin(a) * 300, '#ffe2a0', 0.3, 2, 1, 3);
+      }
+      // conveyed orbs
+      for (let i = fx.belt.length - 1; i >= 0; i--) {
+        const b = fx.belt[i], o = b.o;
+        b.t += dt;
+        if (o.gen !== b.gen || b.t > 1.6) { if (o.gen === b.gen) o.grabbed = false; fx.belt.splice(i, 1); continue; }
+        o.x += (P.vx + P.extX) * dt; o.y += (P.vy + P.extY) * dt;
+        const k = Math.min(1, dt * (4 + b.t * 14));
+        o.x += (P.x - o.x) * k; o.y += (P.y - o.y) * k;
+      }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const t = V.t, px = 1 / V.z, f = P.form, m = P.mach, gs = fx.g, n = gs.length;
+      if (!n) return;
+      // speed form: the drive chain, links racing along both edges of the train
+      if (f > 0.05 && n > 3) {
+        ctx.strokeStyle = SS.rgba('#dfe7ee', 0.85 * f);
+        ctx.lineWidth = Math.max(px * 1.5, 3.2 * kit.zs());
+        ctx.setLineDash([5 * kit.zs(), 3.5 * kit.zs()]);
+        ctx.lineDashOffset = -t * 120 * kit.zs();
+        for (const s of [-1, 1]) {
+          ctx.beginPath();
+          let on = false;
+          for (const g of gs) {
+            if (g.dir !== s) continue;
+            const run = 1 - (t - g.t) / LIFE;
+            if (run < 0.3) { on = false; continue; }
+            on ? ctx.lineTo(g.x, g.y) : ctx.moveTo(g.x, g.y);
+            on = true;
+          }
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
+      for (const g of gs) {
+        const age = t - g.t, run = 1 - age / LIFE, fade = Math.min(1, age * 8) * SS.smooth(run / 0.3);
+        if (fade <= 0) continue;
+        // turning: slows as it runs down, fast when the train locks
+        const ang = g.rot + g.dir * (g.spin * (age - age * age / (2 * LIFE)) + fx.lock * 6 * age);
+        ctx.save();
+        ctx.translate(g.x, g.y);
+        ctx.rotate(ang);
+        const sc = 1 - 0.15 * SS.smooth((0.3 - run) / 0.3);
+        ctx.scale(sc, sc);
+        ctx.globalAlpha = fade;
+        const metal = g.cu ? C.copper : C.hull;
+        const blur = m > 0.25 ? SS.clamp(1 - age / 0.7, 0, 1) : 0;    // fresh gears at real speed spin into a blur
+        ctx.fillStyle = metal;
+        ctx.globalAlpha = fade * (1 - 0.6 * blur);
+        gearPath(ctx, g.R, g.n); ctx.fill();
+        if (blur > 0) {
+          ctx.globalAlpha = fade * blur;
+          ctx.strokeStyle = SS.rgba('#fff0c8', 0.8);
+          ctx.lineWidth = g.R * 0.22;
+          ctx.beginPath(); ctx.arc(0, 0, g.R * 0.9, 0, SS.TAU); ctx.stroke();
+        }
+        ctx.globalAlpha = fade;
+        ctx.fillStyle = 'rgba(10,8,4,0.75)';
+        ctx.beginPath(); ctx.arc(0, 0, g.R * 0.55, 0, SS.TAU); ctx.fill();
+        ctx.strokeStyle = metal; ctx.lineWidth = g.R * 0.13;
+        ctx.beginPath();
+        for (let k = 0; k < 4; k++) { const a = k / 4 * SS.TAU; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * g.R * 0.55, Math.sin(a) * g.R * 0.55); }
+        ctx.stroke();
+        ctx.fillStyle = '#fff1c8';
+        ctx.beginPath(); ctx.arc(0, 0, g.R * 0.14, 0, SS.TAU); ctx.fill();
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      if (fx.lock > 0) {
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < n; i += 3) SS.drawGlow(ctx, C.glow, gs[i].x, gs[i].y, gs[i].R * 3, 0.4 * fx.lock);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      // the wind-up key, turning
+      ctx.save();
+      ctx.translate(-13, 0);
+      ctx.scale(1, Math.cos(t * 3));
+      ctx.fillStyle = C.accent;
+      ctx.fillRect(-2, -1, 3, 2);
+      ctx.beginPath(); ctx.ellipse(-5, -3.5, 3, 2.4, 0.5, 0, SS.TAU); ctx.ellipse(-5, 3.5, 3, 2.4, -0.5, 0, SS.TAU); ctx.fill();
+      ctx.restore();
+      // the beetle shell
+      const g = ctx.createLinearGradient(0, -7, 0, 7);
+      g.addColorStop(0, '#ffe39a'); g.addColorStop(0.5, C.hull); g.addColorStop(1, '#7a5418');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(1, 0, 13, 7.5, 0, 0, SS.TAU); ctx.fill();
+      ctx.strokeStyle = '#5a3d10'; ctx.lineWidth = 0.6;
+      ctx.beginPath(); ctx.moveTo(-11, 0); ctx.lineTo(12, 0); ctx.stroke();
+      // a gear turning under a glass window
+      ctx.save();
+      ctx.translate(2, 0);
+      ctx.rotate(t * (2 + 4 * r));
+      ctx.fillStyle = C.copper; gearPath(ctx, 5, 9); ctx.fill();
+      ctx.fillStyle = '#2a1a06'; ctx.beginPath(); ctx.arc(0, 0, 1.6, 0, SS.TAU); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.arc(2, 0, 5.6, 0, SS.TAU); ctx.stroke();
+      // the head and its eyes
+      ctx.fillStyle = '#6b4a14';
+      ctx.beginPath(); ctx.ellipse(15, 0, 4, 4.6, 0, 0, SS.TAU); ctx.fill();
+      ctx.globalCompositeOperation = 'lighter';
+      SS.drawGlow(ctx, C.glow, 17, -1.8, 2 + 2 * r + 2 * f, 0.9);
+      SS.drawGlow(ctx, C.glow, 17, 1.8, 2 + 2 * r + 2 * f, 0.9);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    onBoost(fx, P) { SS.audio.clank(); },
+    onTurn(fx, P, sign) { for (let k = 0; k < 3; k++) SS.fx.spawn(P.x, P.y, SS.rand(-160, 160), SS.rand(-160, 160), C.accent, 0.4, 2.5, 2, 3); },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.accent, 4, 30, 0.3, 1.5); },
+    onTopSpeed(fx, P) { SS.audio.chime(); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.accent, 30, 500, 0.9, 3); },
+  });
+})();
+</script>
+<script>
+/* SHIP - SUMI, the Brush. RARE, from the Rift. It PAINTS ONE STROKE.
+   - Wake: a single calligraphy stroke of luminous ivory ink, swelling and
+     thinning with your speed, ragged at the edges like a real brush. The ink
+     soaks into the fabric (the grid pinches toward it) and dries dim. Every
+     hard turn is signed with a vermilion seal.
+   - SPEED FORM (P.form): DRY BRUSH - the stroke breaks into racing bristle
+     lines with white gaps ("flying white"), and ink spatters off it.
+   - Real speed (P.mach): ENSO - an open circle, brushed in one sweep, left
+     hanging behind you.
+   - ENSO (ability): one great circle brushed round you: every orb inside it is
+     yours, and a Wraith inside it is inked still.
+   Device (keep it unique): ONE BRUSH STROKE (filled, pressure-width) + seals. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#d8c48a', accent: '#ff4a3a', glow: '#fff1cf', ink: '#f6eedc' };
+  const LIFE = 3.2, MAX = 420, BIG = 480;
+  const hash = (n) => { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); };
+  /** Smooth value noise: the brush swells and thins organically instead of jittering point to point. */
+  const vnoise = (x) => { const i = Math.floor(x); return SS.lerp(hash(i), hash(i + 1), SS.smooth(x - i)); };
+
+  function seal(fx, x, y, s, a) { fx.seals.push({ x, y, s, a, t: 0 }); if (fx.seals.length > 8) fx.seals.shift(); }
+  function enso(fx, x, y, R, w, life) { fx.ensos.push({ x, y, R, w, t: 0, life, a0: Math.random() * SS.TAU }); if (fx.ensos.length > 6) fx.ensos.shift(); }
+
+  SS.registerShip({
+    id: 'sumi', order: 14, rarity: 'rare', name: 'SUMI', title: 'The Brush',
+    desc: 'A calligraphy brush on a bamboo shaft. It paints one long stroke of luminous ink behind you, and signs every hard turn with a seal.',
+    world: 'Ink soaks into the fabric: the grid pinches toward the stroke.',
+    ability: { name: 'ENSO', desc: 'Brush one great circle round you: every orb inside it is yours, and a Wraith inside it is inked still.', cd: 8,
+      use(fx, P) {
+        const live = SS.G.state === 'play', W = SS.wraith;
+        for (const o of SS.orbs) if (!o.dead && !o.grabbed && (o.x - P.x) ** 2 + (o.y - P.y) ** 2 < BIG * BIG) SS.collectOrb(o, P, live);
+        if (W.near(P.x, P.y, BIG)) { W.stunFor(1.8); SS.fx.text(W.x, W.y - 60, 'INKED', C.ink, 24); }
+        enso(fx, P.x, P.y, BIG, 26 * kit.zs(), 2.4);
+        seal(fx, P.x + BIG * 0.7, P.y + BIG * 0.7, 40 * kit.zs(), 0.1);
+        SS.audio.brush();
+      } },
+    unlock: null,
+    colors: C, tail: 24,
+    // a breathy shakuhachi over a dry rasp
+    voice: { wave1: 'triangle', wave2: 'sine', base: 147, ratio: 1.5, detune: 2, mix2: 0.3, filter: 'lowpass', q: 1.2, cutoff: 1100, cutoffRange: 2000, lfoRate: 5.5, lfoDepth: 0.01, noise: 0.25, noiseF: 1800, range: 1.15, gain: 0.85 },
+
+    init(fx) { fx.pts = []; fx.acc = 0; fx.lift = true; fx.seals = []; fx.ensos = []; fx.spat = []; fx.circle = 1; fx.n = 0; },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form;
+      const back = 24 * kit.hullScale(SS.cam.zoom), ca = Math.cos(P.angle), sa = Math.sin(P.angle);
+      kit.lay(fx, 'acc', 9 * zs, P, dt, (x, y, age) => {
+        if (r < 0.05) { fx.lift = true; return; }        // too slow: the brush lifts off
+        const id = fx.n++;
+        const w = (4 + 7 * r + 9 * f + 4 * P.mach) * zs * (0.8 + 0.4 * vnoise(id * 0.15));
+        fx.pts.push({ x: x - ca * back, y: y - sa * back, a: P.angle, w, t: t - age, f, brk: fx.lift, id });
+        fx.lift = false;
+        if (f > 0.2 && hash(id) < 0.25 * f) {               // dry brush spatters
+          const side = hash(id + 1) < 0.5 ? -1 : 1, o = w * SS.rand(1.6, 3.4) * side;
+          fx.spat.push({ x: x - ca * back - sa * o, y: y - sa * back + ca * o, s: SS.rand(1, 2.6) * zs, t: t - age });
+        }
+      });
+      while (fx.pts.length && t - fx.pts[0].t > LIFE) fx.pts.shift();
+      if (fx.pts.length > MAX) fx.pts.splice(0, fx.pts.length - MAX);
+      while (fx.spat.length && t - fx.spat[0].t > LIFE) fx.spat.shift();
+      if (fx.spat.length > 160) fx.spat.splice(0, fx.spat.length - 160);
+      // the fabric drinks the ink
+      const n = fx.pts.length;
+      for (let i = n - 3; i > Math.max(0, n - 90); i -= 9) {
+        const p = fx.pts[i], wet = 1 - (t - p.t) / LIFE;
+        SS.world.dent(p.x, p.y, p.w * 7 + 40 * zs, p.w * 2.2 * wet, 1);
+      }
+      for (const s of fx.seals) s.t += dt;
+      for (let i = fx.ensos.length - 1; i >= 0; i--) { const e = fx.ensos[i]; e.t += dt; if (e.t > e.life) fx.ensos.splice(i, 1); }
+      while (fx.seals.length && fx.seals[0].t > LIFE) fx.seals.shift();
+      // real speed: an enso left hanging every so often
+      fx.circle -= dt;
+      if (P.mach > 0.2 && fx.circle <= 0) { fx.circle = 1.3; enso(fx, P.x - ca * 160 * zs, P.y - sa * 160 * zs, 90 * zs, 7 * zs, 1.8); }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const t = V.t, px = 1 / V.z, pts = fx.pts, n = pts.length, now = P.form;
+      ctx.globalCompositeOperation = 'lighter';
+      // the stroke: ribbons in four age bands (wet and bright -> dry and dim), split where the brush lifted
+      const bandOf = (p) => Math.min(3, Math.floor((t - p.t) / LIFE * 4));
+      for (let band = 0; band < 4; band++) {
+        ctx.fillStyle = SS.rgba(C.ink, (0.8 - band * 0.17) * (1 - 0.25 * now));
+        ctx.beginPath();
+        let i = 0;
+        while (i < n - 1) {
+          if (bandOf(pts[i]) !== band) { i++; continue; }
+          let j = i;
+          while (j < n - 1 && !pts[j + 1].brk && bandOf(pts[j]) === band) j++;
+          if (j > i) {
+            const len = j - i;
+            for (let k = i; k <= j; k++) {
+              const p = pts[k], h = p.w * (0.7 + 0.6 * vnoise(p.id * 0.22)) * Math.min(1, (k - i + 1) / 3, (len - (k - i) + 2) / 3), a = p.a + Math.PI / 2;
+              k === i ? ctx.moveTo(p.x + Math.cos(a) * h, p.y + Math.sin(a) * h) : ctx.lineTo(p.x + Math.cos(a) * h, p.y + Math.sin(a) * h);
+            }
+            for (let k = j; k >= i; k--) {
+              const p = pts[k], h = p.w * (0.7 + 0.6 * vnoise(p.id * 0.22 + 50)) * Math.min(1, (k - i + 1) / 3, (len - (k - i) + 2) / 3), a = p.a + Math.PI / 2;
+              ctx.lineTo(p.x - Math.cos(a) * h, p.y - Math.sin(a) * h);
+            }
+            ctx.closePath();
+          }
+          i = j + 1;
+        }
+        ctx.fill();
+      }
+      // dry brush: bristle lines racing along the stroke, broken by white gaps
+      ctx.lineCap = 'round';
+      for (let b = 0; b < 7; b++) {
+        const off = (b / 6 - 0.5) * 1.8;
+        ctx.strokeStyle = SS.rgba(b % 3 ? C.ink : '#ffffff', 0.6);
+        ctx.lineWidth = Math.max(px, 1.1 * kit.zs());
+        ctx.beginPath();
+        let on = false;
+        for (let k = 0; k < n; k++) {
+          const p = pts[k];
+          if (p.f < 0.1 || p.brk || hash(p.id * 0.13 + b * 7.7) < 0.22 + 0.25 * p.f || t - p.t > LIFE * 0.6) { on = false; continue; }
+          const a = p.a + Math.PI / 2, x = p.x + Math.cos(a) * p.w * off, y = p.y + Math.sin(a) * p.w * off;
+          on ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          on = true;
+        }
+        ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+      // spatter
+      ctx.fillStyle = SS.rgba(C.ink, 0.7);
+      ctx.beginPath();
+      for (const s of fx.spat) { ctx.moveTo(s.x + s.s, s.y); ctx.arc(s.x, s.y, s.s, 0, SS.TAU); }
+      ctx.fill();
+      // enso: brushed in one sweep, thick to thin, open at the end
+      for (const e of fx.ensos) {
+        const sweep = SS.easeOut(e.t / 0.35) * SS.TAU * 0.92, fade = 1 - SS.smooth((e.t - e.life * 0.6) / (e.life * 0.4));
+        const steps = 48;
+        ctx.fillStyle = SS.rgba(C.ink, 0.8 * fade);
+        ctx.beginPath();
+        for (let k = 0; k <= steps; k++) {
+          const u = k / steps, a = e.a0 + sweep * u, h = e.w * (1.1 - 0.85 * u) * (0.85 + 0.3 * hash(k + e.a0)), R = e.R + h;
+          k ? ctx.lineTo(e.x + Math.cos(a) * R, e.y + Math.sin(a) * R) : ctx.moveTo(e.x + Math.cos(a) * R, e.y + Math.sin(a) * R);
+        }
+        for (let k = steps; k >= 0; k--) {
+          const u = k / steps, a = e.a0 + sweep * u, h = e.w * (1.1 - 0.85 * u) * (0.85 + 0.3 * hash(k * 3 + e.a0)), R = e.R - h;
+          ctx.lineTo(e.x + Math.cos(a) * R, e.y + Math.sin(a) * R);
+        }
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      // seals: vermilion stamps with a pale mark
+      for (const s of fx.seals) {
+        const k = Math.min(1, s.t * 10), fade = 1 - SS.smooth((s.t - LIFE * 0.7) / (LIFE * 0.3)), z = s.s * (1.4 - 0.4 * k);
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.a);
+        ctx.globalAlpha = fade * k;
+        ctx.fillStyle = C.accent;
+        ctx.fillRect(-z / 2, -z / 2, z, z);
+        ctx.strokeStyle = '#ffe9df'; ctx.lineWidth = z * 0.07;
+        ctx.strokeRect(-z * 0.36, -z * 0.36, z * 0.72, z * 0.72);
+        ctx.beginPath();
+        ctx.moveTo(-z * 0.22, -z * 0.2); ctx.lineTo(z * 0.22, -z * 0.2);
+        ctx.moveTo(0, -z * 0.2); ctx.lineTo(0, z * 0.24);
+        ctx.moveTo(-z * 0.2, z * 0.04); ctx.lineTo(-z * 0.08, z * 0.18);
+        ctx.moveTo(z * 0.2, z * 0.04); ctx.lineTo(z * 0.08, z * 0.18);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      // the bristle tuft at the back, flexing as it paints
+      const flex = Math.sin(t * 6) * 0.08 + (P.bank || 0) * 0.15;
+      ctx.save();
+      ctx.translate(-9, 0);
+      ctx.rotate(flex);
+      const g = ctx.createLinearGradient(0, 0, -16, 0);
+      g.addColorStop(0, '#3a332a'); g.addColorStop(0.45, '#cfc3a6'); g.addColorStop(1, C.ink);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(0, -3.6); ctx.quadraticCurveTo(-8, -4.4, -16, 0); ctx.quadraticCurveTo(-8, 4.4, 0, 3.6); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(40,30,20,0.5)'; ctx.lineWidth = 0.35;
+      ctx.beginPath(); for (let k = -2; k <= 2; k++) { ctx.moveTo(-1, k * 1.2); ctx.quadraticCurveTo(-8, k * 1.5, -14, k * 0.4); } ctx.stroke();
+      ctx.restore();
+      // the ferrule
+      ctx.fillStyle = '#9a8f80'; ctx.fillRect(-10, -3.4, 4, 6.8);
+      // the bamboo shaft, with its nodes
+      const b = ctx.createLinearGradient(0, -2.6, 0, 2.6);
+      b.addColorStop(0, '#f4e7b6'); b.addColorStop(0.5, C.hull); b.addColorStop(1, '#8a7638');
+      ctx.fillStyle = b;
+      ctx.beginPath(); ctx.moveTo(-6, -2.8); ctx.lineTo(20, -2.2); ctx.quadraticCurveTo(23, 0, 20, 2.2); ctx.lineTo(-6, 2.8); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#7a6830'; ctx.lineWidth = 0.7;
+      ctx.beginPath(); for (const x of [2, 11]) { ctx.moveTo(x, -2.6); ctx.lineTo(x, 2.6); } ctx.stroke();
+      // a vermilion cord tied at the end
+      ctx.strokeStyle = C.accent; ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.moveTo(21, 0); ctx.quadraticCurveTo(26, 3 + Math.sin(t * 4), 29, 1 + Math.sin(t * 4 + 1)); ctx.stroke();
+      // the wet tip glows
+      ctx.globalCompositeOperation = 'lighter';
+      SS.drawGlow(ctx, C.glow, -23, 0, 4 + 5 * r + 6 * f, 0.7);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    onBoost(fx, P) { SS.audio.brush(); },
+    onTurn(fx, P, sign) { const zs = kit.zs(); seal(fx, P.x - Math.sin(P.angle) * sign * 40 * zs, P.y + Math.cos(P.angle) * sign * 40 * zs, 22 * zs, P.angle); },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.ink, 4, 30, 0.3, 1.5); },
+    onTopSpeed(fx, P) { SS.audio.chime(); },
+    onRegion(fx, P) { enso(fx, P.x, P.y, 300, 18 * kit.zs(), 2); },
+  });
+})();
+</script>
+<script>
+/* SHIP - ASTRAL, the Constellation. MYTHIC, from the Rift. It DRAWS
+   CONSTELLATIONS.
+   - Wake: stars pinned into the sky along your route, joined by fine lines
+     into constellations (each star to the last, sometimes back to the one
+     before, so figures form). Every orb you collect becomes a star too, so your
+     route is written in the sky. Stars are heavy: the fabric sags under them.
+   - SPEED FORM (P.form): a MILKY WAY - a river of star dust and coloured
+     nebula along your line - and shooting stars peeling off the hull.
+   - Real speed (P.mach): stars go NOVA - a cross of light and a ring - and the
+     constellation lines blaze.
+   - STARFALL: a shower of meteors falls across your path ahead; every orb a
+     meteor crosses is yours, and a Wraith it strikes is starstruck.
+   Device (keep it unique): POINT STARS joined by STRAIGHT LINES. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#ece8ff', accent: '#a08fff', glow: '#d2c9ff', star: '#fff6dc' };
+  const NEB = ['#6a5cff', '#ff6ad5', '#3fd0ff'];
+  const LIFE = 4.2, MAX = 110;
+
+  function addStar(fx, x, y, s, links) {
+    const st = { x, y, s, t: SS.world.time, ph: Math.random() * 6, spike: Math.random() * 0.8, to: [], nova: -1 };
+    const n = fx.stars.length;
+    if (links && n) {
+      st.to.push(fx.stars[n - 1]);
+      if (n > 2 && Math.random() < 0.3) st.to.push(fx.stars[n - 3]);
+    }
+    fx.stars.push(st);
+    if (fx.stars.length > MAX) fx.stars.shift();
+    return st;
+  }
+
+  SS.registerShip({
+    id: 'astral', order: 15, rarity: 'mythic', name: 'ASTRAL', title: 'The Constellation',
+    desc: 'A star-crystal inside a turning armillary ring. It pins stars into the sky behind you and joins them into constellations - every orb you take becomes one.',
+    world: 'Stars weigh on the fabric: the grid sags under each one.',
+    ability: { name: 'STARFALL', desc: 'A shower of meteors falls across your path ahead: every orb a meteor crosses is yours, and a Wraith it strikes is starstruck.', cd: 8,
+      use(fx, P) {
+        const ca = Math.cos(P.angle), sa = Math.sin(P.angle);
+        for (let k = 0; k < 14; k++) {
+          const ahead = SS.rand(250, 1100), side = SS.rand(-1, 1);
+          const ex = P.x + ca * ahead - sa * side * 420, ey = P.y + sa * ahead + ca * side * 420;   // where it lands
+          const fa = P.angle + Math.PI / 2 * (side < 0 ? 1 : -1) + SS.rand(-0.5, 0.5), len = SS.rand(600, 800);
+          fx.meteors.push({ sx: ex - Math.cos(fa) * len, sy: ey - Math.sin(fa) * len, ex, ey, t: -k * 0.04, dur: 0.5, hx: 0, hy: 0 });
+        }
+        fx.hitW = false;
+        SS.audio.stars();
+      } },
+    unlock: null,
+    colors: C, tail: 14,
+    // a glassy choir: a fifth that shimmers slowly
+    voice: { wave1: 'sine', wave2: 'triangle', base: 110, ratio: 1.5, detune: 7, mix2: 0.5, filter: 'lowpass', q: 1, cutoff: 1400, cutoffRange: 3000, lfoRate: 3.5, lfoDepth: 0.006, noise: 0.05, noiseF: 6000, range: 1.3, gain: 1.1 },
+
+    init(fx) { fx.stars = []; fx.acc = 0; fx.side = 1; fx.meteors = []; fx.shoot = 0; fx.hitW = false; },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form, m = P.mach;
+      const back = 14 * kit.hullScale(SS.cam.zoom), ca = Math.cos(P.angle), sa = Math.sin(P.angle);
+      kit.lay(fx, 'acc', (64 - 22 * f) * zs, P, dt, (x, y) => {
+        if (r < 0.05) return;
+        fx.side = Math.random() < 0.7 ? -fx.side : fx.side;
+        const o = SS.rand(20, 70 + 50 * f) * zs * fx.side;
+        addStar(fx, x - ca * back - sa * o, y - sa * back + ca * o, (3.4 + 2 * r + 1.6 * f) * zs * SS.rand(0.7, 1.3), true);
+      });
+      while (fx.stars.length && t - fx.stars[0].t > LIFE) fx.stars.shift();
+      // stars are heavy
+      const n = fx.stars.length;
+      for (let i = n - 1; i >= Math.max(0, n - 30); i -= 2) {
+        const s = fx.stars[i], k = 1 - (t - s.t) / LIFE;
+        SS.world.dent(s.x, s.y, s.s * 16 + 30 * zs, s.s * 5 * k, 1);
+      }
+      // real speed: novas
+      if (m > 0.2 && n > 4 && Math.random() < m * dt * 5) {
+        const s = fx.stars[n - 1 - ((Math.random() * Math.min(12, n - 1)) | 0)];
+        if (s.nova < 0) { s.nova = t; SS.fx.ring(s.x, s.y, C.star, 6, 90 * zs, 0.6, 2); }
+      }
+      // speed form: shooting stars peel off the hull
+      fx.shoot -= dt;
+      if (f > 0.1 && fx.shoot <= 0) {
+        fx.shoot = 0.18 / f;
+        const a = P.angle + Math.PI + SS.rand(-0.7, 0.7), s = SS.rand(500, 900);
+        SS.fx.spawn(P.x, P.y, Math.cos(a) * s + P.vx * 0.4, Math.sin(a) * s + P.vy * 0.4, Math.random() < 0.5 ? C.star : C.accent, 0.45, 2.4, 1, 0.6);
+      }
+      // meteors: sweep orbs along their path as they fall
+      const live = SS.G.state === 'play', W = SS.wraith;
+      for (let i = fx.meteors.length - 1; i >= 0; i--) {
+        const q = fx.meteors[i];
+        const u0 = SS.clamp(q.t / q.dur, 0, 1);
+        q.t += dt;
+        const u1 = SS.clamp(q.t / q.dur, 0, 1);
+        if (q.t > q.dur + 0.5) { fx.meteors.splice(i, 1); continue; }
+        if (u1 <= 0 || u0 >= 1) continue;
+        const ax = q.sx + (q.ex - q.sx) * u0, ay = q.sy + (q.ey - q.sy) * u0, bx = q.sx + (q.ex - q.sx) * u1, by = q.sy + (q.ey - q.sy) * u1;
+        q.hx = bx; q.hy = by;
+        const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1;
+        for (const o of SS.orbs) {
+          if (o.dead || o.grabbed) continue;
+          const w = SS.clamp(((o.x - ax) * dx + (o.y - ay) * dy) / L2, 0, 1), px = ax + dx * w - o.x, py = ay + dy * w - o.y;
+          if (px * px + py * py < 55 * 55) SS.collectOrb(o, P, live);
+        }
+        if (!fx.hitW && W.near(bx, by, 110)) { fx.hitW = true; W.stunFor(2); SS.fx.text(W.x, W.y - 60, 'STARSTRUCK', C.star, 24); }
+        if (u1 >= 1) { SS.fx.ring(q.ex, q.ey, C.star, 8, 120, 0.5, 3); SS.fx.burst(q.ex, q.ey, C.accent, 6, 300, 3, 0.5); q.t = q.dur + 0.01; }
+      }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const t = V.t, px = 1 / V.z, f = P.form, m = P.mach, stars = fx.stars, zs = kit.zs();
+      ctx.globalCompositeOperation = 'lighter';
+      // speed form: the milky way - nebula glow and a river of star dust
+      if (f > 0.05) {
+        const tr = P.trail, n = Math.min(tr.length, (40 + 70 * f) | 0);
+        for (let i = 3; i < n; i += 5) {
+          const p = tr[i], an = kit.perp(tr, i), o = Math.sin(i * 0.37) * (10 + i * 0.8) * zs;
+          SS.drawGlow(ctx, NEB[(i / 5 | 0) % 3], p.x + Math.cos(an) * o, p.y + Math.sin(an) * o, (70 + i * 3) * zs, 0.24 * f * (1 - i / n));
+        }
+        ctx.fillStyle = 'rgba(240,236,255,' + 0.8 * f + ')';
+        ctx.beginPath();
+        for (let i = 2; i < n; i++) {
+          const p = tr[i], an = kit.perp(tr, i), fall = 1 - i / n;
+          for (let k = 0; k < 3; k++) {
+            const j = (p.j * [3.17, 7.31, 11.9][k]) % 1, o = (j - 0.5) * (24 + i * 1.8) * zs, s = (1.2 + 2.4 * ((j * 11.7) % 1)) * zs * (0.4 + 0.6 * fall);
+            ctx.rect(p.x + Math.cos(an) * o - s / 2, p.y + Math.sin(an) * o - s / 2, s, s);
+          }
+        }
+        ctx.fill();
+      }
+      // constellation lines
+      ctx.strokeStyle = SS.rgba(C.accent, 0.55 + 0.35 * m);
+      ctx.lineWidth = Math.max(px * 1.2, (1.3 + 0.8 * m) * zs);
+      ctx.beginPath();
+      for (const s of stars) {
+        if (t - s.t > LIFE * 0.85) continue;
+        for (const o of s.to) { if (t - o.t > LIFE * 0.85) continue; ctx.moveTo(s.x, s.y); ctx.lineTo(o.x, o.y); }
+      }
+      ctx.stroke();
+      // stars: a glow, four diffraction spikes, twinkling
+      ctx.strokeStyle = SS.rgba(C.star, 0.8);
+      ctx.lineWidth = Math.max(px, 0.8 * zs);
+      ctx.beginPath();
+      for (const s of stars) {
+        const age = t - s.t, k = Math.min(1, age * 5) * (1 - SS.smooth((age - LIFE * 0.75) / (LIFE * 0.25)));
+        const tw = 0.75 + 0.25 * Math.sin(t * 7 + s.ph), L = s.s * 3.2 * k * tw;
+        const a = s.spike;
+        ctx.moveTo(s.x - Math.cos(a) * L, s.y - Math.sin(a) * L); ctx.lineTo(s.x + Math.cos(a) * L, s.y + Math.sin(a) * L);
+        ctx.moveTo(s.x + Math.sin(a) * L, s.y - Math.cos(a) * L); ctx.lineTo(s.x - Math.sin(a) * L, s.y + Math.cos(a) * L);
+      }
+      ctx.stroke();
+      for (const s of stars) {
+        const age = t - s.t, k = Math.min(1, age * 5) * (1 - SS.smooth((age - LIFE * 0.75) / (LIFE * 0.25)));
+        SS.drawGlow(ctx, C.star, s.x, s.y, s.s * 5, 0.9 * k);
+        if (s.nova >= 0 && t - s.nova < 0.8) {
+          const u = (t - s.nova) / 0.8, L = s.s * 22 * Math.sin(u * Math.PI);
+          SS.drawGlow(ctx, '#ffffff', s.x, s.y, s.s * 12 * (1 - u), 0.9);
+          ctx.strokeStyle = 'rgba(255,255,255,' + (1 - u) + ')';
+          ctx.beginPath(); ctx.moveTo(s.x - L, s.y); ctx.lineTo(s.x + L, s.y); ctx.moveTo(s.x, s.y - L); ctx.lineTo(s.x, s.y + L); ctx.stroke();
+        }
+      }
+      // meteors: a white head on a violet tail
+      for (const q of fx.meteors) {
+        const u = SS.clamp(q.t / q.dur, 0, 1);
+        if (q.t < 0 || u >= 1) continue;
+        const tx = q.hx - (q.ex - q.sx) * 0.25, ty = q.hy - (q.ey - q.sy) * 0.25;
+        const g = ctx.createLinearGradient(tx, ty, q.hx, q.hy);
+        g.addColorStop(0, 'rgba(160,143,255,0)'); g.addColorStop(1, 'rgba(255,246,220,0.95)');
+        ctx.strokeStyle = g; ctx.lineWidth = 5 * zs;
+        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(q.hx, q.hy); ctx.stroke();
+        SS.drawGlow(ctx, C.star, q.hx, q.hy, 22 * zs, 0.9);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      // the armillary ring, behind
+      const ry = 11 * Math.abs(Math.sin(t * 1.3)) + 2;
+      ctx.strokeStyle = SS.rgba(C.accent, 0.8); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(1, 0, 12, ry, 0.5, Math.PI, SS.TAU); ctx.stroke();
+      // the star-crystal: a four-pointed star, long to the front
+      const g = ctx.createRadialGradient(2, -1, 0.5, 1, 0, 14);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, C.hull); g.addColorStop(1, '#6d5fd8');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(21, 0); ctx.lineTo(3, -2.6); ctx.lineTo(1, -10); ctx.lineTo(-1.6, -2.4); ctx.lineTo(-13, 0);
+      ctx.lineTo(-1.6, 2.4); ctx.lineTo(1, 10); ctx.lineTo(3, 2.6); ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 0.5; ctx.stroke();
+      // the ring, in front, with a little moon riding it
+      ctx.strokeStyle = SS.rgba(C.accent, 0.95); ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.ellipse(1, 0, 12, ry, 0.5, 0, Math.PI); ctx.stroke();
+      const ma = t * 2.2;
+      ctx.globalCompositeOperation = 'lighter';
+      SS.drawGlow(ctx, C.star, 1 + Math.cos(ma) * 12 * Math.cos(0.5) - Math.sin(ma) * ry * Math.sin(0.5), Math.cos(ma) * 12 * Math.sin(0.5) + Math.sin(ma) * ry * Math.cos(0.5), 3, 0.9);
+      SS.drawGlow(ctx, C.glow, 1, 0, 6 + 6 * r + 8 * f, 0.7);
+      SS.drawGlow(ctx, '#ffffff', 1, 0, 2.5, 1);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    onBoost(fx, P) { SS.audio.chime(); },
+    onTurn(fx, P, sign) { addStar(fx, P.x, P.y, 4 * kit.zs(), true); },
+    onCollect(fx, P, o) { addStar(fx, o.x, o.y, (3 + o.t) * kit.zs(), true); SS.fx.ring(o.x, o.y, C.star, 4, 30, 0.3, 1.5); },
+    onTopSpeed(fx, P) { SS.audio.stars(); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.accent, 30, 500, 0.9, 3); },
+  });
+})();
+</script>
+<script>
 /* SHIP - DEAD AIR (Halloween event, analog horror). A haunted broadcast: an
    old CRT set with rabbit-ear antennae, an eye on its screen and a red REC
    light.
@@ -4825,7 +6118,7 @@ body.touch kbd { display: none; }
   }
 
   SS.registerShip({
-    id: 'deadair', order: 10, event: 'halloween', name: 'DEAD AIR', title: 'Analog Horror',
+    id: 'deadair', order: 20, rarity: 'limited', event: 'halloween', name: 'DEAD AIR', title: 'Analog Horror',
     desc: 'A haunted broadcast. Static trails behind it, faces surface in the noise, and the emergency broadcast types itself into space ahead of you.',
     world: 'Writes an emergency broadcast into space; the fabric jitters with interference.',
     ability: { name: 'JUMP CUT', desc: 'The tape cuts: vanish and reappear 700 ahead, collecting every orb on the cut.', cd: 6,
@@ -4839,7 +6132,7 @@ body.touch kbd { display: none; }
         SS.fx.ring(P.x, P.y, '#ffffff', 10, 200, 0.3, 3);
         SS.audio.tapeCut();
       } },
-    unlock: { text: 'Halloween event', test: () => SS.EVENTS.halloween.active },
+    unlock: null,                 // LIMITED: only from the Rift while Halloween runs; kept for good
     colors: C, tail: 13,
     // mains hum that barely moves with speed, under static hiss that does
     voice: { wave1: 'sawtooth', wave2: 'sine', base: 60, ratio: 2, detune: 2, mix2: 0.5, filter: 'lowpass', q: 0.8, cutoff: 320, cutoffRange: 1100, noise: 0.7, noiseF: 3000, range: 0.45, gain: 0.9 },
@@ -5093,7 +6386,7 @@ body.touch kbd { display: none; }
   }
 
   SS.registerShip({
-    id: 'maw', order: 11, event: 'halloween', name: 'MAW', title: 'Monster Horror',
+    id: 'maw', order: 21, rarity: 'limited', event: 'halloween', name: 'MAW', title: 'Monster Horror',
     desc: 'Something that should not be flying. A many-eyed head with snapping jaws, dragging a mass of tentacles that reach out and take what they want.',
     world: 'Grabs: tentacles lash out to orbs in reach and drag them into its jaws.',
     ability: { name: 'DEVOUR', desc: 'Lunge with the jaws wide: everything near the maw is swallowed and a Wraith in reach is bitten.', cd: 7,
@@ -5104,7 +6397,7 @@ body.touch kbd { display: none; }
         SS.fx.shake(0.35);
         SS.audio.roar();
       } },
-    unlock: { text: 'Halloween event', test: () => SS.EVENTS.halloween.active },
+    unlock: null,                 // LIMITED: only from the Rift while Halloween runs; kept for good
     colors: C, tail: 14,
     voice: { wave1: 'sawtooth', wave2: 'square', base: 40, ratio: 0.5, detune: 20, mix2: 0.7, filter: 'lowpass', q: 5, cutoff: 200, cutoffRange: 900, lfoRate: 6, lfoDepth: 0.12, noise: 0.35, noiseF: 400, range: 1.1, gain: 1.2 },
 
@@ -5388,7 +6681,7 @@ body.touch kbd { display: none; }
   }
 
   SS.registerShip({
-    id: 'hollow', order: 12, event: 'halloween', name: 'HOLLOW', title: 'Jack-o’-Lantern',
+    id: 'hollow', order: 22, rarity: 'limited', event: 'halloween', name: 'HOLLOW', title: 'Jack-o’-Lantern',
     desc: 'A carved pumpkin with a candle burning inside. It leaves flames hovering in the dark and casts its grin ahead of you as a face of light.',
     world: 'Carves its grin into the dark: its light is cast ahead of you as a giant glowing face.',
     ability: { name: 'TRICK OR TREAT', desc: 'Every orb near you goes up a tier (3 in 4) or vanishes; a Wraith in the light is spooked.', cd: 8,
@@ -5405,7 +6698,7 @@ body.touch kbd { display: none; }
         SS.fx.ring(P.x, P.y, C.glow, 20, R, 0.7, 6);
         SS.audio.spook();
       } },
-    unlock: { text: 'Halloween event', test: () => SS.EVENTS.halloween.active },
+    unlock: null,                 // LIMITED: only from the Rift while Halloween runs; kept for good
     colors: C, tail: 15,
     // a hollow organ fifth with a slow vibrato, and a little crackle
     voice: { wave1: 'triangle', wave2: 'triangle', base: 98, ratio: 1.498, detune: 6, mix2: 0.55, filter: 'lowpass', cutoff: 700, cutoffRange: 2200, lfoRate: 5.5, lfoDepth: 0.018, noise: 0.18, noiseF: 900, range: 1.2, gain: 1.15 },
@@ -5614,7 +6907,7 @@ body.touch kbd { display: none; }
   let mm, mmT = 0, bounceT = 0, breakId = null, novaT = 0;
 
   hud.init = () => {
-    for (const id of ['hud', 'h-region', 'h-goal', 'h-goal-text', 'h-goal-n', 'h-speed', 'h-speedbar', 'h-gatemark', 'h-note', 'h-energy', 'h-level', 'h-xp',
+    for (const id of ['hud', 'h-region', 'h-goal', 'h-goal-text', 'h-goal-n', 'h-speed', 'h-speedbar', 'h-gatemark', 'h-note', 'h-energy', 'h-wisps', 'h-wisps-box', 'h-level', 'h-xp',
       'b-prestige', 'h-chase', 'h-chase-name', 'h-chase-bar', 'h-chase-time', 'h-ability', 'h-ab-name', 'h-ab-cd', 'h-boost', 'h-greed', 'h-greed-bar', 'h-greed-label',
       'minimap', 'banner', 'toasts', 'dread', 'flash', 'game']) el[id] = $(id);
     mm = el.minimap.getContext('2d');
@@ -5678,6 +6971,7 @@ body.touch kbd { display: none; }
     put('note', (v) => (el['h-note'].textContent = v), note);
     put('noteh', (v) => el['h-note'].classList.toggle('hot', v), hot);
     put('energy', (v) => (el['h-energy'].textContent = v), SS.fmt(s.energy));
+    put('wisps', (v) => (el['h-wisps'].textContent = v), SS.fmt(s.wisps));
     const capped = s.level >= st.prestigeLevel;
     put('level', (v) => (el['h-level'].textContent = v), capped ? s.level + ' MAX' : s.level);
     put('xp', (v) => (el['h-xp'].style.width = v + '%'), capped ? 100 : Math.round(s.xp / SS.xpNeeded(s.level) * 100));
@@ -5802,6 +7096,15 @@ body.touch kbd { display: none; }
     A().pickup(o.t, SS.P.chain);
     if (o.t >= 3 && SS.world.time - novaT > 0.4) { novaT = SS.world.time; SS.fx.text(o.x, o.y - 30, 'NOVA', T.color, 22); }
   });
+  let riftHinted = false;
+  SS.on('wisps', (n, why) => {
+    if (!el['h-wisps-box']) return;
+    const box = el['h-wisps-box'];
+    box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
+    if (!live()) return;
+    if (why) hud.toast('<b>+' + n + ' WISPS</b> · ' + why, 'wisp');
+    if (!riftHinted && SS.save.wisps >= SS.rift.COST && SS.save.wisps - n < SS.rift.COST) { riftHinted = true; setTimeout(() => hud.toast('<b>THE RIFT</b> · enough wisps to pull a ship · ESC', 'wisp'), 900); }
+  });
   SS.on('boostStart', () => A().boost());
   SS.on('lightning', (d) => A().lightning(d));
   SS.on('struck', () => A().struck());
@@ -5819,7 +7122,7 @@ body.touch kbd { display: none; }
   const SS = window.SS;
   const $ = (id) => document.getElementById(id);
   const ui = (SS.ui = { open: 'menu', preview: null });
-  const SCREENS = ['menu', 'hangar', 'codex', 'settings', 'shop', 'pause'];
+  const SCREENS = ['menu', 'hangar', 'rift', 'codex', 'settings', 'shop', 'pause'];
   let returnTo = 'menu', codexTab = 'orbs';
   const BOLT = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -5832,8 +7135,15 @@ body.touch kbd { display: none; }
     if (id === 'settings') renderSettings();
     if (id === 'shop') renderShop();
     if (id === 'menu') renderMenu();
-    if (id === 'pause') $('p-sync').textContent = syncText();
+    if (id === 'rift') SS.rift.render();
+    if (id === 'pause') { $('p-sync').textContent = syncText(); riftBadge('p-rift-badge'); }
   };
+  /** The Rift button's badge: your wisps, lit when you can pull. */
+  function riftBadge(id) {
+    const w = SS.save.wisps, b = $(id);
+    b.textContent = SS.fmt(w);
+    b.parentNode.classList.toggle('ready', w >= SS.rift.COST);
+  }
   ui.closeAll = () => { for (const s of SCREENS) $(s).classList.add('hidden'); ui.open = null; };
   const inGame = () => SS.G.state === 'play' || SS.G.state === 'paused';
   /** Close a sub-screen back to wherever it was opened from. */
@@ -5858,9 +7168,10 @@ body.touch kbd { display: none; }
     const s = SS.save, ship = SS.shipById[s.ship];
     const found = s.regions.length;
     $('menu-summary').innerHTML = s.stats.playtime < 5 && s.level === 1 && !s.prestiges
-      ? 'Four regions. Four ships. One Wraith that wants what you collect.'
+      ? 'Four regions. A Rift full of ships. One Wraith that wants what you collect.'
       : 'Level <b>' + s.level + '</b> &middot; Prestige <b>' + s.prestiges + '</b> &middot; <b>' + ship.name + '</b> &middot; ' + found + '/' + SS.regions.length + ' regions';
     $('b-play').textContent = s.stats.playtime > 5 ? 'CONTINUE' : 'PLAY';
+    riftBadge('rift-badge');
     renderAccount();
   }
   function renderAccount() {
@@ -5876,12 +7187,14 @@ body.touch kbd { display: none; }
     list.innerHTML = '';
     for (const sh of SS.ships) {
       const owned = s.ships.includes(sh.id);
+      const ev = sh.event && SS.EVENTS[sh.event], rar = SS.rarityOf(sh);
+      if (!owned && ev && !ev.active) continue;          // a limited ship you missed: gone with its event
       const li = document.createElement('li');
       const b = document.createElement('button');
       b.className = (sh.id === sel ? 'sel ' : '') + (owned ? '' : 'locked');
       b.style.setProperty('--ship', sh.colors.accent);
-      const ev = sh.event && SS.EVENTS[sh.event];
-      b.innerHTML = '<b>' + esc(sh.name) + (ev ? ' <em class="ev" style="--ev:' + ev.color + '">' + esc(ev.name.toUpperCase()) + '</em>' : '') + '</b><span>' + esc(owned ? (sh.id === s.ship ? 'Equipped' : sh.title) : 'Locked · ' + sh.unlock.text) + '</span>';
+      const tag = ev ? [ev.name, ev.color] : rar ? [rar.name, rar.color] : null;
+      b.innerHTML = '<b>' + esc(sh.name) + (tag ? ' <em class="ev" style="--ev:' + tag[1] + '">' + esc(tag[0].toUpperCase()) + '</em>' : '') + '</b><span>' + esc(owned ? (sh.id === s.ship ? 'Equipped' : sh.title) : lockText(sh)) + '</span>';
       b.onclick = () => { SS.audio.click(); ui.preview = sh.id; SS.setShip(sh.id, true); renderHangar(); };
       li.appendChild(b);
       list.appendChild(li);
@@ -5895,12 +7208,15 @@ body.touch kbd { display: none; }
     $('sv-world').textContent = sh.world;
     $('sv-ability').textContent = sh.ability.name + ' — ' + sh.ability.desc + ' (' + sh.ability.cd + ' s)';
     $('sv-lock').classList.toggle('hidden', owned);
-    $('sv-lock').textContent = owned ? '' : 'LOCKED · ' + sh.unlock.text;
-    const eq = $('sv-equip');
-    eq.disabled = !owned || s.ship === sel;
-    eq.textContent = !owned ? 'LOCKED' : s.ship === sel ? 'EQUIPPED' : 'EQUIP';
-    eq.onclick = () => { s.ship = sel; SS.setShip(sel); SS.checkpoint(); SS.audio.buy(); renderHangar(); };
+    $('sv-lock').textContent = owned ? '' : lockText(sh).toUpperCase();
+    const eq = $('sv-equip'), inRift = !owned && !!sh.rarity;
+    eq.disabled = inRift ? false : !owned || s.ship === sel;
+    eq.textContent = inRift ? 'OPEN THE RIFT' : !owned ? 'LOCKED' : s.ship === sel ? 'EQUIPPED' : 'EQUIP';
+    eq.onclick = inRift
+      ? () => { ui.preview = null; SS.setShip(s.ship, true); openFrom('rift', 'menu'); }
+      : () => { s.ship = sel; SS.setShip(sel); SS.checkpoint(); SS.audio.buy(); renderHangar(); };
   }
+  const lockText = (sh) => (sh.rarity ? 'In the Rift · ' + SS.rarityOf(sh).name.toLowerCase() : 'Locked · ' + sh.unlock.text);
   ui.drawHangar = () => {
     if (ui.open !== 'hangar') return;
     const c = $('ship-canvas'), g = c.getContext('2d'), t = SS.world.time;
@@ -6009,6 +7325,9 @@ body.touch kbd { display: none; }
     $('ver').textContent = 'v' + SS.VERSION;
     $('b-play').onclick = () => { SS.audio.click(); SS.startRun(); };
     $('b-hangar').onclick = () => openFrom('hangar', 'menu');
+    $('b-rift').onclick = () => openFrom('rift', 'menu');
+    $('p-rift').onclick = () => openFrom('rift', 'pause');
+    SS.rift.init();
     $('b-codex').onclick = () => openFrom('codex', 'menu');
     $('b-settings').onclick = () => openFrom('settings', 'menu');
     $('b-signin').onclick = () => SS.signIn();
@@ -6062,8 +7381,337 @@ body.touch kbd { display: none; }
   ui.openShop = () => { if (SS.G.state !== 'play') return; SS.pause(); openFrom('shop', 'game'); };
   ui.pause = () => { if (SS.G.state !== 'play') return; SS.pause(); returnTo = 'game'; SS.audio.click(); ui.show('pause'); };
 
-  SS.on('saveSwap', () => { if (ui.open === 'menu') renderMenu(); if (ui.open === 'shop') renderShop(); });
+  SS.on('saveSwap', () => { if (ui.open === 'menu') renderMenu(); if (ui.open === 'shop') renderShop(); if (ui.open === 'rift') SS.rift.render(); });
   SS.on('purchase', () => { if (ui.open === 'shop') renderShop(); });
+})();
+</script>
+<script>
+/* SPEED SIMULATOR 2 - THE RIFT (the gacha).
+   Ships with a `rarity` (SS.RARITY, core.js) are found only here, pulled with
+   WISPS - a second currency energy can't buy. Wisps come from moments: escaping
+   a Wraith, goals, secrets, breaking a gate, prestige, and a trickle while you
+   fly. alloy/validator.js rate-limits wisps from EARN and FLIGHT_S below -
+   change them together.
+   - One pull costs COST; ten cost TEN and hold at least one Rare or better.
+   - Pity: a Mythic or better within PITY pulls, guaranteed.
+   - A duplicate refunds wisps (SS.RARITY refund). Refunds never exceed the
+     cost, so pulling can only lower the balance.
+   - LIMITED ships are in the pool only while their event runs; pulled, they
+     stay yours for good.
+   The reveal draws on its own overlay canvas; main.js calls rift.draw(dt). */
+(function () {
+  'use strict';
+  const SS = window.SS;
+  const $ = (id) => document.getElementById(id);
+  const COST = 10, TEN = 100, PITY = 40, FLIGHT_S = 30;
+  const EARN = { escape: 5, goal: 10, secret: 20, region: 15, prestige: 25 };
+  const rift = (SS.rift = { COST, TEN, PITY, EARN, FLIGHT_S });
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const WISP = (rift.WISP = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.4 5.5 5.6 5.5 11.2A5.5 5.5 0 0 1 6.5 13.6c0-2.6 1.6-4 2.6-5.6.3 1.7 1.1 2.7 2.2 3C11 8.2 10.7 5 12 2z"/></svg>');
+
+  // ---------------------------------------------------------------- earning
+  // Each reward is added in the same tick as the save change that earns it,
+  // before any checkpoint, so the validator always sees the wisps together with
+  // their cause (a new goal, secret, region, prestige or escape).
+  SS.earnWisps = (n, why) => { SS.save.wisps += n; SS.emit('wisps', n, why); };
+  SS.on('wraithEscape', () => SS.earnWisps(EARN.escape, 'Wraith escaped'));
+  SS.on('goal', () => SS.earnWisps(EARN.goal, 'goal complete'));
+  SS.on('codex', (kind) => { if (kind === 'secrets') SS.earnWisps(EARN.secret, 'secret found'); });
+  SS.on('gateBreak', () => SS.earnWisps(EARN.region, 'gate broken'));
+  SS.on('prestige', () => SS.earnWisps(EARN.prestige, 'prestige'));
+  let flown = 0;
+  /** Flight trickle, from progressUpdate's game dt (never faster than real time). */
+  rift.tick = (dt) => { flown += dt; if (flown >= FLIGHT_S) { flown -= FLIGHT_S; SS.earnWisps(1, null); } };
+
+  // ---------------------------------------------------------------- the pool
+  const live = (sh) => !sh.event || !!(SS.EVENTS[sh.event] && SS.EVENTS[sh.event].active);
+  /** Tiers that have something in them right now, with their share (p). */
+  rift.tiers = () => {
+    const out = [];
+    let sum = 0;
+    SS.RARITY.forEach((r, idx) => {
+      const pool = SS.ships.filter((sh) => sh.rarity === r.id && live(sh));
+      if (pool.length) { out.push({ r, idx, pool, p: 0 }); sum += r.weight; }
+    });
+    for (const x of out) x.p = x.r.weight / sum;
+    return out;
+  };
+  function roll(minIdx) {
+    const all = rift.tiers(), T = all.filter((x) => x.idx >= minIdx).length ? all.filter((x) => x.idx >= minIdx) : all;
+    let u = Math.random() * T.reduce((a, x) => a + x.r.weight, 0), pick = T[T.length - 1];
+    for (const x of T) { u -= x.r.weight; if (u < 0) { pick = x; break; } }
+    return { ship: SS.pick(pick.pool), rarity: pick.r, idx: pick.idx, dup: false };
+  }
+
+  rift.pull = (n) => {
+    const s = SS.save, cost = n === 10 ? TEN : COST;
+    if (reveal || s.wisps < cost) { SS.audio.deny(); return null; }
+    s.wisps -= cost;
+    const res = [];
+    for (let i = 0; i < n; i++) {
+      s.rift.pity++;
+      let min = s.rift.pity >= PITY ? 3 : 0;
+      if (n === 10 && i === n - 1 && !res.some((x) => x.idx >= 2)) min = Math.max(min, 2);
+      const x = roll(min);
+      if (x.idx >= 3) s.rift.pity = 0;
+      x.dup = s.ships.includes(x.ship.id);
+      if (x.dup) s.wisps += x.rarity.refund;
+      else s.ships.push(x.ship.id);
+      res.push(x);
+    }
+    s.rift.pulls += n;
+    SS.checkpoint();
+    startReveal(res, n);
+    return res;
+  };
+
+  // ---------------------------------------------------------------- the screen
+  const pct = (p) => Math.round(p * 1000) / 10 + '%';
+  rift.render = () => {
+    const s = SS.save, T = rift.tiers();
+    $('rift-wisps').textContent = SS.fmt(s.wisps);
+    const lim = T.find((x) => x.r.id === 'limited'), bn = $('rift-banner');
+    bn.classList.toggle('hidden', !lim);
+    if (lim) {
+      const ev = SS.EVENTS[lim.pool[0].event] || { name: 'Limited', color: lim.r.color };
+      bn.style.setProperty('--ev', ev.color);
+      bn.innerHTML = '<b>' + esc(ev.name.toUpperCase()) + ' · LIMITED</b><span>' + lim.pool.map((sh) => esc(sh.name)).join(' · ') +
+        '</span><em>In the Rift only while the event runs. Pull one and it’s yours for good.</em>';
+    }
+    $('rift-odds').innerHTML = T.map((x) => '<div class="odd" style="--r:' + x.r.color + '"><b>' + x.r.name + '</b><span class="pct">' + pct(x.p) + '</span><span class="pool">' +
+      x.pool.map((sh) => '<i' + (s.ships.includes(sh.id) ? ' class="own" title="Owned"' : '') + '>' + esc(sh.name) + '</i>').join('') + '</span></div>').join('');
+    $('rift-pity').innerHTML = 'Mythic or better within <b>' + Math.max(1, PITY - s.rift.pity) + '</b> pulls · ×10 holds a <b>Rare</b> or better';
+    const b1 = $('rift-1'), b10 = $('rift-10');
+    b1.innerHTML = '<span>PULL ×1</span><span class="cost">' + WISP + COST + '</span>';
+    b10.innerHTML = '<span>PULL ×10</span><span class="cost">' + WISP + TEN + '</span>';
+    b1.disabled = s.wisps < COST; b10.disabled = s.wisps < TEN;
+    $('rift-earn').innerHTML = 'Wisps come from: escaping a Wraith <b>+' + EARN.escape + '</b> · a goal <b>+' + EARN.goal + '</b> · a new region <b>+' + EARN.region +
+      '</b> · a secret <b>+' + EARN.secret + '</b> · prestige <b>+' + EARN.prestige + '</b> · and <b>+1</b> for every ' + FLIGHT_S + ' s you fly.';
+  };
+
+  // ---------------------------------------------------------------- the reveal
+  // A slit of light opens and hints at the best rarity (white, then green or
+  // blue, then purple or gold at the last moment), tears open, and the ship
+  // flies out. Ten pulls deal ten cards instead.
+  const OPEN = 1.5, SHOW = 2.25;
+  let reveal = null, motes = [];
+  rift.busy = () => !!reveal;
+  function startReveal(res, n) {
+    reveal = { res, n, t: 0, best: res.reduce((m, x) => Math.max(m, x.idx), 0), dealt: 0, info: false, cards: null };
+    motes = Array.from({ length: 70 }, () => ({ a: Math.random() * SS.TAU, r: SS.rand(0.35, 1.1), ph: Math.random(), s: SS.rand(0.6, 1.4) }));
+    $('reveal').classList.remove('hidden');
+    $('rv-info').classList.add('hidden');
+    $('rv-actions').classList.add('hidden');
+    SS.audio.riftPull(reveal.best);
+  }
+  const hint = (R) => SS.RARITY[R.t < 0.55 ? 0 : R.t < 1.05 ? Math.min(R.best, 2) : R.best].color;
+
+  function showInfo(R) {
+    R.info = true;
+    const one = R.n === 1 ? R.res[0] : null;
+    const rar = $('rv-rar'), note = $('rv-note');
+    $('rv-info').classList.toggle('ten', !one);
+    if (one) {
+      rar.textContent = one.rarity.name + (one.ship.event && SS.EVENTS[one.ship.event] ? ' · ' + SS.EVENTS[one.ship.event].name.toUpperCase() : '');
+      rar.style.color = one.rarity.color;
+      $('rv-name').textContent = one.ship.name;
+      $('rv-title').textContent = one.ship.title;
+      note.innerHTML = one.dup ? 'Already yours · <b>+' + one.rarity.refund + '</b> wisps back' : '<b>NEW SHIP</b> · ' + esc(one.ship.world);
+    } else {
+      const fresh = R.res.filter((x) => !x.dup).length, back = R.res.reduce((a, x) => a + (x.dup ? x.rarity.refund : 0), 0);
+      rar.textContent = 'TEN PULLS'; rar.style.color = SS.RARITY[R.best].color;
+      $('rv-name').textContent = fresh ? fresh + ' NEW SHIP' + (fresh > 1 ? 'S' : '') : 'NOTHING NEW';
+      $('rv-title').textContent = '';
+      note.innerHTML = back ? 'Duplicates gave back <b>+' + back + '</b> wisps' : '';
+    }
+    const eq = $('rv-equip');
+    eq.classList.toggle('hidden', !(one && !one.dup));
+    const again = $('rv-again'), cost = R.n === 10 ? TEN : COST;
+    again.innerHTML = '<span>AGAIN ×' + R.n + '</span><span class="cost">' + WISP + cost + '</span>';
+    again.disabled = SS.save.wisps < cost;
+    $('rv-info').classList.remove('hidden');
+    $('rv-actions').classList.remove('hidden');
+  }
+  function advance() {
+    const R = reveal;
+    if (!R) return;
+    if (R.t < SHOW) { R.t = SHOW; return; }       // skip the slit
+    if (R.n === 10 && R.dealt < 10) { R.dealt = 10; R.skip = true; return; }
+    if (!R.info) showInfo(R);
+  }
+  function closeReveal() {
+    reveal = null;
+    $('reveal').classList.add('hidden');
+    if (SS.ui.open === 'rift') rift.render();
+  }
+
+  function sizeCanvas(c) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.75), w = innerWidth || 1, h = innerHeight || 1;
+    if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    return { dpr, w, h };
+  }
+  function hull(g, sh, x, y, S, t, a) {
+    const rise = 0.75 + 0.25 * Math.sin(t * 0.9);
+    const fake = { rise, form: SS.smooth((rise - 0.72) / 0.26), boosting: false, bank: Math.sin(t * 0.7) * 0.3, hunted: false, mach: 0, speed: 0 };
+    g.save();
+    g.translate(x, y);
+    g.rotate(a);
+    g.globalCompositeOperation = 'lighter';
+    SS.drawGlow(g, sh.colors.glow, -(sh.tail || 15) * S, 0, 14 * S, 0.55);
+    g.globalCompositeOperation = 'source-over';
+    g.scale(S, S * (1 - Math.abs(fake.bank) * 0.2));
+    g.translate(-4, 0);
+    sh.drawHull(g, fake, { z: 1, t });
+    g.restore();
+  }
+  function rays(g, x, y, R0, col, t, n, alpha) {
+    g.save();
+    g.translate(x, y);
+    g.rotate(t * 0.25);
+    g.fillStyle = SS.rgba(col, alpha);
+    g.beginPath();
+    for (let k = 0; k < n; k++) {
+      const a = k / n * SS.TAU, w = SS.TAU / n * 0.22;
+      g.moveTo(0, 0); g.lineTo(Math.cos(a - w) * R0, Math.sin(a - w) * R0); g.lineTo(Math.cos(a + w) * R0, Math.sin(a + w) * R0);
+    }
+    g.fill();
+    g.restore();
+  }
+
+  rift.draw = (dt) => {
+    const R = reveal;
+    if (!R) return;
+    const c = $('reveal-canvas'), g = c.getContext('2d'), { dpr, w: W, h: H } = sizeCanvas(c);
+    R.t += Math.min(dt, 0.05);
+    const t = R.t, cx = W / 2, cy = H * 0.44, col = hint(R);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.globalCompositeOperation = 'source-over';
+    g.fillStyle = 'rgba(2,4,10,' + Math.min(0.94, t * 4) + ')';
+    g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = 'lighter';
+
+    // the slit: grows, flickers, changes colour, then tears open
+    if (t < OPEN + 0.5) {
+      const grow = SS.easeOut(t / 0.5), open = SS.smooth((t - 1.1) / (OPEN - 1.1)), gone = SS.clamp((t - OPEN) / 0.5, 0, 1);
+      const h = H * 0.62 * grow * (1 + 0.15 * open), wd = (3 + 2 * Math.sin(t * 40) + open * W * 0.09) * (1 - gone);
+      const shake = R.best >= 3 && t > 1.05 && t < OPEN ? SS.rand(-3, 3) : 0;
+      for (const m of motes) {      // light pulled into the slit
+        const u = (m.ph + t * 0.7 * m.s) % 1, rr = m.r * Math.min(W, H) * 0.55 * (1 - u);
+        const x = cx + Math.cos(m.a) * rr, y = cy + Math.sin(m.a) * rr * 0.8;
+        g.strokeStyle = SS.rgba(col, 0.5 * u * (1 - gone)); g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + (cx - x) * 0.08, y + (cy - y) * 0.08); g.stroke();
+      }
+      SS.drawGlow(g, col, cx + shake, cy, Math.max(80, h * 0.55), 0.35 * (1 - gone) + 0.25 * open);
+      g.fillStyle = SS.rgba(col, 0.9 * (1 - gone));
+      g.beginPath();
+      g.moveTo(cx + shake, cy - h / 2);
+      g.quadraticCurveTo(cx + shake + wd, cy, cx + shake, cy + h / 2);
+      g.quadraticCurveTo(cx + shake - wd, cy, cx + shake, cy - h / 2);
+      g.fill();
+      g.fillStyle = 'rgba(255,255,255,' + 0.85 * (1 - gone) + ')';
+      g.beginPath();
+      g.moveTo(cx + shake, cy - h * 0.42);
+      g.quadraticCurveTo(cx + shake + wd * 0.35, cy, cx + shake, cy + h * 0.42);
+      g.quadraticCurveTo(cx + shake - wd * 0.35, cy, cx + shake, cy - h * 0.42);
+      g.fill();
+    }
+    // the tear: one soft bloom (flashes setting tames it)
+    if (t >= OPEN && t < OPEN + 0.6) {
+      const k = 1 - (t - OPEN) / 0.6;
+      SS.drawGlow(g, '#ffffff', cx, cy, Math.max(W, H) * 0.6, (SS.settings.flashes ? 0.55 : 0.2) * k);
+      SS.drawGlow(g, col, cx, cy, Math.max(W, H) * 0.4, 0.5 * k);
+    }
+
+    if (t >= OPEN) {
+      if (R.n === 1) drawOne(g, R, W, H, cx, cy, t);
+      else drawTen(g, R, W, H, t);
+    }
+    g.globalCompositeOperation = 'source-over';
+    if (!R.info && t >= SHOW + (R.n === 10 ? 1.4 : 0.15) && (R.n === 1 || R.dealt >= 10)) showInfo(R);
+  };
+
+  function drawOne(g, R, W, H, cx, cy, t) {
+    const x = R.res[0], e = SS.easeOut((t - OPEN) / 0.8), S = Math.min(W * 0.55, H * 0.75) / 62 * (0.3 + 0.7 * e);
+    const col = x.rarity.color, bob = Math.sin(t * 1.6) * 6;
+    rays(g, cx, cy, Math.max(W, H) * 0.7, col, t, x.idx >= 3 ? 18 : 12, (0.04 + 0.02 * x.idx) * e);
+    if (x.idx >= 3) rays(g, cx, cy, Math.max(W, H) * 0.5, x.idx === 4 ? '#ffffff' : col, -t * 1.3, 7, 0.05 * e);
+    SS.drawGlow(g, col, cx, cy, S * 40, 0.35 * e);
+    if (x.idx >= 3) for (let k = 0; k < 8; k++) {     // sparks circling a Mythic / Limited
+      const a = t * 0.8 + k / 8 * SS.TAU, rr = S * (30 + 6 * Math.sin(t * 2 + k));
+      SS.drawGlow(g, k % 2 ? '#ffffff' : col, cx + Math.cos(a) * rr, cy + bob + Math.sin(a) * rr * 0.45, S * 2.2, 0.8 * e);
+    }
+    g.globalCompositeOperation = 'source-over';
+    hull(g, x.ship, cx, cy + bob, S, t, -0.12 + Math.sin(t * 0.6) * 0.08);
+    g.globalCompositeOperation = 'lighter';
+  }
+
+  function layout(W, H) {
+    let best = null;
+    for (const cols of [5, 4, 3, 2]) {
+      const rows = Math.ceil(10 / cols), gap = 12;
+      const cw = Math.min(190, (W - 32 - gap * (cols - 1)) / cols), ch = cw * 1.32;
+      const fit = rows * ch + (rows - 1) * gap <= H * 0.56;
+      const sz = fit ? cw : Math.min(cw, (H * 0.56 - (rows - 1) * gap) / rows / 1.32);
+      if (!best || sz > best.cw) best = { cols, rows, gap, cw: sz, ch: sz * 1.32 };
+    }
+    return best;
+  }
+  function drawTen(g, R, W, H, t) {
+    const L = layout(W, H), x0 = (W - (L.cols * L.cw + (L.cols - 1) * L.gap)) / 2, y0 = H * 0.37 - (L.rows * L.ch + (L.rows - 1) * L.gap) / 2;
+    const due = Math.min(10, Math.floor((t - OPEN) / 0.14) + 1);
+    if (due > R.dealt) { R.dealt = due; const x = R.res[due - 1]; SS.audio.riftCard(x.idx); }
+    for (let i = 0; i < R.dealt; i++) {
+      const x = R.res[i], col = x.rarity.color, at = OPEN + i * 0.14, e = R.skip ? 1 : SS.easeOut((t - at) / 0.3);
+      const cx = x0 + (i % L.cols) * (L.cw + L.gap) + L.cw / 2, cy = y0 + Math.floor(i / L.cols) * (L.ch + L.gap) + L.ch / 2;
+      const w = L.cw * (0.7 + 0.3 * e), h = L.ch * (0.7 + 0.3 * e);
+      if (x.idx >= 2) SS.drawGlow(g, col, cx, cy, w * (0.9 + 0.1 * Math.sin(t * 3 + i)), (0.12 + 0.08 * x.idx) * e);
+      g.globalCompositeOperation = 'source-over';
+      g.fillStyle = 'rgba(8,14,26,' + 0.92 * e + ')';
+      g.strokeStyle = SS.rgba(col, 0.9 * e); g.lineWidth = x.idx >= 3 ? 2.5 : 1.5;
+      g.beginPath(); g.rect(cx - w / 2, cy - h / 2, w, h); g.fill(); g.stroke();
+      g.fillStyle = SS.rgba(col, 0.16 * e); g.fillRect(cx - w / 2, cy + h / 2 - h * 0.26, w, h * 0.26);
+      g.save();
+      g.beginPath(); g.rect(cx - w / 2, cy - h / 2, w, h); g.clip();
+      g.globalAlpha = e;
+      hull(g, x.ship, cx, cy - h * 0.1, w / 68, t + i, -0.5);
+      g.restore();
+      g.globalAlpha = e;
+      g.textAlign = 'center';
+      g.fillStyle = '#eaf4ff';
+      g.font = '700 ' + Math.round(w * 0.105) + 'px "Chakra Petch", system-ui, sans-serif';
+      g.fillText(x.ship.name, cx, cy + h / 2 - h * 0.13);
+      g.fillStyle = col;
+      g.font = '700 ' + Math.round(w * 0.075) + 'px "Chakra Petch", system-ui, sans-serif';
+      g.fillText(x.rarity.name, cx, cy + h / 2 - h * 0.045);
+      g.textAlign = 'left';
+      g.fillStyle = x.dup ? '#93a6bd' : '#8dffb0';
+      g.fillText(x.dup ? '+' + x.rarity.refund : 'NEW', cx - w / 2 + 7, cy - h / 2 + w * 0.1);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'lighter';
+    }
+  }
+
+  // ---------------------------------------------------------------- wiring
+  rift.init = () => {
+    $('rift-1').onclick = () => rift.pull(1);
+    $('rift-10').onclick = () => rift.pull(10);
+    $('reveal-canvas').onclick = advance;
+    $('rv-ok').onclick = () => { SS.audio.click(); closeReveal(); };
+    $('rv-again').onclick = () => { const n = reveal ? reveal.n : 1; closeReveal(); rift.pull(n); };
+    $('rv-equip').onclick = () => {
+      const x = reveal && reveal.res[0];
+      if (x) { SS.save.ship = x.ship.id; SS.setShip(x.ship.id); SS.checkpoint(); SS.audio.buy(); }
+      closeReveal();
+    };
+    // while the reveal is up, keys belong to it (Escape must not close the screen under it)
+    addEventListener('keydown', (e) => {
+      if (!reveal) return;
+      e.stopImmediatePropagation();
+      if (e.repeat) return;
+      if (e.code === 'Escape') { if (reveal.info) closeReveal(); else advance(); }
+      else if (e.code === 'Space' || e.code === 'Enter') { if (reveal.info) closeReveal(); else advance(); }
+    }, true);
+  };
 })();
 </script>
 <script>
@@ -6138,6 +7786,7 @@ body.touch kbd { display: none; }
       setTimeout(() => SS.hud.toast(touch ? '<b>TOUCH AND HOLD</b> to fly toward your finger' : '<b>HOLD THE MOUSE</b> (or WASD) to fly toward it'), 600);
       setTimeout(() => SS.hud.toast(touch ? '<b>BOOST</b> with a second finger · <b>SKILL</b> for your ship’s ability' : '<b>SHIFT</b> or <b>RIGHT MOUSE</b> to boost · <b>SPACE</b> for your ship’s ability'), 3800);
     }
+    if (!SS.save.rift.pulls && SS.save.wisps >= SS.rift.COST) setTimeout(() => SS.hud.toast('<b>THE RIFT</b> · a free pull is waiting (pause menu)', 'wisp'), 7500);
   };
   SS.pause = () => { if (G.state === 'play') G.state = 'paused'; };
   SS.resume = () => { if (G.state === 'paused') G.state = 'play'; };
@@ -6234,6 +7883,7 @@ body.touch kbd { display: none; }
     ctx.fillRect(0, 0, W, H);
     if (G.state === 'play' || G.state === 'paused') SS.hud.update(dt);
     SS.ui.drawHangar();
+    SS.rift.draw(dt);
   }
 
   function tick(rdt) {
