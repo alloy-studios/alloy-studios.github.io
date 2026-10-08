@@ -216,7 +216,7 @@
       "controls": "Hold mouse or WASD to fly, Shift or right mouse to boost, Space ability, Tab upgrades, Esc pause",
       "added": "2026-10-06",
       "thumb": "/assets/thumbs/speed-simulator-2.webp",
-      "rev": "20261007-2105"
+      "rev": "20261008-1850"
     },
     {
       "id": "cosmic-climb",

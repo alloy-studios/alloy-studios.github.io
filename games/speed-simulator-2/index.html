@@ -31,7 +31,7 @@
 <meta name="description" content="Fly through a world of regions, break speed gates, outrun the Wraith and prestige.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Unbounded:wght@600;800;900&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Unbounded:wght@600;800;900&family=VT323&family=Nothing+You+Could+Do&display=swap">
 <style>
 /* SPEED SIMULATOR 2 - interface. Tokens first; --accent follows the region
    you're in (set from JS), so the whole interface re-tints as you travel. */
@@ -195,6 +195,20 @@ kbd { font: 600 10px var(--ui); letter-spacing: 0.08em; padding: 2px 5px; border
 .hud-tr .wisps.pop { animation: wpop 0.5s ease; }
 .toast.wisp { border-color: var(--wisp); } .toast.wisp b { color: var(--wisp); }
 @keyframes wpop { 30% { transform: scale(1.3); filter: brightness(1.6); } }
+/* ULTRA LIMITED: run. A scrawl, not a logo; it shivers (never strobes). */
+:root { --scrawl: 'Nothing You Could Do', 'Segoe Script', cursive; }
+.odd.ultra { background: #000; border-left-color: var(--r); box-shadow: inset 0 0 24px rgba(120, 0, 14, 0.35); }
+.odd.ultra .pool i { font: 400 18px var(--scrawl); letter-spacing: 0.12em; color: #cfc6b8; border-color: rgba(224, 20, 44, 0.45); animation: shiver 4s infinite; }
+.rift-banner em.ult { color: #e0142c; margin-top: 4px; }
+.rift-banner em.ult i { font: 400 17px var(--scrawl); font-style: normal; color: #d8d0c4; letter-spacing: 0.1em; }
+.ship-list button.ultra { background: #000; }
+.ship-list button.ultra b { font: 400 19px var(--scrawl); letter-spacing: 0.12em; }
+.rv-info.ultra .rv-rar { color: #e0142c; letter-spacing: 0.6em; }
+.rv-info.ultra h2 { font: 400 clamp(44px, 9vw, 92px) var(--scrawl); color: #d8d0c4; letter-spacing: 0.14em; text-shadow: 0 0 30px rgba(160, 0, 20, 0.6); animation: shiver 3.2s infinite; }
+.rv-info.ultra .rv-title { color: #8a7f74; letter-spacing: 0.3em; }
+.rv-info.ultra .rv-note, .rv-info.ultra .rv-note b { color: #8a7f74; }
+#reveal.ultra .rv-actions .btn.primary { background: #8a1626; color: #f2e9e0; }
+@keyframes shiver { 0%, 61%, 63%, 87%, 89%, 100% { transform: none; } 62% { transform: translate(1px, -1px) skewX(-2deg); } 88% { transform: translate(-1px, 1px); } }
 
 /* codex */
 .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -330,7 +344,8 @@ body.touch kbd { display: none; }
   .prestige-box { grid-template-columns: 1fr; }
   .odd { grid-template-columns: 1fr auto; }
   .odd .pool { grid-column: 1 / -1; }
-  .rv-info { bottom: 132px; }
+  .rv-info { bottom: 168px; }
+  .rv-actions { bottom: 20px; }
   .hud-tr .wisps { font-size: 13px; }
   .chase { top: 124px; min-width: 0; width: 200px; }
   .menu-help { display: none; }
@@ -339,6 +354,7 @@ body.touch kbd { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   #banner .b, .toast { animation: none; }   /* both are removed by JS on a timer */
+  .rv-info.ultra h2, .odd.ultra .pool i { animation: none; }
 }
 </style>
 </head>
@@ -626,12 +642,14 @@ body.touch kbd { display: none; }
   // outside an event) drops out and the rest are renormalised. `refund` is the
   // wisps a duplicate gives back - NEVER more than one pull costs (10), or
   // pulling could raise your balance and the validator's wisp ceiling breaks.
+  // ULTRA LIMITED: exactly ONE ship per event batch, rarer than its limiteds.
   SS.RARITY = [
-    { id: 'common',   name: 'COMMON',   color: '#b9c6da', weight: 50, refund: 1 },
-    { id: 'uncommon', name: 'UNCOMMON', color: '#5dff9a', weight: 28, refund: 2 },
-    { id: 'rare',     name: 'RARE',     color: '#4fa2ff', weight: 14, refund: 4 },
-    { id: 'mythic',   name: 'MYTHIC',   color: '#c46bff', weight: 6,  refund: 7 },
-    { id: 'limited',  name: 'LIMITED',  color: '#ffb02e', weight: 2,  refund: 10 },
+    { id: 'common',   name: 'COMMON',        color: '#b9c6da', weight: 49.5, refund: 1 },
+    { id: 'uncommon', name: 'UNCOMMON',      color: '#5dff9a', weight: 28,   refund: 2 },
+    { id: 'rare',     name: 'RARE',          color: '#4fa2ff', weight: 14,   refund: 4 },
+    { id: 'mythic',   name: 'MYTHIC',        color: '#c46bff', weight: 6,    refund: 7 },
+    { id: 'limited',  name: 'LIMITED',       color: '#ffb02e', weight: 2,    refund: 10 },
+    { id: 'ultra',    name: 'ULTRA LIMITED', color: '#e0142c', weight: 0.5,  refund: 10 },
   ];
   SS.rarityOf = (sh) => SS.RARITY.find((r) => r.id === sh.rarity) || null;
 
@@ -1302,6 +1320,43 @@ body.touch kbd { display: none; }
   A.tick = () => { if (ok()) { tone(2400, 0.03, { type: 'square', gain: 0.02, filter: 'bandpass', cutoff: 2600 }); tone(1200, 0.06, { type: 'triangle', gain: 0.03 }); } };
   A.brush = () => { if (ok()) { noise(0.5, { f: 900, to: 2600, q: 0.7, gain: 0.1, attack: 0.04 }); tone(mtof(57), 0.9, { type: 'triangle', gain: 0.05 }); } };
   A.stars = () => { if (ok()) { const t = ac.currentTime; [0, 7, 12, 19, 24, 28].forEach((s, i) => tone(mtof(79 + s), 1.4, { type: 'sine', gain: 0.025, when: t + i * 0.09 })); } };
+  // run (ULTRA LIMITED). A whisper is breath through formant filters, no voice:
+  // a rasp (r), a dark rounded hollow (u), a closing hum of air (n), then the room.
+  A.whisper = (vol, delay) => {
+    if (!ok()) return;
+    const v = vol || 1, t = ac.currentTime + (delay || 0);
+    noise(0.16, { f: 1500, to: 1100, q: 2.5, gain: 0.05 * v, attack: 0.05, when: t });
+    noise(0.34, { f: 650, to: 420, q: 5, gain: 0.08 * v, attack: 0.06, when: t + 0.1 });
+    noise(0.34, { f: 320, to: 260, q: 6, gain: 0.06 * v, attack: 0.06, when: t + 0.1 });
+    noise(0.24, { f: 240, q: 8, gain: 0.045 * v, attack: 0.03, when: t + 0.38 });
+    noise(0.6, { f: 520, to: 300, q: 4, gain: 0.02 * v, attack: 0.1, when: t + 0.5 });
+  };
+  const slapAt = (when, v) => { noise(0.07, { f: 520, q: 1.2, gain: 0.13 * v, when }); tone(110, 0.15, { to: 48, gain: 0.12 * v, when }); };
+  A.slap = (v) => { if (ok()) slapAt(ac.currentTime, v || 0.5); };
+  A.lightsOut = () => {
+    if (!ok()) return;
+    const t = ac.currentTime;
+    tone(1900, 0.03, { type: 'square', gain: 0.03 });                       // the switch
+    tone(40, 1.6, { gain: 0.22, attack: 0.15, when: t + 0.05 });
+    noise(1.2, { f: 300, q: 3, gain: 0.04, attack: 0.3, when: t + 0.1 });
+    A.whisper(0.9, 0.35);
+  };
+  // the Rift, for an ULTRA: it hints rare, then limited... then at 1.3 s everything
+  // stops. Silence and a heartbeat. At 2.6 s it comes through; hands hit the glass; it speaks.
+  A.riftUltra = () => {
+    if (!ok()) return;
+    const t = ac.currentTime;
+    noise(1.3, { f: 180, to: 2600, q: 2, gain: 0.07, attack: 1 });
+    tone(55, 1.3, { type: 'sawtooth', to: 200, gain: 0.05, filter: 'lowpass', cutoff: 700, attack: 0.8 });
+    tone(mtof(84), 0.5, { type: 'triangle', gain: 0.05, when: t + 0.55 });
+    tone(mtof(88), 0.4, { type: 'triangle', gain: 0.05, when: t + 1.05 });
+    tone(45, 0.6, { to: 28, gain: 0.28, when: t + 1.3 });
+    [1.75, 2.0, 2.45, 2.7].forEach((d, i) => tone(i % 2 ? 50 : 58, 0.22, { gain: 0.18, when: t + d }));
+    tone(36, 3.2, { gain: 0.3, attack: 0.6, when: t + 2.6 });
+    [0, 1, 6].forEach((s) => tone(mtof(50 + s), 3, { type: 'sawtooth', gain: 0.018, filter: 'lowpass', cutoff: 500, attack: 0.8, when: t + 2.6 }));
+    [2.9, 3.15, 3.3, 3.55, 3.7, 3.85].forEach((d) => slapAt(t + d, 0.8));
+    A.whisper(1.4, 4.05);
+  };
   A.riftCard = (idx) => { if (ok()) tone(mtof(76 + idx * 3), 0.3 + idx * 0.1, { type: 'triangle', gain: 0.03 + idx * 0.01 }); };
 
   // Halloween ships
@@ -6893,6 +6948,538 @@ body.touch kbd { display: none; }
 })();
 </script>
 <script>
+/* SHIP - run. ULTRA LIMITED (Halloween), from the Rift. One per event batch.
+   It is not a ship. It is a pale, starved thing that crawls across space on
+   too-long limbs bent the wrong way, its face turned up at YOU - black
+   sockets, a mouth too wide - and every so often it twitches. It only ever
+   says one word.
+   - Wake: SOMETHING IS CHASING YOU. The light dies along your path, and out of
+     that dark a long pale jointed ARM reaches after you, its hand snapping
+     open and shut at your tail. When it misses it slams down a bloody print
+     (the grid pinches under every grip). The thing crawls on its own hands
+     too, leaving smaller prints.
+   - SPEED FORM (P.form): more arms - a crowd of hands clawing after you.
+   - Real speed (P.mach): five arms, eyes blinking in the dark, and behind
+     them its giant face looms out of the black, grinning, eyes red.
+   - lights out (ability): every light dies. Hands reach out of the dark and
+     drag every orb near you in; a Wraith that sees it runs.
+   Every so often, in flight, it whispers.
+   Device (keep it unique): RIGID JOINTED ARMS + HANDS reaching from a dark
+   that follows you (not Maw's soft tentacles on the hull), + handprints. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#d6cfc3', accent: '#c4142c', glow: '#8a1626', blood: '#86101e', pale: '#e8e1d4' };
+  const LIFE = 3, MAX = 70, DARK = 1.4;      // prints are costly (a dozen shapes each): keep the count low
+  const hash = (n) => { const s = Math.sin(n * 91.7) * 43758.5453; return s - Math.floor(s); };
+
+  /** A bloody handprint, palm at the origin, fingers toward +x, thumb toward +y,
+      in the current fill/stroke colour. Pressed unevenly (dabs, not a stamp):
+      long two-jointed fingers with a gap at the knuckle and heavy tips. */
+  function hand(ctx, s, seed) {
+    seed = seed || 0;
+    const a0 = ctx.globalAlpha;
+    for (let k = 0; k < 6; k++) {
+      const x = (-0.44 + 0.72 * hash(seed + k * 1.7)) * s, y = (-0.3 + 0.6 * hash(seed + k * 3.1 + 5)) * s;
+      ctx.globalAlpha = a0 * (0.3 + 0.45 * hash(seed + k * 7.3));
+      ctx.beginPath(); ctx.arc(x, y, (0.13 + 0.12 * hash(seed + k)) * s, 0, SS.TAU); ctx.fill();
+    }
+    const fy = [-0.3, -0.1, 0.1, 0.28], fl = [1.05, 1.3, 1.22, 0.95], fa = [-0.2, -0.06, 0.06, 0.18];
+    ctx.lineCap = 'round';
+    for (let k = 0; k < 4; k++) {
+      const a = fa[k] + (hash(seed + k * 11) - 0.5) * 0.14, L = fl[k] * s, x0 = 0.28 * s, y0 = fy[k] * s, ca = Math.cos(a), sa = Math.sin(a);
+      ctx.globalAlpha = a0 * 0.7; ctx.lineWidth = 0.12 * s;
+      ctx.beginPath(); ctx.moveTo(x0 + ca * 0.05 * s, y0 + sa * 0.05 * s); ctx.lineTo(x0 + ca * L * 0.5, y0 + sa * L * 0.5); ctx.stroke();
+      ctx.lineWidth = 0.1 * s;
+      ctx.beginPath(); ctx.moveTo(x0 + ca * L * 0.6, y0 + sa * L * 0.6); ctx.lineTo(x0 + ca * L * 0.88, y0 + sa * L * 0.88); ctx.stroke();
+      ctx.globalAlpha = a0 * 0.95;
+      ctx.beginPath(); ctx.ellipse(x0 + ca * L * 0.94, y0 + sa * L * 0.94, 0.085 * s, 0.065 * s, a, 0, SS.TAU); ctx.fill();
+    }
+    ctx.globalAlpha = a0 * 0.65; ctx.lineWidth = 0.12 * s;
+    ctx.beginPath(); ctx.moveTo(-0.05 * s, 0.32 * s); ctx.quadraticCurveTo(0.12 * s, 0.64 * s, 0.36 * s, 0.78 * s); ctx.stroke();
+    ctx.globalAlpha = a0 * 0.9; ctx.beginPath(); ctx.arc(0.38 * s, 0.8 * s, 0.075 * s, 0, SS.TAU); ctx.fill();
+    ctx.globalAlpha = a0; ctx.lineCap = 'butt';
+  }
+  SS.handprint = hand;     // the Rift's reveal slaps these onto the glass
+  /** Four textured bloody prints (with the smear where they dragged), drawn once. */
+  const SPRITE = { s: 40, ox: 80, oy: 48, w: 150, h: 96 };   // room for the smear behind (-64) and fingers ahead (+62)
+  let spriteCache = null;
+  function sprites() {
+    if (spriteCache) return spriteCache;
+    spriteCache = [0, 1, 2, 3].map((v) => {
+      const c = document.createElement('canvas');
+      c.width = SPRITE.w; c.height = SPRITE.h;
+      const g = c.getContext('2d');
+      g.translate(SPRITE.ox, SPRITE.oy);
+      g.strokeStyle = '#5e0812'; g.lineCap = 'round'; g.lineWidth = SPRITE.s * 0.09; g.globalAlpha = 0.4;
+      g.beginPath();
+      for (let k = -1; k <= 1; k++) { g.moveTo(-0.25 * SPRITE.s, k * 0.2 * SPRITE.s); g.lineTo(-(0.9 + 0.7 * hash(v * 3 + k)) * SPRITE.s, k * 0.26 * SPRITE.s); }
+      g.stroke();
+      g.globalAlpha = 1;
+      g.fillStyle = C.blood; g.strokeStyle = C.blood;
+      hand(g, SPRITE.s, v * 7.13 + 1);
+      return c;
+    });
+    return spriteCache;
+  }
+
+  /** Its face, upright (y down), centred, s = face height. A long gaunt skull,
+      sunken sockets, WIDE lidless eyes with pinprick pupils that stare at you,
+      a skull's nose, and a grin stretched nearly ear to ear, full of teeth. */
+  const qb = (a, b, c, u) => (1 - u) * (1 - u) * a + 2 * u * (1 - u) * b + u * u * c;
+  function drawFace(ctx, s, open, hot) {
+    const hw = 0.34 * s, hh = 0.5 * s;
+    const g = ctx.createRadialGradient(0, -0.16 * s, 0.03 * s, 0, 0.02 * s, 0.6 * s);
+    g.addColorStop(0, '#dcd4c6'); g.addColorStop(0.5, '#958b7e'); g.addColorStop(1, '#100b09');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0, -hh);
+    ctx.bezierCurveTo(hw * 1.15, -hh, hw * 1.05, 0.1 * s, hw * 0.55, 0.38 * s);
+    ctx.quadraticCurveTo(0.1 * s, hh, 0, hh);
+    ctx.quadraticCurveTo(-0.1 * s, hh, -hw * 0.55, 0.38 * s);
+    ctx.bezierCurveTo(-hw * 1.05, 0.1 * s, -hw * 1.15, -hh, 0, -hh);
+    ctx.fill();
+    for (const sx of [-1, 1]) {                       // sunken sockets, hollow cheeks
+      const ex = sx * 0.13 * s, ey = -0.07 * s;
+      const sg = ctx.createRadialGradient(ex, ey, 0.02 * s, ex, ey, 0.14 * s);
+      sg.addColorStop(0, 'rgba(10,6,5,0.9)'); sg.addColorStop(1, 'rgba(10,6,5,0)');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(ex, ey, 0.14 * s, 0, SS.TAU); ctx.fill();
+      const cg = ctx.createRadialGradient(sx * 0.2 * s, 0.12 * s, 0.01 * s, sx * 0.2 * s, 0.12 * s, 0.12 * s);
+      cg.addColorStop(0, 'rgba(14,9,7,0.55)'); cg.addColorStop(1, 'rgba(14,9,7,0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(sx * 0.2 * s, 0.12 * s, 0.12 * s, 0, SS.TAU); ctx.fill();
+    }
+    for (const sx of [-1, 1]) {                       // the eyes: no lids, bloodshot, staring
+      const ex = sx * 0.13 * s, ey = -0.07 * s, rx = 0.064 * s * (sx > 0 ? 1.1 : 1), ry = 0.05 * s;
+      ctx.fillStyle = '#e9e3d3';
+      ctx.beginPath(); ctx.ellipse(ex, ey, rx, ry, sx * 0.08, 0, SS.TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(128,12,24,0.75)'; ctx.lineWidth = 0.009 * s; ctx.stroke();
+      ctx.fillStyle = hot ? '#b0001a' : '#040202';
+      ctx.beginPath(); ctx.arc(ex + sx * 0.004 * s, ey + 0.003 * s, 0.013 * s, 0, SS.TAU); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(58,32,40,0.4)'; ctx.lineWidth = 0.0045 * s;   // veins at the temples, a crack in the brow
+    ctx.beginPath();
+    for (const sx of [-1, 1]) {
+      ctx.moveTo(sx * 0.27 * s, -0.3 * s); ctx.quadraticCurveTo(sx * 0.24 * s, -0.22 * s, sx * 0.28 * s, -0.14 * s); ctx.lineTo(sx * 0.25 * s, -0.08 * s);
+      ctx.moveTo(sx * 0.24 * s, -0.22 * s); ctx.lineTo(sx * 0.19 * s, -0.25 * s);
+    }
+    ctx.moveTo(0.02 * s, -0.46 * s); ctx.lineTo(-0.01 * s, -0.38 * s); ctx.lineTo(0.025 * s, -0.31 * s); ctx.lineTo(0.005 * s, -0.25 * s);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(8,5,4,0.85)';             // a skull's nose
+    ctx.beginPath(); ctx.ellipse(-0.024 * s, 0.09 * s, 0.012 * s, 0.032 * s, 0.25, 0, SS.TAU); ctx.ellipse(0.024 * s, 0.09 * s, 0.012 * s, 0.032 * s, -0.25, 0, SS.TAU); ctx.fill();
+    // the grin: corners pulled far up and out, lips apart, two rows of teeth
+    const mw = 0.3 * s, cy0 = 0.12 * s, top = 0.27 * s, bot = top + (0.05 + 0.1 * open) * s;
+    ctx.fillStyle = '#1c0306';
+    ctx.beginPath();
+    ctx.moveTo(-mw, cy0); ctx.quadraticCurveTo(0, top, mw, cy0); ctx.quadraticCurveTo(0, bot + 0.04 * s, -mw, cy0);
+    ctx.fill();
+    ctx.fillStyle = '#e3dcca';
+    for (let k = 0; k < 18; k++) {
+      const u = (k + 0.5) / 18, edge = 1 - Math.pow(Math.abs(2 * u - 1), 2), x = qb(-mw, 0, mw, u), w = 0.026 * s * (0.5 + 0.5 * edge);
+      const yu = qb(cy0, top, cy0, u), yl = qb(cy0, bot + 0.04 * s, cy0, u), gap = yl - yu;
+      if (gap <= 0.004 * s) continue;
+      ctx.fillRect(x - w / 2, yu, w * 0.82, Math.min(gap * 0.48, 0.045 * s * edge + 0.006 * s));
+      ctx.fillRect(x - w / 2, yl - Math.min(gap * 0.4, 0.035 * s * edge + 0.005 * s), w * 0.82, Math.min(gap * 0.4, 0.035 * s * edge + 0.005 * s));
+    }
+  }
+  /** The Rift's close-up: its face out of the black, fingers either side of it. */
+  SS.runPortrait = (ctx, cx, cy, s, t, e, open) => {
+    const beat = Math.floor(t * 1.15), ph = t * 1.15 - beat;
+    const tw = (hash(beat) - 0.5) * 0.3 * (hash(beat + 7) > 0.5 ? 1 : 0) + (ph < 0.04 ? (hash(beat * 3) - 0.5) * 0.35 : 0);
+    ctx.save();
+    ctx.globalAlpha = e;
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 0.003 * s;
+    for (const sd of [-1, 1]) {                       // long jointed fingers out of the dark, curled toward its face
+      for (let k = 0; k < 4; k++) {
+        const L = [1, 1.08, 1.04, 0.9][k], creep = Math.sin(t * 0.9 + k * 1.3 + sd) * 0.012 * s;
+        const bx = cx + sd * (0.7 + 0.03 * k) * s, by = cy + (1.05 + 0.05 * k) * s;
+        const j1x = cx + sd * (0.66 - 0.01 * k) * s, j1y = cy + (0.36 + 0.12 * k) * s;
+        const j2x = cx + sd * (0.58 - 0.02 * k * L) * s, j2y = cy + (0.36 + 0.12 * k - 0.3 * L) * s;
+        const tx = cx + sd * (0.47 - 0.01 * k) * s + creep, ty = j2y - 0.17 * L * s;
+        const fg = ctx.createLinearGradient(bx, by, tx, ty);
+        fg.addColorStop(0, 'rgba(110,102,92,0)'); fg.addColorStop(0.45, 'rgba(110,102,92,0.85)'); fg.addColorStop(1, '#b3ab9e');
+        ctx.fillStyle = fg;
+        bone(ctx, [bx, by, j1x, j1y, j2x, j2y, tx, ty], 0.05 * s, 0.014 * s);
+        ctx.fillStyle = 'rgba(205,197,184,0.55)';
+        ctx.beginPath(); ctx.ellipse(j1x, j1y, 0.02 * s, 0.014 * s, 0, 0, SS.TAU); ctx.ellipse(j2x, j2y, 0.016 * s, 0.011 * s, 0, 0, SS.TAU); ctx.fill();
+        ctx.fillStyle = '#2a2018';
+        ctx.beginPath(); ctx.ellipse(tx, ty + 0.008 * s, 0.006 * s, 0.012 * s, -sd * 0.5, 0, SS.TAU); ctx.fill();
+      }
+    }
+    ctx.translate(cx, cy);
+    ctx.rotate(0.28 + tw);
+    drawFace(ctx, s, open, false);
+    ctx.restore();
+  };
+  /** A tapered limb along points [x0,y0, x1,y1, ...], w0 thick at the root to w1 at the tip, rim-lit on one edge. */
+  function bone(ctx, p, w0, w1) {
+    const n = p.length / 2, L = [], R = [];
+    for (let i = 0; i < n; i++) {
+      const j0 = Math.max(0, i - 1), j1 = Math.min(n - 1, i + 1), dx = p[j1 * 2] - p[j0 * 2], dy = p[j1 * 2 + 1] - p[j0 * 2 + 1], d = Math.hypot(dx, dy) || 1;
+      const w = (w0 + (w1 - w0) * i / (n - 1)) / 2, nx = -dy / d * w, ny = dx / d * w;
+      L.push(p[i * 2] + nx, p[i * 2 + 1] + ny); R.push(p[i * 2] - nx, p[i * 2 + 1] - ny);
+    }
+    ctx.beginPath(); ctx.moveTo(L[0], L[1]);
+    for (let i = 1; i < n; i++) ctx.lineTo(L[i * 2], L[i * 2 + 1]);
+    for (let i = n - 1; i >= 0; i--) ctx.lineTo(R[i * 2], R[i * 2 + 1]);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(L[0], L[1]);
+    for (let i = 1; i < n; i++) ctx.lineTo(L[i * 2], L[i * 2 + 1]);
+    ctx.stroke();
+  }
+
+  // Your path as a smooth line: the ship, then the trail, with the distance
+  // along it. The arms sit at exact DISTANCES on it - picking whole trail points
+  // made them hop 14 units at a time (they jittered).
+  function buildPath(fx, P, maxLen) {
+    const tr = P.trail, xs = (fx.px = fx.px || []), ys = (fx.py = fx.py || []), cs = (fx.pc = fx.pc || []);
+    xs.length = ys.length = cs.length = 0;
+    xs.push(P.x); ys.push(P.y); cs.push(0);
+    let d = 0;
+    for (let i = 0; i < tr.length && d < maxLen; i++) {
+      const l = Math.hypot(tr[i].x - xs[xs.length - 1], tr[i].y - ys[ys.length - 1]);
+      if (l < 0.5) continue;
+      d += l; xs.push(tr[i].x); ys.push(tr[i].y); cs.push(d);
+    }
+    return d;
+  }
+  function pathAt(fx, s, out) {
+    const cs = fx.pc, xs = fx.px, ys = fx.py;
+    let i = 1;
+    while (i < cs.length - 1 && cs[i] < s) i++;
+    const u = cs[i] > cs[i - 1] ? SS.clamp((s - cs[i - 1]) / (cs[i] - cs[i - 1]), 0, 1) : 0;
+    out.x = xs[i - 1] + (xs[i] - xs[i - 1]) * u; out.y = ys[i - 1] + (ys[i] - ys[i - 1]) * u;
+    return out;
+  }
+  const A = { x: 0, y: 0 }, B = { x: 0, y: 0 }, Q = { x: 0, y: 0 };
+  /** A point at distance s back along your path, pushed sideways by off (normal from a wide, smooth tangent). */
+  function onPath(fx, s, off, out) {
+    pathAt(fx, s - 40, A); pathAt(fx, s + 40, B); pathAt(fx, s, out);
+    const tx = A.x - B.x, ty = A.y - B.y, tl = Math.hypot(tx, ty) || 1;
+    out.x += -ty / tl * off; out.y += tx / tl * off;
+    return out;
+  }
+  /** Ease a world point toward its target in SHIP-RELATIVE terms, so the arm
+      settles without lagging behind you at speed. */
+  function ease(a, key, P, x, y, k) {
+    const rx = x - P.x, ry = y - P.y;
+    if (a[key + 'x'] === undefined || Math.abs(a[key + 'x'] - rx) > 900) { a[key + 'x'] = rx; a[key + 'y'] = ry; }
+    a[key + 'x'] += (rx - a[key + 'x']) * k; a[key + 'y'] += (ry - a[key + 'y']) * k;
+    return [P.x + a[key + 'x'], P.y + a[key + 'y']];
+  }
+  /** Where an arm is this frame. The hand rides your path a little behind you,
+      lunging closer and falling back; the shoulder is far back in the dark,
+      also on your path, so the arm bends with your turns. Two bones, elbow out. */
+  function armGeom(a, fx, P, total, t, zs, f, dt) {
+    const lag = (110 + 90 * (0.5 + 0.5 * Math.sin(t * (1.6 + a.k) + a.ph * 1.3))) * zs * (1 - 0.2 * f);
+    const len = (380 + 140 * f) * zs;
+    a.ok = total > lag + len + 50;
+    if (!a.ok) { a.hrx = undefined; return; }
+    const sway = Math.sin(t * 1.3 + a.ph) * 22 * zs;
+    onPath(fx, lag, a.off * zs + sway, Q);
+    const k = 1 - Math.exp(-dt / 0.05);
+    [a.hx, a.hy] = ease(a, 'hr', P, Q.x, Q.y, k);
+    onPath(fx, lag + len, a.off * 1.9 * zs, Q);
+    [a.ax, a.ay] = ease(a, 'ar', P, Q.x, Q.y, 1 - Math.exp(-dt / 0.12));
+    // elbow out by a smooth curve of how stretched the arm is (exact two-bone IK
+    // snaps as the arm nears full stretch - the outer arms twitched there)
+    const dx = a.hx - a.ax, dy = a.hy - a.ay, d = Math.hypot(dx, dy) || 1, L = len * 0.6, q = d / (2 * L);
+    const bend = L * Math.max(0.12, 1 - q * q) * 0.8 * a.side;
+    [a.ex, a.ey] = ease(a, 'er', P, (a.ax + a.hx) / 2 - dy / d * bend, (a.ay + a.hy) / 2 + dx / d * bend, 1 - Math.exp(-dt / 0.08));
+    a.dir = Math.atan2(a.hy - a.ey, a.hx - a.ex);
+    a.H = (46 + 12 * f) * zs;
+  }
+  /** A long pale arm out of the dark (it fades in from the shoulder), and a hand
+      that opens wide and snaps shut, fingertips red. */
+  function drawArm(ctx, a, zs) {
+    const H = a.H, g = a.g;
+    ctx.globalAlpha = a.vis;
+    // the limb: starved and knotted, a little bowed, the shoulder lost in the dark
+    const bow = (x0, y0, x1, y1, k) => { const dx = x1 - x0, dy = y1 - y0; return [(x0 + x1) / 2 - dy * k * a.side, (y0 + y1) / 2 + dx * k * a.side]; };
+    const [ux, uy] = bow(a.ax, a.ay, a.ex, a.ey, 0.08), [fx2, fy2] = bow(a.ex, a.ey, a.hx, a.hy, -0.05);
+    const pts = [a.ax, a.ay, ux, uy, a.ex, a.ey, fx2, fy2, a.hx, a.hy];
+    const ag = ctx.createLinearGradient(a.ax, a.ay, a.hx, a.hy);
+    ag.addColorStop(0, 'rgba(50,44,40,0)'); ag.addColorStop(0.32, 'rgba(78,70,63,0.95)'); ag.addColorStop(0.7, '#8d8378'); ag.addColorStop(1, '#b7ad9f');
+    ctx.fillStyle = ag; ctx.strokeStyle = 'rgba(232,222,206,0.55)'; ctx.lineWidth = 1.6 * zs;   // light catches one edge of the bone
+    bone(ctx, pts, 28 * zs, 10 * zs);
+    ctx.strokeStyle = 'rgba(30,22,18,0.55)'; ctx.lineWidth = 2 * zs;                               // a tendon down the forearm
+    ctx.beginPath(); ctx.moveTo(a.ex, a.ey); ctx.quadraticCurveTo(fx2, fy2, a.hx, a.hy); ctx.stroke();
+    const kg = ctx.createRadialGradient(a.ex - 3 * zs, a.ey - 3 * zs, 1, a.ex, a.ey, 12 * zs);          // a swollen elbow
+    kg.addColorStop(0, '#cfc6b8'); kg.addColorStop(1, '#5d554d');
+    ctx.fillStyle = kg;
+    ctx.beginPath(); ctx.arc(a.ex, a.ey, 12 * zs, 0, SS.TAU); ctx.fill();
+    ctx.save();
+    ctx.translate(a.hx, a.hy);
+    ctx.rotate(a.dir);
+    ctx.fillStyle = '#c3baad'; ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 0.8 * zs;
+    ctx.beginPath(); ctx.ellipse(0.2 * H, 0, 0.36 * H, 0.27 * H, 0, 0, SS.TAU); ctx.fill();
+    const spread = 0.12 + 0.36 * g, curl = (1 - g) * 1.25;
+    const tips = [];
+    for (let k = 0; k < 4; k++) {
+      const c = k - 1.5, a1 = c * spread, bx = 0.48 * H, by = c * 0.15 * H;
+      const jx = bx + Math.cos(a1) * 0.55 * H, jy = by + Math.sin(a1) * 0.55 * H, a2 = a1 - Math.sign(c) * curl;
+      const tx = jx + Math.cos(a2) * 0.5 * H, ty = jy + Math.sin(a2) * 0.5 * H;
+      bone(ctx, [bx, by, jx, jy, tx, ty], 0.12 * H, 0.04 * H);
+      tips.push(tx, ty);
+    }
+    const ta = a.side * (0.95 - 0.5 * (1 - g));        // the thumb
+    bone(ctx, [0.15 * H, a.side * 0.22 * H, 0.15 * H + Math.cos(ta) * 0.45 * H, a.side * 0.22 * H + Math.sin(ta) * 0.45 * H], 0.13 * H, 0.05 * H);
+    ctx.fillStyle = '#7d0d19';                           // fingertips dipped in it
+    ctx.beginPath();
+    for (let k = 0; k < tips.length; k += 2) { ctx.moveTo(tips[k] + 0.06 * H, tips[k + 1]); ctx.arc(tips[k], tips[k + 1], 0.06 * H, 0, SS.TAU); }
+    ctx.fill();
+    ctx.restore();
+  }
+
+  SS.registerShip({
+    id: 'run', order: 30, rarity: 'ultra', event: 'halloween', name: 'run', title: 'It only says one word',
+    desc: 'It does not fly. It crawls across space, hand over hand, on limbs bent the wrong way, and it looks up at you while it does. It is never alone. It only ever says one word.',
+    world: 'Its hands grip the fabric; the light dies behind it.',
+    ability: { name: 'lights out', desc: 'Every light dies. Hands reach out of the dark and drag every orb near you in, and a Wraith that sees it runs.', cd: 9,
+      use(fx, P) {
+        const R = 650, W = SS.wraith;
+        fx.dark = DARK;
+        for (const o of SS.orbs) {
+          if (o.dead || o.grabbed || (o.x - P.x) ** 2 + (o.y - P.y) ** 2 > R * R) continue;
+          o.grabbed = true; fx.taken.push({ o, gen: o.gen, t: 0, d: Math.random() * 0.25 });
+        }
+        if (W.active() && W.near(P.x, P.y, 1100)) {
+          W.stunFor(2.2);
+          const a = Math.atan2(W.y - P.y, W.x - P.x);
+          W.ex += Math.cos(a) * 1300; W.ey += Math.sin(a) * 1300;
+          SS.fx.text(W.x, W.y - 60, 'it ran', C.accent, 24);
+        }
+        SS.audio.lightsOut();
+      } },
+    unlock: null,                 // ULTRA LIMITED: only from the Rift while Halloween runs; kept for good
+    colors: C, tail: 22,
+    // a slow, uneven breath under a beating low drone
+    voice: { wave1: 'sawtooth', wave2: 'sawtooth', base: 46, ratio: 1.013, detune: 14, mix2: 0.8, filter: 'lowpass', q: 3, cutoff: 260, cutoffRange: 700, lfoRate: 0.45, lfoDepth: 0.06, noise: 0.3, noiseF: 520, range: 0.9, gain: 0.85 },
+
+    init(fx) {
+      fx.pr = []; fx.acc = 0; fx.side = 1; fx.eyes = []; fx.eyeT = 0.5; fx.dark = 0; fx.taken = []; fx.wh = SS.rand(8, 16); fx.slapT = 0; fx.loom = 0;
+      // the arms that chase you: lateral offset, which way the elbow bends, their own rhythm
+      fx.arms = [[0, 1, 0, 0], [-75, -1, 1.7, 0.35], [75, 1, 3.1, 0.6], [-150, -1, 4.4, 0.2], [150, 1, 5.6, 0.8]]
+        .map(([off, side, ph, k]) => ({ off, side, ph, k, vis: 0, g: 1, ok: false }));
+    },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form, m = P.mach;
+      const back = 6 * kit.hullScale(SS.cam.zoom), ca = Math.cos(P.angle), sa = Math.sin(P.angle);
+      // its own hands, left then right, as it crawls
+      kit.lay(fx, 'acc', (64 - 16 * f) * zs, P, dt, (x, y, age) => {
+        if (r < 0.04) return;
+        fx.side = -fx.side;
+        const off = (15 + 7 * r) * zs * fx.side;
+        fx.pr.push({ x: x - ca * back - sa * off, y: y - sa * back + ca * off, a: P.angle + fx.side * 0.15, s: (11 + 4 * r) * zs, side: fx.side, t: t - age, k: 0 });
+      });
+      // the arms reaching after you: one, three once it's fast, five at real speed
+      const tr = P.trail, want = r < 0.05 ? 0 : 1 + (f > 0.35 ? 2 : 0) + (m > 0.25 ? 2 : 0);
+      const total = buildPath(fx, P, 840 * zs + 120);
+      fx.slapT -= dt;
+      fx.arms.forEach((a, i) => {
+        a.vis += ((i < want ? 1 : 0) - a.vis) * Math.min(1, dt * 2.5);
+        armGeom(a, fx, P, total, t, zs, f, dt);
+        if (!a.ok || a.vis < 0.05) return;
+        const g = 0.5 + 0.5 * Math.sin(t * (2.6 + 1.6 * f + a.k) + a.ph * 2);
+        if (g < 0.12 && a.g >= 0.12) {                 // it snaps shut on nothing: a bloody print where it hit
+          fx.pr.push({ x: a.hx, y: a.hy, a: a.dir, s: a.H * 0.75, side: a.side, t, k: 0 });
+          if (fx.slapT <= 0 && a.vis > 0.5) { fx.slapT = 0.22; SS.audio.slap(0.35); }
+        }
+        a.g = g;
+        SS.world.dent(a.hx, a.hy, a.H * 2.8, a.H * 0.9 * (1 - g) * a.vis, 1);   // its grip drags the fabric
+      });
+      fx.loom += ((m > 0.18 ? 1 : 0) - fx.loom) * Math.min(1, dt * 0.8);
+      const fd = (560 + 160 * f) * zs;                 // where its face hangs, back along your path
+      fx.fok = total > fd + 60;
+      if (fx.fok) [fx.fcx, fx.fcy] = ease(fx, 'fr', P, onPath(fx, fd, 0, Q).x, Q.y, 1 - Math.exp(-dt / 0.2));
+      while (fx.pr.length && t - fx.pr[0].t > LIFE) fx.pr.shift();
+      if (fx.pr.length > MAX) fx.pr.splice(0, fx.pr.length - MAX);
+      // every hand grips the fabric
+      let n = 0;
+      for (let i = fx.pr.length - 1; i >= 0 && n < 14; i--) {
+        const q = fx.pr[i], age = t - q.t;
+        if (age > 1.6) break;
+        n++;
+        SS.world.dent(q.x, q.y, q.s * 3.4, q.s * 1.1 * (1 - age / 1.6), 1);
+      }
+      // real speed: eyes open in the dark among the arms
+      fx.eyeT -= dt;
+      if (m > 0.2 && fx.eyeT <= 0 && tr.length > 40) {
+        fx.eyeT = SS.rand(0.25, 0.6) / m;
+        const i = 18 + ((Math.random() * Math.min(50, tr.length - 19)) | 0), p = tr[i], an = kit.perp(tr, i), o = SS.rand(-1, 1) * 220 * zs;
+        fx.eyes.push({ x: p.x + Math.cos(an) * o, y: p.y + Math.sin(an) * o, a: p.a + Math.PI / 2, t: 0, life: SS.rand(0.9, 1.6), s: SS.rand(3, 5) * zs, red: Math.random() < 0.3 });
+        if (fx.eyes.length > 12) fx.eyes.shift();
+      }
+      for (let i = fx.eyes.length - 1; i >= 0; i--) { fx.eyes[i].t += dt; if (fx.eyes[i].t > fx.eyes[i].life) fx.eyes.splice(i, 1); }
+      // lights out: hands drag the taken orbs in
+      fx.dark = Math.max(0, fx.dark - dt);
+      for (let i = fx.taken.length - 1; i >= 0; i--) {
+        const g = fx.taken[i], o = g.o;
+        g.t += dt;
+        if (o.gen !== g.gen || g.t > 1.8) { if (o.gen === g.gen) o.grabbed = false; fx.taken.splice(i, 1); continue; }
+        o.x += (P.vx + P.extX) * dt; o.y += (P.vy + P.extY) * dt;
+        if (g.t < 0.3 + g.d) continue;                 // a beat in the dark... then it pulls
+        const k = Math.min(1, dt * (3 + (g.t - 0.3) * 14));
+        o.x += (P.x - o.x) * k; o.y += (P.y - o.y) * k;
+      }
+      // it whispers
+      if (SS.G.state === 'play') { fx.wh -= dt; if (fx.wh <= 0) { fx.wh = SS.rand(25, 45); SS.audio.whisper(0.7); } }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const t = V.t, f = P.form, m = P.mach, r = Math.min(1, P.rise), zs = kit.zs(), tr = P.trail;
+      // the light dies along your path: the dark the arms come out of
+      if (r > 0.05 && tr.length > 12) {
+        const n = Math.min(tr.length, (60 + 50 * f) | 0);
+        for (let i = 8; i < n; i += 5) SS.drawGlow(ctx, '#000000', tr[i].x, tr[i].y, (110 + i * 3) * zs, (0.4 + 0.35 * f) * r * Math.min(1, (i - 8) / 10));
+      }
+      // real speed: its face looms out of the black behind its arms, grinning, eyes red
+      if (fx.loom > 0.02 && fx.fok) {
+        const p = { x: fx.fcx, y: fx.fcy };
+        const s = (360 + 140 * m) * zs * (1 + 0.03 * Math.sin(t * 1.1));
+        SS.drawGlow(ctx, '#000000', p.x, p.y, s * 1.2, 0.8 * fx.loom);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.atan2(P.y - p.y, P.x - p.x) + Math.PI / 2 + 0.2 * Math.sin(t * 0.37));
+        ctx.globalAlpha = 0.62 * fx.loom * (0.85 + 0.15 * Math.sin(t * 2.3));
+        drawFace(ctx, s, 0.5 + 0.3 * Math.sin(t * 0.9), true);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+      if (f > 0.05 || m > 0.2) {
+        for (const e of fx.eyes) {
+          const u = e.t / e.life, blink = Math.abs(u - 0.55) < 0.05 ? 0.1 : 1, a = Math.sin(u * Math.PI) * blink;
+          const dx = Math.cos(e.a) * e.s * 1.8, dy = Math.sin(e.a) * e.s * 1.8;
+          ctx.fillStyle = e.red ? 'rgba(255,40,60,' + a + ')' : 'rgba(255,250,240,' + a + ')';
+          ctx.beginPath(); ctx.ellipse(e.x - dx, e.y - dy, e.s, e.s * 0.55 * blink, e.a + Math.PI / 2, 0, SS.TAU); ctx.ellipse(e.x + dx, e.y + dy, e.s, e.s * 0.55 * blink, e.a + Math.PI / 2, 0, SS.TAU); ctx.fill();
+        }
+      }
+      // handprints: slapped down, smeared, drying dark
+      // one pre-drawn textured sprite per print (drawing each in vector cost ~20 calls apiece)
+      const cam = ctx.getTransform(), imgs = sprites();
+      for (const q of fx.pr) {
+        const age = t - q.t, slap = 1 + 0.3 * (1 - Math.min(1, age / 0.07)), fade = Math.min(1, age * 14) * (1 - SS.smooth((age - LIFE * 0.55) / (LIFE * 0.45)));
+        if (fade <= 0) continue;
+        const k = q.s / SPRITE.s * slap;
+        ctx.setTransform(cam);
+        ctx.translate(q.x, q.y);
+        ctx.rotate(q.a);
+        ctx.scale(k, k * q.side);
+        ctx.globalAlpha = fade * 0.85;
+        ctx.drawImage(imgs[((q.t * 37) | 0) & 3], -SPRITE.ox, -SPRITE.oy);
+      }
+      ctx.setTransform(cam);
+      ctx.globalAlpha = 1;
+      // the arms, reaching
+      for (const a of fx.arms) if (a.ok && a.vis > 0.02) drawArm(ctx, a, zs);
+      ctx.globalAlpha = 1;
+    },
+
+    drawWake(ctx, fx, P, V) {
+      if (fx.dark <= 0 && !fx.taken.length) return;
+      // lights out: everything goes black but it (and its hands)
+      const e = DARK - fx.dark, a = fx.dark > 0 ? Math.min(e / 0.12, fx.dark / 0.45, 1) * (SS.settings.flashes ? 0.94 : 0.8) : 0;
+      if (a > 0) {
+        const v = SS.world.view;
+        ctx.fillStyle = 'rgba(0,0,0,' + a + ')';
+        ctx.fillRect(v.x0 - 600, v.y0 - 600, v.x1 - v.x0 + 1200, v.y1 - v.y0 + 1200);
+      }
+      // pale arms reaching out of the dark to the orbs they took
+      const zs = kit.zs();
+      for (const g of fx.taken) {
+        if (g.o.gen !== g.gen) continue;
+        const o = g.o, ang = Math.atan2(o.y - P.y, o.x - P.x), k = Math.min(1, g.t / 0.2) * (1 - SS.smooth((g.t - 1.2) / 0.5));
+        if (k <= 0) continue;
+        ctx.strokeStyle = SS.rgba(C.pale, 0.35 * k);
+        ctx.lineWidth = 3 * zs;
+        ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.quadraticCurveTo((P.x + o.x) / 2 + Math.sin(g.d * 40) * 40, (P.y + o.y) / 2 + Math.cos(g.d * 40) * 40, o.x, o.y); ctx.stroke();
+        ctx.save();
+        ctx.translate(o.x, o.y); ctx.rotate(ang + Math.PI); ctx.translate(-14 * zs, 0);
+        ctx.globalAlpha = 0.9 * k;
+        ctx.fillStyle = C.pale; ctx.strokeStyle = C.pale;
+        hand(ctx, 16 * zs, g.d * 99);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    },
+
+    drawHull(ctx, P, V) {
+      // Mostly dark. The light finds only bone edges, and the face. Drawn a size up: it's all limbs.
+      ctx.scale(1.15, 1.15);
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t;
+      const gait = t * (2.4 + 6 * r), gl = Math.sin(gait), gr = Math.sin(gait + Math.PI);
+      // the twitch: still, still, still - then a snap
+      const beat = Math.floor(t * 1.15), ph = t * 1.15 - beat;
+      const tw = (hash(beat) - 0.5) * 0.5 * (hash(beat + 7) > 0.45 ? 1 : 0) + (ph < 0.05 ? (hash(beat * 3) - 0.5) * 0.6 : 0);
+      const SKIN = '#3a312c', RIM = 'rgba(186,174,160,0.35)';
+      const knob = (x, y, w) => { ctx.fillStyle = '#2b2421'; ctx.beginPath(); ctx.arc(x, y, w, 0, SS.TAU); ctx.fill(); ctx.fillStyle = SKIN; };
+      ctx.lineJoin = 'round';
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.ellipse(0, 1.5, 21, 10, 0, 0, SS.TAU); ctx.fill();
+      ctx.fillStyle = SKIN; ctx.strokeStyle = RIM; ctx.lineWidth = 0.3;
+      // legs: splayed, knees bent the wrong way, long feet dragging behind
+      for (const [s, g] of [[-1, gl], [1, gr]]) {
+        const kx = -4 + 2 * g, ky = 11.5 * s, ax = -15 - 2.5 * g, ay = 9.5 * s;
+        bone(ctx, [-8, 2.4 * s, kx, ky, ax, ay], 2.3, 1);
+        for (const d of [-1, 0, 1]) bone(ctx, [ax, ay, ax - 3.5, ay + d * 0.7 * s, ax - 6.5, ay + d * 1.5 * s - 0.4 * s], 0.7, 0.15);
+        knob(kx, ky, 0.95);
+      }
+      // arms: far too long, reaching past its own head, fingers spread to grip
+      for (const [s, g] of [[-1, gr], [1, gl]]) {
+        const ex = 10 + 3 * g, ey = 9.8 * s, wx = 22 + 6 * g, wy = 5.6 * s;
+        bone(ctx, [5, 3.6 * s, ex, ey, wx, wy], 2.1, 0.95);
+        for (let k = 0; k < 4; k++) {
+          const sp = (k - 1.5) * 1.5, L = 7.6 - Math.abs(k - 1.5) * 1.1;
+          bone(ctx, [wx, wy, wx + L * 0.55, wy + sp * 0.6 * s, wx + L, wy + sp * s + 0.6 * s], 0.75, 0.12);
+        }
+        knob(ex, ey, 0.85);
+      }
+      // the body: starved, the spine knuckled up under the skin
+      const g = ctx.createLinearGradient(0, -5, 0, 5);
+      g.addColorStop(0, '#6c6158'); g.addColorStop(0.45, '#3a312c'); g.addColorStop(1, '#120e0c');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(9.5, 0); ctx.quadraticCurveTo(8, -5.4, 1.5, -4.6); ctx.lineTo(-6, -2.2); ctx.quadraticCurveTo(-11.5, -3.4, -12.5, 0);
+      ctx.quadraticCurveTo(-11.5, 3.4, -6, 2.2); ctx.lineTo(1.5, 4.6); ctx.quadraticCurveTo(8, 5.4, 9.5, 0);
+      ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(150,138,124,0.3)'; ctx.lineWidth = 0.35;
+      ctx.beginPath();
+      for (let k = 0; k < 5; k++) { const x = 6.5 - k * 2.2, w = 4.2 - k * 0.45; ctx.moveTo(x, 0); ctx.quadraticCurveTo(x - 0.6, -w * 0.7, x - 1.6, -w); ctx.moveTo(x, 0); ctx.quadraticCurveTo(x - 0.6, w * 0.7, x - 1.6, w); }
+      ctx.stroke();
+      ctx.fillStyle = '#6f655b';
+      for (let k = 0; k < 10; k++) { ctx.beginPath(); ctx.arc(8.5 - k * 2.1, 0, 0.5 - k * 0.02, 0, SS.TAU); ctx.fill(); }
+      // the head - cocked on its neck, turned up to look at you
+      ctx.save();
+      ctx.translate(10, 0);
+      ctx.rotate(0.35 * Math.sin(t * 0.13 + 1) + tw);
+      ctx.fillStyle = SKIN; ctx.strokeStyle = RIM;
+      bone(ctx, [-2, 0, 2.5, 0], 1.6, 1.3);
+      const hot = P.hunted || f > 0.6, open = 0.3 + 0.3 * Math.max(0, Math.sin(t * 0.7)) + 0.5 * f;
+      ctx.translate(6.5, 0);
+      ctx.rotate(Math.PI / 2);                     // the top of its head leads; the face looks up at you
+      drawFace(ctx, 11, open, hot);
+      if (hot) {
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, '#ff1f33', 0, -0.8, 5, 0.3);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      ctx.restore();
+    },
+
+    onBoost(fx, P) { SS.audio.slap(0.6); },
+    onTurn(fx, P, sign) {
+      const zs = kit.zs(), a = P.angle - sign * Math.PI / 2;
+      fx.pr.push({ x: P.x + Math.cos(a) * 26 * zs, y: P.y + Math.sin(a) * 26 * zs, a: P.angle - sign * 0.6, s: 15 * zs, side: -sign, t: SS.world.time, k: 0 });
+      SS.audio.slap(0.4);
+    },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.accent, 4, 26, 0.3, 1.5); },
+    onHunted(fx, P) { SS.audio.whisper(1.1); },
+    onTopSpeed(fx, P) { SS.audio.whisper(0.6); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.blood, 30, 500, 1.2, 3); },
+  });
+})();
+</script>
+<script>
 /* SPEED SIMULATOR 2 - HUD. DOM for numbers and meters, a small canvas for the
    minimap, plus toasts, banners and the Wraith's screen dread. Presentation
    only: it listens to events and never changes the game. */
@@ -7193,7 +7780,8 @@ body.touch kbd { display: none; }
       const b = document.createElement('button');
       b.className = (sh.id === sel ? 'sel ' : '') + (owned ? '' : 'locked');
       b.style.setProperty('--ship', sh.colors.accent);
-      const tag = ev ? [ev.name, ev.color] : rar ? [rar.name, rar.color] : null;
+      const tag = rar && rar.id === 'ultra' ? [rar.name, rar.color] : ev ? [ev.name, ev.color] : rar ? [rar.name, rar.color] : null;
+      if (rar && rar.id === 'ultra') b.classList.add('ultra');
       b.innerHTML = '<b>' + esc(sh.name) + (tag ? ' <em class="ev" style="--ev:' + tag[1] + '">' + esc(tag[0].toUpperCase()) + '</em>' : '') + '</b><span>' + esc(owned ? (sh.id === s.ship ? 'Equipped' : sh.title) : lockText(sh)) + '</span>';
       b.onclick = () => { SS.audio.click(); ui.preview = sh.id; SS.setShip(sh.id, true); renderHangar(); };
       li.appendChild(b);
@@ -7470,15 +8058,16 @@ body.touch kbd { display: none; }
   rift.render = () => {
     const s = SS.save, T = rift.tiers();
     $('rift-wisps').textContent = SS.fmt(s.wisps);
-    const lim = T.find((x) => x.r.id === 'limited'), bn = $('rift-banner');
+    const lim = T.find((x) => x.r.id === 'limited'), ult = T.find((x) => x.r.id === 'ultra'), bn = $('rift-banner');
     bn.classList.toggle('hidden', !lim);
     if (lim) {
       const ev = SS.EVENTS[lim.pool[0].event] || { name: 'Limited', color: lim.r.color };
       bn.style.setProperty('--ev', ev.color);
       bn.innerHTML = '<b>' + esc(ev.name.toUpperCase()) + ' · LIMITED</b><span>' + lim.pool.map((sh) => esc(sh.name)).join(' · ') +
-        '</span><em>In the Rift only while the event runs. Pull one and it’s yours for good.</em>';
+        '</span><em>In the Rift only while the event runs. Pull one and it’s yours for good.</em>' +
+        (ult ? '<em class="ult">…and one more. ULTRA LIMITED, ' + pct(ult.p) + ': <i>' + esc(ult.pool[0].name) + '</i></em>' : '');
     }
-    $('rift-odds').innerHTML = T.map((x) => '<div class="odd" style="--r:' + x.r.color + '"><b>' + x.r.name + '</b><span class="pct">' + pct(x.p) + '</span><span class="pool">' +
+    $('rift-odds').innerHTML = T.map((x) => '<div class="odd' + (x.r.id === 'ultra' ? ' ultra' : '') + '" style="--r:' + x.r.color + '"><b>' + x.r.name + '</b><span class="pct">' + pct(x.p) + '</span><span class="pool">' +
       x.pool.map((sh) => '<i' + (s.ships.includes(sh.id) ? ' class="own" title="Owned"' : '') + '>' + esc(sh.name) + '</i>').join('') + '</span></div>').join('');
     $('rift-pity').innerHTML = 'Mythic or better within <b>' + Math.max(1, PITY - s.rift.pity) + '</b> pulls · ×10 holds a <b>Rare</b> or better';
     const b1 = $('rift-1'), b10 = $('rift-10');
@@ -7489,28 +8078,39 @@ body.touch kbd { display: none; }
       '</b> · a secret <b>+' + EARN.secret + '</b> · prestige <b>+' + EARN.prestige + '</b> · and <b>+1</b> for every ' + FLIGHT_S + ' s you fly.';
   };
 
+
   // ---------------------------------------------------------------- the reveal
   // A slit of light opens and hints at the best rarity (white, then green or
   // blue, then purple or gold at the last moment), tears open, and the ship
   // flies out. Ten pulls deal ten cards instead.
-  const OPEN = 1.5, SHOW = 2.25;
+  // An ULTRA lies: it hints rare, then limited - then at 1.3 s the light goes
+  // out. Black, a heartbeat, a slit that opens like an eye. At 2.6 s it is
+  // simply there, getting closer, and hands hit the glass. Then it speaks.
+  const ULTRA = SS.RARITY.findIndex((r) => r.id === 'ultra'), VOID = 1.3;
   let reveal = null, motes = [];
   rift.busy = () => !!reveal;
   function startReveal(res, n) {
-    reveal = { res, n, t: 0, best: res.reduce((m, x) => Math.max(m, x.idx), 0), dealt: 0, info: false, cards: null };
+    const best = res.reduce((m, x) => Math.max(m, x.idx), 0), ultra = best === ULTRA;
+    reveal = { res, n, t: 0, best, ultra, open: ultra ? 2.6 : 1.5, show: ultra ? 4.0 : 2.25, dealt: 0, info: false, prints: [] };
+    if (ultra) {
+      const spots = [[0.13, 0.28], [0.86, 0.22], [0.2, 0.72], [0.8, 0.7], [0.52, 0.1], [0.93, 0.5]];
+      reveal.prints = [2.9, 3.15, 3.3, 3.55, 3.7, 3.85].map((at, i) => ({ at, x: spots[i][0] + SS.rand(-0.04, 0.04), y: spots[i][1] + SS.rand(-0.04, 0.04), a: -Math.PI / 2 + SS.rand(-0.6, 0.6), s: SS.rand(0.09, 0.13), side: i % 2 ? 1 : -1 }));
+    }
     motes = Array.from({ length: 70 }, () => ({ a: Math.random() * SS.TAU, r: SS.rand(0.35, 1.1), ph: Math.random(), s: SS.rand(0.6, 1.4) }));
     $('reveal').classList.remove('hidden');
     $('rv-info').classList.add('hidden');
     $('rv-actions').classList.add('hidden');
-    SS.audio.riftPull(reveal.best);
+    if (ultra) SS.audio.riftUltra(); else SS.audio.riftPull(best);
   }
-  const hint = (R) => SS.RARITY[R.t < 0.55 ? 0 : R.t < 1.05 ? Math.min(R.best, 2) : R.best].color;
+  const hint = (R) => SS.RARITY[R.t < 0.55 ? 0 : R.t < 1.05 ? Math.min(R.best, 2) : R.ultra ? ULTRA - 1 : R.best].color;
 
   function showInfo(R) {
     R.info = true;
     const one = R.n === 1 ? R.res[0] : null;
     const rar = $('rv-rar'), note = $('rv-note');
     $('rv-info').classList.toggle('ten', !one);
+    $('rv-info').classList.toggle('ultra', !!(one && one.idx === ULTRA));
+    $('reveal').classList.toggle('ultra', R.ultra);
     if (one) {
       rar.textContent = one.rarity.name + (one.ship.event && SS.EVENTS[one.ship.event] ? ' · ' + SS.EVENTS[one.ship.event].name.toUpperCase() : '');
       rar.style.color = one.rarity.color;
@@ -7535,7 +8135,7 @@ body.touch kbd { display: none; }
   function advance() {
     const R = reveal;
     if (!R) return;
-    if (R.t < SHOW) { R.t = SHOW; return; }       // skip the slit
+    if (R.t < R.show) { R.t = R.show; return; }   // skip the slit
     if (R.n === 10 && R.dealt < 10) { R.dealt = 10; R.skip = true; return; }
     if (!R.info) showInfo(R);
   }
@@ -7583,15 +8183,16 @@ body.touch kbd { display: none; }
     if (!R) return;
     const c = $('reveal-canvas'), g = c.getContext('2d'), { dpr, w: W, h: H } = sizeCanvas(c);
     R.t += Math.min(dt, 0.05);
-    const t = R.t, cx = W / 2, cy = H * 0.44, col = hint(R);
+    const t = R.t, cx = W / 2, cy = H * 0.44, col = hint(R), OPEN = R.open, dark = R.ultra && t >= VOID;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.globalCompositeOperation = 'source-over';
-    g.fillStyle = 'rgba(2,4,10,' + Math.min(0.94, t * 4) + ')';
+    g.fillStyle = dark ? '#000000' : 'rgba(2,4,10,' + Math.min(0.94, t * 4) + ')';
     g.fillRect(0, 0, W, H);
     g.globalCompositeOperation = 'lighter';
 
     // the slit: grows, flickers, changes colour, then tears open
-    if (t < OPEN + 0.5) {
+    if (dark) drawVoid(g, R, W, H, cx, cy, t);
+    else if (t < OPEN + 0.5) {
       const grow = SS.easeOut(t / 0.5), open = SS.smooth((t - 1.1) / (OPEN - 1.1)), gone = SS.clamp((t - OPEN) / 0.5, 0, 1);
       const h = H * 0.62 * grow * (1 + 0.15 * open), wd = (3 + 2 * Math.sin(t * 40) + open * W * 0.09) * (1 - gone);
       const shake = R.best >= 3 && t > 1.05 && t < OPEN ? SS.rand(-3, 3) : 0;
@@ -7615,23 +8216,73 @@ body.touch kbd { display: none; }
       g.quadraticCurveTo(cx + shake - wd * 0.35, cy, cx + shake, cy - h * 0.42);
       g.fill();
     }
-    // the tear: one soft bloom (flashes setting tames it)
-    if (t >= OPEN && t < OPEN + 0.6) {
+    // the tear: one soft bloom (flashes setting tames it). An ultra doesn't tear - it's just there.
+    if (!R.ultra && t >= OPEN && t < OPEN + 0.6) {
       const k = 1 - (t - OPEN) / 0.6;
       SS.drawGlow(g, '#ffffff', cx, cy, Math.max(W, H) * 0.6, (SS.settings.flashes ? 0.55 : 0.2) * k);
       SS.drawGlow(g, col, cx, cy, Math.max(W, H) * 0.4, 0.5 * k);
     }
 
     if (t >= OPEN) {
-      if (R.n === 1) drawOne(g, R, W, H, cx, cy, t);
-      else drawTen(g, R, W, H, t);
+      if (R.n === 10) drawTen(g, R, W, H, t);
+      else if (R.ultra) drawUltra(g, R, W, H, cx, cy, t);
+      else drawOne(g, R, W, H, cx, cy, t);
     }
     g.globalCompositeOperation = 'source-over';
-    if (!R.info && t >= SHOW + (R.n === 10 ? 1.4 : 0.15) && (R.n === 1 || R.dealt >= 10)) showInfo(R);
+    if (!R.info && t >= R.show + (R.n === 10 ? 1.4 : 0.15) && (R.n === 1 || R.dealt >= 10)) showInfo(R);
   };
 
+  /** The ultra's slit, after the lights go: a black eye opening, rimmed in red. */
+  function drawVoid(g, R, W, H, cx, cy, t) {
+    if (t > R.open + 0.4) return;
+    const u = SS.clamp((t - VOID) / (R.open - VOID), 0, 1), gone = SS.clamp((t - R.open) / 0.4, 0, 1);
+    const h = H * 0.62 * (1 + 0.08 * u), wd = (2 + u * u * W * 0.07) * (1 - gone);
+    SS.drawGlow(g, '#e0142c', cx, cy, h * 0.45, (0.1 + 0.12 * u) * (1 - gone));
+    g.globalCompositeOperation = 'source-over';
+    g.beginPath();
+    g.moveTo(cx, cy - h / 2); g.quadraticCurveTo(cx + wd, cy, cx, cy + h / 2); g.quadraticCurveTo(cx - wd, cy, cx, cy - h / 2);
+    g.fillStyle = '#000000'; g.fill();
+    g.strokeStyle = 'rgba(224,20,44,' + 0.75 * (1 - gone) + ')'; g.lineWidth = 1.5; g.stroke();
+    g.globalCompositeOperation = 'lighter';
+  }
+
+  /** run: no rays, no sparkle. It fades up out of the black, getting closer, and hands hit the glass. */
+  function drawUltra(g, R, W, H, cx, cy, t) {
+    const e = SS.smooth((t - R.open) / 1.6), near = 1 + Math.min(0.35, (t - R.open) * 0.04);
+    const s = Math.min(W * 0.5, H * 0.56) * near, open = 0.2 + 0.6 * SS.smooth((t - R.show + 0.2) / 0.5);
+    g.globalCompositeOperation = 'source-over';
+    SS.runPortrait(g, cx, cy, s, t, e, open);
+    // the dark closes in round it, and the edges go red
+    const vg = g.createRadialGradient(cx, cy, s * 0.42, cx, cy, Math.max(W, H) * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(0.35, 'rgba(0,0,0,' + 0.75 * e + ')'); vg.addColorStop(1, 'rgba(55,0,8,' + 0.8 * e + ')');
+    g.fillStyle = vg; g.fillRect(0, 0, W, H);
+    // hands on the glass from the other side; the blood runs down after them
+    const m = Math.min(W, H);
+    for (const p of R.prints) {
+      if (t < p.at) continue;
+      const age = t - p.at, s = p.s * m * (1 + 0.2 * Math.max(0, 1 - age / 0.06)), px = p.x * W, py = p.y * H;
+      g.save();
+      g.translate(px, py);
+      g.rotate(p.a); g.scale(1, p.side);
+      g.globalAlpha = 0.9;
+      g.fillStyle = '#6a0912'; g.strokeStyle = '#6a0912';
+      SS.handprint(g, s, p.at * 31);
+      g.restore();
+      g.strokeStyle = 'rgba(106,9,18,0.85)'; g.fillStyle = 'rgba(106,9,18,0.9)'; g.lineCap = 'round';
+      for (let k = 0; k < 3; k++) {
+        const dx = (k - 1) * 0.28 * s + Math.sin(p.at * 7 + k) * 0.08 * s, len = Math.min(1, age / (1.4 + k * 0.5)) * s * (0.5 + 0.35 * ((p.at * 13 + k * 3.7) % 1));
+        g.lineWidth = s * (0.045 - k * 0.008);
+        g.beginPath(); g.moveTo(px + dx, py + 0.15 * s); g.lineTo(px + dx, py + 0.15 * s + len); g.stroke();
+        g.beginPath(); g.arc(px + dx, py + 0.15 * s + len, s * 0.04, 0, SS.TAU); g.fill();
+      }
+      g.lineCap = 'butt';
+    }
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'lighter';
+  }
+
   function drawOne(g, R, W, H, cx, cy, t) {
-    const x = R.res[0], e = SS.easeOut((t - OPEN) / 0.8), S = Math.min(W * 0.55, H * 0.75) / 62 * (0.3 + 0.7 * e);
+    const OPEN = R.open, x = R.res[0], e = SS.easeOut((t - OPEN) / 0.8), S = Math.min(W * 0.55, H * 0.75) / 62 * (0.3 + 0.7 * e);
     const col = x.rarity.color, bob = Math.sin(t * 1.6) * 6;
     rays(g, cx, cy, Math.max(W, H) * 0.7, col, t, x.idx >= 3 ? 18 : 12, (0.04 + 0.02 * x.idx) * e);
     if (x.idx >= 3) rays(g, cx, cy, Math.max(W, H) * 0.5, x.idx === 4 ? '#ffffff' : col, -t * 1.3, 7, 0.05 * e);
@@ -7658,15 +8309,19 @@ body.touch kbd { display: none; }
   }
   function drawTen(g, R, W, H, t) {
     const L = layout(W, H), x0 = (W - (L.cols * L.cw + (L.cols - 1) * L.gap)) / 2, y0 = H * 0.37 - (L.rows * L.ch + (L.rows - 1) * L.gap) / 2;
-    const due = Math.min(10, Math.floor((t - OPEN) / 0.14) + 1);
-    if (due > R.dealt) { R.dealt = due; const x = R.res[due - 1]; SS.audio.riftCard(x.idx); }
+    const OPEN = R.open, due = Math.min(10, Math.floor((t - OPEN) / 0.14) + 1);
+    if (due > R.dealt) {
+      R.dealt = due;
+      const x = R.res[due - 1];
+      if (x.idx === ULTRA) SS.audio.whisper(1.3); else SS.audio.riftCard(x.idx);
+    }
     for (let i = 0; i < R.dealt; i++) {
-      const x = R.res[i], col = x.rarity.color, at = OPEN + i * 0.14, e = R.skip ? 1 : SS.easeOut((t - at) / 0.3);
-      const cx = x0 + (i % L.cols) * (L.cw + L.gap) + L.cw / 2, cy = y0 + Math.floor(i / L.cols) * (L.ch + L.gap) + L.ch / 2;
+      const x = R.res[i], col = x.rarity.color, at = OPEN + i * 0.14, e = R.skip ? 1 : SS.easeOut((t - at) / 0.3), ult = x.idx === ULTRA;
+      const cx = x0 + (i % L.cols) * (L.cw + L.gap) + L.cw / 2 + (ult ? Math.sin(t * 43 + i) * 1.2 : 0), cy = y0 + Math.floor(i / L.cols) * (L.ch + L.gap) + L.ch / 2;
       const w = L.cw * (0.7 + 0.3 * e), h = L.ch * (0.7 + 0.3 * e);
-      if (x.idx >= 2) SS.drawGlow(g, col, cx, cy, w * (0.9 + 0.1 * Math.sin(t * 3 + i)), (0.12 + 0.08 * x.idx) * e);
+      if (x.idx >= 2 && !ult) SS.drawGlow(g, col, cx, cy, w * (0.9 + 0.1 * Math.sin(t * 3 + i)), (0.12 + 0.08 * x.idx) * e);
       g.globalCompositeOperation = 'source-over';
-      g.fillStyle = 'rgba(8,14,26,' + 0.92 * e + ')';
+      g.fillStyle = ult ? 'rgba(0,0,0,' + e + ')' : 'rgba(8,14,26,' + 0.92 * e + ')';
       g.strokeStyle = SS.rgba(col, 0.9 * e); g.lineWidth = x.idx >= 3 ? 2.5 : 1.5;
       g.beginPath(); g.rect(cx - w / 2, cy - h / 2, w, h); g.fill(); g.stroke();
       g.fillStyle = SS.rgba(col, 0.16 * e); g.fillRect(cx - w / 2, cy + h / 2 - h * 0.26, w, h * 0.26);
@@ -7677,8 +8332,8 @@ body.touch kbd { display: none; }
       g.restore();
       g.globalAlpha = e;
       g.textAlign = 'center';
-      g.fillStyle = '#eaf4ff';
-      g.font = '700 ' + Math.round(w * 0.105) + 'px "Chakra Petch", system-ui, sans-serif';
+      g.fillStyle = ult ? '#d8d0c4' : '#eaf4ff';
+      g.font = ult ? Math.round(w * 0.16) + 'px "Nothing You Could Do", cursive' : '700 ' + Math.round(w * 0.105) + 'px "Chakra Petch", system-ui, sans-serif';
       g.fillText(x.ship.name, cx, cy + h / 2 - h * 0.13);
       g.fillStyle = col;
       g.font = '700 ' + Math.round(w * 0.075) + 'px "Chakra Petch", system-ui, sans-serif';
