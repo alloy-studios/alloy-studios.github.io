@@ -24,12 +24,12 @@
       {
         "status": "In development",
         "title": "New games",
-        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out, Tomorrowless and Speed Simulator 2 followed; more are in the works."
+        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out, Tomorrowless, Speed Simulator 2 and Nitro Pitch followed; more are in the works."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
     "about": [
-      "Every game here is built as a single self-contained page. That is a deliberate constraint: no engine to load, no asset packs to download, no launcher. You click a link and you are playing inside a second or two, on a phone or a laptop, and it still works years later because there is nothing to rot.",
+      "Almost every game here is built as a single self-contained page. That is a deliberate constraint: no engine to load, no asset packs to download, no launcher. You click a link and you are playing inside a second or two, on a phone or a laptop, and it still works years later because there is nothing to rot. The one exception is Nitro Pitch, our first 3D game, built in Unity: it takes a few seconds longer to load the first time, and there is still nothing to install.",
       "It is a small operation. One developer builds the games, one steers what gets made next and keeps the ideas coming, and one plays everything to destruction before it goes live.",
       "The catalogue moves fast and openly. Games ship in beta, get rebuilt, and sometimes get pulled. Each one's source lives on GitHub, so what you play is exactly what is in the repo."
     ]
@@ -217,6 +217,22 @@
       "added": "2026-10-06",
       "thumb": "/assets/thumbs/speed-simulator-2.webp",
       "rev": "20261008-1850"
+    },
+    {
+      "id": "nitro-pitch",
+      "title": "Nitro Pitch",
+      "tagline": "Rocket-powered car soccer: boost, flip, drive up the walls.",
+      "description": "Rocket-powered car soccer against bots on three skill levels, from 1v1 to 3v3. Boost, jump, flip and drive up the walls, and pick from four cars, nine boost trails and nine goal explosions in the garage - every one free from the start. Our first 3D game, built in Unity, so the first load takes a few seconds longer.",
+      "tags": [
+        "sports",
+        "cars",
+        "arcade"
+      ],
+      "accent": "#ff7814",
+      "controls": "WASD or arrows drive, Space jump, Shift boost, X powerslide, Q/E air roll, C ball cam, Esc or P pause, mouse left boost and right jump, controllers supported",
+      "added": "2026-10-27",
+      "thumb": "/assets/thumbs/nitro-pitch.webp",
+      "rev": "20261027-1729"
     },
     {
       "id": "cosmic-climb",
