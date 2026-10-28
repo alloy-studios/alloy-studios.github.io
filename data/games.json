@@ -19,12 +19,12 @@
       {
         "status": "In development",
         "title": "Alloy accounts and events",
-        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Accounts are now in every game that keeps progress - fifteen of them. The first limited-time events are next."
+        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Accounts are now in every game that keeps progress - sixteen of them. The first limited-time events are next."
       },
       {
         "status": "In development",
         "title": "New games",
-        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out, Tomorrowless, Speed Simulator 2 and Nitro Pitch followed; more are in the works."
+        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out, Tomorrowless, Speed Simulator 2, Nitro Pitch and Project Hero followed; more are in the works."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
@@ -233,6 +233,22 @@
       "added": "2026-10-27",
       "thumb": "/assets/thumbs/nitro-pitch.webp",
       "rev": "20261027-1729"
+    },
+    {
+      "id": "project-hero",
+      "title": "Project Hero",
+      "tagline": "Transform mid-fight and brawl across a rift-torn island.",
+      "description": "A first-person hero brawler. Pull Hero Files from a claw machine, transform mid-fight, and clear a rift-torn island of city sectors and countryside while you chase down Agent Cole's story. Evolve your favourite heroes into stronger forms, and your heroes, gear and quests follow you to any device on your Alloy account.",
+      "tags": [
+        "action",
+        "fighting",
+        "open-world"
+      ],
+      "accent": "#b066ff",
+      "controls": "WASD move, Space jump/glide, Shift sprint, mouse to attack/transform, Q/E/R abilities, 1-6 pick a hero, F interact, Tab tablet",
+      "added": "2026-10-28",
+      "thumb": "/assets/thumbs/project-hero.webp",
+      "rev": "20261028-1345"
     },
     {
       "id": "cosmic-climb",

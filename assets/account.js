@@ -88,6 +88,8 @@
   }
 
   function onAuth(u) {
+    // A save or event count queued for the old account must never go out under the new one.
+    if (user && (!u || u.uid !== user.uid)) dropQueues();
     if (!u) {
       user = null;
       setHint(false);
@@ -126,7 +128,19 @@
   function emit() {
     renderButton();
     var u = pub();
+    listeners = listeners.filter(alive);
     listeners.slice().forEach(function (fn) { try { fn(u); } catch (_) {} });
+  }
+
+  // A game that reloads inside its frame leaves its old onChange listeners here.
+  // Keep only those from this page or from a document a frame is showing now.
+  function alive(fn) {
+    if (fn instanceof Function) return true;
+    var frames = document.getElementsByTagName("iframe");
+    for (var i = 0; i < frames.length; i++) {
+      try { if (fn instanceof frames[i].contentWindow.Function) return true; } catch (_) {}
+    }
+    return false;
   }
 
   // --------------------------------------------------------------- saves ---
@@ -153,6 +167,16 @@
   function flushAll() {
     Object.keys(saveQ).forEach(function (id) { clearTimeout(saveQ[id].timer); flushSave(id); });
     Object.keys(evQ).forEach(function (id) { clearTimeout(evQ[id].timer); flushEvent(id); });
+  }
+  function dropQueues() {
+    [saveQ, evQ].forEach(function (qs) {
+      Object.keys(qs).forEach(function (id) {
+        var q = qs[id];
+        clearTimeout(q.timer);
+        q.data = null; q.add = 0; q.best = 0;
+        q.waiters.splice(0).forEach(function (w) { w({ ok: false, error: "signed-out" }); });
+      });
+    });
   }
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") flushAll();
@@ -290,6 +314,7 @@
     else if (a === "name") { if (menu) menu.hidden = true; openModal("name"); }
     else if (a === "out") {
       if (menu) menu.hidden = true;
+      flushAll();                            // send what this account has pending before it leaves
       load().then(function () { return fb.a.signOut(fb.auth); });
     }
   });

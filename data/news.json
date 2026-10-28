@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-10-28",
+      "title": "Project Hero is out",
+      "body": "Project Hero is a first-person hero brawler: pull Hero Files from a claw machine and transform mid-fight. Clear a rift-torn island of city sectors and countryside, chase down Agent Cole's story, and evolve your favourites into stronger forms. Sign in and your heroes, gear and quests follow you to any device. Also fixed across the site: switching Alloy accounts quickly could, rarely, send the last few seconds of one account's progress to the other.",
+      "game": "project-hero"
+    },
+    {
       "date": "2026-10-27",
       "title": "Nitro Pitch is here",
       "body": "Nitro Pitch is rocket-powered car soccer, right in your browser. Boost, jump, flip and drive up the walls in 1v1 to 3v3 matches against bots on three skill levels, with four cars, nine boost trails and nine goal explosions to choose from in the garage - all free from the start. It is our first 3D game, built in Unity, so the first load takes a few seconds longer than usual. Play on the keyboard or grab a controller.",
