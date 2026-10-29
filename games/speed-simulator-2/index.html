@@ -31,7 +31,7 @@
 <meta name="description" content="Fly through a world of regions, break speed gates, outrun the Wraith and prestige.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Unbounded:wght@600;800;900&family=VT323&family=Nothing+You+Could+Do&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Unbounded:wght@600;800;900&family=VT323&family=Nothing+You+Could+Do&family=Luckiest+Guy&display=swap">
 <style>
 /* SPEED SIMULATOR 2 - interface. Tokens first; --accent follows the region
    you're in (set from JS), so the whole interface re-tints as you travel. */
@@ -195,19 +195,33 @@ kbd { font: 600 10px var(--ui); letter-spacing: 0.08em; padding: 2px 5px; border
 .hud-tr .wisps.pop { animation: wpop 0.5s ease; }
 .toast.wisp { border-color: var(--wisp); } .toast.wisp b { color: var(--wisp); }
 @keyframes wpop { 30% { transform: scale(1.3); filter: brightness(1.6); } }
-/* ULTRA LIMITED: run. A scrawl, not a logo; it shivers (never strobes). */
-:root { --scrawl: 'Nothing You Could Do', 'Segoe Script', cursive; }
-.odd.ultra { background: #000; border-left-color: var(--r); box-shadow: inset 0 0 24px rgba(120, 0, 14, 0.35); }
-.odd.ultra .pool i { font: 400 18px var(--scrawl); letter-spacing: 0.12em; color: #cfc6b8; border-color: rgba(224, 20, 44, 0.45); animation: shiver 4s infinite; }
+/* ULTRA LIMITED: each one styles its own name (data-u = its ship id). */
+:root { --scrawl: 'Nothing You Could Do', 'Segoe Script', cursive; --toon: 'Luckiest Guy', 'Arial Black', sans-serif; }
+.odd.ultra { border-left-color: var(--r); }
 .rift-banner em.ult { color: #e0142c; margin-top: 4px; }
-.rift-banner em.ult i { font: 400 17px var(--scrawl); font-style: normal; color: #d8d0c4; letter-spacing: 0.1em; }
-.ship-list button.ultra { background: #000; }
-.ship-list button.ultra b { font: 400 19px var(--scrawl); letter-spacing: 0.12em; }
+.rift-banner em.ult i { font-style: normal; }
 .rv-info.ultra .rv-rar { color: #e0142c; letter-spacing: 0.6em; }
-.rv-info.ultra h2 { font: 400 clamp(44px, 9vw, 92px) var(--scrawl); color: #d8d0c4; letter-spacing: 0.14em; text-shadow: 0 0 30px rgba(160, 0, 20, 0.6); animation: shiver 3.2s infinite; }
-.rv-info.ultra .rv-title { color: #8a7f74; letter-spacing: 0.3em; }
-.rv-info.ultra .rv-note, .rv-info.ultra .rv-note b { color: #8a7f74; }
-#reveal.ultra .rv-actions .btn.primary { background: #8a1626; color: #f2e9e0; }
+/* run: a scrawl, not a logo; it shivers (never strobes) */
+.odd[data-u="run"] { background: #000; box-shadow: inset 0 0 24px rgba(120, 0, 14, 0.35); }
+.odd[data-u="run"] .pool i { font: 400 18px var(--scrawl); letter-spacing: 0.12em; color: #cfc6b8; border-color: rgba(224, 20, 44, 0.45); animation: shiver 4s infinite; }
+.rift-banner em.ult[data-u="run"] i { font: 400 17px var(--scrawl); color: #d8d0c4; letter-spacing: 0.1em; }
+.ship-list button[data-u="run"] { background: #000; }
+.ship-list button[data-u="run"] b { font: 400 19px var(--scrawl); letter-spacing: 0.12em; }
+.rv-info[data-u="run"] h2 { font: 400 clamp(44px, 9vw, 92px) var(--scrawl); color: #d8d0c4; letter-spacing: 0.14em; text-shadow: 0 0 30px rgba(160, 0, 20, 0.6); animation: shiver 3.2s infinite; }
+.rv-info[data-u="run"] .rv-title { color: #8a7f74; letter-spacing: 0.3em; }
+.rv-info[data-u="run"] .rv-note, .rv-info[data-u="run"] .rv-note b { color: #8a7f74; }
+#reveal[data-u="run"] .rv-actions .btn.primary { background: #8a1626; color: #f2e9e0; }
+/* THE ONE THAT GOT AWAY: cartoon letters that land with a boing */
+.odd[data-u="getaway"] { background: linear-gradient(90deg, #3a1d0a, #1a0d05); box-shadow: inset 0 0 24px rgba(255, 150, 40, 0.18); }
+.odd[data-u="getaway"] .pool i { font: 400 13px var(--toon); letter-spacing: 0.05em; color: #ffd36b; border-color: rgba(255, 170, 60, 0.5); text-shadow: 0 2px 0 #8a3a10; }
+.rift-banner em.ult[data-u="getaway"] i { font: 400 14px var(--toon); color: #ffd36b; letter-spacing: 0.05em; text-shadow: 0 2px 0 #8a3a10; }
+.ship-list button[data-u="getaway"] { background: linear-gradient(180deg, #3a1d0a, #1a0d05); }
+.ship-list button[data-u="getaway"] b { font: 400 13px var(--toon); letter-spacing: 0.05em; color: #ffd36b; }
+.rv-info[data-u="getaway"] h2 { font: 400 clamp(28px, 6vw, 62px) var(--toon); color: #ffd36b; letter-spacing: 0.03em; text-shadow: 0 4px 0 #8a3a10, 0 0 24px rgba(255, 150, 40, 0.5); animation: boing 0.9s ease-out 1; }
+.rv-info[data-u="getaway"] .rv-title { color: #e8c08a; letter-spacing: 0.24em; }
+.rv-info[data-u="getaway"] .rv-note, .rv-info[data-u="getaway"] .rv-note b { color: #e8c08a; }
+#reveal[data-u="getaway"] .rv-actions .btn.primary { background: #d9641e; color: #fff4e0; }
+@keyframes boing { 0% { transform: scale(0.3) rotate(-8deg); } 55% { transform: scale(1.12) rotate(3deg); } 75% { transform: scale(0.95) rotate(-1deg); } 100% { transform: none; } }
 @keyframes shiver { 0%, 61%, 63%, 87%, 89%, 100% { transform: none; } 62% { transform: translate(1px, -1px) skewX(-2deg); } 88% { transform: translate(-1px, 1px); } }
 
 /* codex */
@@ -354,7 +368,7 @@ body.touch kbd { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   #banner .b, .toast { animation: none; }   /* both are removed by JS on a timer */
-  .rv-info.ultra h2, .odd.ultra .pool i { animation: none; }
+  .rv-info[data-u] h2, .odd.ultra .pool i { animation: none; }
 }
 </style>
 </head>
@@ -632,9 +646,13 @@ body.touch kbd { display: none; }
 
   // Limited-time events. A LIMITED ship with `event: 'halloween'` is in the
   // Rift only while its event is active; whoever pulls it keeps it for good.
-  // Flip `active` (or add an end date check) to close an event.
+  // Flip `active` (or add an end date check) to close an event. `ultra` sets
+  // that event's ULTRA LIMITED weight (default SS.RARITY's 0.5). Thanksgiving's
+  // started at 0.75; the owner raised it to 1 on 2026-10-28 (players found it
+  // too hard to get).
   SS.EVENTS = {
-    halloween: { name: 'Halloween', active: true, color: '#ff8a2a' },
+    halloween: { name: 'Halloween', active: false, color: '#ff8a2a' },          // closed 2026-10-27
+    thanksgiving: { name: 'Thanksgiving', active: true, color: '#d9a441', ultra: 1 },
   };
 
   // The Rift (js/rift.js): ships with a `rarity` are only found there, pulled
@@ -1385,6 +1403,78 @@ body.touch kbd { display: none; }
     for (let i = 0; i < 6; i++) tone(SS.rand(900, 2200), 0.08, { type: 'triangle', gain: 0.03, when: t + 0.2 + i * 0.05 });
   };
   A.screech = () => { if (ok()) { const t = ac.currentTime; for (let i = 0; i < 4; i++) tone(SS.rand(3200, 5200), 0.06, { type: 'square', gain: 0.012, to: SS.rand(2400, 3600), when: t + i * 0.07, filter: 'bandpass', cutoff: 4000 }); } };
+
+  // Thanksgiving ships
+  A.honk = (v) => {                           // a goose: two nasal honks, the second a little higher
+    if (!ok()) return;
+    const t = ac.currentTime, a = v || 0.6, f0 = SS.rand(300, 360);
+    for (let i = 0; i < 2; i++) {
+      const w = t + i * SS.rand(0.17, 0.24), f = f0 * (i ? 1.12 : 1);
+      tone(f, 0.15, { type: 'sawtooth', to: f * 0.82, filter: 'bandpass', cutoff: 1100, q: 2.5, gain: 0.08 * a, attack: 0.015, when: w });
+      tone(f * 2.02, 0.12, { type: 'square', to: f * 1.66, filter: 'bandpass', cutoff: 1500, q: 4, gain: 0.025 * a, attack: 0.015, when: w });
+    }
+  };
+  const thudAt = (when, v) => { tone(SS.rand(110, 170), 0.14, { to: 60, gain: 0.09 * v, when }); noise(0.05, { f: 700, q: 1.2, gain: 0.05 * v, when }); };
+  A.thud = (v) => { if (ok()) thudAt(ac.currentTime, v || 0.5); };
+  A.bounty = () => {
+    if (!ok()) return;
+    const t = ac.currentTime;
+    [0, 4, 7, 12, 16].forEach((s, i) => tone(mtof(67 + s), 0.8, { type: 'triangle', gain: 0.045, when: t + i * 0.05 }));
+    noise(0.6, { f: 2400, to: 900, q: 0.6, gain: 0.05, attack: 0.05 });
+    for (let i = 0; i < 5; i++) thudAt(t + 0.35 + i * 0.09, 0.4);
+  };
+  // THE ONE THAT GOT AWAY: a gobble is a fast warble through a nasal band
+  const gobbleAt = (when, v) => {
+    const f0 = SS.rand(380, 460);
+    for (let i = 0; i < 9; i++) tone(f0 * (i % 2 ? 1.22 : 1) * (1 - i * 0.02), 0.06, { type: 'sawtooth', filter: 'bandpass', cutoff: 1300, q: 3, gain: 0.07 * v, attack: 0.005, when: when + i * 0.045 });
+  };
+  A.gobble = (v) => { if (ok()) gobbleAt(ac.currentTime, v || 0.7); };
+  // the kitchen trying to catch it: a lasso of twine snapping shut on air
+  A.lassoSnap = () => { if (ok()) { noise(0.06, { filter: 'highpass', f: 2600, gain: 0.12 }); tone(240, 0.12, { type: 'triangle', to: 160, gain: 0.05 }); } };
+  A.bonk = (v) => { if (ok()) { const a = v || 0.5; tone(620, 0.3, { type: 'triangle', gain: 0.08 * a }); tone(1310, 0.25, { gain: 0.035 * a }); tone(95, 0.1, { to: 50, gain: 0.12 * a }); } };
+  A.splat = (v) => { if (ok()) { const a = v || 0.5; noise(0.14, { filter: 'lowpass', f: 1100, to: 260, q: 0.8, gain: 0.14 * a }); tone(170, 0.08, { to: 80, gain: 0.05 * a }); } };
+  A.ovenBurst = () => {                       // the opening scene: the oven door bangs open, a slide whistle, a gobble
+    if (!ok()) return;
+    const t = ac.currentTime;
+    tone(85, 0.4, { to: 42, gain: 0.25 }); noise(0.35, { f: 800, to: 200, q: 0.6, gain: 0.16 });
+    tone(420, 0.4, { to: 1600, glide: 0.35, gain: 0.04, when: t + 0.05 });
+    gobbleAt(t + 0.2, 1);
+  };
+  // a knife into wood: the thunk, then the handle quivering
+  const thwackAt = (when, v) => {
+    noise(0.04, { filter: 'highpass', f: 2200, gain: 0.12 * v, when });
+    tone(95, 0.09, { to: 60, gain: 0.14 * v, when });
+    for (let i = 0; i < 6; i++) tone(i % 2 ? 300 : 345, 0.07, { type: 'triangle', gain: 0.035 * v * (1 - i / 6), when: when + 0.03 + i * 0.055 });
+  };
+  A.thwack = (v) => { if (ok()) thwackAt(ac.currentTime, v || 0.5); };
+  A.decoy = () => {                          // a dinner bell, a clatter of plates, and it's off
+    if (!ok()) return;
+    const t = ac.currentTime;
+    tone(mtof(91), 0.9, { type: 'triangle', gain: 0.05 }); tone(mtof(103), 0.6, { gain: 0.02 });
+    for (let i = 0; i < 4; i++) noise(0.05, { filter: 'highpass', f: 3000 + i * 600, gain: 0.05, when: t + 0.08 + i * 0.05 });
+    gobbleAt(t + 0.2, 0.9);
+  };
+  // the Rift, for it: the same lie (rare, then limited), then at 1.3 s the light
+  // goes. A kitchen timer, ticking, an oven humming. DING at 2.3 s; the door
+  // rattles. At 2.6 s it BURSTS out (a slide whistle and a gobble), the
+  // cutlery thwacks into the glass after it, and a ta-da.
+  A.riftGetaway = () => {
+    if (!ok()) return;
+    const t = ac.currentTime;
+    noise(1.3, { f: 180, to: 2600, q: 2, gain: 0.07, attack: 1 });
+    tone(55, 1.3, { type: 'sawtooth', to: 200, gain: 0.05, filter: 'lowpass', cutoff: 700, attack: 0.8 });
+    tone(mtof(84), 0.5, { type: 'triangle', gain: 0.05, when: t + 0.55 });
+    tone(mtof(88), 0.4, { type: 'triangle', gain: 0.05, when: t + 1.05 });
+    tone(60, 1.3, { type: 'sawtooth', gain: 0.025, filter: 'lowpass', cutoff: 180, attack: 0.2, when: t + 1.3 });           // the oven hum
+    for (let d = 1.45; d < 2.3; d += 0.16) tone(2400, 0.025, { type: 'square', gain: 0.02, filter: 'bandpass', cutoff: 2600, when: t + d });   // tick, tick
+    tone(mtof(96), 1.2, { gain: 0.06, when: t + 2.3 }); tone(mtof(103), 0.8, { gain: 0.025, when: t + 2.3 });                // DING
+    for (let i = 0; i < 5; i++) noise(0.05, { f: 400, q: 1.5, gain: 0.08, when: t + 2.33 + i * 0.05 });                      // rattle
+    tone(80, 0.5, { to: 40, gain: 0.3, when: t + 2.6 }); noise(0.4, { f: 900, to: 200, q: 0.6, gain: 0.2, when: t + 2.6 }); // BANG
+    tone(420, 0.45, { to: 1700, glide: 0.4, gain: 0.04, when: t + 2.62 });                                                  // slide whistle
+    gobbleAt(t + 2.75, 1.1);
+    [2.95, 3.12, 3.3, 3.5, 3.68, 3.86].forEach((d) => thwackAt(t + d, 0.8));
+    [72, 76, 79, 84].forEach((m, i) => tone(mtof(m), i === 3 ? 1 : 0.18, { type: 'triangle', gain: 0.05, when: t + 4.05 + i * 0.11 }));   // ta-da
+  };
 
   // the Wraith
   A.wraithArrive = () => {
@@ -2520,6 +2610,48 @@ body.touch kbd { display: none; }
     }
     ctx.closePath();
     ctx.fill();
+  };
+  // Your path as a smooth line: the ship, then the trail, with the distance
+  // along it. Anything that rides your path sits at an exact DISTANCE on it -
+  // picking whole trail points made run's arms hop 14 units at a time (jitter).
+  /** Build fx's path out to maxLen; returns its length. */
+  kit.path = (fx, P, maxLen) => {
+    const tr = P.trail, xs = (fx.px = fx.px || []), ys = (fx.py = fx.py || []), cs = (fx.pc = fx.pc || []);
+    xs.length = ys.length = cs.length = 0;
+    xs.push(P.x); ys.push(P.y); cs.push(0);
+    let d = 0;
+    for (let i = 0; i < tr.length && d < maxLen; i++) {
+      const l = Math.hypot(tr[i].x - xs[xs.length - 1], tr[i].y - ys[ys.length - 1]);
+      if (l < 0.5) continue;
+      d += l; xs.push(tr[i].x); ys.push(tr[i].y); cs.push(d);
+    }
+    return d;
+  };
+  /** The point at distance s back along fx's path (kit.path first). */
+  kit.at = (fx, s, out) => {
+    const cs = fx.pc, xs = fx.px, ys = fx.py;
+    let i = 1;
+    while (i < cs.length - 1 && cs[i] < s) i++;
+    const u = cs[i] > cs[i - 1] ? SS.clamp((s - cs[i - 1]) / (cs[i] - cs[i - 1]), 0, 1) : 0;
+    out.x = xs[i - 1] + (xs[i] - xs[i - 1]) * u; out.y = ys[i - 1] + (ys[i] - ys[i - 1]) * u;
+    return out;
+  };
+  const PA = { x: 0, y: 0 }, PB = { x: 0, y: 0 };
+  /** A point at distance s back along the path, pushed sideways by off (normal
+      from a wide, smooth tangent); out.a is the heading there. */
+  kit.onPath = (fx, s, off, out) => {
+    kit.at(fx, s - 40, PA); kit.at(fx, s + 40, PB); kit.at(fx, s, out);
+    const tx = PA.x - PB.x, ty = PA.y - PB.y, tl = Math.hypot(tx, ty) || 1;
+    out.x += -ty / tl * off; out.y += tx / tl * off; out.a = Math.atan2(ty, tx);
+    return out;
+  };
+  /** Ease a world point toward its target in SHIP-RELATIVE terms, so whatever
+      rides your path settles without lagging behind you at speed. */
+  kit.ease = (a, key, P, x, y, k) => {
+    const rx = x - P.x, ry = y - P.y;
+    if (a[key + 'x'] === undefined || Math.abs(a[key + 'x'] - rx) > 900) { a[key + 'x'] = rx; a[key + 'y'] = ry; }
+    a[key + 'x'] += (rx - a[key + 'x']) * k; a[key + 'y'] += (ry - a[key + 'y']) * k;
+    return [P.x + a[key + 'x'], P.y + a[key + 'y']];
   };
   /** Polyline through trail points offset sideways by off(i). */
   kit.line = (ctx, tr, i0, i1, off) => {
@@ -7000,7 +7132,6 @@ body.touch kbd { display: none; }
     ctx.globalAlpha = a0 * 0.9; ctx.beginPath(); ctx.arc(0.38 * s, 0.8 * s, 0.075 * s, 0, SS.TAU); ctx.fill();
     ctx.globalAlpha = a0; ctx.lineCap = 'butt';
   }
-  SS.handprint = hand;     // the Rift's reveal slaps these onto the glass
   /** Four textured bloody prints (with the smear where they dragged), drawn once. */
   const SPRITE = { s: 40, ox: 80, oy: 48, w: 150, h: 96 };   // room for the smear behind (-64) and fingers ahead (+62)
   let spriteCache = null;
@@ -7082,7 +7213,7 @@ body.touch kbd { display: none; }
     }
   }
   /** The Rift's close-up: its face out of the black, fingers either side of it. */
-  SS.runPortrait = (ctx, cx, cy, s, t, e, open) => {
+  const portrait = (ctx, cx, cy, s, t, e, open) => {
     const beat = Math.floor(t * 1.15), ph = t * 1.15 - beat;
     const tw = (hash(beat) - 0.5) * 0.3 * (hash(beat + 7) > 0.5 ? 1 : 0) + (ph < 0.04 ? (hash(beat * 3) - 0.5) * 0.35 : 0);
     ctx.save();
@@ -7127,45 +7258,8 @@ body.touch kbd { display: none; }
     ctx.stroke();
   }
 
-  // Your path as a smooth line: the ship, then the trail, with the distance
-  // along it. The arms sit at exact DISTANCES on it - picking whole trail points
-  // made them hop 14 units at a time (they jittered).
-  function buildPath(fx, P, maxLen) {
-    const tr = P.trail, xs = (fx.px = fx.px || []), ys = (fx.py = fx.py || []), cs = (fx.pc = fx.pc || []);
-    xs.length = ys.length = cs.length = 0;
-    xs.push(P.x); ys.push(P.y); cs.push(0);
-    let d = 0;
-    for (let i = 0; i < tr.length && d < maxLen; i++) {
-      const l = Math.hypot(tr[i].x - xs[xs.length - 1], tr[i].y - ys[ys.length - 1]);
-      if (l < 0.5) continue;
-      d += l; xs.push(tr[i].x); ys.push(tr[i].y); cs.push(d);
-    }
-    return d;
-  }
-  function pathAt(fx, s, out) {
-    const cs = fx.pc, xs = fx.px, ys = fx.py;
-    let i = 1;
-    while (i < cs.length - 1 && cs[i] < s) i++;
-    const u = cs[i] > cs[i - 1] ? SS.clamp((s - cs[i - 1]) / (cs[i] - cs[i - 1]), 0, 1) : 0;
-    out.x = xs[i - 1] + (xs[i] - xs[i - 1]) * u; out.y = ys[i - 1] + (ys[i] - ys[i - 1]) * u;
-    return out;
-  }
-  const A = { x: 0, y: 0 }, B = { x: 0, y: 0 }, Q = { x: 0, y: 0 };
-  /** A point at distance s back along your path, pushed sideways by off (normal from a wide, smooth tangent). */
-  function onPath(fx, s, off, out) {
-    pathAt(fx, s - 40, A); pathAt(fx, s + 40, B); pathAt(fx, s, out);
-    const tx = A.x - B.x, ty = A.y - B.y, tl = Math.hypot(tx, ty) || 1;
-    out.x += -ty / tl * off; out.y += tx / tl * off;
-    return out;
-  }
-  /** Ease a world point toward its target in SHIP-RELATIVE terms, so the arm
-      settles without lagging behind you at speed. */
-  function ease(a, key, P, x, y, k) {
-    const rx = x - P.x, ry = y - P.y;
-    if (a[key + 'x'] === undefined || Math.abs(a[key + 'x'] - rx) > 900) { a[key + 'x'] = rx; a[key + 'y'] = ry; }
-    a[key + 'x'] += (rx - a[key + 'x']) * k; a[key + 'y'] += (ry - a[key + 'y']) * k;
-    return [P.x + a[key + 'x'], P.y + a[key + 'y']];
-  }
+  // the arms sit at exact distances along your path (kit.path)
+  const buildPath = kit.path, onPath = kit.onPath, ease = kit.ease, Q = { x: 0, y: 0 };
   /** Where an arm is this frame. The hand rides your path a little behind you,
       lunging closer and falling back; the shoulder is far back in the dark,
       also on your path, so the arm bends with your turns. Two bones, elbow out. */
@@ -7252,6 +7346,68 @@ body.touch kbd { display: none; }
       } },
     unlock: null,                 // ULTRA LIMITED: only from the Rift while Halloween runs; kept for good
     colors: C, tail: 22,
+    // Its Rift reveal (rift.js calls these). It lies - a rare, then a limited -
+    // then at VOID the lights go: black, a heartbeat, a slit that opens like an
+    // eye. At `open` its face is simply there, getting closer, and hands hit the
+    // glass from the other side. Then it speaks.
+    reveal: {
+      open: 2.6, show: 4.0, bg: '#000000',
+      start(R) {
+        const spots = [[0.13, 0.28], [0.86, 0.22], [0.2, 0.72], [0.8, 0.7], [0.52, 0.1], [0.93, 0.5]];
+        R.prints = [2.9, 3.15, 3.3, 3.55, 3.7, 3.85].map((at, i) => ({ at, x: spots[i][0] + SS.rand(-0.04, 0.04), y: spots[i][1] + SS.rand(-0.04, 0.04), a: -Math.PI / 2 + SS.rand(-0.6, 0.6), s: SS.rand(0.09, 0.13), side: i % 2 ? 1 : -1 }));
+      },
+      sound() { SS.audio.riftUltra(); },
+      /** After the lights go: a black eye opening, rimmed in red. */
+      slit(g, R, W, H, cx, cy, t) {
+        if (t > R.open + 0.4) return;
+        const VOID = SS.rift.VOID, u = SS.clamp((t - VOID) / (R.open - VOID), 0, 1), gone = SS.clamp((t - R.open) / 0.4, 0, 1);
+        const h = H * 0.62 * (1 + 0.08 * u), wd = (2 + u * u * W * 0.07) * (1 - gone);
+        SS.drawGlow(g, '#e0142c', cx, cy, h * 0.45, (0.1 + 0.12 * u) * (1 - gone));
+        g.globalCompositeOperation = 'source-over';
+        g.beginPath();
+        g.moveTo(cx, cy - h / 2); g.quadraticCurveTo(cx + wd, cy, cx, cy + h / 2); g.quadraticCurveTo(cx - wd, cy, cx, cy - h / 2);
+        g.fillStyle = '#000000'; g.fill();
+        g.strokeStyle = 'rgba(224,20,44,' + 0.75 * (1 - gone) + ')'; g.lineWidth = 1.5; g.stroke();
+        g.globalCompositeOperation = 'lighter';
+      },
+      /** No rays, no sparkle. It fades up out of the black, getting closer, and hands hit the glass. */
+      draw(g, R, W, H, cx, cy, t) {
+        const e = SS.smooth((t - R.open) / 1.6), near = 1 + Math.min(0.35, (t - R.open) * 0.04);
+        const s = Math.min(W * 0.5, H * 0.56) * near, open = 0.2 + 0.6 * SS.smooth((t - R.show + 0.2) / 0.5);
+        g.globalCompositeOperation = 'source-over';
+        portrait(g, cx, cy, s, t, e, open);
+        // the dark closes in round it, and the edges go red
+        const vg = g.createRadialGradient(cx, cy, s * 0.42, cx, cy, Math.max(W, H) * 0.75);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(0.35, 'rgba(0,0,0,' + 0.75 * e + ')'); vg.addColorStop(1, 'rgba(55,0,8,' + 0.8 * e + ')');
+        g.fillStyle = vg; g.fillRect(0, 0, W, H);
+        // hands on the glass from the other side; the blood runs down after them
+        const m = Math.min(W, H);
+        for (const p of R.prints) {
+          if (t < p.at) continue;
+          const age = t - p.at, s = p.s * m * (1 + 0.2 * Math.max(0, 1 - age / 0.06)), px = p.x * W, py = p.y * H;
+          g.save();
+          g.translate(px, py);
+          g.rotate(p.a); g.scale(1, p.side);
+          g.globalAlpha = 0.9;
+          g.fillStyle = '#6a0912'; g.strokeStyle = '#6a0912';
+          hand(g, s, p.at * 31);
+          g.restore();
+          g.strokeStyle = 'rgba(106,9,18,0.85)'; g.fillStyle = 'rgba(106,9,18,0.9)'; g.lineCap = 'round';
+          for (let k = 0; k < 3; k++) {
+            const dx = (k - 1) * 0.28 * s + Math.sin(p.at * 7 + k) * 0.08 * s, len = Math.min(1, age / (1.4 + k * 0.5)) * s * (0.5 + 0.35 * ((p.at * 13 + k * 3.7) % 1));
+            g.lineWidth = s * (0.045 - k * 0.008);
+            g.beginPath(); g.moveTo(px + dx, py + 0.15 * s); g.lineTo(px + dx, py + 0.15 * s + len); g.stroke();
+            g.beginPath(); g.arc(px + dx, py + 0.15 * s + len, s * 0.04, 0, SS.TAU); g.fill();
+          }
+          g.lineCap = 'butt';
+        }
+        g.globalAlpha = 1;
+        g.globalCompositeOperation = 'lighter';
+      },
+      // its card in a ten-pull: black, a scrawl, a shiver, and a whisper as it's dealt
+      card: { bg: '#000000', ink: '#d8d0c4', font: '"Nothing You Could Do", cursive', shake: true },
+      cardSound() { SS.audio.whisper(1.3); },
+    },
     // a slow, uneven breath under a beating low drone
     voice: { wave1: 'sawtooth', wave2: 'sawtooth', base: 46, ratio: 1.013, detune: 14, mix2: 0.8, filter: 'lowpass', q: 3, cutoff: 260, cutoffRange: 700, lfoRate: 0.45, lfoDepth: 0.06, noise: 0.3, noiseF: 520, range: 0.9, gain: 0.85 },
 
@@ -7476,6 +7632,1312 @@ body.touch kbd { display: none; }
     onHunted(fx, P) { SS.audio.whisper(1.1); },
     onTopSpeed(fx, P) { SS.audio.whisper(0.6); },
     onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.blood, 30, 500, 1.2, 3); },
+  });
+})();
+</script>
+<script>
+/* SHIP - SOUTHBOUND. LIMITED (Thanksgiving), from the Rift. A Canada goose
+   leading the skein south before the winter.
+   - Wake: THE SKEIN - geese join you and fly a V behind you. Each one holds its
+     slot at a DISTANCE back along your path (kit.path), so the V bends with
+     your turns; wings beat out of step, and every downstroke presses the fabric.
+   - SPEED FORM (P.form): the V grows longer, the flock honks, and banks of
+     sunset cloud slide by below with the flock's shadows on them.
+   - Real speed (P.mach): sixteen geese, and far off other skeins cross the
+     sky, every one of them heading south.
+   - SKEIN: the V breaks - each goose flies off, snatches an orb and brings it
+     back; a Wraith in their way is mobbed.
+   Device (keep it unique): a FORMATION of flapping birds holding a V (not
+   Hollow's loose bat swarm), + their downdraft. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#7a6550', accent: '#f3e9d6', glow: '#ffb35c', neck: '#15110f', wing: '#5f4f40', tip: '#2b231d', belly: '#b9a68c', rim: 'rgba(255,214,170,0.55)' };
+  const N = 16, Q = { x: 0, y: 0, a: 0 };
+  const hash = (n) => { const s = Math.sin(n * 91.7) * 43758.5453; return s - Math.floor(s); };
+  const qb = (a, b, c, u) => (1 - u) * (1 - u) * a + 2 * u * (1 - u) * b + u * u * c;
+
+  /** A Canada goose from above, flying +x, s = half its length. ph is the
+      wingbeat: the wings look longest level, mid-stroke, and sweep back on
+      the downstroke. */
+  function goose(ctx, s, ph) {
+    // long, narrow, pointed wings: a forward wrist on the leading edge, a straight-ish trailing edge
+    const th = 0.8 * Math.sin(ph), span = s * 1.4 * Math.cos(th), sw = -0.16 * s - 0.16 * s * Math.sin(ph);
+    for (const sg of [-1, 1]) {
+      const lx = 0.18 * s, ly = 0.1 * s * sg, c1x = 0.24 * s, c1y = span * 0.45 * sg, tx = sw, ty = span * sg, c2x = -0.22 * s, c2y = span * 0.55 * sg, bx = -0.18 * s, by = 0.1 * s * sg;
+      ctx.fillStyle = C.wing;
+      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.quadraticCurveTo(c1x, c1y, tx, ty); ctx.quadraticCurveTo(c2x, c2y, bx, by); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = C.tip;          // dark primaries at the tip
+      ctx.beginPath(); ctx.moveTo(qb(lx, c1x, tx, 0.62), qb(ly, c1y, ty, 0.62)); ctx.lineTo(tx, ty); ctx.lineTo(qb(tx, c2x, bx, 0.32), qb(ty, c2y, by, 0.32)); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.quadraticCurveTo(c1x, c1y, tx, ty); ctx.stroke();   // the low sun on the leading edge
+    }
+    ctx.fillStyle = C.neck;           // tail
+    ctx.beginPath(); ctx.moveTo(-0.5 * s, -0.1 * s); ctx.lineTo(-0.74 * s, -0.08 * s); ctx.quadraticCurveTo(-0.8 * s, 0, -0.74 * s, 0.08 * s); ctx.lineTo(-0.5 * s, 0.1 * s); ctx.fill();
+    ctx.fillStyle = C.hull;           // body
+    ctx.beginPath(); ctx.ellipse(-0.04 * s, 0, 0.52 * s, 0.17 * s, 0, 0, SS.TAU); ctx.fill();
+    ctx.fillStyle = C.accent;         // the white rump band
+    ctx.beginPath(); ctx.ellipse(-0.5 * s, 0, 0.045 * s, 0.11 * s, 0, 0, SS.TAU); ctx.fill();
+    ctx.strokeStyle = C.neck; ctx.lineWidth = 0.11 * s; ctx.lineCap = 'round';   // the long black neck
+    ctx.beginPath(); ctx.moveTo(0.4 * s, 0); ctx.lineTo(0.88 * s, 0); ctx.stroke();
+    ctx.lineCap = 'butt';
+    ctx.fillStyle = C.neck;
+    ctx.beginPath(); ctx.ellipse(0.96 * s, 0, 0.12 * s, 0.075 * s, 0, 0, SS.TAU); ctx.fill();
+    ctx.fillStyle = C.accent;         // the chinstrap
+    ctx.beginPath(); ctx.ellipse(0.93 * s, -0.055 * s, 0.05 * s, 0.022 * s, 0, 0, SS.TAU); ctx.ellipse(0.93 * s, 0.055 * s, 0.05 * s, 0.022 * s, 0, 0, SS.TAU); ctx.fill();
+  }
+  /** A bank of cloud lit from the low sun: soft puffs, a dusky underside, a cream top, a warm rim. */
+  function cloud(ctx, c, a) {
+    for (const [ox, oy, rs, col, al] of [[0.05, 0.14, 1.3, '#6e5a78', 0.75], [0, 0, 1.15, '#f6e4d2', 0.85], [-0.06, -0.1, 0.75, '#ffb46a', 0.45]]) {
+      for (let j = 0; j < 8; j++) {
+        const x = c.x + ((hash(c.seed + j) - 0.5) * 1.7 + ox) * c.s, y = c.y + ((hash(c.seed + j * 3) - 0.5) * 0.5 - 0.25 * Math.sin(j / 7 * Math.PI) + oy) * c.s;
+        SS.drawGlow(ctx, col, x, y, (0.34 + 0.26 * hash(c.seed + j * 7)) * c.s * rs, a * al);
+      }
+    }
+  }
+
+  SS.registerShip({
+    id: 'goose', order: 23, rarity: 'limited', event: 'thanksgiving', name: 'SOUTHBOUND', title: 'The Lead Goose',
+    desc: 'A Canada goose at the point of the skein, flying south before the winter. The rest of the flock falls in behind you in a V.',
+    world: 'Every wingbeat of the flock presses the fabric down.',
+    ability: { name: 'SKEIN', desc: 'The V breaks: each goose snatches an orb near you and brings it back, and a Wraith in their way is mobbed.', cd: 8,
+      use(fx, P) {
+        const R = 720, W = SS.wraith, near = [];
+        for (const o of SS.orbs) {
+          if (o.dead || o.grabbed) continue;
+          const d2 = (o.x - P.x) ** 2 + (o.y - P.y) ** 2;
+          if (d2 < R * R) near.push([d2, o]);
+        }
+        near.sort((a, b) => a[0] - b[0]);
+        for (const [d2, o] of near.slice(0, 24)) { o.grabbed = true; fx.fetch.push({ o, gen: o.gen, t: 0, out: 0.12 + Math.sqrt(d2) / 2400, ph: Math.random() * 6, x: P.x, y: P.y, a: 0 }); }
+        if (W.near(P.x, P.y, R)) { W.snagFor(2); SS.fx.text(W.x, W.y - 60, 'MOBBED', C.accent, 24); }
+        SS.audio.honk(1.3);
+      } },
+    unlock: null,                 // LIMITED: only from the Rift while Thanksgiving runs; kept for good
+    colors: C, tail: 12,
+    // wind over feathers, and the slow pulse of the wingbeat
+    voice: { wave1: 'triangle', wave2: 'sine', base: 82, ratio: 2.01, detune: 5, mix2: 0.35, filter: 'lowpass', q: 1, cutoff: 650, cutoffRange: 1800, lfoRate: 3, lfoDepth: 0.025, noise: 0.32, noiseF: 1300, range: 1.1, gain: 0.9 },
+
+    init(fx) {
+      // slot k along the V (1 = right behind you), which arm, its own wingbeat
+      fx.g = Array.from({ length: N }, (_, i) => ({ k: (i >> 1) + 1, side: i & 1 ? 1 : -1, ph: Math.random() * SS.TAU, vis: 0, ok: false, x: 0, y: 0, a: 0, w: 0 }));
+      fx.flap = 0; fx.clouds = []; fx.acc = 0; fx.far = []; fx.farT = 1; fx.honkT = 3; fx.fetch = [];
+    },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form, m = P.mach;
+      // two geese at a crawl, eight at full boost, twelve in speed form, sixteen at real speed
+      const want = r < 0.05 ? 0 : 2 * Math.round(1 + 3 * Math.min(1, r)) + (f > 0.3 ? 4 : 0) + (m > 0.25 ? 4 : 0);
+      const gb = (34 - 6 * f) * zs, gs = (27 - 5 * f) * zs;
+      const total = kit.path(fx, P, (N / 2 + 1) * gb + 120);
+      fx.flap += dt * (2.2 + 1.1 * Math.min(1, r) + 0.6 * f) * SS.TAU;
+      for (let i = 0; i < N; i++) {
+        const g = fx.g[i];
+        g.vis += ((i < want ? 1 : 0) - g.vis) * Math.min(1, dt * 2);
+        const d = g.k * gb + Math.sin(t * 0.9 + g.ph) * 4 * zs;
+        g.ok = total > d + 50 && g.vis > 0.01;
+        if (!g.ok) { g.rx = undefined; continue; }
+        kit.onPath(fx, d, g.side * g.k * gs + Math.sin(t * 1.3 + g.ph) * 3 * zs, Q);
+        const join = g.rx === undefined;
+        [g.x, g.y] = kit.ease(g, 'r', P, Q.x, Q.y, 1 - Math.exp(-dt / 0.15));
+        if (join) { g.rx -= Math.sin(Q.a) * g.side * 170 * zs; g.ry += Math.cos(Q.a) * g.side * 170 * zs; }   // it flies in from out wide
+        g.a = Q.a;
+        g.w = fx.flap + g.ph;
+        SS.world.dent(g.x, g.y, 46 * zs, 9 * zs * Math.max(0, -Math.cos(g.w)) * g.vis, 0);   // the downstroke
+      }
+      // speed form: banks of cloud below, lit by the low sun
+      kit.lay(fx, 'acc', 230 * zs, P, dt, (x, y) => {
+        if (f < 0.25) return;
+        const o = SS.rand(70, 320) * zs * (Math.random() < 0.5 ? -1 : 1);
+        fx.clouds.push({ x: x - Math.sin(P.angle) * o, y: y + Math.cos(P.angle) * o, s: SS.rand(90, 170) * zs, t: 0, life: SS.rand(2.4, 3.4), seed: Math.random() * 99, k: f });
+      });
+      for (let i = fx.clouds.length - 1; i >= 0; i--) if ((fx.clouds[i].t += dt) > fx.clouds[i].life) fx.clouds.splice(i, 1);
+      if (fx.clouds.length > 24) fx.clouds.splice(0, fx.clouds.length - 24);
+      // real speed: other skeins, far off, all heading south
+      fx.farT -= dt;
+      if (m > 0.25 && fx.farT <= 0 && fx.far.length < 4) {
+        fx.farT = SS.rand(0.9, 1.8);
+        const v = SS.world.view, hw = (v.x1 - v.x0) / 2, hh = (v.y1 - v.y0) / 2, ca = Math.cos(P.angle), sa = Math.sin(P.angle), side = SS.rand(-0.8, 0.8);
+        fx.far.push({ x: P.x + ca * hw * 1.05 - sa * side * hw, y: P.y + sa * hh * 1.05 + ca * side * hh, a: Math.PI / 2 + SS.rand(-0.35, 0.35), n: 5 + ((Math.random() * 3) | 0) * 2, s: SS.rand(5, 7) * zs, t: 0, life: 6, ph: Math.random() * 9 });
+      }
+      for (let i = fx.far.length - 1; i >= 0; i--) {
+        const q = fx.far[i];
+        q.t += dt; q.x += Math.cos(q.a) * 260 * zs * dt; q.y += Math.sin(q.a) * 260 * zs * dt;
+        if (q.t > q.life) fx.far.splice(i, 1);
+      }
+      // SKEIN: out to the orb, then back with it
+      for (let i = fx.fetch.length - 1; i >= 0; i--) {
+        const g = fx.fetch[i], o = g.o;
+        g.t += dt;
+        if (o.gen !== g.gen || g.t > g.out + 1.5) { if (o.gen === g.gen) o.grabbed = false; fx.fetch.splice(i, 1); continue; }
+        if (g.t < g.out) {
+          const u = SS.easeOut(g.t / g.out);
+          g.x = P.x + (o.x - P.x) * u; g.y = P.y + (o.y - P.y) * u; g.a = Math.atan2(o.y - P.y, o.x - P.x);
+          continue;
+        }
+        o.x += (P.vx + P.extX) * dt; o.y += (P.vy + P.extY) * dt;
+        const k = Math.min(1, dt * (3 + (g.t - g.out) * 12));
+        o.x += (P.x - o.x) * k; o.y += (P.y - o.y) * k;
+        g.a = Math.atan2(P.y - o.y, P.x - o.x); g.x = o.x - Math.cos(g.a) * 10 * zs; g.y = o.y - Math.sin(g.a) * 10 * zs;
+      }
+      // speed form: the flock calls to itself
+      fx.honkT -= dt;
+      if (fx.honkT <= 0) { fx.honkT = SS.rand(1.6, 4); if (f > 0.3 && SS.G.state === 'play') SS.audio.honk(0.45); }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const zs = kit.zs(), px = 1 / V.z, t = V.t;
+      // clouds below, then every goose's shadow on whatever is under it
+      for (const c of fx.clouds) cloud(ctx, c, c.k * Math.min(1, c.t / 0.5) * (1 - SS.smooth((c.t - c.life + 0.8) / 0.8)));
+      for (const g of fx.g) if (g.ok) SS.drawGlow(ctx, '#000000', g.x + 14 * zs, g.y + 22 * zs, 22 * zs, 0.4 * g.vis);
+      if (P.rise > 0.05) SS.drawGlow(ctx, '#000000', P.x + 18 * zs, P.y + 28 * zs, 30 * zs, 0.4);
+      // far skeins: tiny Vs of sunlit birds
+      ctx.lineWidth = Math.max(px, 1.1 * zs); ctx.lineCap = 'round';
+      for (const q of fx.far) {
+        const a = Math.min(1, q.t / 0.6) * (1 - SS.smooth((q.t - q.life + 1) / 1)), ca = Math.cos(q.a), sa = Math.sin(q.a);
+        ctx.strokeStyle = 'rgba(255,214,170,' + 0.5 * a + ')';
+        ctx.beginPath();
+        for (let j = 0; j < q.n; j++) {
+          const k = (j + 1) >> 1, sd = j & 1 ? 1 : -1, g = q.s * 3.2, x = q.x - ca * k * g - sa * sd * k * g * 0.8, y = q.y - sa * k * g + ca * sd * k * g * 0.8;
+          const fl = Math.sin(t * 9 + q.ph + j) * 0.5 * q.s;
+          ctx.moveTo(x - ca * q.s * 0.3 - sa * q.s, y - sa * q.s * 0.3 + ca * q.s);
+          ctx.quadraticCurveTo(x + ca * fl, y + sa * fl, x - ca * q.s * 0.3 + sa * q.s, y - sa * q.s * 0.3 - ca * q.s);
+        }
+        ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+    },
+
+    drawWake(ctx, fx, P, V) {
+      const zs = kit.zs(), px = 1 / V.z;
+      ctx.globalCompositeOperation = 'lighter';          // the low sun behind them, so dark birds read on dark space
+      for (const g of fx.g) if (g.ok) SS.drawGlow(ctx, C.glow, g.x, g.y, 30 * zs, 0.1 * g.vis);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = C.rim; ctx.lineWidth = Math.max(px * 0.8, 0.8 * zs);
+      for (const g of fx.g) {
+        if (!g.ok || g.vis < 0.02) continue;
+        ctx.save();
+        ctx.translate(g.x, g.y); ctx.rotate(g.a);
+        ctx.globalAlpha = g.vis;
+        goose(ctx, 13 * zs * (0.7 + 0.3 * g.vis), g.w);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      for (const g of fx.fetch) {
+        ctx.save();
+        ctx.translate(g.x, g.y); ctx.rotate(g.a);
+        goose(ctx, 12 * zs, V.t * 20 + g.ph);
+        ctx.restore();
+      }
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0;
+      const ph = P.fx && P.fx.flap !== undefined ? P.fx.flap : V.t * 2.6 * SS.TAU;
+      ctx.strokeStyle = C.rim; ctx.lineWidth = 0.6;
+      goose(ctx, 15, ph);
+      // the leader's back catches the light; one dark eye
+      const g = ctx.createLinearGradient(0, -2.6, 0, 2.6);
+      g.addColorStop(0, 'rgba(255,226,190,0.35)'); g.addColorStop(1, 'rgba(255,226,190,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(-1, -0.6, 6.5, 1.8, 0, 0, SS.TAU); ctx.fill();
+      ctx.fillStyle = '#e8d9c0';
+      ctx.beginPath(); ctx.arc(14.6, -0.55, 0.32, 0, SS.TAU); ctx.arc(14.6, 0.55, 0.32, 0, SS.TAU); ctx.fill();
+      if (f > 0.05 || r > 0.5) {
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, C.glow, 0, 0, 16 + 10 * f, 0.15 + 0.15 * f);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    },
+
+    onBoost(fx, P) { SS.audio.honk(0.7); },
+    onTurn(fx, P, sign) {
+      const out = P.angle - sign * Math.PI / 2;
+      for (let k = 0; k < 4; k++) { const a = out + SS.rand(-0.6, 0.6), s = SS.rand(90, 220); SS.fx.spawn(P.x, P.y, Math.cos(a) * s, Math.sin(a) * s, C.accent, 0.7, 2.5, 2, 2.5); }
+    },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.glow, 4, 28, 0.3, 1.5); },
+    onTopSpeed(fx, P) { SS.audio.honk(0.8); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.glow, 30, 520, 1, 3); SS.audio.honk(1); },
+  });
+})();
+</script>
+<script>
+/* SHIP - PLENTY. LIMITED (Thanksgiving), from the Rift. A horn of plenty in
+   woven wicker that never runs empty.
+   - Wake: THE HARVEST SPILLS - pumpkins, apples, pears, grapes, corn and gourds
+     tumble out of the horn's mouth and are tossed up (their shadows stay on
+     the ground under them), bounce once and settle. Each one that lands
+     weighs the fabric down.
+   - SPEED FORM (P.form): a sheaf of wheat streams out of the horn along your
+     path, ears nodding, and the harvest is flung up in high arcs.
+   - Real speed (P.mach): the harvest turns to gold - what spills is gilded
+     and glints.
+   - BOUNTY: every orb near you ripens a tier.
+   Device (keep it unique): TOSSED PRODUCE with height and ground shadows
+   (pre-drawn sprites), + the wheat sheaf in speed form. */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#c8913f', accent: '#ffb347', glow: '#ffcf6b', wick: '#7a5222', gold: '#ffd36b' };
+  const MAX = 100, SPR = 64, SR = 22, EAR = 48;
+  const Q1 = { x: 0, y: 0 }, Q2 = { x: 0, y: 0 }, Q0 = { x: 0, y: 0 };
+  const hash = (n) => { const s = Math.sin(n * 91.7) * 43758.5453; return s - Math.floor(s); };
+  const PAL = [
+    { pumpkin: ['#e8670f', '#b8480a', '#ffa45a'], apple: ['#c81e2a', '#7e0e16', '#ff8070'], pear: ['#c2c43c', '#7f8a1e', '#f0f29a'], grape: ['#6a3290', '#3a1450', '#b07ad6'],
+      corn: ['#f2c230', '#b88a14', '#fff09a'], gourd: ['#eec44a', '#4f8a2a', '#fff4b0'], stem: '#5a3a1a', leaf: '#4f8f32', husk: '#d9c48e' },
+    { pumpkin: ['#e9b93a', '#9a6c12', '#fff3b0'], apple: ['#e9b93a', '#9a6c12', '#fff3b0'], pear: ['#e9b93a', '#9a6c12', '#fff3b0'], grape: ['#e0ac2e', '#8a5e0e', '#fff0a0'],
+      corn: ['#f2c84a', '#9a6c12', '#fff7c8'], gourd: ['#e9b93a', '#c8901e', '#fff3b0'], stem: '#9a6c12', leaf: '#d9a62a', husk: '#f2d77a' },
+  ];
+  // the harvest, each in local space with radius ~s
+  const PAINT = [
+    function pumpkin(c, s, p) {
+      const [m, d, l] = p.pumpkin;
+      c.fillStyle = d;
+      c.beginPath(); c.ellipse(-0.42 * s, 0.05 * s, 0.48 * s, 0.66 * s, 0, 0, SS.TAU); c.ellipse(0.42 * s, 0.05 * s, 0.48 * s, 0.66 * s, 0, 0, SS.TAU); c.fill();
+      c.fillStyle = m;
+      c.beginPath(); c.ellipse(0, 0.05 * s, 0.5 * s, 0.72 * s, 0, 0, SS.TAU); c.fill();
+      c.strokeStyle = d; c.lineWidth = 0.05 * s;
+      c.beginPath(); c.moveTo(-0.2 * s, -0.6 * s); c.quadraticCurveTo(-0.32 * s, 0.05 * s, -0.2 * s, 0.7 * s); c.moveTo(0.2 * s, -0.6 * s); c.quadraticCurveTo(0.32 * s, 0.05 * s, 0.2 * s, 0.7 * s); c.stroke();
+      c.globalAlpha = 0.5; c.fillStyle = l; c.beginPath(); c.ellipse(-0.12 * s, -0.3 * s, 0.11 * s, 0.22 * s, 0.3, 0, SS.TAU); c.fill(); c.globalAlpha = 1;
+      c.fillStyle = p.stem; c.beginPath(); c.moveTo(-0.07 * s, -0.6 * s); c.lineTo(0.06 * s, -0.6 * s); c.lineTo(0.15 * s, -0.92 * s); c.lineTo(0.03 * s, -0.9 * s); c.closePath(); c.fill();
+    },
+    function apple(c, s, p) {
+      const [m, d, l] = p.apple;
+      c.fillStyle = d; c.beginPath(); c.arc(0.08 * s, 0.12 * s, 0.72 * s, 0, SS.TAU); c.fill();
+      c.fillStyle = m; c.beginPath(); c.arc(-0.03 * s, 0.04 * s, 0.66 * s, 0, SS.TAU); c.fill();
+      c.globalAlpha = 0.6; c.fillStyle = l; c.beginPath(); c.ellipse(-0.27 * s, -0.18 * s, 0.12 * s, 0.2 * s, 0.4, 0, SS.TAU); c.fill(); c.globalAlpha = 1;
+      c.strokeStyle = p.stem; c.lineWidth = 0.08 * s; c.beginPath(); c.moveTo(0, -0.5 * s); c.lineTo(0.08 * s, -0.9 * s); c.stroke();
+      c.fillStyle = p.leaf; c.beginPath(); c.ellipse(0.3 * s, -0.78 * s, 0.25 * s, 0.1 * s, -0.5, 0, SS.TAU); c.fill();
+    },
+    function pear(c, s, p) {
+      const [m, d, l] = p.pear;
+      c.fillStyle = m;
+      c.beginPath(); c.moveTo(0, -0.8 * s);
+      c.bezierCurveTo(0.3 * s, -0.8 * s, 0.22 * s, -0.25 * s, 0.52 * s, 0.2 * s); c.bezierCurveTo(0.78 * s, 0.62 * s, 0.45 * s, 0.9 * s, 0, 0.9 * s);
+      c.bezierCurveTo(-0.45 * s, 0.9 * s, -0.78 * s, 0.62 * s, -0.52 * s, 0.2 * s); c.bezierCurveTo(-0.22 * s, -0.25 * s, -0.3 * s, -0.8 * s, 0, -0.8 * s);
+      c.fill();
+      c.globalAlpha = 0.45; c.fillStyle = d; c.beginPath(); c.ellipse(0.2 * s, 0.45 * s, 0.3 * s, 0.36 * s, 0, 0, SS.TAU); c.fill();
+      c.fillStyle = l; c.beginPath(); c.ellipse(-0.2 * s, 0.25 * s, 0.1 * s, 0.22 * s, 0.2, 0, SS.TAU); c.fill(); c.globalAlpha = 1;
+      c.strokeStyle = p.stem; c.lineWidth = 0.07 * s; c.beginPath(); c.moveTo(0, -0.75 * s); c.quadraticCurveTo(0.05 * s, -0.9 * s, 0.15 * s, -0.98 * s); c.stroke();
+    },
+    function grapes(c, s, p) {
+      const [m, d, l] = p.grape;
+      c.strokeStyle = p.stem; c.lineWidth = 0.07 * s; c.beginPath(); c.moveTo(0, -0.55 * s); c.lineTo(0.06 * s, -0.92 * s); c.stroke();
+      c.fillStyle = p.leaf; c.beginPath(); c.ellipse(-0.3 * s, -0.72 * s, 0.28 * s, 0.13 * s, 0.3, 0, SS.TAU); c.fill();
+      for (const [x, y] of [[-0.36, -0.42], [-0.12, -0.45], [0.12, -0.45], [0.36, -0.42], [-0.24, -0.14], [0, -0.16], [0.24, -0.14], [-0.12, 0.14], [0.12, 0.14], [0, 0.42]]) {
+        c.fillStyle = d; c.beginPath(); c.arc(x * s, y * s, 0.17 * s, 0, SS.TAU); c.fill();
+        c.fillStyle = m; c.beginPath(); c.arc((x - 0.02) * s, (y - 0.02) * s, 0.14 * s, 0, SS.TAU); c.fill();
+        c.fillStyle = l; c.beginPath(); c.arc((x - 0.06) * s, (y - 0.06) * s, 0.04 * s, 0, SS.TAU); c.fill();
+      }
+    },
+    function corn(c, s, p) {
+      const [m, d, l] = p.corn;
+      c.fillStyle = p.husk;
+      c.beginPath(); c.moveTo(0, 0.9 * s); c.quadraticCurveTo(-0.55 * s, 0.35 * s, -0.42 * s, -0.25 * s); c.quadraticCurveTo(-0.2 * s, 0.3 * s, 0, 0.55 * s);
+      c.quadraticCurveTo(0.2 * s, 0.3 * s, 0.42 * s, -0.25 * s); c.quadraticCurveTo(0.55 * s, 0.35 * s, 0, 0.9 * s); c.fill();
+      c.fillStyle = m; c.beginPath(); c.ellipse(0, -0.08 * s, 0.27 * s, 0.8 * s, 0, 0, SS.TAU); c.fill();
+      for (let y = -0.72; y < 0.62; y += 0.13) for (const x of [-0.14, 0, 0.14]) {
+        const w = Math.sqrt(Math.max(0, 1 - ((y + 0.08) / 0.8) ** 2));
+        c.fillStyle = d; c.beginPath(); c.arc(x * w * s, y * s, 0.06 * s, 0, SS.TAU); c.fill();
+        c.fillStyle = l; c.beginPath(); c.arc((x * w - 0.015) * s, (y - 0.015) * s, 0.04 * s, 0, SS.TAU); c.fill();
+      }
+      c.fillStyle = p.husk; c.beginPath(); c.moveTo(-0.3 * s, 0.92 * s); c.quadraticCurveTo(-0.15 * s, 0.4 * s, 0.02 * s, 0.15 * s); c.quadraticCurveTo(0.05 * s, 0.55 * s, 0.12 * s, 0.92 * s); c.fill();
+    },
+    function gourd(c, s, p) {
+      const [m, g, l] = p.gourd;
+      c.fillStyle = g;
+      c.beginPath(); c.moveTo(-0.2 * s, 0.05 * s); c.quadraticCurveTo(-0.26 * s, -0.55 * s, 0.05 * s, -0.82 * s); c.lineTo(0.2 * s, -0.72 * s); c.quadraticCurveTo(0.05 * s, -0.45 * s, 0.24 * s, 0.05 * s); c.fill();
+      c.fillStyle = m; c.beginPath(); c.arc(0, 0.32 * s, 0.56 * s, 0, SS.TAU); c.fill();
+      c.globalAlpha = 0.55; c.strokeStyle = l; c.lineWidth = 0.05 * s;
+      c.beginPath(); for (const x of [-0.3, 0, 0.3]) { c.moveTo(x * s, -0.15 * s); c.quadraticCurveTo(x * 1.5 * s, 0.32 * s, x * s, 0.82 * s); } c.stroke();
+      c.globalAlpha = 1;
+      c.fillStyle = p.stem; c.beginPath(); c.arc(0.12 * s, -0.8 * s, 0.07 * s, 0, SS.TAU); c.fill();
+    },
+  ];
+  let cache = null;
+  /** [normal, gilded][kind], each drawn once; .ears = [normal, gilded] wheat ears.
+      Everything in the wake is a sprite: mixing dozens of vector ears with the
+      produce sprites cost 4x what either did alone. */
+  function sprites() {
+    if (cache) return cache;
+    cache = PAL.map((p) => PAINT.map((paint) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = SPR;
+      const g = c.getContext('2d');
+      g.translate(SPR / 2, SPR / 2);
+      paint(g, SR, p);
+      return c;
+    }));
+    cache.ears = ['#e2bb5e', '#ffd76e'].map((col) => {
+      const c = document.createElement('canvas');
+      c.width = EAR * 1.36; c.height = EAR * 0.6;
+      const g = c.getContext('2d');
+      g.strokeStyle = col; g.lineWidth = 1.2;
+      ear(g, 2, c.height / 2, 0, EAR, col);
+      return c;
+    });
+    return cache;
+  }
+  function toss(fx, x, y, vx, vy, vz, s, gold) {
+    fx.q.push({ x, y, vx, vy, z: 3 * kit.zs(), vz, s, gold, kind: (Math.random() * PAINT.length) | 0, rot: Math.random() * SS.TAU, spin: SS.rand(-7, 7), t: 0, land: -1, bounced: false, life: SS.rand(2.4, 3.4), ph: Math.random() * 9 });
+  }
+  /** A wheat ear at the end of a stalk, pointing along a: paired grains and long awns. */
+  function ear(ctx, x, y, a, L, col) {
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(a);
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    for (let j = 0; j < 6; j++) {
+      const ex = (0.1 + 0.15 * j) * L, w = (0.13 - 0.012 * j) * L;
+      ctx.ellipse(ex, -w * 0.55, 0.1 * L, 0.05 * L, -0.5, 0, SS.TAU); ctx.ellipse(ex, w * 0.55, 0.1 * L, 0.05 * L, 0.5, 0, SS.TAU);
+    }
+    ctx.fill();
+    ctx.globalAlpha *= 0.55;
+    ctx.beginPath();
+    for (let j = 0; j < 6; j++) { const ex = (0.15 + 0.15 * j) * L; ctx.moveTo(ex, 0); ctx.lineTo(ex + 0.4 * L, -0.2 * L); ctx.moveTo(ex, 0); ctx.lineTo(ex + 0.4 * L, 0.2 * L); }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  SS.registerShip({
+    id: 'plenty', order: 24, rarity: 'limited', event: 'thanksgiving', name: 'PLENTY', title: 'Horn of Plenty',
+    desc: 'A woven horn of plenty that never runs empty. The harvest pours out of it behind you - pumpkins, apples, grapes, corn - tossed up, bouncing, rolling to a stop.',
+    world: 'Every piece of the harvest that lands weighs the fabric down.',
+    ability: { name: 'BOUNTY', desc: 'Every orb near you ripens a tier.', cd: 8,
+      use(fx, P) {
+        const R = 480, zs = kit.zs();
+        for (const o of SS.orbs) {
+          if (o.dead || o.secret || o.t >= 3 || (o.x - P.x) ** 2 + (o.y - P.y) ** 2 > R * R) continue;
+          o.t++;
+          SS.fx.burst(o.x, o.y, SS.pick(['#ffb347', '#ffd36b', '#8dff5c']), 8, 260, 3, 0.6);
+        }
+        for (let k = 0; k < 22; k++) {
+          const a = k / 22 * SS.TAU, sp = SS.rand(260, 420) * zs;
+          toss(fx, P.x, P.y, Math.cos(a) * sp, Math.sin(a) * sp, SS.rand(200, 320) * zs, SS.rand(11, 16) * zs, P.mach > 0.25);
+        }
+        SS.fx.ring(P.x, P.y, C.glow, 20, R, 0.7, 6);
+        SS.audio.bounty();
+      } },
+    unlock: null,                 // LIMITED: only from the Rift while Thanksgiving runs; kept for good
+    colors: C, tail: 12,
+    // a warm, woody reed
+    voice: { wave1: 'sawtooth', wave2: 'triangle', base: 73, ratio: 2, detune: 4, mix2: 0.5, filter: 'lowpass', q: 2, cutoff: 520, cutoffRange: 1500, lfoRate: 4, lfoDepth: 0.01, noise: 0.08, noiseF: 700, range: 1.1, gain: 1 },
+
+    init(fx) { fx.q = []; fx.acc = 0; fx.thudT = 0; fx.total = 0; },
+
+    update(fx, P, dt) {
+      const zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form, m = P.mach;
+      const ca = Math.cos(P.angle), sa = Math.sin(P.angle), back = 13 * kit.hullScale(SS.cam.zoom);
+      kit.lay(fx, 'acc', (30 - 10 * f) * zs, P, dt, (x, y) => {
+        if (r < 0.04) return;
+        for (let k = 0; k < (f > 0.3 ? 2 : 1); k++) {
+          const kick = SS.rand(40, 140) * zs, out = SS.rand(-1, 1) * (60 + 170 * f) * zs;
+          toss(fx, x - ca * back, y - sa * back, -ca * kick - sa * out, -sa * kick + ca * out, SS.rand(70, 150 + 300 * f) * zs,
+            (SS.rand(9, 13) + 5 * Math.min(1, r)) * zs, m > 0.25 && Math.random() < 0.4 + 0.6 * m);
+        }
+      });
+      // tossed up, one bounce, then a roll to a stop
+      const G = 900 * zs;
+      fx.thudT -= dt;
+      for (let i = fx.q.length - 1; i >= 0; i--) {
+        const q = fx.q[i];
+        if ((q.t += dt) > q.life) { fx.q.splice(i, 1); continue; }
+        if (q.land < 0 || q.z > 0 || q.vz > 0) {
+          q.vz -= G * dt; q.z += q.vz * dt;
+          q.x += q.vx * dt; q.y += q.vy * dt;
+          const k = Math.exp(-dt * 0.6); q.vx *= k; q.vy *= k;
+          q.rot += q.spin * dt;
+          if (q.z <= 0 && q.vz < 0) {
+            q.z = 0;
+            if (!q.bounced) {
+              q.bounced = true; q.vz = -q.vz * 0.35; q.land = q.t;
+              if (fx.thudT <= 0 && Math.random() < 0.6) { fx.thudT = 0.16; SS.audio.thud(0.22); }
+            } else q.vz = 0;
+          }
+        } else {
+          const k = Math.exp(-dt * 5);
+          q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= k; q.vy *= k; q.spin *= k; q.rot += q.spin * dt;
+        }
+      }
+      if (fx.q.length > MAX) fx.q.splice(0, fx.q.length - MAX);
+      // what lands weighs the fabric down - hardest the moment it hits
+      let n = 0;
+      for (let i = fx.q.length - 1; i >= 0 && n < 20; i--) {
+        const q = fx.q[i];
+        if (q.land < 0) continue;
+        n++;
+        SS.world.dent(q.x, q.y, q.s * 3.5, q.s * (0.3 + 1.3 * Math.max(0, 1 - (q.t - q.land) / 0.8)), 0);
+      }
+      fx.total = f > 0.02 ? kit.path(fx, P, back + 200 * zs + 60) : 0;
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      const zs = kit.zs(), t = V.t, f = P.form, imgs = sprites(), cam = ctx.getTransform(), A = cam.a;   // the camera never rotates
+      // speed form: a sheaf of wheat streaming out of the horn along your path
+      const back = 13 * kit.hullScale(V.z);
+      if (fx.total > back + 60) {
+        const a = SS.smooth(f / 0.5), gold = P.mach > 0.25, n = 9, tips = [];
+        kit.at(fx, back, Q0);
+        ctx.strokeStyle = gold ? 'rgba(255,214,110,' + 0.85 * a + ')' : 'rgba(206,164,78,' + 0.85 * a + ')';
+        ctx.lineWidth = 1.4 * zs;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const u = (i - (n - 1) / 2) / ((n - 1) / 2), L = Math.min(fx.total - 50, back + (70 + 80 * f) * zs * (0.8 + 0.35 * hash(i + 1)));
+          kit.onPath(fx, L, u * (14 + 26 * f) * zs + Math.sin(t * 2.2 + i * 1.3) * 10 * zs, Q1);
+          kit.onPath(fx, (L + back) / 2, u * (5 + 8 * f) * zs, Q2);
+          ctx.moveTo(Q0.x, Q0.y); ctx.quadraticCurveTo(Q2.x, Q2.y, Q1.x, Q1.y);
+          tips.push(Q1.x, Q1.y, Math.atan2(Q1.y - Q2.y, Q1.x - Q2.x));
+        }
+        ctx.stroke();
+        const img = imgs.ears[gold ? 1 : 0], k = A * 16 * zs * (0.9 + 0.2 * f) / EAR;
+        ctx.globalAlpha = a;
+        for (let i = 0; i < tips.length; i += 3) {
+          const an = tips[i + 2] + Math.sin(t * 3 + i) * 0.15, c = Math.cos(an) * k, s = Math.sin(an) * k;
+          ctx.setTransform(c, s, -s, c, A * tips[i] + cam.e, A * tips[i + 1] + cam.f);
+          ctx.drawImage(img, -2, -img.height / 2);
+        }
+        ctx.setTransform(cam);
+        ctx.globalAlpha = 1;
+      }
+      // shadows stay on the ground; the harvest rides above them by its height.
+      // At speed most of it is already behind you off screen: skip that.
+      const v = SS.world.view, mg = 60 * zs;
+      for (const q of fx.q) q.on = q.x > v.x0 - mg && q.x < v.x1 + mg && q.y > v.y0 - mg - q.z && q.y < v.y1 + mg;
+      ctx.fillStyle = 'rgba(0,0,0,0.32)';
+      ctx.beginPath();
+      for (const q of fx.q) {
+        const fade = 1 - SS.smooth((q.t - q.life + 0.6) / 0.6), rr = q.s * 0.8 * (1 - Math.min(0.5, q.z / (q.s * 12))) * fade;
+        if (rr <= 0 || !q.on) continue;
+        ctx.moveTo(q.x + rr, q.y + q.s * 0.35); ctx.ellipse(q.x, q.y + q.s * 0.35, rr, rr * 0.5, 0, 0, SS.TAU);
+      }
+      ctx.fill();
+      for (const q of fx.q) {                             // one setTransform per piece
+        const fade = Math.min(1, q.t * 8) * (1 - SS.smooth((q.t - q.life + 0.6) / 0.6));
+        if (fade <= 0 || !q.on) continue;
+        const k = A * q.s / SR * (1 + q.z / (q.s * 16)) * (0.6 + 0.4 * fade), c = Math.cos(q.rot) * k, s = Math.sin(q.rot) * k;
+        ctx.setTransform(c, s, -s, c, A * q.x + cam.e, A * (q.y - q.z * 0.7) + cam.f);
+        ctx.globalAlpha = fade;
+        ctx.drawImage(imgs[q.gold ? 1 : 0][q.kind], -SPR / 2, -SPR / 2);
+      }
+      ctx.setTransform(cam);
+      ctx.globalAlpha = 1;
+      // real speed: the gilded pieces glint
+      if (P.mach > 0.2) {
+        ctx.globalCompositeOperation = 'lighter';
+        for (const q of fx.q) {
+          if (!q.gold || !q.on) continue;
+          const gl = Math.sin(t * 6 + q.ph * 3);
+          if (gl > 0.75) SS.drawGlow(ctx, '#fff6d0', q.x - q.s * 0.3, q.y - q.z * 0.7 - q.s * 0.3, q.s * 1.3, (gl - 0.75) * 3);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, m = P.mach || 0;
+      // the horn: woven wicker, its mouth behind you, the tip curled up in front
+      const L = [], R = [];
+      for (let i = 0; i <= 12; i++) {
+        const u = i / 12, x = -11 + 24 * u, y = -3.5 * u * u, rr = 9 * Math.pow(1 - u, 1.15) + 0.9, d = Math.hypot(24, 7 * u);
+        L.push(x - 7 * u / d * rr, y - 24 / d * rr); R.push(x + 7 * u / d * rr, y + 24 / d * rr);
+      }
+      const horn = () => {
+        ctx.beginPath(); ctx.moveTo(L[0], L[1]);
+        for (let i = 2; i < L.length; i += 2) ctx.lineTo(L[i], L[i + 1]);
+        for (let i = R.length - 2; i >= 0; i -= 2) ctx.lineTo(R[i], R[i + 1]);
+        ctx.closePath();
+      };
+      const g = ctx.createLinearGradient(0, -9, 0, 9);
+      g.addColorStop(0, m > 0.25 ? '#ffe08a' : '#f0c070'); g.addColorStop(0.5, C.hull); g.addColorStop(1, C.wick);
+      ctx.fillStyle = g;
+      horn(); ctx.fill();
+      ctx.save();
+      horn(); ctx.clip();
+      ctx.strokeStyle = 'rgba(90,56,20,0.55)'; ctx.lineWidth = 0.45;   // the weave
+      ctx.beginPath();
+      for (let k = -30; k <= 30; k += 2.4) { ctx.moveTo(k - 12, -12); ctx.lineTo(k + 12, 12); ctx.moveTo(k + 12, -12); ctx.lineTo(k - 12, 12); }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(70,42,14,0.7)'; ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      for (let i = 1; i < 12; i += 2) { ctx.moveTo(L[i * 2], L[i * 2 + 1]); ctx.lineTo(R[i * 2], R[i * 2 + 1]); }
+      ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = '#a8742e'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';      // the curled tip
+      ctx.beginPath(); ctx.arc(13.6, -5.9, 2.4, 1.82, 1.82 - 4.8, true); ctx.stroke();
+      ctx.lineCap = 'butt';
+      // the mouth, and the harvest spilling over its lip
+      ctx.fillStyle = '#2a1606';
+      ctx.beginPath(); ctx.ellipse(-11, 0, 2.8, 9.6, 0, 0, SS.TAU); ctx.fill();
+      ctx.strokeStyle = '#f6cf86'; ctx.lineWidth = 1.1; ctx.stroke();
+      const imgs = sprites()[m > 0.25 ? 1 : 0];
+      for (const [k, x, y, s, a] of [[3, -12.5, -0.5, 3.8, 0.3], [0, -13, 4, 4.8, -0.2], [1, -14, -3.6, 3.8, 0.5], [4, -13.5, 6.8, 3.6, 1.2]]) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(s / SR, s / SR); ctx.drawImage(imgs[k], -SPR / 2, -SPR / 2); ctx.restore();
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      SS.drawGlow(ctx, C.glow, -12, 0, 9 + 6 * f, 0.25 + 0.25 * r);
+      if (m > 0.05) SS.drawGlow(ctx, C.gold, 0, 0, 20, 0.3 * m);
+      ctx.globalCompositeOperation = 'source-over';
+    },
+
+    onBoost(fx, P) {
+      const zs = kit.zs();
+      for (let k = 0; k < 6; k++) { const a = P.angle + Math.PI + SS.rand(-0.8, 0.8), s = SS.rand(80, 200) * zs; toss(fx, P.x, P.y, Math.cos(a) * s, Math.sin(a) * s, SS.rand(220, 320) * zs, SS.rand(10, 14) * zs, P.mach > 0.25); }
+      SS.audio.whoosh(0.4);
+    },
+    onTurn(fx, P, sign) {
+      const zs = kit.zs(), out = P.angle - sign * Math.PI / 2;
+      for (let k = 0; k < 3; k++) { const a = out + SS.rand(-0.4, 0.4), s = SS.rand(120, 240) * zs; toss(fx, P.x, P.y, Math.cos(a) * s, Math.sin(a) * s, SS.rand(120, 200) * zs, SS.rand(9, 12) * zs, P.mach > 0.25); }
+    },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.glow, 4, 28, 0.3, 1.5); },
+    onTopSpeed(fx, P) { SS.audio.chime(); },
+    onRegion(fx, P) {
+      const zs = kit.zs();
+      for (let k = 0; k < 16; k++) { const a = k / 16 * SS.TAU, s = 300 * zs; toss(fx, P.x, P.y, Math.cos(a) * s, Math.sin(a) * s, 280 * zs, 13 * zs, P.mach > 0.25); }
+      SS.fx.ring(P.x, P.y, C.glow, 30, 500, 1, 3);
+    },
+  });
+})();
+</script>
+<script>
+/* SHIP - THE ONE THAT GOT AWAY. ULTRA LIMITED (Thanksgiving), from the Rift.
+   One per event batch. It was supposed to be dinner. It had other plans: a
+   turkey flapping and pedalling for its life, googly eyes looking back - and
+   it always looks the same. What changes with speed is how the kitchen tries
+   to CATCH it (fx.tier; the owner found switching the turkey's own escape
+   awkward). Each tier adds to the last:
+     0 STAB   - a fork and a knife lunge at its tail
+     1 THROW  - a rolling pin and a frying pan BONK, a gravy boat lobs gravy
+     2 LASSO  - loops of kitchen twine are thrown at it and snap shut on air;
+                the cleaver and carving knife join the chase
+     3 OVEN   - the oven itself takes off after it, door chomping like jaws
+   - Wake: everything rides your path behind you (kit.path), lunging at your
+     tail, and hits the fabric where you were a moment ago: stabbing pieces
+     stick there quivering and pin it, bonks knock a dip in it, gravy splats,
+     a lasso cinches it, the oven's chomp bites it. Feathers fly off in the
+     panic; at real speed it leaves cartoon afterimages.
+   - Opening scene: every time play starts or resumes from a menu, an oven pops
+     up, its door bangs open, the turkey leaps out ("NOT TODAY!") and the
+     kitchen pours out after it.
+   - DECOY: a roast turkey on a platter drops behind you. The kitchen goes for
+     it, every orb near it is knocked loose to you, and a Wraith falls for it.
+   Every so often, in flight, it gobbles in a panic.
+   Device (keep it unique): a CHASING KITCHEN of rigid sprites that stab, bonk
+   and splat the fabric (run's opposite: a chase played for laughs). */
+(function () {
+  'use strict';
+  const SS = window.SS, kit = SS.kit;
+  const C = { hull: '#7a5232', accent: '#ffb347', glow: '#ff9a3c', skin: '#c98f8f', face: '#bcd0ec', red: '#d42a2a', beak: '#f2b33a', legs: '#e8902a' };
+  // the kitchen: 0 fork, 1 knife, 2 carving fork, 3 carving knife, 4 cleaver (these stab),
+  // 5 rolling pin, 6 frying pan (these bonk), 7 gravy boat (it lobs gravy)
+  const LEN = [70, 74, 92, 96, 80, 84, 86, 62], TALL = [0.24, 0.24, 0.24, 0.24, 0.42, 0.24, 0.66, 0.5];
+  // who's chasing, in the order they join: stab (2), throw (5), lasso tier (7), oven tier (9)
+  const BIG = 1.35;                                          // how big the whole chase is drawn (owner, 2026-10-28: "a bit larger scale")
+  const SC = 0.9 * BIG, STUCK = 1.6, CUT = [0, 1, 5, 6, 7, 4, 3, 2, 0], CHASE = [2, 5, 7, 9];
+  const SPIN = [0, 0, 0, 0, 9, 7, 5, 0];                     // thrown things turn over as they fly
+  const tierOf = (r, f, m) => (m > 0.25 ? 3 : f > 0.3 ? 2 : r > 0.3 ? 1 : 0);   // how hard the kitchen is trying
+  const Q = { x: 0, y: 0, a: 0 };
+  const hash = (n) => { const s = Math.sin(n * 91.7) * 43758.5453; return s - Math.floor(s); };
+  const back =(x) => { x = SS.clamp(x, 0, 1) - 1; return 1 + 2.7 * x * x * x + 1.7 * x * x; };   // ease out with an overshoot
+  const rr = (g, x, y, w, h, r) => (g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h));   // older Safari has no roundRect
+
+  /** A feather pointing +x from its quill (0) to its white tip (L). */
+  function feather(g, L, tail) {
+    const w = L * (tail ? 0.2 : 0.28), gr = g.createLinearGradient(0, 0, L, 0);
+    gr.addColorStop(0, '#4a2e1a'); gr.addColorStop(0.62, '#8a5a30'); gr.addColorStop(0.66, '#1c120c'); gr.addColorStop(0.78, '#1c120c'); gr.addColorStop(0.8, '#efe3cc'); gr.addColorStop(1, '#efe3cc');
+    g.fillStyle = gr;
+    g.beginPath(); g.moveTo(0.05 * L, 0);
+    g.quadraticCurveTo(0.3 * L, -w, 0.75 * L, -w * 0.9); g.quadraticCurveTo(L, -w * 0.6, L, 0);
+    g.quadraticCurveTo(L, w * 0.6, 0.75 * L, w * 0.9); g.quadraticCurveTo(0.3 * L, w, 0.05 * L, 0);
+    g.fill();
+    g.strokeStyle = '#d8c8a8'; g.lineWidth = 0.03 * L;
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(0.95 * L, 0); g.stroke();
+  }
+  /** Cutlery pointing +x: handle at 0, the business end at L. 0 fork, 1 knife, 2 carving fork, 3 carving knife. */
+  function cutlery(g, k, L) {
+    const steel = g.createLinearGradient(0, -L * 0.06, 0, L * 0.06);
+    steel.addColorStop(0, '#f4f7fa'); steel.addColorStop(0.5, '#b8c2cc'); steel.addColorStop(1, '#6f7a86');
+    g.strokeStyle = 'rgba(30,36,44,0.65)'; g.lineWidth = L * 0.012; g.lineJoin = 'round';
+    const wood = g.createLinearGradient(0, -L * 0.08, 0, L * 0.08);
+    wood.addColorStop(0, '#e8c088'); wood.addColorStop(1, '#9a6a34');
+    if (k === 4) {                                         // the cleaver: a slab of a blade, a hole by the spine
+      g.fillStyle = '#4a2c1c'; g.beginPath(); rr(g, 0, -L * 0.035, L * 0.36, L * 0.07, L * 0.03); g.fill(); g.stroke();
+      g.fillStyle = steel; g.beginPath(); g.moveTo(L * 0.33, -L * 0.19); g.lineTo(L * 0.97, -L * 0.19); g.quadraticCurveTo(L, 0, L * 0.97, L * 0.19); g.lineTo(L * 0.33, L * 0.17); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(20,24,30,0.8)'; g.beginPath(); g.arc(L * 0.45, -L * 0.1, L * 0.035, 0, SS.TAU); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.75)'; g.lineWidth = L * 0.01; g.beginPath(); g.moveTo(L * 0.96, -L * 0.15); g.quadraticCurveTo(L * 0.985, 0, L * 0.96, L * 0.15); g.stroke();
+      return;
+    }
+    if (k === 5) {                                         // the rolling pin
+      g.fillStyle = wood;
+      g.beginPath(); rr(g, 0, -L * 0.03, L, L * 0.06, L * 0.03); g.fill(); g.stroke();
+      g.beginPath(); rr(g, L * 0.16, -L * 0.085, L * 0.68, L * 0.17, L * 0.04); g.fill(); g.stroke();
+      g.strokeStyle = 'rgba(255,240,210,0.6)'; g.lineWidth = L * 0.012; g.beginPath(); g.moveTo(L * 0.2, -L * 0.05); g.lineTo(L * 0.8, -L * 0.05); g.stroke();
+      return;
+    }
+    if (k === 6) {                                         // the frying pan
+      g.fillStyle = '#2a2420'; g.beginPath(); rr(g, 0, -L * 0.03, L * 0.42, L * 0.06, L * 0.03); g.fill(); g.stroke();
+      g.fillStyle = '#2c2c32'; g.beginPath(); g.arc(L * 0.68, 0, L * 0.31, 0, SS.TAU); g.fill(); g.stroke();
+      const pg = g.createRadialGradient(L * 0.62, -L * 0.08, L * 0.02, L * 0.68, 0, L * 0.26);
+      pg.addColorStop(0, '#5a5a64'); pg.addColorStop(1, '#1a1a1e');
+      g.fillStyle = pg; g.beginPath(); g.arc(L * 0.68, 0, L * 0.26, 0, SS.TAU); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = L * 0.012; g.beginPath(); g.arc(L * 0.68, 0, L * 0.29, -2.6, -1.4); g.stroke();
+      return;
+    }
+    if (k === 7) {                                         // the gravy boat, full
+      g.strokeStyle = '#d8d0c4'; g.lineWidth = L * 0.05;
+      g.beginPath(); g.arc(L * 0.16, 0, L * 0.12, Math.PI * 0.5, Math.PI * 1.5); g.stroke();
+      g.fillStyle = '#f6f2ea'; g.strokeStyle = 'rgba(80,70,60,0.6)'; g.lineWidth = L * 0.012;
+      g.beginPath(); g.moveTo(L * 0.2, -L * 0.2); g.quadraticCurveTo(L * 0.65, -L * 0.26, L, -L * 0.04); g.lineTo(L, L * 0.04); g.quadraticCurveTo(L * 0.65, L * 0.26, L * 0.2, L * 0.2); g.quadraticCurveTo(L * 0.1, 0, L * 0.2, -L * 0.2); g.fill(); g.stroke();
+      g.fillStyle = '#7a4416'; g.beginPath(); g.ellipse(L * 0.55, 0, L * 0.28, L * 0.14, 0, 0, SS.TAU); g.fill();
+      g.fillStyle = 'rgba(255,220,170,0.4)'; g.beginPath(); g.ellipse(L * 0.48, -L * 0.05, L * 0.1, L * 0.03, 0, 0, SS.TAU); g.fill();
+      return;
+    }
+    const knife = k === 1 || k === 3, hl = knife ? 0.42 : 0.55;
+    g.fillStyle = k >= 2 ? '#4a2c1c' : steel;           // the carving set has wooden handles
+    g.beginPath(); g.moveTo(0, -L * 0.035); g.quadraticCurveTo(-L * 0.03, 0, 0, L * 0.035); g.lineTo(L * hl, L * 0.022); g.lineTo(L * hl, -L * 0.022); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = steel;
+    if (knife) {
+      g.beginPath(); g.moveTo(L * 0.42, -L * 0.03); g.lineTo(L * 0.92, -L * 0.03); g.quadraticCurveTo(L, -L * 0.025, L, 0);
+      g.quadraticCurveTo(L * 0.9, L * 0.07, L * 0.6, L * 0.065); g.lineTo(L * 0.42, L * 0.045); g.closePath(); g.fill(); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = L * 0.008;
+      g.beginPath(); g.moveTo(L * 0.46, L * 0.035); g.quadraticCurveTo(L * 0.8, L * 0.055, L * 0.96, L * 0.01); g.stroke();
+      return;
+    }
+    const n = k === 2 ? 2 : 4, hw = k === 2 ? L * 0.04 : L * 0.065;
+    g.beginPath(); g.moveTo(L * 0.55, -L * 0.014); g.quadraticCurveTo(L * 0.68, -hw, L * 0.76, -hw); g.lineTo(L * 0.76, hw); g.quadraticCurveTo(L * 0.68, hw, L * 0.55, L * 0.014); g.closePath(); g.fill(); g.stroke();
+    for (let j = 0; j < n; j++) {
+      const y = -hw + (j + 0.5) * (2 * hw / n), tw = 2 * hw / n * 0.55;
+      g.beginPath(); g.moveTo(L * 0.75, y - tw / 2); g.lineTo(L * 0.985, y - tw * 0.22); g.lineTo(L, y); g.lineTo(L * 0.985, y + tw * 0.22); g.lineTo(L * 0.75, y + tw / 2); g.closePath(); g.fill(); g.stroke();
+    }
+  }
+  /** The decoy: a roast turkey on a silver platter, from above. */
+  function roast(g) {
+    g.fillStyle = '#c8ced6'; g.beginPath(); g.ellipse(0, 0, 50, 37, 0, 0, SS.TAU); g.fill();
+    g.fillStyle = '#e6ebf0'; g.beginPath(); g.ellipse(0, 0, 44, 31, 0, 0, SS.TAU); g.fill();
+    for (let k = 0; k < 12; k++) {                         // parsley and cranberries round the edge
+      const a = k / 12 * SS.TAU;
+      g.fillStyle = k % 3 ? '#4f8f32' : '#b0102a';
+      g.beginPath(); g.arc(Math.cos(a) * 38, Math.sin(a) * 26, k % 3 ? 4 : 3, 0, SS.TAU); g.fill();
+    }
+    const rg = g.createRadialGradient(-6, -8, 4, 0, 0, 30);
+    rg.addColorStop(0, '#f0b968'); rg.addColorStop(0.6, '#c27a30'); rg.addColorStop(1, '#7a4214');
+    for (const s of [-1, 1]) {                             // drumsticks, paper frills on the ends
+      g.fillStyle = '#b06a28'; g.beginPath(); g.ellipse(16, s * 15, 12, 7, s * 0.5, 0, SS.TAU); g.fill();
+      g.fillStyle = '#fff6e6'; g.beginPath(); g.arc(27, s * 21, 4, 0, SS.TAU); g.fill();
+    }
+    g.fillStyle = rg; g.beginPath(); g.ellipse(-2, 0, 30, 21, 0, 0, SS.TAU); g.fill();
+    g.strokeStyle = 'rgba(255,230,180,0.45)'; g.lineWidth = 2;
+    g.beginPath(); g.arc(-6, -4, 16, -2.6, -1.2); g.stroke();
+  }
+
+  let cache = null;
+  function sprites() {
+    if (cache) return cache;
+    const make = (w, h, ox, oy, paint) => {
+      const c = document.createElement('canvas');
+      c.width = Math.ceil(w); c.height = Math.ceil(h);
+      const g = c.getContext('2d');
+      g.translate(ox, oy); paint(g);
+      return { c, ox, oy };
+    };
+    cache = {
+      feathers: [true, false].map((tail) => make(66, 30, 2, 15, (g) => feather(g, 62, tail))),
+      cut: LEN.map((L, k) => make(L + 10, L * TALL[k], 5, L * TALL[k] / 2, (g) => cutlery(g, k, L))),
+      roast: make(110, 84, 55, 42, roast),
+      splat: [0, 1].map((v) => make(64, 64, 32, 32, (g) => {        // gravy, splatted
+        g.fillStyle = '#6e3c12';
+        g.beginPath(); g.arc(0, 0, 13, 0, SS.TAU);
+        for (let j = 0; j < 8; j++) { const a = j / 8 * SS.TAU + v, d = 11 + 7 * hash(j + v * 9), r = 4 + 4 * hash(j * 3 + v); g.moveTo(Math.cos(a) * d + r, Math.sin(a) * d); g.arc(Math.cos(a) * d, Math.sin(a) * d, r, 0, SS.TAU); }
+        for (let j = 0; j < 6; j++) { const a = hash(j * 5 + v) * SS.TAU, d = 22 + 6 * hash(j + 2); g.moveTo(Math.cos(a) * d + 2.2, Math.sin(a) * d); g.arc(Math.cos(a) * d, Math.sin(a) * d, 2.2, 0, SS.TAU); }
+        g.fill();
+        g.fillStyle = 'rgba(255,214,160,0.35)'; g.beginPath(); g.ellipse(-4, -5, 6, 3, -0.5, 0, SS.TAU); g.fill();
+      })),
+    };
+    return cache;
+  }
+  /** One sprite with its anchor (ox, oy) at x, y, turned a, scaled k (and fy across), under a non-rotating camera. */
+  function put(ctx, cam, sp, x, y, a, k, fy) {
+    const A = cam.a, c = Math.cos(a) * k * A, s = Math.sin(a) * k * A, f = fy === undefined ? 1 : fy;
+    ctx.setTransform(c, s, -s * f, c * f, A * x + cam.e, A * y + cam.f);
+    ctx.drawImage(sp.c, -sp.ox, -sp.oy);
+  }
+
+  /** The Rift close-up: the turkey head on, mid-panic. Body centre at the origin, s ~ its height. */
+  function portrait(g, s, t) {
+    const sp = sprites(), flap = Math.sin(t * 22);
+    for (let k = 0; k < 11; k++) {                           // the tail fan, every feather up
+      const a = -Math.PI + 0.12 + k / 10 * (Math.PI - 0.24) + Math.sin(t * 6 + k) * 0.025, L = 0.86 * s;
+      g.save(); g.translate(0, -0.04 * s); g.rotate(a); g.scale(L / 62, L / 62); g.drawImage(sp.feathers[0].c, -2, -15); g.restore();
+    }
+    for (const sd of [-1, 1]) {                              // wings, flapping like mad
+      g.save(); g.translate(sd * 0.26 * s, 0.02 * s); g.rotate(sd * (0.5 + 0.55 * flap));
+      g.fillStyle = '#5a3a22'; g.beginPath(); g.ellipse(sd * 0.2 * s, 0, 0.24 * s, 0.1 * s, 0, 0, SS.TAU); g.fill();
+      g.strokeStyle = 'rgba(240,228,206,0.75)'; g.lineWidth = 0.014 * s;
+      g.beginPath(); for (let j = 1; j < 4; j++) { const x = sd * (0.04 + j * 0.09) * s; g.moveTo(x, -0.07 * s); g.lineTo(x + sd * 0.02 * s, 0.07 * s); } g.stroke();
+      g.restore();
+    }
+    g.strokeStyle = C.legs; g.lineCap = 'round'; g.lineWidth = 0.035 * s;   // legs, running on thin air
+    g.beginPath();
+    for (const sd of [-1, 1]) {
+      const ph = t * 14 + (sd > 0 ? 0 : Math.PI), kx = sd * 0.11 * s + Math.sin(ph) * 0.06 * s, fy = 0.6 * s - Math.max(0, Math.cos(ph)) * 0.05 * s;
+      g.moveTo(sd * 0.1 * s, 0.32 * s); g.lineTo(kx, 0.5 * s); g.lineTo(kx, fy);
+      for (const d of [-1, 0, 1]) { g.moveTo(kx, fy); g.lineTo(kx + d * 0.05 * s, fy + 0.04 * s); }
+    }
+    g.stroke(); g.lineCap = 'butt';
+    const bg = g.createRadialGradient(-0.1 * s, -0.08 * s, 0.02 * s, 0, 0.05 * s, 0.38 * s);   // the body, bronze where the light hits
+    bg.addColorStop(0, '#b0783e'); bg.addColorStop(0.6, '#6b4224'); bg.addColorStop(1, '#3a2010');
+    g.fillStyle = bg; g.beginPath(); g.ellipse(0, 0.05 * s, 0.34 * s, 0.36 * s, 0, 0, SS.TAU); g.fill();
+    g.strokeStyle = 'rgba(30,14,4,0.35)'; g.lineWidth = 0.012 * s;          // chest feathers, scalloped
+    g.beginPath();
+    for (let row = 0; row < 4; row++) for (let j = -2; j <= 2; j++) { const x = (j + (row % 2) * 0.5) * 0.1 * s, y = (-0.12 + row * 0.1) * s; if (Math.abs(x) < 0.28 * s - row * 0.02 * s) { g.moveTo(x - 0.05 * s, y); g.quadraticCurveTo(x, y + 0.06 * s, x + 0.05 * s, y); } }
+    g.stroke();
+    g.strokeStyle = C.skin; g.lineWidth = 0.1 * s; g.lineCap = 'round';      // the neck, the head
+    g.beginPath(); g.moveTo(0, -0.24 * s); g.quadraticCurveTo(0.03 * s, -0.36 * s, 0, -0.44 * s); g.stroke(); g.lineCap = 'butt';
+    g.fillStyle = C.face; g.beginPath(); g.ellipse(0, -0.49 * s, 0.1 * s, 0.12 * s, 0, 0, SS.TAU); g.fill();
+    g.fillStyle = C.red; g.beginPath(); g.ellipse(0.02 * s, -0.37 * s, 0.05 * s, 0.07 * s, 0.2, 0, SS.TAU); g.ellipse(-0.03 * s, -0.35 * s, 0.03 * s, 0.045 * s, -0.2, 0, SS.TAU); g.fill();
+    g.fillStyle = C.beak; g.beginPath(); g.moveTo(-0.028 * s, -0.46 * s); g.lineTo(0.028 * s, -0.46 * s); g.lineTo(0, -0.405 * s); g.closePath(); g.fill();
+    g.strokeStyle = C.red; g.lineWidth = 0.026 * s; g.lineCap = 'round';      // the snood, dangling
+    g.beginPath(); g.moveTo(0, -0.475 * s); g.quadraticCurveTo(0.05 * s, -0.45 * s + Math.sin(t * 9) * 0.01 * s, 0.045 * s, -0.37 * s); g.stroke(); g.lineCap = 'butt';
+    for (const sd of [-1, 1]) {                              // googly eyes, darting everywhere
+      g.fillStyle = '#ffffff'; g.strokeStyle = '#1a1210'; g.lineWidth = 0.008 * s;
+      g.beginPath(); g.arc(sd * 0.048 * s, -0.53 * s, 0.045 * s, 0, SS.TAU); g.fill(); g.stroke();
+      g.fillStyle = '#111111'; g.beginPath(); g.arc(sd * 0.048 * s + Math.sin(t * 17 + sd) * 0.018 * s, -0.53 * s + Math.cos(t * 13) * 0.015 * s, 0.017 * s, 0, SS.TAU); g.fill();
+      g.strokeStyle = '#2a1a10'; g.lineWidth = 0.012 * s;   // worried brows
+      g.beginPath(); g.moveTo(sd * 0.02 * s, -0.6 * s); g.lineTo(sd * 0.08 * s, -0.575 * s); g.stroke();
+      const q = (t * 1.4 + (sd > 0 ? 0 : 0.5)) % 1;          // sweat, flying off
+      g.globalAlpha = 1 - q; g.fillStyle = '#8fd0ff';
+      g.beginPath(); g.ellipse(sd * (0.13 + 0.16 * q) * s, (-0.57 - 0.06 * q + 0.22 * q * q) * s, 0.016 * s, 0.024 * s, sd * 0.4, 0, SS.TAU); g.fill();
+      g.globalAlpha = 1;
+    }
+    g.strokeStyle = '#5a3a1e'; g.lineWidth = 0.02 * s;            // aviator goggles, pushed up on its head
+    g.beginPath(); g.moveTo(-0.1 * s, -0.6 * s); g.quadraticCurveTo(0, -0.66 * s, 0.1 * s, -0.6 * s); g.stroke();
+    for (const sd of [-1, 1]) {
+      g.fillStyle = '#c8a050'; g.beginPath(); g.arc(sd * 0.045 * s, -0.625 * s, 0.04 * s, 0, SS.TAU); g.fill();
+      g.fillStyle = '#7fc8f0'; g.beginPath(); g.arc(sd * 0.045 * s, -0.625 * s, 0.03 * s, 0, SS.TAU); g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.8)'; g.beginPath(); g.arc(sd * 0.045 * s - 0.01 * s, -0.635 * s, 0.009 * s, 0, SS.TAU); g.fill();
+    }
+  }
+
+  // ---------------------------------------------------------------- the kitchen's other moves
+  /** A cartoon puff of smoke: n puffs flung out from x, y. */
+  function puff(fx, x, y, zs, n) {
+    for (let k = 0; k < n; k++) {
+      const a = k / n * SS.TAU + Math.random() * 0.5, s = SS.rand(120, 260) * zs;
+      fx.smoke.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: SS.rand(0.5, 0.8), s: SS.rand(10, 16) * zs });
+    }
+  }
+  /** The opening scene's oven, upright, centred on x, y, w wide; its door (hinged at the bottom) open by `open`. */
+  function oven(ctx, x, y, w, open, t) {
+    const h = w * 0.9, x0 = x - w / 2, y0 = y - h / 2;
+    const body = ctx.createLinearGradient(0, y0, 0, y0 + h);
+    body.addColorStop(0, '#eef1f4'); body.addColorStop(1, '#a8b0ba');
+    ctx.fillStyle = body; ctx.strokeStyle = 'rgba(40,46,56,0.7)'; ctx.lineWidth = w * 0.015;
+    ctx.beginPath(); rr(ctx, x0, y0, w, h, w * 0.05); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#2a2e36';                                   // the knobs
+    for (let j = 0; j < 4; j++) { ctx.beginPath(); ctx.arc(x0 + w * (0.2 + j * 0.2), y0 + h * 0.1, w * 0.04, 0, SS.TAU); ctx.fill(); }
+    const dx = x0 + w * 0.08, dy = y0 + h * 0.2, dw = w * 0.84, dh = h * 0.74;
+    const inner = ctx.createRadialGradient(x, dy + dh * 0.6, dh * 0.05, x, dy + dh * 0.5, dw * 0.6);
+    inner.addColorStop(0, '#ffcf7a'); inner.addColorStop(0.5, '#c8520e'); inner.addColorStop(1, '#2a0c02');
+    ctx.fillStyle = inner; ctx.beginPath(); rr(ctx, dx, dy, dw, dh, w * 0.03); ctx.fill();   // the inside, glowing
+    const c = Math.cos(open * Math.PI / 2), fh = dh * c;          // the door swings down toward you
+    ctx.fillStyle = '#2c3038'; ctx.beginPath(); rr(ctx, dx, dy + dh - fh, dw, Math.max(1, fh), w * 0.03); ctx.fill(); ctx.stroke();
+    if (c > 0.15) {
+      ctx.fillStyle = 'rgba(255,150,60,' + 0.6 * c + ')'; ctx.beginPath(); rr(ctx, dx + dw * 0.12, dy + dh - fh + fh * 0.18, dw * 0.76, fh * 0.55, w * 0.02); ctx.fill();
+      ctx.fillStyle = '#c8ced6'; ctx.fillRect(dx + dw * 0.15, dy + dh - fh + fh * 0.06, dw * 0.7, Math.max(1, fh * 0.06));
+    }
+    if (open > 0.02) {                                            // the open door, lying flat below
+      ctx.fillStyle = '#3a3e48'; ctx.beginPath();
+      ctx.moveTo(dx, dy + dh); ctx.lineTo(dx + dw, dy + dh); ctx.lineTo(dx + dw + dw * 0.08 * open, dy + dh + dh * 0.35 * open); ctx.lineTo(dx - dw * 0.08 * open, dy + dh + dh * 0.35 * open); ctx.closePath(); ctx.fill();
+    }
+  }
+  /** A cartoon afterimage of it: one flat silhouette in hull space (three full hull redraws cost more than the rest of the wake). */
+  function ghost(ctx, f, t) {
+    const span = 4 + 8 * Math.abs(Math.sin(t * 22)), spread = 1.15 - 0.55 * f;
+    ctx.fillStyle = '#8a5a32';
+    ctx.beginPath();
+    ctx.moveTo(-6, 0); ctx.arc(-6, 0, 14, Math.PI - spread, Math.PI + spread); ctx.closePath();   // the fan
+    ctx.moveTo(8, 0); ctx.ellipse(-1, 0, 9, 7, 0, 0, SS.TAU);                                     // the body
+    for (const s of [-1, 1]) { const cy = s * (5 + span * 0.45), a = s * 0.25; ctx.moveTo(-1 + 6 * Math.cos(a), cy + 6 * Math.sin(a)); ctx.ellipse(-1, cy, 6, span * 0.55, a, 0, SS.TAU); }
+    ctx.moveTo(15.3, 0); ctx.ellipse(12.5, 0, 2.8, 2.3, 0, 0, SS.TAU);                           // the head
+    ctx.fill();
+    ctx.strokeStyle = '#8a5a32'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(11, 0); ctx.stroke();
+  }
+  /** A lasso of kitchen twine: the rope from (ox, oy) to a loop of radius r at (lx, ly), sagging, with its knot. */
+  function lasso(ctx, ox, oy, lx, ly, r, zs, a) {
+    const dx = lx - ox, dy = ly - oy, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d, kx = lx - dx / d * r, ky = ly - dy / d * r;
+    ctx.globalAlpha = a;
+    ctx.lineCap = 'round';
+    for (const [col, w] of [['rgba(60,40,20,0.5)', 3.6], ['#e8dcc0', 2.2]]) {     // a dark edge, then the twine
+      ctx.strokeStyle = col; ctx.lineWidth = w * zs;
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.quadraticCurveTo((ox + kx) / 2 + nx * d * 0.12, (oy + ky) / 2 + ny * d * 0.12, kx, ky); ctx.stroke();
+      if (r > 1) { ctx.beginPath(); ctx.ellipse(lx, ly, r, r * 0.8, Math.atan2(dy, dx), 0, SS.TAU); ctx.stroke(); }
+    }
+    ctx.fillStyle = '#c8b890'; ctx.beginPath(); ctx.arc(kx, ky, 3 * zs, 0, SS.TAU); ctx.fill();
+    ctx.lineCap = 'butt';
+    ctx.globalAlpha = 1;
+  }
+
+  SS.registerShip({
+    id: 'getaway', order: 31, rarity: 'ultra', event: 'thanksgiving', name: 'THE ONE THAT GOT AWAY', title: 'Not on the menu',
+    desc: 'It was supposed to be dinner. It had other plans. The faster it flies, the harder the kitchen tries: knives and forks, then thrown pans and gravy, then lassos of twine - and at full speed, the oven itself comes after it.',
+    world: 'The kitchen stabs, bonks, splats and lassos the fabric where it was a moment ago.',
+    ability: { name: 'DECOY', desc: 'Drop a roast turkey decoy. The kitchen goes for it, every orb near it is knocked loose to you, and a Wraith falls for it too.', cd: 8,
+      use(fx, P) {
+        const W = SS.wraith;
+        fx.decoy = { x: P.x, y: P.y, t: 0, hits: 0 };
+        if (W.active() && W.near(P.x, P.y, 900)) { W.stunFor(2.4); SS.fx.text(W.x, W.y - 60, 'FOOLED!', C.accent, 24); }
+        SS.audio.decoy();
+      } },
+    unlock: null,                 // ULTRA LIMITED: only from the Rift while Thanksgiving runs; kept for good
+    colors: C, tail: 12,
+    // Its Rift reveal (rift.js calls these). The same lie - a rare, then a
+    // limited - then at VOID the light goes, and in the dark an oven door
+    // glows, a kitchen timer ticking, something in there moving. DING. The
+    // door rattles. At `open` it BURSTS out at you in a cloud of feathers, and
+    // the cutlery thwacks into the glass all round it. It got away.
+    reveal: {
+      open: 2.6, show: 4.0, bg: '#0c0603',
+      start(R) {
+        R.burst = Array.from({ length: 22 }, () => ({ a: Math.random() * SS.TAU, sp: SS.rand(0.3, 0.65), spin: SS.rand(-5, 5), s: SS.rand(0.26, 0.42), ph: Math.random() * 9, tail: Math.random() < 0.35 }));
+        // thrown from all round it (never from below, where the name goes) - and every one just misses
+        R.forks = [2.95, 3.12, 3.3, 3.5, 3.68, 3.86].map((at, i) => ({ at, ang: [-2.75, -0.4, 2.85, 0.3, -2.05, -1.05][i] + SS.rand(-0.12, 0.12), tilt: SS.rand(-0.18, 0.18), kind: CUT[i] }));
+      },
+      sound() { SS.audio.riftGetaway(); },
+      /** After the light goes: an oven door in the dark, glowing hotter, rattling. */
+      slit(g, R, W, H, cx, cy, t) {
+        if (t >= R.open) return;
+        const VOID = SS.rift.VOID, u = SS.smooth((t - VOID) / 0.4), hot = SS.smooth((t - VOID) / (R.open - VOID));
+        const m = Math.min(W, H), w = m * 0.56, h = w * 0.66, x0 = cx - w / 2, y0 = cy - h / 2;
+        const sh = t > 2.0 ? Math.sin(t * 70) * (t > 2.3 ? 7 : 2) : 0;            // it rattles; after the DING it's really going
+        g.globalCompositeOperation = 'source-over';
+        g.save();
+        g.globalAlpha = u;
+        g.translate(sh, Math.cos(t * 53) * sh * 0.4);
+        const dg = g.createLinearGradient(0, y0, 0, y0 + h);
+        dg.addColorStop(0, '#3c3c42'); dg.addColorStop(1, '#1c1c20');
+        g.fillStyle = dg; g.beginPath(); rr(g, x0, y0, w, h, w * 0.04); g.fill();
+        g.fillStyle = '#c8ced6'; g.beginPath(); rr(g, x0 + w * 0.12, y0 + h * 0.07, w * 0.76, h * 0.07, h * 0.035); g.fill();
+        const wx = x0 + w * 0.14, wy = y0 + h * 0.24, ww = w * 0.72, wh = h * 0.62;
+        const og = g.createRadialGradient(cx, wy + wh * 0.7, wh * 0.05, cx, wy + wh * 0.5, ww * 0.6);
+        og.addColorStop(0, 'rgba(255,214,130,' + (0.35 + 0.65 * hot) + ')'); og.addColorStop(0.5, '#b84a0e'); og.addColorStop(1, '#2a0c02');
+        g.fillStyle = og; g.beginPath(); rr(g, wx, wy, ww, wh, w * 0.03); g.fill();
+        g.save();                                                                   // someone in there, very much alive
+        g.translate(cx + Math.sin(t * 19) * ww * 0.02 * hot, wy + wh * 0.72 + Math.abs(Math.sin(t * 11)) * -wh * 0.06 * hot);
+        const k = ww * 0.14;
+        g.fillStyle = '#2a0e04';
+        g.beginPath();                                                              // the fan: a scallop per feather
+        for (let j = 0; j < 7; j++) { const a = Math.PI + (j + 0.5) / 7 * Math.PI; g.moveTo(0, 0); g.arc(Math.cos(a) * k * 0.95, -k * 0.1 + Math.sin(a) * k * 0.95, k * 0.26, 0, SS.TAU); }
+        g.arc(0, -k * 0.1, k * 0.95, Math.PI, 0);
+        g.fill();
+        g.beginPath(); g.ellipse(0, k * 0.2, k * 0.62, k * 0.55, 0, 0, SS.TAU); g.fill();          // the body
+        g.fillRect(-k * 0.3, k * 0.65, k * 0.07, k * 0.25); g.fillRect(k * 0.23, k * 0.65, k * 0.07, k * 0.25);   // feet
+        g.lineWidth = k * 0.16; g.strokeStyle = '#2a0e04';
+        g.beginPath(); g.moveTo(0, -k * 0.1); g.quadraticCurveTo(k * 0.05, -k * 0.5, k * 0.18, -k * 0.62); g.stroke();   // the neck, craning to look out
+        g.beginPath(); g.ellipse(k * 0.22, -k * 0.7, k * 0.17, k * 0.15, 0, 0, SS.TAU); g.fill();
+        g.beginPath(); g.moveTo(k * 0.36, -k * 0.74); g.lineTo(k * 0.5, -k * 0.68); g.lineTo(k * 0.36, -k * 0.63); g.fill();   // beak
+        g.beginPath(); g.ellipse(k * 0.3, -k * 0.55, k * 0.05, k * 0.09, 0, 0, SS.TAU); g.fill();   // wattle
+        g.fillStyle = '#ffffff';
+        g.beginPath(); g.arc(k * 0.17, -k * 0.74, k * 0.07, 0, SS.TAU); g.arc(k * 0.3, -k * 0.76, k * 0.07, 0, SS.TAU); g.fill();
+        g.restore();
+        g.fillStyle = 'rgba(255,255,255,0.1)';                                       // glare on the glass
+        g.beginPath(); g.moveTo(wx + ww * 0.1, wy); g.lineTo(wx + ww * 0.3, wy); g.lineTo(wx + ww * 0.12, wy + wh); g.lineTo(wx - ww * 0.08 + ww * 0.1, wy + wh); g.closePath(); g.fill();
+        g.restore();
+        g.globalCompositeOperation = 'lighter';
+        SS.drawGlow(g, '#ff8a2a', cx, cy + h * 0.1, w * 0.65, (0.12 + 0.28 * hot) * u);
+      },
+      draw(g, R, W, H, cx, cy, t) {
+        const u = t - R.open, e = SS.smooth(u / 0.3), sp = sprites(), mob = W < 600;
+        // it sits between the top of the screen and the name (#rv-info)
+        const top = 24, bot = H - (mob ? 450 : 380), s0 = Math.max(70, Math.min(W * 0.42, H * 0.42, (bot - top) / 1.45));
+        const by = top + 0.85 * s0 + Math.max(0, bot - top - 1.45 * s0) / 2, bx = cx;
+        g.globalCompositeOperation = 'source-over';
+        g.globalAlpha = e;
+        const kg = g.createRadialGradient(bx, by, 0, bx, by, Math.max(W, H) * 0.75);
+        kg.addColorStop(0, '#6a3210'); kg.addColorStop(1, '#140904');
+        g.fillStyle = kg; g.fillRect(0, 0, W, H);
+        g.globalCompositeOperation = 'lighter';                                    // a cartoon burst behind it
+        g.save(); g.translate(bx, by); g.rotate(t * 0.3);
+        g.fillStyle = 'rgba(255,180,80,0.09)';
+        g.beginPath();
+        for (let k = 0; k < 18; k += 2) { const a0 = k / 18 * SS.TAU, a1 = (k + 1) / 18 * SS.TAU, R0 = Math.max(W, H); g.moveTo(0, 0); g.lineTo(Math.cos(a0) * R0, Math.sin(a0) * R0); g.lineTo(Math.cos(a1) * R0, Math.sin(a1) * R0); }
+        g.fill(); g.restore();
+        if (u < 0.4) SS.drawGlow(g, '#ffd9a0', bx, by, Math.max(W, H) * 0.6, (SS.settings.flashes ? 0.5 : 0.2) * (1 - u / 0.4));   // BANG
+        g.globalCompositeOperation = 'source-over';
+        g.globalAlpha = 1;
+        for (let k = 0; k < 6 && u < 1.2; k++) {                                    // oven smoke
+          const a = k / 6 * SS.TAU + 0.4, d = s0 * (0.3 + u * 0.9);
+          SS.drawGlow(g, '#6e625a', bx + Math.cos(a) * d, by + Math.sin(a) * d * 0.7, s0 * (0.25 + u * 0.4), 0.5 * (1 - u / 1.2));
+        }
+        const cam = g.getTransform();
+        for (const f of R.burst) {                                                   // feathers everywhere
+          const d = f.sp * s0 * 2.2 * (1 - Math.exp(-u * 3)), x = bx + Math.cos(f.a) * d + Math.sin(u * 2 + f.ph) * s0 * 0.05, y = by + Math.sin(f.a) * d + u * u * s0 * 0.12;
+          g.globalAlpha = Math.min(1, u * 6) * (1 - SS.smooth((u - 1) / 0.8));         // gone by the time its name lands
+          put(g, cam, sp.feathers[f.tail ? 0 : 1], x, y, f.a + f.spin * u, f.s * s0 / 62, Math.cos(u * 4 + f.ph));
+        }
+        g.setTransform(cam);
+        g.globalAlpha = 1;
+        const s = s0 * (0.15 + 0.85 * back(u / 0.55));                              // out of the oven at you - too far - settles
+        g.save();
+        g.translate(bx + Math.sin(t * 31) * s * 0.01, by + Math.sin(t * 9) * s * 0.025);
+        portrait(g, s, t);
+        g.restore();
+        const k = Math.min(W, H) * 0.003;
+        for (const p of R.forks) {                                                   // THWACK - into the glass, all round it
+          if (t < p.at) continue;
+          const age = t - p.at, L = LEN[p.kind], fly = Math.min(1, age / 0.06);
+          const tx = bx + Math.cos(p.ang) * s0 * 0.98, ty = by + Math.sin(p.ang) * s0 * 0.9;   // the tip lands just past the fan
+          const a = p.ang + Math.PI + p.tilt + Math.sin(age * 45) * 0.12 * Math.exp(-age * 4), px = tx - Math.cos(a) * L * k * (1 + 0.3 * (1 - fly)), py = ty - Math.sin(a) * L * k * (1 + 0.3 * (1 - fly));
+          g.globalAlpha = fly;
+          put(g, cam, sp.cut[p.kind], px, py, a, k, 1);
+          g.setTransform(cam);
+          const m = Math.min(W, H);                                                  // a crack where the tip went in
+          g.strokeStyle = 'rgba(255,255,255,' + 0.55 * fly + ')'; g.lineWidth = 1.2;
+          g.beginPath(); for (let j = 0; j < 6; j++) { const ca = j * 1.05 + p.at, cl = m * (0.02 + 0.02 * ((j * 7 + p.at * 10) % 1)); g.moveTo(tx, ty); g.lineTo(tx + Math.cos(ca) * cl, ty + Math.sin(ca) * cl); } g.stroke();
+        }
+        g.globalAlpha = 1;
+        g.globalCompositeOperation = 'lighter';
+      },
+      // its card in a ten-pull: warm, in cartoon letters, a gobble as it's dealt
+      card: { bg: '#2a1408', ink: '#ffd36b', font: '"Luckiest Guy", cursive', size: 0.085, lines: ['THE ONE THAT', 'GOT AWAY'], shake: false },
+      cardSound() { SS.audio.gobble(1); },
+    },
+    // a nervous, warbling trill
+    voice: { wave1: 'triangle', wave2: 'square', base: 150, ratio: 1.5, detune: 9, mix2: 0.18, filter: 'lowpass', q: 2, cutoff: 800, cutoffRange: 1800, lfoRate: 12, lfoDepth: 0.025, noise: 0.15, noiseF: 1800, range: 1.3, gain: 0.7 },
+
+    init(fx) {
+      fx.c = CUT.map((kind, i) => ({ kind, i, side: i % 2 ? 1 : -1, ph: Math.random() * 9, vis: 0, ok: false, u: 0, x: 0, y: 0, a: 0, lob: SS.rand(0.4, 1.2) }));
+      fx.stuck = []; fx.fe = []; fx.smoke = []; fx.splats = []; fx.blobs = []; fx.bonks = [];
+      fx.acc = 0; fx.thT = 0; fx.decoy = null; fx.gob = SS.rand(10, 18); fx.total = 0;
+      fx.tier = 0; fx.tierT = 0; fx.intro = null; fx.seen = 'play';
+      fx.lassos = []; fx.lassoT = 1;
+      fx.oven = { vis: 0, x: 0, y: 0, a: 0, open: 0, smokeT: 0 };   // the oven that takes off after it (tier 3)
+    },
+
+    update(fx, P, dt) {
+      const t = SS.world.time, zs = kit.zs(), r = Math.min(1.2, P.rise), f = P.form, m = P.mach;
+      const ca = Math.cos(P.angle), sa = Math.sin(P.angle), hs = kit.hullScale(SS.cam.zoom), bk = 8 * BIG * hs;
+      // the opening scene: play just started, or came back from a menu (drawWorld notes the state every frame, paused or not)
+      if (SS.G.state === 'play' && fx.seen !== 'play') {
+        fx.intro = { t: 0, x: P.x - ca * 70 * BIG * zs, y: P.y - sa * 70 * BIG * zs, bang: false, said: false };
+        for (const c of fx.c) { c.out = true; c.vis = 0; }
+      }
+      fx.seen = SS.G.state;
+      const I = fx.intro;
+      if (I) {
+        I.t += dt;
+        if (!I.bang && I.t > 0.1) { I.bang = true; SS.audio.ovenBurst(); puff(fx, I.x, I.y, zs, 10); }
+        if (!I.said && I.t > 0.35) { I.said = true; SS.fx.text(P.x, P.y - 60 * zs, 'NOT TODAY!', C.accent, 26); }
+        if (I.t > 1.8) fx.intro = null;
+      }
+      // how hard the kitchen is trying: the faster it goes, the bigger the guns (held a moment so it doesn't flicker)
+      const next = tierOf(r, f, m);
+      if (next !== fx.tier) { if ((fx.tierT += dt) > 0.25) { fx.tier = next; fx.tierT = 0; } } else fx.tierT = 0;
+      const tier = fx.tier;
+      // the kitchen gives chase: 2, 5, 7, then 9 pieces (and four out of the oven in the opening scene)
+      const want = Math.max(r < 0.05 ? 0 : CHASE[tier], I ? 4 : 0), lag = 1 + 0.6 * m;
+      fx.total = kit.path(fx, P, 600 * zs * lag + 200);
+      fx.thT -= dt;
+      for (const c of fx.c) {
+        const u = Math.sin(t * (2.6 + 0.3 * c.i) + c.ph);
+        if (I && c.out && I.t < 0.4 + c.i * 0.07) { c.u = u; continue; }          // still in the oven
+        if (c.out) { c.out = false; if (I) { c.rx = I.x - P.x; c.ry = I.y - P.y; } } // and out it comes
+        c.vis += ((c.i < want ? 1 : 0) - c.vis) * Math.min(1, dt * 2.5);
+        c.ok = c.vis > 0.02;
+        if (!c.ok) { c.rx = undefined; c.u = u; continue; }
+        const d = (40 + 14 * c.i + 60 * (0.5 + 0.5 * u)) * zs * BIG * lag, off = (c.side * (14 + 9 * c.i) + Math.sin(t * 1.7 + c.ph) * 10) * BIG * zs;   // lunging at its tail, falling back
+        if (fx.total > d + 60) kit.onPath(fx, d, off, Q);
+        else { Q.x = P.x - ca * d - sa * off; Q.y = P.y - sa * d + ca * off; }          // no path yet (a standing start): straight back
+        [c.x, c.y] = kit.ease(c, 'r', P, Q.x, Q.y, 1 - Math.exp(-dt / (I ? 0.2 : 0.07)));
+        c.a = Math.atan2(P.y - c.y, P.x - c.x);
+        if (c.kind === 7) {                                                          // the gravy boat lobs gravy at it
+          if ((c.lob -= dt) <= 0 && c.vis > 0.5) { c.lob = SS.rand(0.9, 1.6); fx.blobs.push({ x: c.x, y: c.y, tx: P.x, ty: P.y, t: 0, dur: 0.45 }); }
+        } else if (c.u > -0.92 && u <= -0.92 && c.vis > 0.5) {                      // the lunge bottoms out - and it's not there any more
+          const L = LEN[c.kind] * SC * zs, tx = c.x + Math.cos(c.a) * L * 0.5, ty = c.y + Math.sin(c.a) * L * 0.5;
+          if (c.kind >= 5) {                                                         // BONK
+            fx.bonks.push({ x: tx, y: ty, t, k: 1 });
+            SS.fx.ring(tx, ty, '#ffffff', 6, 46 * zs, 0.3, 2);
+            if (fx.thT <= 0) { fx.thT = 0.2; SS.audio.bonk(0.35); }
+          } else {                                                                   // STAB
+            fx.stuck.push({ x: tx, y: ty, a: c.a, kind: c.kind, t });
+            if (fx.thT <= 0) { fx.thT = 0.2; SS.audio.thwack(0.3); }
+          }
+        }
+        c.u = u;
+      }
+      // gravy in the air, then on the fabric
+      for (let i = fx.blobs.length - 1; i >= 0; i--) {
+        const b = fx.blobs[i];
+        if ((b.t += dt) < b.dur) continue;
+        fx.splats.push({ x: b.tx, y: b.ty, t, a: Math.random() * SS.TAU, v: (Math.random() * 2) | 0, s: SS.rand(0.8, 1.2) });
+        fx.blobs.splice(i, 1);
+        SS.audio.splat(0.4);
+      }
+      for (let i = fx.splats.length - 1; i >= 0; i--) if (t - fx.splats[i].t > 3) fx.splats.splice(i, 1);
+      if (fx.splats.length > 14) fx.splats.splice(0, fx.splats.length - 14);
+      for (const q of fx.splats) { const age = t - q.t; if (age < 0.8) SS.world.dent(q.x, q.y, 55 * BIG * zs, 16 * BIG * zs * (1 - age / 0.8), 1); }
+      for (let i = fx.bonks.length - 1; i >= 0; i--) {                              // a bonk or a chomp knocks a dip into it; a lasso cinches it
+        const b = fx.bonks[i], age = t - b.t;
+        if (age > 0.35) { fx.bonks.splice(i, 1); continue; }
+        SS.world.dent(b.x, b.y, 90 * zs * b.k, 30 * zs * b.k * (1 - age / 0.35), b.pull ? 1 : 0);
+      }
+      // DECOY: the kitchen goes for the roast instead, and knocks every orb near it loose
+      const D = fx.decoy;
+      if (D) {
+        D.t += dt;
+        if (D.t < 1.3) SS.orbPulls.push({ x: D.x, y: D.y, r: 700, speed: 1100, eat: 50 });
+        while (D.hits < 6 && D.t > 0.15 + D.hits * 0.09) {
+          const a = D.hits * 1.05 + 0.3;
+          fx.stuck.push({ x: D.x + Math.cos(a) * 26 * BIG * zs, y: D.y + Math.sin(a) * 26 * BIG * zs, a: a + Math.PI, kind: [0, 1, 3, 4, 0, 2][D.hits], t });
+          D.hits++;
+          SS.audio.thwack(0.5);
+        }
+        if (D.t > 2.2) fx.decoy = null;
+      }
+      for (let i = fx.stuck.length - 1; i >= 0; i--) if (t - fx.stuck[i].t > STUCK) fx.stuck.splice(i, 1);
+      if (fx.stuck.length > 24) fx.stuck.splice(0, fx.stuck.length - 24);
+      for (let i = fx.stuck.length - 1, n = 0; i >= 0 && n < 10; i--, n++) {   // each one pins the fabric
+        const q = fx.stuck[i];
+        SS.world.dent(q.x, q.y, 70 * BIG * zs, 24 * BIG * zs * (1 - (t - q.t) / STUCK), 1);
+      }
+      // feathers fly off in the panic
+      kit.lay(fx, 'acc', (44 - 14 * f) * zs, P, dt, (x, y) => {
+        if (r < 0.04) return;
+        for (let k = 0; k < (f > 0.3 ? 2 : 1); k++) {
+          const side = Math.random() < 0.5 ? -1 : 1, out = SS.rand(40, 120 + 120 * f) * zs;
+          fx.fe.push({ x: x - ca * bk, y: y - sa * bk, vx: -sa * side * out - ca * 30 * zs, vy: ca * side * out - sa * 30 * zs, t: 0, life: SS.rand(1.2, 2), s: SS.rand(14, 22) * BIG * zs, rot: Math.random() * SS.TAU, spin: SS.rand(-6, 6), ph: Math.random() * 9, tail: Math.random() < 0.4 });
+        }
+      });
+      for (let i = fx.fe.length - 1; i >= 0; i--) {
+        const q = fx.fe[i];
+        if ((q.t += dt) > q.life) { fx.fe.splice(i, 1); continue; }
+        const k = Math.exp(-dt * 1.8), fl = Math.sin(q.t * 5 + q.ph) * 30 * zs * dt;
+        q.vx *= k; q.vy *= k; q.x += q.vx * dt + Math.cos(q.ph) * fl; q.y += q.vy * dt + Math.sin(q.ph) * fl; q.rot += q.spin * dt;
+      }
+      if (fx.fe.length > 70) fx.fe.splice(0, fx.fe.length - 70);
+      // tier 2+: lassos of kitchen twine, thrown from the pack at where it's headed - and snapping shut on air
+      if (tier >= 2 && (fx.lassoT -= dt) <= 0) {
+        fx.lassoT = SS.rand(1.1, 1.8);
+        fx.lassos.push({ t: 0, d: SS.rand(170, 240) * BIG * zs, off: (Math.random() < 0.5 ? -1 : 1) * SS.rand(40, 90) * BIG * zs, tx: P.x + P.vx * 0.12, ty: P.y + P.vy * 0.12, snapped: false });
+        SS.audio.whoosh(0.45);
+      }
+      for (let i = fx.lassos.length - 1; i >= 0; i--) {
+        const L = fx.lassos[i];
+        L.t += dt;
+        if (!L.snapped && L.t > 0.42) {                                             // it cinches the fabric instead
+          L.snapped = true;
+          fx.bonks.push({ x: L.tx, y: L.ty, t, k: 0.9, pull: true });
+          SS.fx.ring(L.tx, L.ty, '#e8dcc0', 34 * BIG * zs, 4, 0.25, 2);
+          SS.audio.lassoSnap();
+        }
+        if (L.t > 0.85) fx.lassos.splice(i, 1);
+      }
+      // tier 3: the oven itself takes off after it - burners blazing out the back, door chomping like jaws
+      const O = fx.oven;
+      O.vis += ((tier === 3 ? 1 : 0) - O.vis) * Math.min(1, dt * 1.5);
+      if (O.vis > 0.01) {
+        const d = (250 + 40 * Math.sin(t * 2.1)) * zs * BIG * lag;                     // behind the pack, looming over it
+        if (fx.total > d + 60) kit.onPath(fx, d, Math.sin(t * 1.3) * 20 * zs, Q);
+        else { Q.x = P.x - ca * d; Q.y = P.y - sa * d; }
+        if (O.rx === undefined) { O.rx = -ca * 400 * zs; O.ry = -sa * 400 * zs; }   // it comes roaring in from way back
+        [O.x, O.y] = kit.ease(O, 'r', P, Q.x, Q.y, 1 - Math.exp(-dt / 0.3));
+        O.a = Math.atan2(P.y - O.y, P.x - O.x);
+        const open = Math.pow(0.5 + 0.5 * Math.sin(t * 5.5), 0.6);
+        if (O.open > 0.15 && open <= 0.15 && O.vis > 0.5) {                        // CHOMP - on nothing
+          fx.bonks.push({ x: O.x + Math.cos(O.a) * 75 * BIG * zs, y: O.y + Math.sin(O.a) * 75 * BIG * zs, t, k: 1.4 });
+          SS.audio.chomp();
+        }
+        O.open = open;
+        if ((O.smokeT -= dt) <= 0) {
+          O.smokeT = 0.05;
+          const bx = O.x - Math.cos(O.a) * 55 * BIG * zs, by = O.y - Math.sin(O.a) * 55 * BIG * zs;
+          fx.smoke.push({ x: bx + SS.rand(-14, 14) * zs, y: by + SS.rand(-14, 14) * zs, vx: -Math.cos(O.a) * 80 * zs, vy: -Math.sin(O.a) * 80 * zs, t: 0, life: 0.9, s: SS.rand(10, 16) * zs });
+        }
+      } else O.rx = undefined;
+      for (let i = fx.smoke.length - 1; i >= 0; i--) { const p = fx.smoke[i]; if ((p.t += dt) > p.life) { fx.smoke.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 1 - dt * 3; p.vy *= 1 - dt * 3; }
+      if (fx.smoke.length > 80) fx.smoke.splice(0, fx.smoke.length - 80);
+      // it gobbles, in a panic
+      if (SS.G.state === 'play' && (fx.gob -= dt) <= 0) { fx.gob = SS.rand(18, 32); SS.audio.gobble(0.7); }
+    },
+
+    drawWorld(ctx, fx, P, V) {
+      fx.seen = SS.G.state;
+      const zs = kit.zs(), t = V.t, sp = sprites(), cam = ctx.getTransform(), v = SS.world.view, mg = 120 * zs;
+      const on = (x, y) => x > v.x0 - mg && x < v.x1 + mg && y > v.y0 - mg && y < v.y1 + mg;
+      for (const q of fx.splats) {                                                  // gravy on the fabric
+        if (!on(q.x, q.y)) continue;
+        const age = t - q.t;
+        ctx.globalAlpha = 0.9 * (1 - SS.smooth((age - 2.2) / 0.8));
+        put(ctx, cam, sp.splat[q.v], q.x, q.y, q.a, 0.9 * BIG * zs * q.s * (0.6 + 0.4 * Math.min(1, age * 12)));
+      }
+      ctx.setTransform(cam);
+      ctx.globalAlpha = 1;
+      for (const p of fx.smoke) if (on(p.x, p.y)) SS.drawGlow(ctx, '#9a948e', p.x, p.y, p.s * (1 + p.t * 2.2), 0.38 * (1 - p.t / p.life) * Math.min(1, p.t * 8));
+      // the opening scene: the oven it came out of, and then it's gone in a puff
+      const I = fx.intro;
+      if (I && I.t < 1.7) {
+        const gone = SS.smooth((I.t - 1.15) / 0.5), w = 90 * BIG * zs * back(I.t / 0.16) * (1 + 0.2 * gone);
+        ctx.globalAlpha = 1 - gone;
+        oven(ctx, I.x, I.y, w, SS.smooth((I.t - 0.06) / 0.12), t);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, '#ff9a3c', I.x, I.y + w * 0.2, w * 1.1, 0.45 * (1 - gone) * SS.smooth((I.t - 0.06) / 0.12));
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      // real speed: afterimages of it along your path
+      const al = SS.smooth((P.mach - 0.15) / 0.3);
+      if (al > 0.01) {
+        const hs = kit.hullScale(V.z);
+        for (let j = 1; j <= 3; j++) {
+          const d = j * 34 * BIG * zs * (1 + P.mach);
+          if (fx.total < d + 50) break;
+          kit.onPath(fx, d, 0, Q);
+          ctx.save(); ctx.translate(Q.x, Q.y); ctx.rotate(Q.a); ctx.scale(hs, hs);
+          ctx.globalAlpha = al * (0.4 - 0.11 * j);
+          ctx.scale(1.2 * BIG, 1.2 * BIG);
+          ghost(ctx, P.form, V.t);
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
+      if (fx.decoy) {
+        const D = fx.decoy, k = zs * 0.9 * BIG * back(D.t / 0.35) * (1 - SS.smooth((D.t - 1.7) / 0.5));
+        if (k > 0) { put(ctx, cam, sp.roast, D.x, D.y, 0, k); ctx.setTransform(cam); }
+      }
+      // what got stuck: a puncture, and the piece quivering in it
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.beginPath();
+      for (const q of fx.stuck) if (on(q.x, q.y)) { ctx.moveTo(q.x + 4 * zs, q.y); ctx.ellipse(q.x, q.y, 4 * zs, 2.5 * zs, q.a, 0, SS.TAU); }
+      ctx.fill();
+      for (const q of fx.stuck) {
+        if (!on(q.x, q.y)) continue;
+        const age = t - q.t, L = LEN[q.kind];
+        ctx.globalAlpha = Math.min(1, age * 20) * (1 - SS.smooth((age - STUCK + 0.4) / 0.4));
+        // anchored at the tip: the sprite's tip is L past its anchor
+        const a = q.a + Math.sin(age * 45) * 0.22 * Math.exp(-age * 5), k = SC * zs;
+        put(ctx, cam, sp.cut[q.kind], q.x - Math.cos(a) * L * k, q.y - Math.sin(a) * L * k, a, k);
+      }
+      for (const q of fx.fe) {
+        if (!on(q.x, q.y)) continue;
+        ctx.globalAlpha = Math.min(1, q.t * 6) * (1 - SS.smooth((q.t - q.life * 0.7) / (q.life * 0.3)));
+        put(ctx, cam, sp.feathers[q.tail ? 0 : 1], q.x, q.y, q.rot, q.s / 62, Math.cos(q.t * 4 + q.ph));
+      }
+      ctx.setTransform(cam);
+      ctx.globalAlpha = 1;
+    },
+
+    drawWake(ctx, fx, P, V) {
+      const zs = kit.zs(), t = V.t, sp = sprites(), cam = ctx.getTransform(), O = fx.oven;
+      if (O.vis > 0.02) {                         // the oven, flying after it: burners out the back, door chomping, angry
+        const w = 120 * BIG * zs, h = w * 0.9;
+        ctx.save();
+        ctx.translate(O.x, O.y); ctx.rotate(O.a - Math.PI / 2 + Math.sin(t * 7) * 0.04);
+        ctx.globalAlpha = O.vis;
+        ctx.globalCompositeOperation = 'lighter';
+        for (const s of [-1, 1]) SS.drawGlow(ctx, '#ff8a2a', s * w * 0.25, -h * 0.55, w * (0.35 + 0.08 * Math.sin(t * 31 + s)), 0.7);
+        ctx.globalCompositeOperation = 'source-over';
+        oven(ctx, 0, 0, w, O.open, t);
+        for (const s of [-1, 1]) {                // two knobs are eyes now, glaring down at it
+          const ex = s * w * 0.22, ey = -h * 0.36;
+          ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#2a2e36'; ctx.lineWidth = w * 0.012;
+          ctx.beginPath(); ctx.arc(ex, ey, w * 0.085, 0, SS.TAU); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#111111'; ctx.beginPath(); ctx.arc(ex - s * w * 0.015, ey + w * 0.035, w * 0.038, 0, SS.TAU); ctx.fill();
+          ctx.lineWidth = w * 0.035; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(ex + s * w * 0.11, ey - w * 0.13); ctx.lineTo(ex - s * w * 0.07, ey - w * 0.06); ctx.stroke();
+          ctx.lineCap = 'butt';
+        }
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, '#ffb347', 0, h * 0.5, w * 0.8, 0.45 * O.open);   // heat out of its mouth
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.restore();
+      }
+      for (const c of fx.c) {                     // the chase: points at your tail; the thrown things turn over as they come
+        if (!c.ok) continue;
+        const L = LEN[c.kind], k = SC * zs, a = c.a + (SPIN[c.kind] ? t * SPIN[c.kind] + c.ph : 0);
+        ctx.globalAlpha = Math.min(1, c.vis);
+        put(ctx, cam, sp.cut[c.kind], c.x - Math.cos(a) * L * k * 0.5, c.y - Math.sin(a) * L * k * 0.5, a, k);
+      }
+      ctx.setTransform(cam);
+      ctx.globalAlpha = 1;
+      for (const b of fx.blobs) {                 // gravy, mid-air: higher (bigger) in the middle of its arc
+        const u = b.t / b.dur, x = b.x + (b.tx - b.x) * u, y = b.y + (b.ty - b.y) * u, s = (5 + 7 * Math.sin(u * Math.PI)) * BIG * zs;
+        ctx.fillStyle = '#6e3c12'; ctx.beginPath(); ctx.arc(x, y, s, 0, SS.TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(255,214,160,0.5)'; ctx.beginPath(); ctx.arc(x - s * 0.3, y - s * 0.3, s * 0.3, 0, SS.TAU); ctx.fill();
+      }
+      for (const L of fx.lassos) {                // the twine: out to where it's headed, a loop that snaps shut on air, reeled back in
+        if (fx.total > L.d + 50) kit.onPath(fx, L.d, L.off, Q);
+        else { Q.x = P.x - Math.cos(P.angle) * L.d; Q.y = P.y - Math.sin(P.angle) * L.d; }
+        const out = SS.easeOut(Math.min(1, L.t / 0.42)), reel = SS.smooth((L.t - 0.55) / 0.3);
+        const lx = Q.x + (L.tx - Q.x) * out * (1 - reel), ly = Q.y + (L.ty - Q.y) * out * (1 - reel);
+        const r = L.t < 0.42 ? (10 + 26 * out) * BIG * zs : 36 * BIG * zs * (1 - SS.smooth((L.t - 0.42) / 0.1));
+        lasso(ctx, Q.x, Q.y, lx, ly, r, zs * BIG, 1 - reel);
+      }
+    },
+
+    drawHull(ctx, P, V) {
+      const r = Math.min(1, P.rise || 0), f = P.form || 0, t = V.t, sp = sprites(), fx = P.fx, I = fx && fx.intro;
+      if (I && I.t < 0.62) {                                    // the opening scene: the leap out of the oven, in an arc
+        if (I.t < 0.12) return;                                 // (still in there)
+        const u = SS.smooth((I.t - 0.12) / 0.48), hs = kit.hullScale(V.z), zs = kit.zs(), c = Math.cos(P.angle), s = Math.sin(P.angle);
+        const dx = (I.x - P.x) * (1 - u), dy = (I.y - P.y) * (1 - u) - Math.sin(u * Math.PI) * 60 * zs;
+        ctx.translate((dx * c + dy * s) / hs, (dy * c - dx * s) / hs);
+        const k = 0.45 + 0.55 * back(u);
+        ctx.scale(k, k);
+      }
+      ctx.scale(1.2 * BIG, 1.2 * BIG);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = C.legs; ctx.lineWidth = 1.1;            // legs, pedalling on thin air
+      ctx.beginPath();
+      for (const s of [-1, 1]) {
+        const x = -7 - 3 * Math.sin(t * (16 + 8 * f) + (s > 0 ? 0 : Math.PI));
+        ctx.moveTo(-3, s * 2.4); ctx.lineTo(x, s * 3.2);
+        for (const d of [-1, 0, 1]) { ctx.moveTo(x, s * 3.2); ctx.lineTo(x - 2, s * 3.2 + d * 0.9); }
+      }
+      ctx.stroke();
+      const spread = 1.15 - 0.55 * f;                           // the tail fan, folding back at speed
+      for (let k = 0; k < 9; k++) {
+        const a = Math.PI + (k / 8 - 0.5) * 2 * spread;
+        ctx.save(); ctx.translate(-6, 0); ctx.rotate(a); ctx.scale(14 / 62, 14 / 62); ctx.drawImage(sp.feathers[0].c, -2, -15); ctx.restore();
+      }
+      const fl = Math.abs(Math.sin(t * (14 + 8 * r)));          // wings, flapping like mad
+      for (const s of [-1, 1]) {
+        const span = 4 + 8 * fl;
+        ctx.fillStyle = '#5a3a22';
+        ctx.beginPath(); ctx.ellipse(-1, s * (5 + span * 0.45), 6, span * 0.55, s * 0.25, 0, SS.TAU); ctx.fill();
+        ctx.strokeStyle = 'rgba(240,228,206,0.7)'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); for (let j = 0; j < 3; j++) { const x = -4 + j * 2.6; ctx.moveTo(x, s * 5.5); ctx.lineTo(x - 0.8, s * (5 + span * 0.85)); } ctx.stroke();
+      }
+      const g = ctx.createRadialGradient(-2, -2.5, 0.5, -1, 0, 9);   // the body, bronze where the light hits
+      g.addColorStop(0, '#b0783e'); g.addColorStop(0.6, C.hull); g.addColorStop(1, '#3a2010');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(-1, 0, 9, 7, 0, 0, SS.TAU); ctx.fill();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = C.skin; ctx.lineWidth = 3;              // neck, wattle, head
+      ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(11, Math.sin(t * 9) * 0.6); ctx.stroke();
+      ctx.lineCap = 'butt';
+      ctx.fillStyle = C.red; ctx.beginPath(); ctx.ellipse(10.5, 2.3, 1.6, 1.1, 0, 0, SS.TAU); ctx.ellipse(10.5, -2.3, 1.6, 1.1, 0, 0, SS.TAU); ctx.fill();
+      ctx.fillStyle = C.face; ctx.beginPath(); ctx.ellipse(12.5, 0, 2.8, 2.3, 0, 0, SS.TAU); ctx.fill();
+      ctx.fillStyle = C.beak; ctx.beginPath(); ctx.moveTo(14.8, -0.9); ctx.lineTo(17, 0); ctx.lineTo(14.8, 0.9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = C.red; ctx.beginPath(); ctx.ellipse(14.4, 1.3, 1.5, 0.6, 0.4, 0, SS.TAU); ctx.fill();
+      for (const s of [-1, 1]) {                                // googly eyes, looking back at what's chasing it
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#1a1210'; ctx.lineWidth = 0.3;
+        ctx.beginPath(); ctx.arc(12.4, s * 1.5, 1.3, 0, SS.TAU); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#111111'; ctx.beginPath(); ctx.arc(11.8 + Math.sin(t * 23) * 0.2, s * 1.5 + Math.cos(t * 19) * 0.25, 0.55, 0, SS.TAU); ctx.fill();
+      }
+      if (P.hunted || f > 0.6) {
+        ctx.globalCompositeOperation = 'lighter';
+        SS.drawGlow(ctx, C.glow, 0, 0, 14 + 8 * f, 0.18);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    },
+
+    onBoost(fx, P) {
+      const zs = kit.zs();
+      for (let k = 0; k < 6; k++) { const a = Math.random() * SS.TAU, s = SS.rand(80, 200) * zs; fx.fe.push({ x: P.x, y: P.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: 1.2, s: SS.rand(12, 18) * BIG * zs, rot: a, spin: SS.rand(-8, 8), ph: k, tail: k % 2 === 0 }); }
+      SS.audio.whoosh(0.5);
+    },
+    onTurn(fx, P, sign) { SS.fx.burst(P.x, P.y, '#efe3cc', 4, 180, 2.5, 0.5, 2); },
+    onCollect(fx, P, o) { SS.fx.ring(o.x, o.y, C.glow, 4, 28, 0.3, 1.5); },
+    onHunted(fx, P) { SS.audio.gobble(1.2); },
+    onTopSpeed(fx, P) { SS.audio.gobble(0.8); },
+    onRegion(fx, P) { SS.fx.ring(P.x, P.y, C.glow, 30, 500, 1, 3); SS.audio.gobble(1); },
   });
 })();
 </script>
@@ -7781,7 +9243,7 @@ body.touch kbd { display: none; }
       b.className = (sh.id === sel ? 'sel ' : '') + (owned ? '' : 'locked');
       b.style.setProperty('--ship', sh.colors.accent);
       const tag = rar && rar.id === 'ultra' ? [rar.name, rar.color] : ev ? [ev.name, ev.color] : rar ? [rar.name, rar.color] : null;
-      if (rar && rar.id === 'ultra') b.classList.add('ultra');
+      if (rar && rar.id === 'ultra') { b.classList.add('ultra'); b.dataset.u = sh.id; }   // each ULTRA styles its own name
       b.innerHTML = '<b>' + esc(sh.name) + (tag ? ' <em class="ev" style="--ev:' + tag[1] + '">' + esc(tag[0].toUpperCase()) + '</em>' : '') + '</b><span>' + esc(owned ? (sh.id === s.ship ? 'Equipped' : sh.title) : lockText(sh)) + '</span>';
       b.onclick = () => { SS.audio.click(); ui.preview = sh.id; SS.setShip(sh.id, true); renderHangar(); };
       li.appendChild(b);
@@ -8013,21 +9475,24 @@ body.touch kbd { display: none; }
 
   // ---------------------------------------------------------------- the pool
   const live = (sh) => !sh.event || !!(SS.EVENTS[sh.event] && SS.EVENTS[sh.event].active);
-  /** Tiers that have something in them right now, with their share (p). */
+  /** Tiers that have something in them right now, with their weight (w) and
+      share (p). An event can set its own ULTRA weight (SS.EVENTS[..].ultra). */
   rift.tiers = () => {
     const out = [];
     let sum = 0;
     SS.RARITY.forEach((r, idx) => {
       const pool = SS.ships.filter((sh) => sh.rarity === r.id && live(sh));
-      if (pool.length) { out.push({ r, idx, pool, p: 0 }); sum += r.weight; }
+      if (!pool.length) return;
+      const ev = r.id === 'ultra' && SS.EVENTS[pool[0].event], w = (ev && ev.ultra) || r.weight;
+      out.push({ r, idx, pool, w, p: 0 }); sum += w;
     });
-    for (const x of out) x.p = x.r.weight / sum;
+    for (const x of out) x.p = x.w / sum;
     return out;
   };
   function roll(minIdx) {
     const all = rift.tiers(), T = all.filter((x) => x.idx >= minIdx).length ? all.filter((x) => x.idx >= minIdx) : all;
-    let u = Math.random() * T.reduce((a, x) => a + x.r.weight, 0), pick = T[T.length - 1];
-    for (const x of T) { u -= x.r.weight; if (u < 0) { pick = x; break; } }
+    let u = Math.random() * T.reduce((a, x) => a + x.w, 0), pick = T[T.length - 1];
+    for (const x of T) { u -= x.w; if (u < 0) { pick = x; break; } }
     return { ship: SS.pick(pick.pool), rarity: pick.r, idx: pick.idx, dup: false };
   }
 
@@ -8054,7 +9519,7 @@ body.touch kbd { display: none; }
   };
 
   // ---------------------------------------------------------------- the screen
-  const pct = (p) => Math.round(p * 1000) / 10 + '%';
+  const pct = (p) => (p < 0.01 ? Math.round(p * 10000) / 100 : Math.round(p * 1000) / 10) + '%';   // 0.75%, not 0.7%
   rift.render = () => {
     const s = SS.save, T = rift.tiers();
     $('rift-wisps').textContent = SS.fmt(s.wisps);
@@ -8065,9 +9530,10 @@ body.touch kbd { display: none; }
       bn.style.setProperty('--ev', ev.color);
       bn.innerHTML = '<b>' + esc(ev.name.toUpperCase()) + ' · LIMITED</b><span>' + lim.pool.map((sh) => esc(sh.name)).join(' · ') +
         '</span><em>In the Rift only while the event runs. Pull one and it’s yours for good.</em>' +
-        (ult ? '<em class="ult">…and one more. ULTRA LIMITED, ' + pct(ult.p) + ': <i>' + esc(ult.pool[0].name) + '</i></em>' : '');
+        (ult ? '<em class="ult" data-u="' + ult.pool[0].id + '">…and one more. ULTRA LIMITED, ' + pct(ult.p) + ': <i>' + esc(ult.pool[0].name) + '</i></em>' : '');
     }
-    $('rift-odds').innerHTML = T.map((x) => '<div class="odd' + (x.r.id === 'ultra' ? ' ultra' : '') + '" style="--r:' + x.r.color + '"><b>' + x.r.name + '</b><span class="pct">' + pct(x.p) + '</span><span class="pool">' +
+    // an ULTRA row is styled by its ship (data-u, style.css)
+    $('rift-odds').innerHTML = T.map((x) => '<div class="odd' + (x.r.id === 'ultra' ? ' ultra" data-u="' + x.pool[0].id : '') + '" style="--r:' + x.r.color + '"><b>' + x.r.name + '</b><span class="pct">' + pct(x.p) + '</span><span class="pool">' +
       x.pool.map((sh) => '<i' + (s.ships.includes(sh.id) ? ' class="own" title="Owned"' : '') + '>' + esc(sh.name) + '</i>').join('') + '</span></div>').join('');
     $('rift-pity').innerHTML = 'Mythic or better within <b>' + Math.max(1, PITY - s.rift.pity) + '</b> pulls · ×10 holds a <b>Rare</b> or better';
     const b1 = $('rift-1'), b10 = $('rift-10');
@@ -8083,24 +9549,22 @@ body.touch kbd { display: none; }
   // A slit of light opens and hints at the best rarity (white, then green or
   // blue, then purple or gold at the last moment), tears open, and the ship
   // flies out. Ten pulls deal ten cards instead.
-  // An ULTRA lies: it hints rare, then limited - then at 1.3 s the light goes
-  // out. Black, a heartbeat, a slit that opens like an eye. At 2.6 s it is
-  // simply there, getting closer, and hands hit the glass. Then it speaks.
-  const ULTRA = SS.RARITY.findIndex((r) => r.id === 'ultra'), VOID = 1.3;
+  // An ULTRA lies: it hints rare, then limited - then at VOID (1.3 s) the
+  // light goes, and the rest is the ship's own: its `reveal` (run.js, getaway.js)
+  // gives the timing (open, show), the background, the slit after VOID, the
+  // single-pull scene, its ten-pull card and the sounds. Every ULTRA needs one.
+  const ULTRA = SS.RARITY.findIndex((r) => r.id === 'ultra'), VOID = (rift.VOID = 1.3);
   let reveal = null, motes = [];
   rift.busy = () => !!reveal;
   function startReveal(res, n) {
-    const best = res.reduce((m, x) => Math.max(m, x.idx), 0), ultra = best === ULTRA;
-    reveal = { res, n, t: 0, best, ultra, open: ultra ? 2.6 : 1.5, show: ultra ? 4.0 : 2.25, dealt: 0, info: false, prints: [] };
-    if (ultra) {
-      const spots = [[0.13, 0.28], [0.86, 0.22], [0.2, 0.72], [0.8, 0.7], [0.52, 0.1], [0.93, 0.5]];
-      reveal.prints = [2.9, 3.15, 3.3, 3.55, 3.7, 3.85].map((at, i) => ({ at, x: spots[i][0] + SS.rand(-0.04, 0.04), y: spots[i][1] + SS.rand(-0.04, 0.04), a: -Math.PI / 2 + SS.rand(-0.6, 0.6), s: SS.rand(0.09, 0.13), side: i % 2 ? 1 : -1 }));
-    }
+    const best = res.reduce((m, x) => Math.max(m, x.idx), 0), U = best === ULTRA ? res.find((x) => x.idx === ULTRA).ship : null;
+    reveal = { res, n, t: 0, best, ultra: !!U, U, open: U ? U.reveal.open : 1.5, show: U ? U.reveal.show : 2.25, dealt: 0, info: false };
+    if (U && U.reveal.start) U.reveal.start(reveal);
     motes = Array.from({ length: 70 }, () => ({ a: Math.random() * SS.TAU, r: SS.rand(0.35, 1.1), ph: Math.random(), s: SS.rand(0.6, 1.4) }));
     $('reveal').classList.remove('hidden');
     $('rv-info').classList.add('hidden');
     $('rv-actions').classList.add('hidden');
-    if (ultra) SS.audio.riftUltra(); else SS.audio.riftPull(best);
+    if (U) U.reveal.sound(); else SS.audio.riftPull(best);
   }
   const hint = (R) => SS.RARITY[R.t < 0.55 ? 0 : R.t < 1.05 ? Math.min(R.best, 2) : R.ultra ? ULTRA - 1 : R.best].color;
 
@@ -8110,7 +9574,9 @@ body.touch kbd { display: none; }
     const rar = $('rv-rar'), note = $('rv-note');
     $('rv-info').classList.toggle('ten', !one);
     $('rv-info').classList.toggle('ultra', !!(one && one.idx === ULTRA));
+    $('rv-info').dataset.u = one && one.idx === ULTRA ? one.ship.id : '';   // styled by the ship (style.css)
     $('reveal').classList.toggle('ultra', R.ultra);
+    $('reveal').dataset.u = R.ultra ? R.U.id : '';
     if (one) {
       rar.textContent = one.rarity.name + (one.ship.event && SS.EVENTS[one.ship.event] ? ' · ' + SS.EVENTS[one.ship.event].name.toUpperCase() : '');
       rar.style.color = one.rarity.color;
@@ -8186,12 +9652,12 @@ body.touch kbd { display: none; }
     const t = R.t, cx = W / 2, cy = H * 0.44, col = hint(R), OPEN = R.open, dark = R.ultra && t >= VOID;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.globalCompositeOperation = 'source-over';
-    g.fillStyle = dark ? '#000000' : 'rgba(2,4,10,' + Math.min(0.94, t * 4) + ')';
+    g.fillStyle = dark ? R.U.reveal.bg : 'rgba(2,4,10,' + Math.min(0.94, t * 4) + ')';
     g.fillRect(0, 0, W, H);
     g.globalCompositeOperation = 'lighter';
 
     // the slit: grows, flickers, changes colour, then tears open
-    if (dark) drawVoid(g, R, W, H, cx, cy, t);
+    if (dark) R.U.reveal.slit(g, R, W, H, cx, cy, t);
     else if (t < OPEN + 0.5) {
       const grow = SS.easeOut(t / 0.5), open = SS.smooth((t - 1.1) / (OPEN - 1.1)), gone = SS.clamp((t - OPEN) / 0.5, 0, 1);
       const h = H * 0.62 * grow * (1 + 0.15 * open), wd = (3 + 2 * Math.sin(t * 40) + open * W * 0.09) * (1 - gone);
@@ -8225,61 +9691,12 @@ body.touch kbd { display: none; }
 
     if (t >= OPEN) {
       if (R.n === 10) drawTen(g, R, W, H, t);
-      else if (R.ultra) drawUltra(g, R, W, H, cx, cy, t);
+      else if (R.ultra) R.U.reveal.draw(g, R, W, H, cx, cy, t);
       else drawOne(g, R, W, H, cx, cy, t);
     }
     g.globalCompositeOperation = 'source-over';
     if (!R.info && t >= R.show + (R.n === 10 ? 1.4 : 0.15) && (R.n === 1 || R.dealt >= 10)) showInfo(R);
   };
-
-  /** The ultra's slit, after the lights go: a black eye opening, rimmed in red. */
-  function drawVoid(g, R, W, H, cx, cy, t) {
-    if (t > R.open + 0.4) return;
-    const u = SS.clamp((t - VOID) / (R.open - VOID), 0, 1), gone = SS.clamp((t - R.open) / 0.4, 0, 1);
-    const h = H * 0.62 * (1 + 0.08 * u), wd = (2 + u * u * W * 0.07) * (1 - gone);
-    SS.drawGlow(g, '#e0142c', cx, cy, h * 0.45, (0.1 + 0.12 * u) * (1 - gone));
-    g.globalCompositeOperation = 'source-over';
-    g.beginPath();
-    g.moveTo(cx, cy - h / 2); g.quadraticCurveTo(cx + wd, cy, cx, cy + h / 2); g.quadraticCurveTo(cx - wd, cy, cx, cy - h / 2);
-    g.fillStyle = '#000000'; g.fill();
-    g.strokeStyle = 'rgba(224,20,44,' + 0.75 * (1 - gone) + ')'; g.lineWidth = 1.5; g.stroke();
-    g.globalCompositeOperation = 'lighter';
-  }
-
-  /** run: no rays, no sparkle. It fades up out of the black, getting closer, and hands hit the glass. */
-  function drawUltra(g, R, W, H, cx, cy, t) {
-    const e = SS.smooth((t - R.open) / 1.6), near = 1 + Math.min(0.35, (t - R.open) * 0.04);
-    const s = Math.min(W * 0.5, H * 0.56) * near, open = 0.2 + 0.6 * SS.smooth((t - R.show + 0.2) / 0.5);
-    g.globalCompositeOperation = 'source-over';
-    SS.runPortrait(g, cx, cy, s, t, e, open);
-    // the dark closes in round it, and the edges go red
-    const vg = g.createRadialGradient(cx, cy, s * 0.42, cx, cy, Math.max(W, H) * 0.75);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(0.35, 'rgba(0,0,0,' + 0.75 * e + ')'); vg.addColorStop(1, 'rgba(55,0,8,' + 0.8 * e + ')');
-    g.fillStyle = vg; g.fillRect(0, 0, W, H);
-    // hands on the glass from the other side; the blood runs down after them
-    const m = Math.min(W, H);
-    for (const p of R.prints) {
-      if (t < p.at) continue;
-      const age = t - p.at, s = p.s * m * (1 + 0.2 * Math.max(0, 1 - age / 0.06)), px = p.x * W, py = p.y * H;
-      g.save();
-      g.translate(px, py);
-      g.rotate(p.a); g.scale(1, p.side);
-      g.globalAlpha = 0.9;
-      g.fillStyle = '#6a0912'; g.strokeStyle = '#6a0912';
-      SS.handprint(g, s, p.at * 31);
-      g.restore();
-      g.strokeStyle = 'rgba(106,9,18,0.85)'; g.fillStyle = 'rgba(106,9,18,0.9)'; g.lineCap = 'round';
-      for (let k = 0; k < 3; k++) {
-        const dx = (k - 1) * 0.28 * s + Math.sin(p.at * 7 + k) * 0.08 * s, len = Math.min(1, age / (1.4 + k * 0.5)) * s * (0.5 + 0.35 * ((p.at * 13 + k * 3.7) % 1));
-        g.lineWidth = s * (0.045 - k * 0.008);
-        g.beginPath(); g.moveTo(px + dx, py + 0.15 * s); g.lineTo(px + dx, py + 0.15 * s + len); g.stroke();
-        g.beginPath(); g.arc(px + dx, py + 0.15 * s + len, s * 0.04, 0, SS.TAU); g.fill();
-      }
-      g.lineCap = 'butt';
-    }
-    g.globalAlpha = 1;
-    g.globalCompositeOperation = 'lighter';
-  }
 
   function drawOne(g, R, W, H, cx, cy, t) {
     const OPEN = R.open, x = R.res[0], e = SS.easeOut((t - OPEN) / 0.8), S = Math.min(W * 0.55, H * 0.75) / 62 * (0.3 + 0.7 * e);
@@ -8313,15 +9730,15 @@ body.touch kbd { display: none; }
     if (due > R.dealt) {
       R.dealt = due;
       const x = R.res[due - 1];
-      if (x.idx === ULTRA) SS.audio.whisper(1.3); else SS.audio.riftCard(x.idx);
+      if (x.idx === ULTRA) x.ship.reveal.cardSound(); else SS.audio.riftCard(x.idx);
     }
     for (let i = 0; i < R.dealt; i++) {
-      const x = R.res[i], col = x.rarity.color, at = OPEN + i * 0.14, e = R.skip ? 1 : SS.easeOut((t - at) / 0.3), ult = x.idx === ULTRA;
-      const cx = x0 + (i % L.cols) * (L.cw + L.gap) + L.cw / 2 + (ult ? Math.sin(t * 43 + i) * 1.2 : 0), cy = y0 + Math.floor(i / L.cols) * (L.ch + L.gap) + L.ch / 2;
+      const x = R.res[i], col = x.rarity.color, at = OPEN + i * 0.14, e = R.skip ? 1 : SS.easeOut((t - at) / 0.3), ult = x.idx === ULTRA && x.ship.reveal.card;
+      const cx = x0 + (i % L.cols) * (L.cw + L.gap) + L.cw / 2 + (ult && ult.shake ? Math.sin(t * 43 + i) * 1.2 : 0), cy = y0 + Math.floor(i / L.cols) * (L.ch + L.gap) + L.ch / 2;
       const w = L.cw * (0.7 + 0.3 * e), h = L.ch * (0.7 + 0.3 * e);
-      if (x.idx >= 2 && !ult) SS.drawGlow(g, col, cx, cy, w * (0.9 + 0.1 * Math.sin(t * 3 + i)), (0.12 + 0.08 * x.idx) * e);
+      if (x.idx >= 2 && !(ult && ult.shake)) SS.drawGlow(g, col, cx, cy, w * (0.9 + 0.1 * Math.sin(t * 3 + i)), (0.12 + 0.08 * x.idx) * e);
       g.globalCompositeOperation = 'source-over';
-      g.fillStyle = ult ? 'rgba(0,0,0,' + e + ')' : 'rgba(8,14,26,' + 0.92 * e + ')';
+      g.fillStyle = ult ? SS.rgba(ult.bg, e) : 'rgba(8,14,26,' + 0.92 * e + ')';
       g.strokeStyle = SS.rgba(col, 0.9 * e); g.lineWidth = x.idx >= 3 ? 2.5 : 1.5;
       g.beginPath(); g.rect(cx - w / 2, cy - h / 2, w, h); g.fill(); g.stroke();
       g.fillStyle = SS.rgba(col, 0.16 * e); g.fillRect(cx - w / 2, cy + h / 2 - h * 0.26, w, h * 0.26);
@@ -8332,9 +9749,10 @@ body.touch kbd { display: none; }
       g.restore();
       g.globalAlpha = e;
       g.textAlign = 'center';
-      g.fillStyle = ult ? '#d8d0c4' : '#eaf4ff';
-      g.font = ult ? Math.round(w * 0.16) + 'px "Nothing You Could Do", cursive' : '700 ' + Math.round(w * 0.105) + 'px "Chakra Petch", system-ui, sans-serif';
-      g.fillText(x.ship.name, cx, cy + h / 2 - h * 0.13);
+      g.fillStyle = ult ? ult.ink : '#eaf4ff';
+      g.font = ult ? Math.round(w * (ult.size || 0.16)) + 'px ' + ult.font : '700 ' + Math.round(w * 0.105) + 'px "Chakra Petch", system-ui, sans-serif';
+      if (ult && ult.lines) ult.lines.forEach((ln, k) => g.fillText(ln, cx, cy + h / 2 - h * (0.13 + 0.075 * (ult.lines.length - 1 - k))));   // a long name, broken
+      else g.fillText(x.ship.name, cx, cy + h / 2 - h * 0.13);
       g.fillStyle = col;
       g.font = '700 ' + Math.round(w * 0.075) + 'px "Chakra Petch", system-ui, sans-serif';
       g.fillText(x.rarity.name, cx, cy + h / 2 - h * 0.045);

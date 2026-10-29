@@ -15,12 +15,14 @@ const { grow, gain, Reject } = require("./lib");
 const LIMITS = { level: 100000, prestiges: 100000, big: 1e15, wisps: 1e7 };
 
 // Ids the game knows (js/ships/*.js, js/regions/*.js, SS.TIERS, SS.SECRETS).
-// fizz .. astral come only from the Rift (the game's gacha, js/rift.js), and
-// deadair / maw / hollow are its LIMITED tier and run its ULTRA LIMITED, in the pool only while the
-// Halloween event runs. Pulls are rolled on the client, so ships are accepted
-// as sent like the rest (see "trusted" in the report: cosmetic + one ability).
+// fizz .. astral come only from the Rift (the game's gacha, js/rift.js). Its
+// LIMITED tier and ULTRA LIMITED are in the pool only while their event runs:
+// deadair / maw / hollow + run (Halloween, closed - owners keep them), goose /
+// plenty + getaway (Thanksgiving). Pulls are rolled on the client, so ships are
+// accepted as sent like the rest (see "trusted" in the report: cosmetic + one ability).
 const SHIPS = ["lance", "claw", "drill", "frost", "needle", "magnet", "prism",
-  "fizz", "blossom", "gala", "cog", "sumi", "astral", "deadair", "maw", "hollow", "run"];
+  "fizz", "blossom", "gala", "cog", "sumi", "astral", "deadair", "maw", "hollow", "run",
+  "goose", "plenty", "getaway"];
 const REGIONS = ["shallows", "gale", "wells", "storm"];
 const WILD = ["gale", "wells", "storm"];                  // regions with a Wraith
 const TIERS = ["mote", "surge", "mega", "nova"];
