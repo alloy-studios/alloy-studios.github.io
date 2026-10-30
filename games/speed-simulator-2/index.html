@@ -53,7 +53,7 @@
   --cut: 12px;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; overflow: hidden; background: #02070f; color: var(--ink); font-family: var(--ui); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #02070f; color: var(--ink); font-family: var(--ui); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
 canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; transition: filter 0.4s; }
 .hidden { display: none !important; }
 button { font-family: var(--ui); color: inherit; cursor: pointer; }
@@ -276,6 +276,28 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .hud-btn:hover { border-color: var(--accent); }
 .hud-btn.prestige { border-color: var(--gold); color: var(--gold); animation: pulse 1.6s infinite; }
 .hud-bc { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; gap: 16px; align-items: flex-end; }
+/* first flight: the controls on screen, one step at a time (hud.js coach) - key caps and a mouse, few words */
+.coach { position: absolute; left: 50%; top: 64%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.coach-step { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: rgba(4, 10, 20, 0.66); border: 1px solid var(--line-strong); animation: coach-in 0.35s ease; white-space: nowrap; }
+.coach-step.ok { border-color: #8dffb0; box-shadow: 0 0 24px rgba(141, 255, 176, 0.25); }
+.coach-step .label { font: 800 15px var(--display); letter-spacing: 0.06em; color: var(--accent); }
+.coach-step.ok .label { color: #8dffb0; }
+.coach-step .or { font: 600 11px var(--ui); letter-spacing: 0.16em; color: var(--ink-dim); }
+.coach .k { min-width: 30px; height: 30px; padding: 0 8px; box-sizing: border-box; display: grid; place-items: center; border: 1px solid rgba(234, 244, 255, 0.6); border-bottom-width: 4px; border-radius: 6px; font: 700 13px var(--ui); color: #eaf4ff; animation: press 1.2s ease-in-out infinite; }
+.coach .k.wide { min-width: 84px; }
+.coach .wasd { display: grid; grid-template-columns: repeat(3, 30px); gap: 3px; }
+.coach .wasd .k { animation-delay: var(--d, 0s); }
+.coach .wasd .k:first-child { grid-column: 2; grid-row: 1; }
+.coach .wasd .k:not(:first-child) { grid-row: 2; }
+.coach svg.mouse { width: 26px; height: 38px; color: #eaf4ff; }
+.coach svg.mouse .hit { fill: var(--accent); animation: blink 1.2s ease-in-out infinite; }
+.coach .orb { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff6d8, #ffb347 55%, #c8701a); box-shadow: 0 0 14px rgba(255, 179, 71, 0.8); }
+.coach-skip { background: none; border: none; padding: 4px 8px; font: 600 11px var(--ui); letter-spacing: 0.16em; color: var(--ink-dim); cursor: pointer; }
+.coach-skip:hover { color: var(--ink); }
+@keyframes coach-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes press { 0%, 60%, 100% { transform: none; border-bottom-width: 4px; } 75% { transform: translateY(2px); border-bottom-width: 2px; } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.panel header .hint { font-size: 12px; letter-spacing: 0.12em; color: var(--ink-dim); margin-left: auto; }
 .boost, .ability { background: rgba(4, 10, 20, 0.6); border: 1px solid var(--line); padding: 8px 12px; font-size: 11px; letter-spacing: 0.16em; color: var(--ink-dim); }
 .boost .bar { width: 220px; height: 8px; margin-top: 6px; background: rgba(150, 200, 255, 0.12); }
 .boost .bar i { display: block; height: 100%; width: 100%; background: var(--accent); transition: background 0.2s; }
@@ -369,6 +391,7 @@ body.touch kbd { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #banner .b, .toast { animation: none; }   /* both are removed by JS on a timer */
   .rv-info[data-u] h2, .odd.ultra .pool i { animation: none; }
+  .coach .k, .coach svg.mouse .hit, .coach-step { animation: none; }
 }
 </style>
 </head>
@@ -390,10 +413,10 @@ body.touch kbd { display: none; }
   </div>
   <div class="hud-tr">
     <div class="energy"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span id="h-energy">0</span></div>
-    <div class="wisps" id="h-wisps-box" title="Wisps: spend them in the Rift (ESC)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.4 5.5 5.6 5.5 11.2A5.5 5.5 0 0 1 6.5 13.6c0-2.6 1.6-4 2.6-5.6.3 1.7 1.1 2.7 2.2 3C11 8.2 10.7 5 12 2z"/></svg><span id="h-wisps">0</span></div>
+    <div class="wisps" id="h-wisps-box" title="Wisps: spend them in the Rift (P, then THE RIFT)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 3.4 5.5 5.6 5.5 11.2A5.5 5.5 0 0 1 6.5 13.6c0-2.6 1.6-4 2.6-5.6.3 1.7 1.1 2.7 2.2 3C11 8.2 10.7 5 12 2z"/></svg><span id="h-wisps">0</span></div>
     <div class="level"><span>LV <b id="h-level">1</b></span><div class="xp"><i id="h-xp"></i></div></div>
     <button class="hud-btn" id="b-shop">UPGRADES<kbd>TAB</kbd></button>
-    <button class="hud-btn prestige hidden" id="b-prestige">PRESTIGE READY<kbd>P</kbd></button>
+    <button class="hud-btn prestige hidden" id="b-prestige">PRESTIGE READY<kbd>TAB</kbd></button>
   </div>
   <div class="chase hidden" id="h-chase">
     <div class="name" id="h-chase-name"></div>
@@ -411,6 +434,7 @@ body.touch kbd { display: none; }
     </div>
   </div>
   <div class="hud-br"><canvas id="minimap" width="336" height="336"></canvas></div>
+  <div class="coach hidden" id="coach"><div class="coach-step" id="coach-step"></div><button class="coach-skip" id="coach-skip">SKIP TIPS</button></div>
 </div>
 <div id="banner"></div>
 <div id="toasts"></div>
@@ -430,7 +454,7 @@ body.touch kbd { display: none; }
     </div>
   </div>
   <div class="menu-foot"><span id="acct"></span><button class="link hidden" id="b-signin">Sign in</button><span class="ver" id="ver"></span></div>
-  <div class="menu-help">HOLD MOUSE or WASD to fly<br>SHIFT / RIGHT MOUSE to boost &middot; SPACE ability<br>TAB upgrades &middot; ESC pause &middot; M mute</div>
+  <div class="menu-help">HOLD MOUSE or WASD to fly<br>SHIFT / RIGHT MOUSE to boost &middot; SPACE ability<br>TAB upgrades &middot; P pause &middot; M mute</div>
 </section>
 
 <section id="hangar" class="screen hidden">
@@ -470,7 +494,7 @@ body.touch kbd { display: none; }
       <label>Mouse</label><div class="seg" data-set="steer"><button data-v="hold">HOLD TO FLY</button><button data-v="follow">ALWAYS FOLLOW</button></div>
       <label>Screen shake</label><div class="seg" data-set="shake"><button data-v="true">ON</button><button data-v="false">OFF</button></div>
       <label>Screen flashes</label><div class="seg" data-set="flashes"><button data-v="true">ON</button><button data-v="false">OFF</button></div>
-      <label>Quality</label><div class="seg" data-set="quality"><button data-v="high">HIGH</button><button data-v="low">LOW</button></div>
+      <label>Quality</label><div class="seg" data-set="quality"><button data-v="auto">AUTO</button><button data-v="high">HIGH</button><button data-v="low">LOW</button></div>
     </div>
   </div>
 </section>
@@ -492,14 +516,14 @@ body.touch kbd { display: none; }
     <p class="sub">Spend wisps to pull a ship through. The ships in the Rift are found nowhere else.</p>
     <div class="rift-banner hidden" id="rift-banner"></div>
     <div class="rift-odds" id="rift-odds"></div>
-    <div class="rift-pull"><div class="rift-pity" id="rift-pity"></div><button class="btn" id="rift-10"></button><button class="btn primary" id="rift-1"></button></div>
+    <div class="rift-pull"><div class="rift-pity" id="rift-pity"></div><button class="btn hidden" id="rift-ad"></button><button class="btn" id="rift-10"></button><button class="btn primary" id="rift-1"></button></div>
     <p class="rift-earn" id="rift-earn"></p>
   </div>
 </section>
 
 <section id="pause" class="screen dim hidden">
   <div class="panel small">
-    <header><h2>PAUSED</h2></header>
+    <header><h2>PAUSED</h2><span class="hint"><kbd>P</kbd> to resume</span></header>
     <div class="stack">
       <button class="btn primary" id="p-resume">RESUME</button>
       <button class="btn" id="p-shop">UPGRADES</button>
@@ -763,6 +787,41 @@ body.touch kbd { display: none; }
 })();
 </script>
 <script>
+/* SPEED SIMULATOR 2 - platform. What the page the game runs on needs to hear,
+   and where saves live. The Alloy site needs nothing, so these are no-ops
+   there. The CrazyGames build (tools/build.ps1 -Target crazygames) loads
+   platform/crazygames.js right after this file, which replaces them with SDK
+   v3 calls. Game code only ever talks to SS.platform, never to a portal SDK. */
+(function () {
+  'use strict';
+  const SS = window.SS;
+  SS.platform = {
+    id: 'alloy',
+    accounts: true,            // Alloy sign-in exists here (save.js still checks the site is actually around it)
+    ready: Promise.resolve(),  // main.js boots once this settles (an SDK may need to start first)
+    /** Where the save lives: localStorage's API, so a portal can swap in its own (CrazyGames' Data module is the same API). */
+    store: {
+      get: (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } },
+      set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* full or blocked */ } },
+    },
+    /** The game state changed: 'menu' | 'play' | 'paused' | 'prestige'. why = 'hidden' when the tab lost focus. */
+    state(s, why) {},
+    /** Loading began (true) or finished (false). */
+    loading(on) {},
+    /** A real achievement (a prestige). Use sparingly. */
+    happy() {},
+    // Ad hooks. Nothing shows ads unless ads.available() - never on the site.
+    ads: {
+      available: () => false,
+      /** Between sessions (prestige). done() always runs, ad or not. */
+      midgame(done) { done(); },
+      /** The player asked to watch one for a reward: reward() on a finished ad, otherwise fail(). */
+      rewarded(reward, fail) { if (fail) fail(); },
+    },
+  };
+})();
+</script>
+<script>
 /* SPEED SIMULATOR 2 - saves and Alloy Accounts.
    Contract: Desktop/AlloyStudios/firebase/GAMES.md. The server-side check is
    alloy/validator.js - keep the two save shapes identical.
@@ -783,6 +842,7 @@ body.touch kbd { display: none; }
   const KEY = SS.GAME_ID + '.save';
   const SET_KEY = SS.GAME_ID + '.settings';
   const AA = (() => {
+    if (!SS.platform.accounts) return null;    // a portal build: no Alloy sign-in at all
     try { return window.parent !== window ? window.parent.AlloyAccount || null : null; }
     catch (_) { return null; }
   })();
@@ -859,11 +919,12 @@ body.touch kbd { display: none; }
     return w;
   };
 
+  // The save goes through SS.platform.store (localStorage, or a portal's own store with the same API).
   const readLocal = (key) => {
-    try { const raw = localStorage.getItem(key); return raw ? SS.cleanSave(JSON.parse(raw)) : null; }
+    try { const raw = SS.platform.store.get(key); return raw ? SS.cleanSave(JSON.parse(raw)) : null; }
     catch (_) { return null; }
   };
-  const writeLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (_) { /* full or blocked */ } };
+  const writeLocal = (key, data) => SS.platform.store.set(key, JSON.stringify(data));
 
   // ---------------------------------------------------------------- state
   const sync = (SS.sync = {
@@ -972,11 +1033,13 @@ body.touch kbd { display: none; }
   };
 
   // ---------------------------------------------------------------- settings (device only)
+  // quality: 'auto' drops to low by itself when frames drop (main.js); coached: the first-flight tips were seen or skipped
   SS.settings = Object.assign(
-    { master: 0.8, music: 0.55, sfx: 0.8, muted: false, steer: 'hold', flashes: true, shake: true, quality: 'high' },
+    { master: 0.8, music: 0.55, sfx: 0.8, muted: false, steer: 'hold', flashes: true, shake: true, quality: 'auto', coached: false },
     (() => { try { return JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (_) { return {}; } })()
   );
-  SS.saveSettings = () => writeLocal(SET_KEY, SS.settings);
+  if (!SS.settings.qv) { if (SS.settings.quality === 'high') SS.settings.quality = 'auto'; SS.settings.qv = 1; }   // 'high' was the old default, not a choice
+  SS.saveSettings = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(SS.settings)); } catch (_) { /* full or blocked */ } };
 })();
 </script>
 <script>
@@ -1202,10 +1265,13 @@ body.touch kbd { display: none; }
     if (pendingShip) A.setShip(pendingShip);
     setInterval(schedule, 50);
   };
+  let held = false;
+  /** Silence everything while a portal plays an ad (on = true), then bring it back. */
+  A.hold = (on) => { held = !!on; A.apply(); };
   A.apply = () => {
     if (!ac) return;
     const s = SS.settings, t = ac.currentTime;
-    master.gain.setTargetAtTime(s.muted ? 0 : s.master, t, 0.05);
+    master.gain.setTargetAtTime(s.muted || held ? 0 : s.master, t, 0.05);
     musicVol.gain.setTargetAtTime(s.music, t, 0.05);
     sfxVol.gain.setTargetAtTime(s.sfx, t, 0.05);
   };
@@ -9053,7 +9119,57 @@ body.touch kbd { display: none; }
     put('flash', (v) => (el.flash.style.opacity = v), Math.round(SS.world.flash * 40) / 40);
     mmT -= dt;
     if (mmT <= 0) { mmT = 0.1; minimap(); }
+    if (coach && SS.G.state === 'play') coachTick(dt);
   };
+
+  // ---------------------------------------------------------------- first flight
+  // The controls, on screen, one at a time, inside the game: fly, boost, the
+  // ability, then what to do. Each step ticks off when you do it (pictures of
+  // keys and a mouse, hardly any words); SKIP TIPS ends it. Once seen or
+  // skipped, never again on this device (settings.coached).
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const K = (s, wide) => '<span class="k' + (wide ? ' wide' : '') + '">' + s + '</span>';
+  const MOUSE = (btn) => '<svg class="mouse" viewBox="0 0 26 38"><rect x="1.5" y="1.5" width="23" height="35" rx="11.5" fill="none" stroke="currentColor" stroke-width="2"/>' +
+    '<path d="M13 1.5v13M1.5 14.5h23" stroke="currentColor" stroke-width="2"/><path class="hit" d="' + (btn === 'r' ? 'M14 2.6A10.5 10.5 0 0 1 23.5 12.5V13.5H14Z' : 'M12 2.6A10.5 10.5 0 0 0 2.5 12.5V13.5H12Z') + '"/></svg>';
+  const WASD = '<span class="wasd">' + ['W', 'A', 'S', 'D'].map((k, i) => '<span class="k" style="--d:' + i * 0.15 + 's">' + k + '</span>').join('') + '</span>';
+  const L = (s) => '<span class="label">' + s + '</span>', OR = '<span class="or">OR</span>';
+  let coach = null;
+  const steering = () => {
+    const I = SS.input, k = I.keys;
+    return I.mouseDown || I.touchSteer !== null || k.KeyW || k.KeyA || k.KeyS || k.KeyD || k.ArrowUp || k.ArrowDown || k.ArrowLeft || k.ArrowRight ||
+      (SS.settings.steer === 'follow' && SS.P.speed > 120);
+  };
+  hud.coach = () => {
+    const touch = SS.input.isTouch, ab = esc(SS.ship.ability.name);
+    coach = { i: -1, t: 0, ok: 0, ab: false, n: 0, steps: [
+      { html: touch ? L('TOUCH AND HOLD') + '<span class="or">TO FLY</span>' : MOUSE('l') + L('HOLD') + OR + WASD + L('FLY'), done: (dt) => (coach.t += steering() ? dt : 0) > 1.2 },
+      { html: touch ? K('BOOST', 1) + '<span class="or">SECOND FINGER</span>' : K('SHIFT', 1) + OR + MOUSE('r') + L('BOOST'), done: (dt) => (coach.t += SS.P.boosting ? dt : 0) > 0.6 },
+      { html: K(touch ? 'SKILL' : 'SPACE', 1) + L(ab), done: () => coach.ab },
+      { html: '<span class="orb"></span>' + L('GRAB ORBS · GET FASTER'), done: (dt) => (coach.t += dt) > 6 || coach.n >= 12 },
+    ] };
+    $('coach-skip').onclick = () => { SS.audio.click(); coachEnd(); };
+    coachNext();
+  };
+  function coachNext() {
+    coach.i++; coach.t = 0; coach.ok = 0;
+    if (coach.i >= coach.steps.length) { coachEnd(); return; }
+    const box = $('coach-step');
+    box.className = 'coach-step';
+    box.innerHTML = coach.steps[coach.i].html;
+    box.style.animation = 'none'; void box.offsetWidth; box.style.animation = '';
+    $('coach').classList.remove('hidden');
+  }
+  function coachTick(dt) {
+    if (coach.ok > 0) { if ((coach.ok -= dt) <= 0) coachNext(); return; }   // a moment to see it ticked off
+    if (coach.steps[coach.i].done(dt)) { coach.ok = 0.6; $('coach-step').classList.add('ok'); SS.audio.chime(); }
+  }
+  function coachEnd() {
+    coach = null;
+    $('coach').classList.add('hidden');
+    SS.settings.coached = true; SS.saveSettings();
+  }
+  SS.on('ability', () => { if (coach) coach.ab = true; });
+  SS.on('collect', () => { if (coach) coach.n++; });
 
   function minimap() {
     const c = mm, S = 336, C = S / 2, k = (C - 10) / SS.WORLD_EDGE, P = SS.P, t = SS.world.time;
@@ -9128,7 +9244,7 @@ body.touch kbd { display: none; }
     A().levelUp();
     SS.fx.ring(SS.P.x, SS.P.y, '#ffffff', 20, 220, 0.6, 3);
     hud.toast('<b>LEVEL ' + L + '</b> · faster');
-    if (L === SS.stats.prestigeLevel) hud.toast('<b>MAX LEVEL</b> · prestige to go further (P)', 'gold');
+    if (L === SS.stats.prestigeLevel) hud.toast('<b>MAX LEVEL</b> · prestige to go further · <b>TAB</b>', 'gold');
   });
   SS.on('goal', (g, reward) => { A().goal(); hud.toast('<b>GOAL COMPLETE</b> · ' + g.text + ' · +' + SS.fmt(reward), 'gold'); });
   SS.on('shipUnlock', (sh) => { A().secretNear(); hud.toast('<b>NEW SHIP: ' + sh.name + '</b> · equip it in the Hangar', 'gold'); });
@@ -9152,7 +9268,7 @@ body.touch kbd { display: none; }
     box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
     if (!live()) return;
     if (why) hud.toast('<b>+' + n + ' WISPS</b> · ' + why, 'wisp');
-    if (!riftHinted && SS.save.wisps >= SS.rift.COST && SS.save.wisps - n < SS.rift.COST) { riftHinted = true; setTimeout(() => hud.toast('<b>THE RIFT</b> · enough wisps to pull a ship · ESC', 'wisp'), 900); }
+    if (!riftHinted && SS.save.wisps >= SS.rift.COST && SS.save.wisps - n < SS.rift.COST) { riftHinted = true; setTimeout(() => hud.toast('<b>THE RIFT</b> · enough wisps to pull a ship · <b>P</b> then THE RIFT', 'wisp'), 900); }
   });
   SS.on('boostStart', () => A().boost());
   SS.on('lightning', (d) => A().lightning(d));
@@ -9191,7 +9307,7 @@ body.touch kbd { display: none; }
   function riftBadge(id) {
     const w = SS.save.wisps, b = $(id);
     b.textContent = SS.fmt(w);
-    b.parentNode.classList.toggle('ready', w >= SS.rift.COST);
+    b.parentNode.classList.toggle('ready', w >= SS.rift.COST && SS.save.stats.playtime > 180);   // lit once they've flown a while, not on the first screen
   }
   ui.closeAll = () => { for (const s of SCREENS) $(s).classList.add('hidden'); ui.open = null; };
   const inGame = () => SS.G.state === 'play' || SS.G.state === 'paused';
@@ -9396,7 +9512,7 @@ body.touch kbd { display: none; }
         const key = seg.dataset.set, v = b.dataset.v;
         SS.settings[key] = v === 'true' ? true : v === 'false' ? false : v;
         SS.saveSettings(); SS.audio.apply(); SS.audio.click(); renderSettings();
-        if (key === 'quality') SS.resize();
+        if (key === 'quality') SS.qualityChanged();
       };
     }
     // touch controls
@@ -9409,7 +9525,8 @@ body.touch kbd { display: none; }
     addEventListener('keydown', (e) => {
       if (e.repeat) return;
       if (e.code === 'KeyM') { SS.settings.muted = !SS.settings.muted; SS.saveSettings(); SS.audio.apply(); if (ui.open === 'settings') renderSettings(); return; }
-      if (e.code === 'Escape') {
+      // P pauses. Escape does too, but on portals (CrazyGames) Escape also leaves fullscreen, so P is the one we teach.
+      if (e.code === 'KeyP' || e.code === 'Escape') {
         if (ui.open && ui.open !== 'menu' && ui.open !== 'pause') close();
         else if (ui.open === 'pause') { ui.closeAll(); SS.resume(); }
         else if (SS.G.state === 'play') ui.pause();
@@ -9420,7 +9537,6 @@ body.touch kbd { display: none; }
         else if (!ui.open) ui.openShop();
         return;
       }
-      if (e.code === 'KeyP' && SS.G.state === 'play' && !ui.open && SS.canPrestige()) { ui.openShop(); return; }
       if (ui.open === 'shop' && /^Digit[1-4]$/.test(e.code)) {
         const u = SS.UPGRADES[Number(e.code.slice(5)) - 1];
         if (SS.buy(u.id)) renderShop(); else SS.audio.deny();
@@ -9429,7 +9545,7 @@ body.touch kbd { display: none; }
     renderMenu();
   };
   ui.openShop = () => { if (SS.G.state !== 'play') return; SS.pause(); openFrom('shop', 'game'); };
-  ui.pause = () => { if (SS.G.state !== 'play') return; SS.pause(); returnTo = 'game'; SS.audio.click(); ui.show('pause'); };
+  ui.pause = (why) => { if (SS.G.state !== 'play') return; SS.pause(why); returnTo = 'game'; SS.audio.click(); ui.show('pause'); };
 
   SS.on('saveSwap', () => { if (ui.open === 'menu') renderMenu(); if (ui.open === 'shop') renderShop(); if (ui.open === 'rift') SS.rift.render(); });
   SS.on('purchase', () => { if (ui.open === 'shop') renderShop(); });
@@ -9454,6 +9570,7 @@ body.touch kbd { display: none; }
   const SS = window.SS;
   const $ = (id) => document.getElementById(id);
   const COST = 10, TEN = 100, PITY = 40, FLIGHT_S = 30;
+  const AD_WISPS = 10;   // a rewarded ad (portal builds with ads on only; the Alloy validator never sees these)
   const EARN = { escape: 5, goal: 10, secret: 20, region: 15, prestige: 25 };
   const rift = (SS.rift = { COST, TEN, PITY, EARN, FLIGHT_S });
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -9540,6 +9657,10 @@ body.touch kbd { display: none; }
     b1.innerHTML = '<span>PULL ×1</span><span class="cost">' + WISP + COST + '</span>';
     b10.innerHTML = '<span>PULL ×10</span><span class="cost">' + WISP + TEN + '</span>';
     b1.disabled = s.wisps < COST; b10.disabled = s.wisps < TEN;
+    // a rewarded ad for wisps - only where a platform has ads switched on (never on the Alloy site)
+    const ad = $('rift-ad'), ads = SS.platform.ads.available();
+    ad.classList.toggle('hidden', !ads);
+    if (ads) ad.innerHTML = '<span>WATCH AN AD</span><span class="cost">+' + AD_WISPS + WISP + '</span>';
     $('rift-earn').innerHTML = 'Wisps come from: escaping a Wraith <b>+' + EARN.escape + '</b> · a goal <b>+' + EARN.goal + '</b> · a new region <b>+' + EARN.region +
       '</b> · a secret <b>+' + EARN.secret + '</b> · prestige <b>+' + EARN.prestige + '</b> · and <b>+1</b> for every ' + FLIGHT_S + ' s you fly.';
   };
@@ -9768,6 +9889,9 @@ body.touch kbd { display: none; }
   rift.init = () => {
     $('rift-1').onclick = () => rift.pull(1);
     $('rift-10').onclick = () => rift.pull(10);
+    $('rift-ad').onclick = () => SS.platform.ads.rewarded(
+      () => { SS.earnWisps(AD_WISPS, 'thanks for watching'); SS.checkpoint(); rift.render(); },
+      () => SS.hud.toast('No ad right now · try again in a bit'));
     $('reveal-canvas').onclick = advance;
     $('rv-ok').onclick = () => { SS.audio.click(); closeReveal(); };
     $('rv-again').onclick = () => { const n = reveal ? reveal.n : 1; closeReveal(); rift.pull(n); };
@@ -9798,21 +9922,43 @@ body.touch kbd { display: none; }
   'use strict';
   const SS = window.SS;
   const G = (SS.G = { state: 'menu' });
-  let canvas, ctx, last = 0, saveT = 8, ready = false, autoT = 0, hintT = 0;
+  let canvas, ctx, last = 0, saveT = 8, ready = false, autoT = 0, hintT = 0, loaded = false;
+
+  /** Every state change goes through here, so the platform hears about it (CrazyGames: gameplay start/stop). */
+  SS.setState = (s, why) => { G.state = s; SS.platform.state(s, why); };
 
   // ---------------------------------------------------------------- sizing
+  // Low quality draws the canvas at 3/4 of the screen's CSS pixels (and never
+  // above 1x): a quarter to half the pixels to fill, which is what slow
+  // Chromebooks choke on. 'auto' switches to it when frames drop (see frame()).
+  SS.lowQ = () => SS.settings.quality === 'low' || (SS.settings.quality === 'auto' && slow.on);
   SS.resize = () => {
     const w = innerWidth || 0, h = innerHeight || 0;
     if (w < 2 || h < 2) return;          // hidden frames fire zero-size resizes: ignore them
     applySize(w, h);
   };
   function applySize(w, h) {
-    const dpr = Math.min(window.devicePixelRatio || 1, SS.settings.quality === 'low' ? 1 : 1.75);
+    const dpr = SS.lowQ() ? Math.min(window.devicePixelRatio || 1, 1) * 0.75 : Math.min(window.devicePixelRatio || 1, 1.75);
     SS.W = w; SS.H = h; SS.dpr = dpr;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ready = true;
   }
+  // Frame-time watch for quality 'auto': an average under ~45 fps for 3 s
+  // straight (not counting the first seconds, or a hidden tab) turns low on.
+  const slow = { on: false, avg: 16, t: 0, warm: 3 };
+  function watchFrames(ms) {
+    if (slow.on || SS.settings.quality !== 'auto' || document.hidden) return;
+    if ((slow.warm -= ms / 1000) > 0) return;
+    slow.avg += (Math.min(ms, 100) - slow.avg) * 0.05;
+    slow.t = slow.avg > 22 ? slow.t + ms / 1000 : 0;
+    if (slow.t > 3) {
+      slow.on = true;
+      SS.resize();
+      if (G.state === 'play') SS.hud.toast('Quality lowered to keep things smooth · <b>Settings</b> to change');
+    }
+  }
+  SS.qualityChanged = () => { slow.on = false; slow.t = 0; slow.warm = 2; SS.resize(); };
 
   // ---------------------------------------------------------------- control
   function readControls() {
@@ -9848,24 +9994,21 @@ body.touch kbd { display: none; }
     SS.audio.unlock();
     SS.ui.preview = null;
     if (SS.ship.id !== SS.save.ship) SS.setShip(SS.save.ship);
-    G.state = 'play';
+    SS.setState('play');
     SS.ui.closeAll();
     document.getElementById('hud').classList.remove('hidden');
     document.body.classList.add('playing');
     SS.cam.pull = 0;
     SS.emit('region', SS.P.region, null);
-    if (SS.save.stats.playtime < 30) {
-      const touch = SS.input.isTouch;
-      setTimeout(() => SS.hud.toast(touch ? '<b>TOUCH AND HOLD</b> to fly toward your finger' : '<b>HOLD THE MOUSE</b> (or WASD) to fly toward it'), 600);
-      setTimeout(() => SS.hud.toast(touch ? '<b>BOOST</b> with a second finger · <b>SKILL</b> for your ship’s ability' : '<b>SHIFT</b> or <b>RIGHT MOUSE</b> to boost · <b>SPACE</b> for your ship’s ability'), 3800);
-    }
-    if (!SS.save.rift.pulls && SS.save.wisps >= SS.rift.COST) setTimeout(() => SS.hud.toast('<b>THE RIFT</b> · a free pull is waiting (pause menu)', 'wisp'), 7500);
+    if (!SS.settings.coached && SS.save.stats.playtime < 120) SS.hud.coach();   // first flight: controls shown on screen, step by step
+    // the Rift waits until there's been a little flying first
+    if (!SS.save.rift.pulls && SS.save.wisps >= SS.rift.COST && SS.save.stats.playtime > 180) setTimeout(() => SS.hud.toast('<b>THE RIFT</b> · a free pull is waiting · <b>P</b> then THE RIFT', 'wisp'), 2500);
   };
-  SS.pause = () => { if (G.state === 'play') G.state = 'paused'; };
-  SS.resume = () => { if (G.state === 'paused') G.state = 'play'; };
+  SS.pause = (why) => { if (G.state === 'play') SS.setState('paused', why); };
+  SS.resume = () => { if (G.state === 'paused') SS.setState('play'); };
   SS.toMenu = () => {
     SS.checkpoint();
-    G.state = 'menu';
+    SS.setState('menu');
     SS.wraith.reset();
     document.getElementById('hud').classList.add('hidden');
     document.body.classList.remove('playing');
@@ -9873,7 +10016,9 @@ body.touch kbd { display: none; }
   };
 
   SS.on('prestigeStart', (n) => {
-    G.state = 'prestige';
+    SS.setState('prestige');
+    SS.platform.happy();
+    SS.platform.ads.midgame(() => {});   // the break between sessions: the one place a midgame ad may go (off until a portal turns ads on)
     SS.ui.closeAll();
     SS.wraith.reset();
     document.getElementById('pfx-title').textContent = 'PRESTIGE ' + n;
@@ -9887,7 +10032,7 @@ body.touch kbd { display: none; }
     SS.fx.clear();
     SS.cam.zoomBias = 1;
     document.getElementById('prestige-fx').classList.add('hidden');
-    G.state = 'play';
+    SS.setState('play');
     SS.emit('region', P.region, null);
     SS.hud.banner('PRESTIGE ' + n, '+30% orb value · +5% speed · forever', '#ffd24a');
   });
@@ -9953,7 +10098,7 @@ body.touch kbd { display: none; }
     vg.addColorStop(0, 'rgba(0,0,0,0)');
     vg.addColorStop(1, 'rgba(0,0,0,0.55)');
     ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, W, H);
+    if (!SS.lowQ()) ctx.fillRect(0, 0, W, H);   // a full-screen gradient fill: the first thing low quality drops
     if (G.state === 'play' || G.state === 'paused') SS.hud.update(dt);
     SS.ui.drawHangar();
     SS.rift.draw(dt);
@@ -9967,9 +10112,11 @@ body.touch kbd { display: none; }
     SS.input.endTick();
   }
   function frame(now) {
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    const ms = last ? now - last : 16, dt = Math.min(0.05, ms / 1000);
     last = now;
     tick(dt);
+    watchFrames(ms);
+    if (!loaded && ready) { loaded = true; SS.platform.loading(false); }   // the first frame is on screen
     requestAnimationFrame(frame);
   }
 
@@ -9990,14 +10137,14 @@ body.touch kbd { display: none; }
     addEventListener('resize', SS.resize);
     SS.resize();
     for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => SS.audio.unlock(), { passive: true });
-    addEventListener('visibilitychange', () => { if (document.hidden) { SS.persist(false); if (G.state === 'play') SS.ui.pause(); } });
+    addEventListener('visibilitychange', () => { if (document.hidden) { SS.persist(false); if (G.state === 'play') SS.ui.pause('hidden'); } });
     addEventListener('pagehide', () => SS.persist(false));
     requestAnimationFrame(frame);
   }
 
   // ---------------------------------------------------------------- localhost test hook
 
-  init();
+  SS.platform.ready.then(init, init);   // a portal SDK may need to start (and load the save) first
 })();
 </script>
 </body>
