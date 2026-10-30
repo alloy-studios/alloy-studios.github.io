@@ -222,7 +222,7 @@
       "id": "nitro-pitch",
       "title": "Nitro Pitch",
       "tagline": "Rocket-powered car soccer: boost, flip, drive up the walls.",
-      "description": "Rocket-powered car soccer against bots on three skill levels, from 1v1 to 3v3. Boost, jump, flip and drive up the walls, and pick from four cars, nine boost trails and nine goal explosions in the garage - every one free from the start. Our first 3D game, built in Unity, so the first load takes a few seconds longer.",
+      "description": "Rocket-powered car soccer against bots on four skill levels, from 1v1 to 3v3. Boost, jump, flip and drive up the walls, and pick from four cars, nine boost trails and nine goal explosions in the garage - every one free from the start. Our first 3D game, built in Unity, so the first load takes a few seconds longer.",
       "tags": [
         "sports",
         "cars",
@@ -232,7 +232,7 @@
       "controls": "WASD or arrows drive, Space jump, Shift boost, X powerslide, Q/E air roll, C ball cam, Esc or P pause, mouse left boost and right jump, controllers supported",
       "added": "2026-10-27",
       "thumb": "/assets/thumbs/nitro-pitch.webp",
-      "rev": "20261027-1729"
+      "rev": "20261029-2154"
     },
     {
       "id": "project-hero",

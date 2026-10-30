@@ -58,9 +58,9 @@
   var load = document.getElementById("load");
   var buildUrl = "Build";
   var config = {
-    dataUrl: buildUrl + "/1cdd17142ce314bb13213b49ea652388.data.unityweb",
-    frameworkUrl: buildUrl + "/67819c1dd52700e34ba3298342a7f27f.framework.js.unityweb",
-    codeUrl: buildUrl + "/cac26afa3472f2884850ffb4d6a945c5.wasm.unityweb",
+    dataUrl: buildUrl + "/549d1d61edc0e17743cd272d7539116b.data.unityweb",
+    frameworkUrl: buildUrl + "/53685f1a42e028b850d9f0ce407ef838.framework.js.unityweb",
+    codeUrl: buildUrl + "/5db2d16ab38b1b94f71fb68c9c0645f0.wasm.unityweb",
     streamingAssetsUrl: "StreamingAssets",
     companyName: "NitroPitch",
     productName: "Nitro Pitch",
@@ -72,7 +72,7 @@
   };
   canvas.addEventListener("pointerdown", function () { canvas.focus(); });
   var script = document.createElement("script");
-  script.src = buildUrl + "/9c7a7558b20ecd1ca35d5aa1067d6ed0.loader.js";
+  script.src = buildUrl + "/912926dc2f032222e22be95550c2d49b.loader.js";
   script.onload = function () {
     createUnityInstance(canvas, config, function (p) { fill.style.width = (100 * p) + "%"; })
       .then(function () { load.style.opacity = 0; setTimeout(function () { load.remove(); }, 450); canvas.focus(); })
