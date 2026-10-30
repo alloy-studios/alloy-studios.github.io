@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-10-29",
+      "title": "What's next",
+      "body": "The roadmap is up to date. Two new games are being built and come out next. After that we go back through every game in the catalogue and fix bugs - if you've found one, email alloy-studios@googlegroups.com and it goes on the list. We're also thinking about putting more than games on the site, like videos we make ourselves and wallpapers. The front page now always shows the newest game as the latest release, too.",
+      "game": null
+    },
+    {
+      "date": "2026-10-29",
       "title": "Nitro Pitch: meet LEGEND",
       "body": "Nitro Pitch has a new top bot difficulty, LEGEND. It plans every touch on a full prediction of the ball, saves your shots, and shows off when it has the time - dribbles and flicks, air dribbles and backboard double taps. Good luck scoring on it.",
       "game": "nitro-pitch"

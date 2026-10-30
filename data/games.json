@@ -13,18 +13,28 @@
       },
       {
         "status": "Shipped",
-        "title": "Real thumbnails for every game",
-        "detail": "Every card in the library now shows a frame rendered from the game itself, instead of a generated colour tile."
+        "title": "Alloy accounts",
+        "detail": "One sign-in for every game, so progress follows you between devices and is never lost. Every game that keeps progress saves to it - sixteen of them - and Umbra and Speed Simulator 2 already run limited-time events on it."
       },
       {
-        "status": "In development",
-        "title": "Alloy accounts and events",
-        "detail": "One sign-in for every game, so progress follows you between devices and is never lost - plus limited-time events with personal goals, community goals and leaderboards. Accounts are now in every game that keeps progress - sixteen of them. The first limited-time events are next."
-      },
-      {
-        "status": "In development",
+        "status": "Shipped",
         "title": "New games",
-        "detail": "With the back catalogue caught up, the focus goes back to making new things. Hardburn and Rats With Wings were the first two out, Tomorrowless, Speed Simulator 2, Nitro Pitch and Project Hero followed; more are in the works."
+        "detail": "With the back catalogue caught up, the focus went back to making new things: Hardburn, Rats With Wings, Tomorrowless, Speed Simulator 2, Nitro Pitch and Project Hero."
+      },
+      {
+        "status": "In development",
+        "title": "Two more new games",
+        "detail": "Two new games are being built right now, and they are the next thing to come out."
+      },
+      {
+        "status": "Up next",
+        "title": "Bug fixes for every game",
+        "detail": "Once those two are out, we go back through the whole catalogue, game by game, and fix bugs. If you have found one, email alloy-studios@googlegroups.com and it goes straight onto the list."
+      },
+      {
+        "status": "Thinking about",
+        "title": "More than games",
+        "detail": "We are thinking about putting other things we make on the site too, like videos and wallpapers."
       }
     ],
     "intro": "Alloy Studios makes small, fast browser games - roguelites, sandboxes, tower defense, idle games and whatever else is worth trying next. Everything runs instantly in a tab, with nothing to download and nothing to install.",
@@ -48,7 +58,6 @@
       "accent": "#22d3ee",
       "controls": "WASD or arrows to move, Space to dash, 1-3 to pick",
       "added": "2026-09-08",
-      "featured": true,
       "thumb": "/assets/thumbs/neon-survivor-legends.webp",
       "rev": "20260927-1455"
     },
