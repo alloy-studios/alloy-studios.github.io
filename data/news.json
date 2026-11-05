@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-11-04",
+      "title": "Project Hero gets a new look",
+      "body": "Project Hero has had a big visual update. Heroes have new bodies and animation, and the effects on their moves are all new. Hand-held weapons, rings, air slashes, flight and web swinging have been redone too. There are new creatures to fight, a robot Sentinel, a new claw machine and a reworked gacha reveal. Your save and your heroes carry over as they were.",
+      "game": "project-hero"
+    },
+    {
       "date": "2026-10-30",
       "title": "Speed Simulator 2: a smoother start",
       "body": "Speed Simulator 2 got a polish pass. New players now learn by playing: short in-game tips show the keys one step at a time, tick off as you do them, and can be skipped. P now pauses (Escape still works), and the old P shortcut for prestige has moved into the Upgrades screen. Quality is set to Auto by default, so the game lowers its own detail if your computer starts to struggle - handy on Chromebooks. You can still pick High or Low in Settings.",
