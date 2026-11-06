@@ -28,6 +28,7 @@ const REGISTRY = {
   "echoes": require("./echoes"),
   "speed-simulator-2": require("./speed-simulator-2"),
   "project-hero": require("./project-hero"),
+  "starsong": require("./starsong"),
 };
 
 function validatorFor(gameId) {
