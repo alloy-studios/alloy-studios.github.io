@@ -257,7 +257,7 @@
       "controls": "WASD move, Space jump/glide, Shift sprint, mouse to attack/transform, Q/E/R abilities, 1-6 pick a hero, F interact, Tab tablet",
       "added": "2026-10-28",
       "thumb": "/assets/thumbs/project-hero.webp",
-      "rev": "20261104-2157"
+      "rev": "20261108-1435"
     },
     {
       "id": "starsong",

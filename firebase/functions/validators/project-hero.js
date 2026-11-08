@@ -56,11 +56,14 @@ const BASE_HEROES = [
   "beastboy", "greenlantern", "flash", "invincible", "omniman", "rexsplode",
   "monstergirl", "allen", "yuji", "maki", "mechamaru", "megumi", "gojo", "todo",
   "ichigo", "kenpachi", "byakuya", "lillebarro", "aizen",
+  "luffy", "zoro", "sanji", "law", "ace",
+  "goku", "vegeta", "piccolo", "gohan", "trunks",
 ];
 const QUEST_HEROES = { flash: "barry3", todo: "todo2" };   // QDEF reward.hero
 const EVOS = {                                             // EVOS
   hulk: "worldbreaker", batman: "hellbat", venom: "kinginblack", invincible: "bluesuit",
-  megumi: "mahoraga", ichigo: "vastolorde", flash: "speedforce",
+  megumi: "mahoraga", ichigo: "vastolorde", flash: "speedforce", luffy: "gear5",
+  goku: "ssjgoku",
 };
 const EVO_BASE = Object.fromEntries(Object.entries(EVOS).map(([b, e]) => [e, b]));
 const HEROES = [...BASE_HEROES, ...Object.values(EVOS)];
@@ -83,13 +86,15 @@ const QUESTS = {
   joe1: [4, ["main5"]], joe2: [4, ["joe1"]],
   jen1: [6, ["main5"]], jen2: [8, ["jen1"]],
   dusty1: [9, ["main8"]],
+  logue1: [10, ["main8"]], smoker1: [10, ["logue1"]], smoker2: [11, ["smoker1"]], smoker3: [12, ["smoker2"]],
+  tashigi1: [10, ["logue1"]], tashigi2: [11, ["tashigi1"]], gray1: [10, ["logue1"]],
   bounty: [1, ["main2"]], press: [4, ["main6"]],
 };
 const REPEAT = new Set(["contract", "bounty", "press"]);   // repeat: true
 const QUEST_GEAR = 9;      // quests with reward.gear: main3 main5 main8 main9 main10 main11 joe2 jen1 dusty1
 const QUEST_POTIONS = 3;   // quests with reward.potion: main5 barry2 joe1
 // One-time quests: id -> [reward.coins, reward.xp, boss coins, boss xp] (EDEF of the
-// step's boss: cursedwomb, raiderking, viltelite, espada, rifttitan, alphawolf, todoboss)
+// step's boss: cursedwomb, raiderking, viltelite, espada, rifttitan, alphawolf, todoboss, buggy)
 const ONE_TIME = {
   main1: [250, 0, 0, 0], main2: [300, 250, 0, 0], main3: [400, 350, 0, 0], main4: [300, 400, 0, 0],
   main5: [500, 600, 0, 0], main6: [600, 800, 0, 0], main7: [700, 1000, 150, 420],
@@ -99,6 +104,8 @@ const ONE_TIME = {
   todo1: [500, 700, 0, 0], todo2: [700, 900, 0, 300],
   joe1: [450, 500, 0, 0], joe2: [500, 600, 0, 0], jen1: [450, 600, 0, 0], jen2: [600, 800, 0, 0],
   dusty1: [700, 900, 0, 0],
+  logue1: [600, 900, 0, 0], smoker1: [700, 1000, 0, 0], smoker2: [800, 1200, 0, 0], smoker3: [900, 1500, 190, 480],
+  tashigi1: [600, 900, 0, 0], tashigi2: [700, 1100, 0, 0], gray1: [500, 700, 0, 0],
 };
 
 /* ------------------------------------------------------------------------
@@ -178,8 +185,8 @@ const MAX_GEAR = 1500;      // ~50 KB of accessories; the game never trims the l
  *   kills       KPS, burst 30 live enemies + ~60 one-off story spawns      -> 5.8 / s, 90
  *   questsDone  bounty board: a slot completes at most once per
  *               2.5 + 1 / KPS s (brute, n = 1) -> 3 / 2.68 = 1.12 / s,
- *               repeatables 3 per 20 s -> 0.15 / s; burst 21 one-time
- *               quests + 3 board slots                                       -> 1.3 / s, 24
+ *               repeatables 3 per 20 s -> 0.15 / s; burst 28 one-time
+ *               quests + 3 board slots                                       -> 1.3 / s, 31
  *   clawPlays   2 machines, each locked while its claw runs (m.state):
  *               descend + grab 0.5 s + lift + drop 0.45 s >= 2 s            -> 1 / s, 2
  *   gearTokens  bounty and contract pay 1 each per 20 s cooldown; burst the
@@ -233,7 +240,7 @@ function oneOff(P) {
 }
 const RATE = {
   kills: [5.8, 90],
-  questsDone: [1.3, 24],
+  questsDone: [1.3, 31],
   clawPlays: [1, 2],
   gearTokens: [0.1, 10],
 };
