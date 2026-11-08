@@ -854,7 +854,7 @@ const ZONES_DEF = {
   marvel: { name: 'NEW YORK', verse: 'MARVEL', min: 5, x0: -WALL, x1: WALL, z0: -594, z1: -WALL, gate: [0, -WALL], col: '#ff4a3a', hazard: 'Heavy traffic, Hydra snipers' },
   jjk: { name: 'SHIBUYA', verse: 'JUJUTSU KAISEN', min: 5, x0: WALL, x1: 594, z0: -WALL, z1: WALL, gate: [WALL, 0], col: '#6a7dff', hazard: 'Swarms of cursed spirits' },
   bleach: { name: 'SEIREITEI', verse: 'BLEACH', min: 12, x0: -WALL, x1: WALL, z0: WALL, z1: 594, gate: [0, WALL], col: '#dfe8ff', hazard: 'Spiritual pressure surges' },
-  invincible: { name: 'VILTRUMITE WARZONE', verse: 'INVINCIBLE', min: 12, x0: -594, x1: -WALL, z0: -WALL, z1: WALL, gate: [-WALL, 0], col: '#ffd23a', hazard: 'Falling debris, Viltrumite hunters' },
+  invincible: { name: 'WILTRUMITE WARZONE', verse: 'INVINCIBLE', min: 12, x0: -594, x1: -WALL, z0: -WALL, z1: WALL, gate: [-WALL, 0], col: '#ffd23a', hazard: 'Falling debris, Wiltrumite hunters' },
   // the outskirts: countryside in the four corners of the island
   farm: { name: 'HARVEST VALLEY', verse: 'OUTSKIRTS', min: 3, x0: WALL, x1: 594, z0: -594, z1: -WALL, col: '#e8b84a', hazard: 'Rift bugs in the crops, bandit raids', rural: true },
   forest: { name: 'BLACKWOOD FOREST', verse: 'OUTSKIRTS', min: 8, x0: WALL, x1: 594, z0: WALL, z1: 594, col: '#5ad08a', hazard: 'Rift wolves, poachers', rural: true },
@@ -863,7 +863,7 @@ const ZONES_DEF = {
   // ONE PIECE: an island off the east coast; the zone takes in the bridge and the bay, `land` is the island itself
   onepiece: { name: 'LOGUE TOWN', verse: 'ONE PIECE', min: 10, x0: 600, x1: 1010, z0: -150, z1: 150, land: [748, 990, -132, 132], col: '#ff8a3a', hazard: 'Pirate raids, Marine patrols' },
   // DRAGON BALL: the same off the west coast
-  dragonball: { name: 'PAPAYA ISLAND', verse: 'DRAGON BALL', min: 12, x0: -1010, x1: -600, z0: -150, z1: 150, land: [-990, -748, -132, 132], col: '#ffa21a', hazard: 'Frieza Force landings, Saibamen' },
+  dragonball: { name: 'PAPAYA ISLAND', verse: 'DRAGON BALL', min: 12, x0: -1010, x1: -600, z0: -150, z1: 150, land: [-990, -748, -132, 132], col: '#ffa21a', hazard: 'Freezer Force landings, Saibaguys' },
 };
 const ISLANDS = ['onepiece', 'dragonball'];
 const ZONE_KEYS = Object.keys(ZONES_DEF);
@@ -2066,7 +2066,7 @@ function scrambleCrossing(x, z) {
   for (const s of [-1, 1]) for (let k = -6; k <= 6; k++) put('paint', G_.plane(.7, 3.2, x + k * 1.25, .05, z + s * k * 1.25, s * Math.PI / 4));
 }
 
-// ---------- INVINCIBLE: Viltrumite warzone (burning ruins, tilted towers, craters, wrecks)
+// ---------- INVINCIBLE: Wiltrumite warzone (burning ruins, tilted towers, craters, wrecks)
 const fires = [];
 function fire(x, y, z, s = 1) {
   for (let k = 0; k < 3; k++) { const g = new THREE.PlaneGeometry(2.4 * s, 4 * s); g.translate(0, 2 * s, 0); g.rotateY(k * Math.PI / 3); g.translate(x, y, z); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i)); put('fire', g); }
@@ -2330,7 +2330,7 @@ function makeLogueTown() {
   opShip(1050, -60, Math.PI / 2 + .15, false); opShip(1046, 80, -Math.PI / 2 - .1, false); opShip(870, 178, .08, true); opShip(760, -180, Math.PI - .2, true);
   makeExtract(894, 18, .5, 'onepiece'); noSpawn.push({ x: 894, z: 18, r: 10 });
 }
-// ---------- DRAGON BALL: Papaya Island. Off the west coast, joined to the Viltrumite warzone by a stone causeway.
+// ---------- DRAGON BALL: Papaya Island. Off the west coast, joined to the Wiltrumite warzone by a stone causeway.
 // Capsule houses and Capsule Corp by the shore, the World Martial Arts Tournament in the middle, and a wasteland of
 // mesas in the west where the fights get serious. Aligned to the ocean grid like Logue Town; Kame House sits offshore.
 const DBI = { x0: -990, x1: -748, z0: -132, z1: 132 };
@@ -4005,12 +4005,12 @@ const EDEF = {
   spitter: { name: 'Curse Spitter', hp: 72, dmg: 8, speed: 5, range: 22, cd: 2.2, wind: .7, xp: 32, coins: 12, scale: 1.1, creature: 'blob', skin: 0x4a5a2a, ranged: true, eyes: [2.4, 3, .3], proj: { color: [1.4, 3, .3], kind: 'orb', size: .3, speed: 34 } },
   grade1: { name: 'Grade 1 Curse', hp: 420, dmg: 24, speed: 5, range: 4.2, cd: 2.4, wind: .85, xp: 115, coins: 40, scale: 1.8, creature: 'beast', skin: 0x2a1a30, slam: true, eyes: [3, .2, 2] },
   // BLEACH — Seireitei
-  arrancar: { name: 'Arrancar', hp: 120, dmg: 14, speed: 9.5, range: 2.8, cd: .95, wind: .3, xp: 46, coins: 16, scale: 1, top: [0xeeeef4], pants: 0xdcdce4, weapon: 'katana', mask: true, eyes: [3, 3, 3.4] },
+  arrancar: { name: 'Arrankar', hp: 120, dmg: 14, speed: 9.5, range: 2.8, cd: .95, wind: .3, xp: 46, coins: 16, scale: 1, top: [0xeeeef4], pants: 0xdcdce4, weapon: 'katana', mask: true, eyes: [3, 3, 3.4] },
   menos: { name: 'Cero Hollow', hp: 170, dmg: 20, speed: 5, range: 30, cd: 3, wind: 1.1, xp: 60, coins: 20, scale: 1.45, top: [0x0e0e12], pants: 0x0e0e12, mask: true, ranged: true, cloak: true, eyes: [3, .3, .3], proj: { color: [4, .3, .4], kind: 'orb', size: .7, speed: 30 } },
   hollow: { name: 'Hollow', hp: 400, dmg: 26, speed: 6.5, range: 4.2, cd: 2.2, wind: .75, xp: 120, coins: 42, scale: 1.7, creature: 'beast', skin: 0x141418, mask: true, slam: true, eyes: [3, 2.8, .4] },
-  // INVINCIBLE — Viltrumite warzone
-  flaxan: { name: 'Flaxan', hp: 90, dmg: 11, speed: 6.5, range: 28, cd: 1.5, wind: .6, xp: 44, coins: 15, scale: 1, top: [0x5a3a8a], pants: 0x3a2a5a, weapon: 'gun', ranged: true, helmet: 0x8a6ab0, eyes: [.4, 3, 3], proj: { color: [.4, 3, 3] } },
-  viltrumite: { name: 'Viltrumite', hp: 320, dmg: 28, speed: 14, range: 13, cd: 2.4, wind: .55, xp: 120, coins: 42, scale: 1.1, top: [0x1a1a20], pants: 0x1a1a20, fly: true, cape: 0xa01818, eyes: [2, 2, 2.4], heavyKb: 30 },
+  // INVINCIBLE — Wiltrumite warzone
+  flaxan: { name: 'Floxan', hp: 90, dmg: 11, speed: 6.5, range: 28, cd: 1.5, wind: .6, xp: 44, coins: 15, scale: 1, top: [0x5a3a8a], pants: 0x3a2a5a, weapon: 'gun', ranged: true, helmet: 0x8a6ab0, eyes: [.4, 3, 3], proj: { color: [.4, 3, 3] } },
+  viltrumite: { name: 'Wiltrumite', hp: 320, dmg: 28, speed: 14, range: 13, cd: 2.4, wind: .55, xp: 120, coins: 42, scale: 1.1, top: [0x1a1a20], pants: 0x1a1a20, fly: true, cape: 0xa01818, eyes: [2, 2, 2.4], heavyKb: 30 },
   // enemy vehicles (rolled in by the encounter director); they are enemies, so every ability can wreck them
   van: { name: 'Armored Van', hp: 420, dmg: 0, speed: 0, range: 0, cd: 9, wind: 0, xp: 90, coins: 45, scale: 1, vehicle: 'van', eyes: [3, .6, .3] },
   pickup: { name: 'Raider Truck', hp: 320, dmg: 0, speed: 0, range: 0, cd: 9, wind: 0, xp: 80, coins: 40, scale: 1, vehicle: 'pickup', eyes: [3, 1.4, .3] },
@@ -4020,21 +4020,21 @@ const EDEF = {
   // quest bosses and props
   cursedwomb: { name: 'Cursed Womb', hp: 1400, dmg: 26, speed: 5.5, range: 4.6, cd: 2, wind: .8, xp: 420, coins: 150, scale: 2.4, creature: 'beast', womb: true, skin: 0x3a1a2a, slam: true, boss: true, eyes: [4, .2, 2] },
   raiderking: { name: 'Raider King', hp: 1600, dmg: 28, speed: 5.2, range: 4.2, cd: 2.2, wind: .8, xp: 460, coins: 180, scale: 1.75, top: [0x5a2a1a], pants: 0x2a2a2a, weapon: 'fists', helmet: 0x8a6a3a, slam: true, boss: true, eyes: [4, 1, .1] },
-  viltelite: { name: 'Viltrumite Elite', hp: 1900, dmg: 34, speed: 16, range: 13, cd: 2, wind: .5, xp: 540, coins: 210, scale: 1.25, top: [0x2a0a0a], pants: 0x1a1a20, fly: true, cape: 0x1a1a1a, boss: true, eyes: [3, .3, .3], heavyKb: 34 },
+  viltelite: { name: 'Wiltrumite Elite', hp: 1900, dmg: 34, speed: 16, range: 13, cd: 2, wind: .5, xp: 540, coins: 210, scale: 1.25, top: [0x2a0a0a], pants: 0x1a1a20, fly: true, cape: 0x1a1a1a, boss: true, eyes: [3, .3, .3], heavyKb: 34 },
   espada: { name: 'Espada', hp: 2100, dmg: 30, speed: 10, range: 32, cd: 2, wind: .9, xp: 620, coins: 230, scale: 1.2, top: [0xf4f4f8], pants: 0xe8e8f0, mask: true, ranged: true, boss: true, eyes: [.4, 4, 1.4], proj: { color: [.4, 3, 1.2], kind: 'orb', size: .9, speed: 34 } },
-  buggy: { name: 'Buggy the Clown', hp: 1800, dmg: 24, speed: 7.6, range: 2.8, cd: 1.1, wind: .38, xp: 480, coins: 190, scale: 1.1, top: [0xb02828], pants: 0x2a3a6a, skin: 0xf2ece6, hair: 0x2a5ab8, hairLong: true, hat: 'pirate', hatCol: 0x1e1e26, weapon: 'knife', boss: true, clown: true, bara: true, eyes: [.02, .02, .02] },
+  buggy: { name: 'Boogie the Clown', hp: 1800, dmg: 24, speed: 7.6, range: 2.8, cd: 1.1, wind: .38, xp: 480, coins: 190, scale: 1.1, top: [0xb02828], pants: 0x2a3a6a, skin: 0xf2ece6, hair: 0x2a5ab8, hairLong: true, hat: 'pirate', hatCol: 0x1e1e26, weapon: 'knife', boss: true, clown: true, bara: true, eyes: [.02, .02, .02] },
   rifttitan: { name: 'Rift Titan', hp: 6500, dmg: 40, speed: 4.5, range: 7, cd: 2.4, wind: 1, xp: 1600, coins: 650, scale: 4, creature: 'beast', skin: 0x2a1040, slam: true, boss: true, titan: true, eyes: [3, .6, 4] },
   alphawolf: { name: 'Alpha Rift Wolf', hp: 1300, dmg: 26, speed: 12, range: 3.2, cd: 1.3, wind: .4, xp: 400, coins: 160, scale: 2.4, creature: 'dog', skin: 0x1a1428, boss: true, eyes: [3, .5, 4] },
-  todoboss: { name: 'Aoi Todo', hp: 1500, dmg: 22, speed: 9, range: 3, cd: 1.1, wind: .35, xp: 300, coins: 0, scale: 1.22, top: [0xe8e4d8], pants: 0x1a1a22, weapon: 'fists', boss: true, swapper: true, skin: 0xc68a64, hair: 0x1a1410, eyes: [.05, .05, .05] },
+  todoboss: { name: 'Aoi To-Do', hp: 1500, dmg: 22, speed: 9, range: 3, cd: 1.1, wind: .35, xp: 300, coins: 0, scale: 1.22, top: [0xe8e4d8], pants: 0x1a1a22, weapon: 'fists', boss: true, swapper: true, skin: 0xc68a64, hair: 0x1a1410, eyes: [.05, .05, .05] },
   crate: { name: 'Explosive Crate', hp: 60, dmg: 0, speed: 0, range: 0, cd: 9, wind: 0, xp: 20, coins: 6, scale: 1, prop: 'crate', eyes: [4, 1.2, .2] },
   // ONE PIECE — Logue Town
   pirate: { name: 'Pirate', hp: 78, dmg: 10, speed: 6.8, range: 2.5, cd: 1.05, wind: .34, xp: 32, coins: 12, scale: 1, top: [0x8a2020, 0x2a4a7a, 0xd8cfb8, 0x3a5a3a], pants: 0x3a2a1a, skin: 0xc68a64, hair: 0x2a1a10, hat: 'bandana', hatCol: 0x9a2020, weapon: 'cutlass', eyes: [.02, .02, .02] },
   marine: { name: 'Marine', hp: 72, dmg: 8, speed: 5.8, range: 28, cd: 1.9, wind: .75, xp: 34, coins: 13, scale: 1, top: [0xf2f2f4], pants: 0x2a3a6a, skin: 0xe0ac88, hair: 0x2a1a10, hat: 'cap', hatCol: 0xf2f2f4, weapon: 'rifle', ranged: true, eyes: [.02, .02, .02] },
-  pacifista: { name: 'Pacifista', hp: 560, dmg: 26, speed: 3.8, range: 34, cd: 3.2, wind: 1.1, xp: 120, coins: 44, scale: 2.3, top: [0x1e1c26], pants: 0x1e1c26, skin: 0x9a7058, hat: 'bearcap', hatCol: 0x18181e, cloak: true, weapon: 'none', ranged: true, palm: true, proj: { kind: 'orb', color: [3.6, 3, 1.4], speed: 88, size: .3, aoe: 3.4 }, eyes: [.02, .02, .02] },
+  pacifista: { name: 'Pacifisto', hp: 560, dmg: 26, speed: 3.8, range: 34, cd: 3.2, wind: 1.1, xp: 120, coins: 44, scale: 2.3, top: [0x1e1c26], pants: 0x1e1c26, skin: 0x9a7058, hat: 'bearcap', hatCol: 0x18181e, cloak: true, weapon: 'none', ranged: true, palm: true, proj: { kind: 'orb', color: [3.6, 3, 1.4], speed: 88, size: .3, aoe: 3.4 }, eyes: [.02, .02, .02] },
   // DRAGON BALL — Papaya Island
-  friezasoldier: { name: 'Frieza Soldier', hp: 84, dmg: 9, speed: 6.2, range: 30, cd: 1.8, wind: .6, xp: 36, coins: 13, scale: 1, top: [0x23284e, 0x2c2040], pants: 0x1c1c2a, skin: [0x8a5ab0, 0x5aa0a8, 0xd890a0, 0x8ab05a, 0xd8b090, 0xc87a5a], vest: 0xeee8d8, pads: 0xd8b860, scouter: true, weapon: 'none', ranged: true, palm: true, proj: { kind: 'orb', color: [3.2, 1.1, 2.6], speed: 58, size: .22 }, eyes: [.02, .02, .02] },
-  saibaman: { name: 'Saibaman', hp: 58, dmg: 12, speed: 9.8, range: 2.2, cd: 1, wind: .3, xp: 30, coins: 11, scale: .76, top: [0x4a9a3a], pants: 0x3e8a30, skin: 0x58a844, weapon: 'none', saiba: true, kamikaze: true, eyes: [3.2, .25, .2] },
-  rrandroid: { name: 'Red Ribbon Android', hp: 520, dmg: 25, speed: 4.4, range: 4.4, cd: 2.4, wind: .85, xp: 115, coins: 42, scale: 2, top: [0xa82020], pants: 0x2a2a30, skin: 0xc8c8cc, weapon: 'fists', robot: true, slam: true, eyes: [4, .3, .2] },
+  friezasoldier: { name: 'Freezer Soldier', hp: 84, dmg: 9, speed: 6.2, range: 30, cd: 1.8, wind: .6, xp: 36, coins: 13, scale: 1, top: [0x23284e, 0x2c2040], pants: 0x1c1c2a, skin: [0x8a5ab0, 0x5aa0a8, 0xd890a0, 0x8ab05a, 0xd8b090, 0xc87a5a], vest: 0xeee8d8, pads: 0xd8b860, scouter: true, weapon: 'none', ranged: true, palm: true, proj: { kind: 'orb', color: [3.2, 1.1, 2.6], speed: 58, size: .22 }, eyes: [.02, .02, .02] },
+  saibaman: { name: 'Saibaguy', hp: 58, dmg: 12, speed: 9.8, range: 2.2, cd: 1, wind: .3, xp: 30, coins: 11, scale: .76, top: [0x4a9a3a], pants: 0x3e8a30, skin: 0x58a844, weapon: 'none', saiba: true, kamikaze: true, eyes: [3.2, .25, .2] },
+  rrandroid: { name: 'Red Ripple Android', hp: 520, dmg: 25, speed: 4.4, range: 4.4, cd: 2.4, wind: .85, xp: 115, coins: 42, scale: 2, top: [0xa82020], pants: 0x2a2a30, skin: 0xc8c8cc, weapon: 'fists', robot: true, slam: true, eyes: [4, .3, .2] },
   // OUTSKIRTS — farm, forest, town, quarry
   bandit: { name: 'Bandit', hp: 64, dmg: 7, speed: 5.8, range: 26, cd: 1.9, wind: .75, xp: 30, coins: 12, scale: 1, top: [0x6a4a2a, 0x3a3a2a, 0x5a2a1a], pants: 0x2a3a5a, weapon: 'gun', ranged: true, hat: 'cowboy', eyes: [3, 1.2, .2] },
   raider: { name: 'Raider', hp: 80, dmg: 9, speed: 6.6, range: 2.4, cd: 1.2, wind: .38, xp: 30, coins: 12, scale: 1.05, top: [0x3a2a1a, 0x4a4a3a], pants: 0x2a2420, weapon: 'machete', helmet: 0x5a4a3a, eyes: [3, .5, .1] },
@@ -4042,7 +4042,7 @@ const EDEF = {
   riftwolf: { name: 'Rift Wolf', hp: 70, dmg: 10, speed: 10.5, range: 2.4, cd: 1, wind: .28, xp: 32, coins: 12, scale: 1.25, creature: 'dog', skin: 0x3a3440, eyes: [2, .6, 4] },
   poacher: { name: 'Poacher', hp: 66, dmg: 9, speed: 5.6, range: 34, cd: 2.4, wind: 1, xp: 34, coins: 13, scale: 1, top: [0x3a4a2a, 0x4a4a30], pants: 0x3a3a28, weapon: 'gun', ranged: true, hat: 'cap', eyes: [3, 2, .4], proj: { color: [4, 3, 1.4], speed: 110 } },
   quarrybrute: { name: 'Quarry Brute', hp: 340, dmg: 24, speed: 4.6, range: 3.8, cd: 2.5, wind: .85, xp: 100, coins: 36, scale: 1.55, top: [0xc86a1a, 0x8a8a2a], pants: 0x2a2a30, weapon: 'fists', helmet: 0xe8c020, slam: true, eyes: [3, 1, .1] },
-  reanimen: { name: 'Reanimen', hp: 380, dmg: 24, speed: 4.8, range: 4, cd: 2.5, wind: .8, xp: 105, coins: 38, scale: 1.55, top: [0x4a5a3a, 0x5a4a3a], pants: 0x2a2a30, weapon: 'fists', slam: true, eyes: [1.4, 3, .4] },
+  reanimen: { name: 'Reanimates', hp: 380, dmg: 24, speed: 4.8, range: 4, cd: 2.5, wind: .8, xp: 105, coins: 38, scale: 1.55, top: [0x4a5a3a, 0x5a4a3a], pants: 0x2a2a30, weapon: 'fists', slam: true, eyes: [1.4, 3, .4] },
 };
 // which enemies roam each sector: [type, weight, min player level (Gotham only)]
 const ZONE_ENEMIES = {
@@ -5115,7 +5115,7 @@ class Enemy {
           want.copy(toP); spd = d.speed * (dist < 5 && !d.fly ? .6 : 1);
           const reach = hunting ? 2.8 : d.range;
           if (d.bara && !hunting && canSee && dist < 34 && this.baraCd <= 0) { this.baraCd = rand(2.6, 4); baraShot(this, tp); }
-          else if (d.kamikaze && !hunting && canSee && !this.fuse && (dist < 3.6 || this.hp < this.maxHp * .35)) { this.fuse = .9; this.vel.copy(toP).multiplyScalar(Math.min(10, dist * 3)).setY(7); this.onGround = false; tn({ f: 300, f2: 1400, dur: .9, type: 'square', vol: .05 * att(this.pos) }); toastOnce('saiba', "SAIBAMAN — it's going to blow!", 6); }
+          else if (d.kamikaze && !hunting && canSee && !this.fuse && (dist < 3.6 || this.hp < this.maxHp * .35)) { this.fuse = .9; this.vel.copy(toP).multiplyScalar(Math.min(10, dist * 3)).setY(7); this.onGround = false; tn({ f: 300, f2: 1400, dur: .9, type: 'square', vol: .05 * att(this.pos) }); toastOnce('saiba', "SAIBAGUY — it's going to blow!", 6); }
           else if (dist < reach && this.cd <= 0) { this.state = 'windup'; this.t = d.wind; }
           else if (d.slam && !hunting && canSee && dist > 10 && dist < 38 && this.throwCd <= 0) { this.throwCd = rand(12, 18); if (grabCar(this)) { this.state = 'windup'; this.t = 1.1; } }
           else if (d.swapper && !hunting && canSee && dist > 5 && dist < 32 && this.swapCd <= 0) { this.swapCd = rand(4, 6.5); boogieSwap(this); }
@@ -5143,7 +5143,7 @@ class Enemy {
     for (const o of enemies) { if (o === this || o.dead) continue; const dx = this.pos.x - o.pos.x, dz = this.pos.z - o.pos.z, d2 = dx * dx + dz * dz, r = this.radius + o.radius; if (d2 < r * r && d2 > 1e-6) { const dd = Math.sqrt(d2); want.x += dx / dd * 1.2; want.z += dz / dd * 1.2; } }
     // physics
     if (flying) {
-      // Viltrumites hover at head height and dive in with a lunge
+      // Wiltrumites hover at head height and dive in with a lunge
       if (this.lunge > 0) {
         this.lunge -= dt;
         if (!this.lungeHit && !P.dead && this.center.distanceTo(_b.copy(P.pos).setY(P.pos.y + 1)) < 2.6 + this.radius) {
@@ -5628,7 +5628,7 @@ function carHitsCivs(car) {
 
 // ============================================================ ENEMY VEHICLES & AMBUSHES
 // Gangs roll up in armored vans and raider trucks that screech to a stop and unload a squad, drive-by cars circle
-// your block with a gunman hanging out of the window, Hydra gunships hover and rappel troopers down, Viltrumite
+// your block with a gunman hanging out of the window, Hydra gunships hover and rappel troopers down, Wiltrumite
 // drop pods punch into the street, and Garganta rifts / Cursed Veils tear open to release enemies. Vehicles are
 // enemies too (every ability can wreck them). Brutes rip cars out of traffic to throw, and thugs mug civilians.
 const ROADLINES = [];   // straight city roads: { x } or { z } with an extent, registered by the road builders
@@ -5665,7 +5665,7 @@ function saibaBlast(e) {
 function saibaSprout(lvl) {
   const spots = []; for (let i = 0; i < 12 && spots.length < 5; i++) { const a = rand(0, 6.28), r = rand(7, 15), q = V(P.pos.x + Math.cos(a) * r, 0, P.pos.z + Math.sin(a) * r); if (!pointBlocked(V(q.x, 1, q.z))) { q.y = groundAt(q.x, q.z); spots.push(q); } }
   if (!spots.length) return false;
-  toast('SAIBAMEN — something is growing out of the ground!', '#7ad04a', 3); tn({ f: 90, f2: 60, dur: 1, type: 'sawtooth', vol: .12 });
+  toast('SAIBAGUYS — something is growing out of the ground!', '#7ad04a', 3); tn({ f: 90, f2: 60, dur: 1, type: 'sawtooth', vol: .12 });
   spots.forEach((q, i) => {
     for (let k = 0; k < 4; k++) later(k * .2 + i * .08, () => { dust(q, { r: .5 + k * .15, n: 3, color: 0x6a5a3a, alpha: .45, life: .6 }); glow.emit({ pos: q.clone().setY(q.y + .2), life: .25, size: .5 + k * .2, color: C3(1, 2.4, .4), cell: FX_CELL.glow, fadeIn: .05 }); });
     later(.9 + i * .08, () => { chunks(q.clone().setY(q.y + .3), 8, 7, 0x5a4a32); dust(q, { r: 1.4, n: 8, color: 0x6a5a3a, alpha: .5 }); crater(q, 1); const e = spawnEnemy('saibaman', lvl, q.clone()); e.state = 'chase'; e.aggro = 80; e.vel.set(rand(-2, 2), 9, rand(-2, 2)); e.onGround = false; SFX.heavy(.4 * att(q)); });
@@ -5829,7 +5829,7 @@ function gunshipUpdate(e, dt) {
   }
   if (Math.random() < .3) nz({ dur: .09, f: 180, vol: .12 * att(e.pos) });
 }
-// drop pods (Viltrumite warzone): a telegraphed impact, then a squad climbs out
+// drop pods (Wiltrumite warzone): a telegraphed impact, then a squad climbs out
 const pods = [];
 function dropPod(p, squad, lvl, style) {
   p.y = groundAt(p.x, p.z);
@@ -5988,22 +5988,22 @@ function startEncounter(kind, zk, lvl) {
 
 // ============================================================ HEROES
 const HEROES = {
-  hulk: { name: 'Hulk', verse: 'MARVEL', rage: true, type: 'Mutant', trait: 'Force', color: '#4caf50', glyph: 'H', hp: 2.1, speed: 9.5, jump: 15, eye: 2.55, radius: .75,
+  hulk: { name: 'Bulk', verse: 'MARVEL', rage: true, type: 'Mutant', trait: 'Force', color: '#4caf50', glyph: 'B', hp: 2.1, speed: 9.5, jump: 15, eye: 2.55, radius: .75,
     kit: { m1: 'Smash', m2: 'Ground Slam', q: 'Gamma Charge', e: 'Super Leap', r: 'Thunderclap' }, cds: { m1: .6, m2: 5, q: 7, e: 7, r: 40 },
     passive: 'RAGE — hits harder the lower your HP. Punch enemies into traffic!' },
-  batman: { name: 'Batman', verse: 'DC', type: 'Striker', trait: 'Intellect', color: '#8fa0d0', glyph: 'B', hp: 1.25, speed: 10.5, jump: 13, eye: 1.72, radius: .45,
+  batman: { name: 'Badman', verse: 'DC', type: 'Striker', trait: 'Intellect', color: '#8fa0d0', glyph: 'B', hp: 1.25, speed: 10.5, jump: 13, eye: 1.72, radius: .45,
     kit: { m1: 'Combo Strikes', m2: 'Batarang', q: 'Grapple Pull', e: 'Smoke Vanish', r: 'Drone Barrage' }, cds: { m1: .3, m2: 1.1, q: 5, e: 14, r: 45 },
     passive: 'CAPE GLIDE — hold SPACE while falling.' },
-  ironman: { name: 'Iron-Man', verse: 'MARVEL', hover: true, type: 'Mechabot', trait: 'Intellect', color: '#ff4a3a', glyph: 'I', hp: 1.4, speed: 10, jump: 12, eye: 1.8, radius: .48,
+  ironman: { name: 'Irony Man', verse: 'MARVEL', hover: true, type: 'Mechabot', trait: 'Intellect', color: '#ff4a3a', glyph: 'I', hp: 1.4, speed: 10, jump: 12, eye: 1.8, radius: .48,
     kit: { m1: 'Repulsor', m2: 'Micro-Missiles', q: 'Thruster Dash', e: 'Flight', r: 'Unibeam' }, cds: { m1: .2, m2: 4, q: 4, e: 14, r: 40 },
     passive: 'HOVER — hold SPACE while falling.' },
-  loki: { name: 'Loki', verse: 'MARVEL', type: 'Timeholder', trait: 'Resilient', color: '#35d49a', glyph: 'L', hp: 1.3, speed: 10.5, jump: 12.5, eye: 1.75, radius: .45,
+  loki: { name: 'Lokey', verse: 'MARVEL', type: 'Timeholder', trait: 'Resilient', color: '#35d49a', glyph: 'L', hp: 1.3, speed: 10.5, jump: 12.5, eye: 1.75, radius: .45,
     kit: { m1: 'Dagger Slash', m2: 'Dagger Fan', q: 'Illusory Blink', e: 'Time Rewind', r: 'Time Stop' }, cds: { m1: .34, m2: 1, q: 6, e: 12, r: 50 },
     passive: 'TRICKSTER — blinking leaves an illusion that draws aggro.' },
-  venom: { name: 'Venom', verse: 'MARVEL', type: 'Webber', trait: 'Force', color: '#e6e6f5', glyph: 'V', hp: 1.6, speed: 11, jump: 14, eye: 2.0, radius: .55,
+  venom: { name: 'Venum', verse: 'MARVEL', type: 'Webber', trait: 'Force', color: '#e6e6f5', glyph: 'V', hp: 1.6, speed: 11, jump: 14, eye: 2.0, radius: .55,
     kit: { m1: 'Claw Rend', m2: 'Web Shot', q: 'Tendril Zip', e: 'Web Swing', r: 'Symbiote Frenzy' }, cds: { m1: .4, m2: 2.5, q: 5, e: .35, r: 45 },
     passive: 'WEB SWING — hold E to swing from buildings, release to fling.' },
-  strange: { name: 'Doctor Strange', verse: 'MARVEL', shield: [2.4, 1.2, .3], type: 'Wizard', trait: 'Intellect', color: '#ff9a2a', glyph: 'S', hp: 1.15, speed: 10, jump: 12, eye: 1.75, radius: .45,
+  strange: { name: 'Doctor Stranger', verse: 'MARVEL', shield: [2.4, 1.2, .3], type: 'Wizard', trait: 'Intellect', color: '#ff9a2a', glyph: 'S', hp: 1.15, speed: 10, jump: 12, eye: 1.75, radius: .45,
     kit: { m1: 'Mystic Bolt', m2: 'Seraphim Shield', q: 'Sling Portal', e: 'Levitation', r: 'Crimson Bands' }, cds: { m1: .28, m2: 0, q: 6, e: 12, r: 45 },
     passive: 'SHIELD — hold RMB to block and reflect bullets.' },
 };
@@ -7546,7 +7546,7 @@ function defHero(id, def, names, kit) {
 const YEL = [3, 2.4, .6], LANTERN = [.4, 3.4, 1];
 
 // ---------------------------------------------------------------- DC
-defHero('superman', { name: 'Superman', verse: 'DC', type: 'Striker', trait: 'Resilient', color: '#3f7bff', glyph: 'S', hp: 1.9, speed: 11, jump: 15, eye: 1.85, radius: .5, hover: true,
+defHero('superman', { name: 'Superb Man', verse: 'DC', type: 'Striker', trait: 'Resilient', color: '#3f7bff', glyph: 'S', hp: 1.9, speed: 11, jump: 15, eye: 1.85, radius: .5, hover: true,
   passive: 'KRYPTONIAN — hold LMB to wind up a punch, hold RMB for heat vision, hold SPACE in the air to hover.', vm: { sleeve: 0x1f4fd0, hand: 0xd8a888, scale: 1.12, cuff: 0xc81e2a } },
   { m1: ['Kryptonian Haymaker', .25], m2: ['Heat Vision', 3], q: ['Man of Steel Tackle', 6], e: ['Super Speed', 10], r: ['Solar Flare', 45] }, {
   m1Down() { P.meter = { k: 0, rate: 1.3, col: '#9fc4ff' }; P.charging = 'm1'; P.pose = 'low'; },
@@ -7625,7 +7625,7 @@ defHero('superman', { name: 'Superman', verse: 'DC', type: 'Striker', trait: 'Re
   },
 });
 
-defHero('cyborg', { name: 'Cyborg', verse: 'DC', type: 'Mechabot', trait: 'Resilient', color: '#c8d0dc', glyph: 'C', hp: 1.7, speed: 9.5, jump: 12, eye: 1.85, radius: .5,
+defHero('cyborg', { name: 'Psyborg', verse: 'DC', type: 'Mechabot', trait: 'Resilient', color: '#c8d0dc', glyph: 'P', hp: 1.7, speed: 9.5, jump: 12, eye: 1.85, radius: .5,
   passive: 'BOOM TUBE — Q opens a two-way portal anyone can walk through. E has 3 rocket boosts.', vm: { sleeve: 0x9aa2b0, hand: 0x6a7280, scale: 1.12, metal: true, cannon: true } },
   { m1: ['Sonic Cannon', .45], m2: ['Tech Scan', 7], q: ['Boom Tube', 8], e: ['Rocket Boost', .25], r: ['Satellite Uplink', 45] }, {
   m1() {
@@ -7681,7 +7681,7 @@ defHero('cyborg', { name: 'Cyborg', verse: 'DC', type: 'Mechabot', trait: 'Resil
   },
 });
 
-defHero('beastboy', { name: 'Beast Boy', verse: 'DC', type: 'Mutant', trait: 'Intellect', color: '#5ad05a', glyph: 'B', hp: 1.5, speed: 11, jump: 14, eye: 1.7, radius: .45,
+defHero('beastboy', { name: 'Beast Bro', verse: 'DC', type: 'Mutant', trait: 'Intellect', color: '#5ad05a', glyph: 'B', hp: 1.5, speed: 11, jump: 14, eye: 1.7, radius: .45,
   passive: 'SHAPESHIFTER — every move is a different animal. In Hawk Form, tap SPACE to flap.', vm: { sleeve: 0x5a2a7a, hand: 0x62b04a, scale: 1.05, claws: true } },
   { m1: ['Wolf Lunge', .45], m2: ['Porcupine Quills', 1.6], q: ['Octopus Grab', 7], e: ['Hawk Form', 12], r: ['T-Rex', 45] }, {
   m1() {
@@ -7735,7 +7735,7 @@ defHero('beastboy', { name: 'Beast Boy', verse: 'DC', type: 'Mutant', trait: 'In
   },
 });
 
-defHero('greenlantern', { name: 'Green Lantern', verse: 'DC', type: 'Cosmic', trait: 'Intellect', color: '#2ee86a', glyph: 'G', hp: 1.3, speed: 10, jump: 12, eye: 1.8, radius: .45,
+defHero('greenlantern', { name: 'Green Flashlight', verse: 'DC', type: 'Cosmic', trait: 'Intellect', color: '#2ee86a', glyph: 'G', hp: 1.3, speed: 10, jump: 12, eye: 1.8, radius: .45,
   passive: 'WILLPOWER — hold RMB to raise a dome that blocks everything; release it to blast enemies away.', vm: { sleeve: 0x111418, hand: 0x1a1c20, scale: 1, ringCol: [.4, 4, 1.2] } },
   { m1: ['Construct Fist', .5], m2: ['Construct Dome', 1], q: ['Construct Hammer', 7], e: ['Construct Stairs', 12], r: ['Construct Minigun', 45] }, {
   m1() {
@@ -7789,8 +7789,8 @@ defHero('greenlantern', { name: 'Green Lantern', verse: 'DC', type: 'Cosmic', tr
 });
 
 // ---------------------------------------------------------------- INVINCIBLE
-defHero('invincible', { name: 'Invincible', verse: 'INVINCIBLE', type: 'Striker', trait: 'Resilient', color: '#ffd23a', glyph: 'I', hp: 1.8, speed: 11, jump: 15, eye: 1.8, radius: .48, hover: true,
-  passive: 'VILTRUMITE — hold LMB for a punch flurry, RMB grabs an enemy (RMB again to throw).', vm: { sleeve: 0xf0c020, hand: 0x1b3aa0, scale: 1.05 } },
+defHero('invincible', { name: 'Invincibull', verse: 'INVINCIBLE', type: 'Striker', trait: 'Resilient', color: '#ffd23a', glyph: 'I', hp: 1.8, speed: 11, jump: 15, eye: 1.8, radius: .48, hover: true,
+  passive: 'WILTRUMITE — hold LMB for a punch flurry, RMB grabs an enemy (RMB again to throw).', vm: { sleeve: 0xf0c020, hand: 0x1b3aa0, scale: 1.05 } },
   { m1: ['Flurry', .1], m2: ['Grab & Throw', .4], q: ['Skyward Slam', 7], e: ['Sonic Flight', 14], r: ['Relentless Barrage', 42] }, {
   m1() {
     P.flurry = (P.flurry || 0) + 1; vmPunch(P.flurry % 2, .1);
@@ -7829,9 +7829,9 @@ defHero('invincible', { name: 'Invincible', verse: 'INVINCIBLE', type: 'Striker'
   },
 });
 
-defHero('omniman', { name: 'Omni-Man', verse: 'INVINCIBLE', type: 'Striker', trait: 'Force', color: '#e8e8f0', glyph: 'O', hp: 2.0, speed: 11, jump: 15, eye: 1.9, radius: .5, hover: true,
+defHero('omniman', { name: 'Omni-Dad', verse: 'INVINCIBLE', type: 'Striker', trait: 'Force', color: '#e8e8f0', glyph: 'O', hp: 2.0, speed: 11, jump: 15, eye: 1.9, radius: .5, hover: true,
   passive: 'CONQUEROR — enemies you backhand become projectiles that bowl over others.', vm: { sleeve: 0xe8e8f0, hand: 0xd8d8e0, scale: 1.15, cuff: 0xc81e2a } },
-  { m1: ['Viltrumite Backhand', .7], m2: ['Through & Through', 3], q: ['Sonic Flyby', 6], e: ['Menacing Hover', 12], r: ['Think, Mark!', 48] }, {
+  { m1: ['Wiltrumite Backhand', .7], m2: ['Through & Through', 3], q: ['Sonic Flyby', 6], e: ['Menacing Hover', 12], r: ['Think, Mark!', 48] }, {
   m1() {
     const s = P.hand ^= 1; vmPunch(s, .32);
     later(.12, () => {
@@ -7866,7 +7866,7 @@ defHero('omniman', { name: 'Omni-Man', verse: 'INVINCIBLE', type: 'Striker', tra
   },
 });
 
-defHero('rexsplode', { name: 'Rex Splode', verse: 'INVINCIBLE', type: 'Mechabot', trait: 'Force', color: '#ff7a1a', glyph: 'R', hp: 1.3, speed: 10.5, jump: 13, eye: 1.75, radius: .45,
+defHero('rexsplode', { name: 'Rex Explode', verse: 'INVINCIBLE', type: 'Mechabot', trait: 'Force', color: '#ff7a1a', glyph: 'R', hp: 1.3, speed: 10.5, jump: 13, eye: 1.75, radius: .45,
   passive: 'EXPLOSIVE — RMB charges an enemy (or the ground) to blow up. In Detonation Glide, tap SPACE to pop another blast.', vm: { sleeve: 0x1a1a1e, hand: 0x2a2a30, scale: 1, cuff: 0xff7a1a } },
   { m1: ['Charged Pebbles', .55], m2: ['Charge Up', 4], q: ['Blast Dash', 5], e: ['Detonation Glide', 10], r: ['Self-Detonate', 45] }, {
   m1() {
@@ -7920,7 +7920,7 @@ defHero('rexsplode', { name: 'Rex Splode', verse: 'INVINCIBLE', type: 'Mechabot'
   },
 });
 
-defHero('monstergirl', { name: 'Monster Girl', verse: 'INVINCIBLE', type: 'Mutant', trait: 'Resilient', color: '#8fd06a', glyph: 'M', hp: 2.1, speed: 9.5, jump: 14, eye: 2.4, radius: .7,
+defHero('monstergirl', { name: 'Monster Gal', verse: 'INVINCIBLE', type: 'Mutant', trait: 'Resilient', color: '#8fd06a', glyph: 'M', hp: 2.1, speed: 9.5, jump: 14, eye: 2.4, radius: .7,
   passive: 'TROLL HIDE — swings a torn-out lamppost and shrugs off knockback.', vm: { sleeve: 0x6a8a5a, hand: 0x7a9a66, scale: 1.7, claws: true, club: true } },
   { m1: ['Lamppost Swing', .8], m2: ['Boulder Roll', 4], q: ['Terrifying Roar', 9], e: ['Troll Bounce', 8], r: ['Monster Mode', 48] }, {
   m1() { vmSwing(1, 'club', .6); later(.2, () => SFX.swing()); later(.32, () => { melee(5.4, 120, 30, { kb: 20, up: 8, max: 4, heavy: true, sfx: SFX.heavy, fx: C3(2, 2, 1.4) }); const p = P.pos.clone().addScaledVector(flatLook(), 4); p.y = groundAt(p.x, p.z); crater(p, 1.3, 5); dust(p, { r: 1.4, n: 8, alpha: .45 }); chunks(p.clone().setY(p.y + .3), 6, 7); shake(.12); }); },
@@ -7949,7 +7949,7 @@ defHero('monstergirl', { name: 'Monster Girl', verse: 'INVINCIBLE', type: 'Mutan
   },
 });
 
-defHero('allen', { name: 'Allen the Alien', verse: 'INVINCIBLE', type: 'Cosmic', trait: 'Force', color: '#3ab8d0', glyph: 'A', hp: 2.0, speed: 10, jump: 14, eye: 2.3, radius: .65,
+defHero('allen', { name: 'Alvin the Alien', verse: 'INVINCIBLE', type: 'Cosmic', trait: 'Force', color: '#3ab8d0', glyph: 'A', hp: 2.0, speed: 10, jump: 14, eye: 2.3, radius: .65,
   passive: 'EVALUATOR — tap RMB right before a hit lands to parry it and stun the attacker.', vm: { sleeve: 0x2a3a6a, hand: 0x3aa8c0, scale: 1.55 } },
   { m1: ['Pulse Punch', .55], m2: ['Parry', 1.2], q: ['Gravity Crater', 8], e: ['Moon Jump', 9], r: ['Meteor Shower', 46] }, {
   m1() {
@@ -7980,7 +7980,7 @@ defHero('allen', { name: 'Allen the Alien', verse: 'INVINCIBLE', type: 'Cosmic',
 });
 
 // ---------------------------------------------------------------- JUJUTSU KAISEN
-defHero('yuji', { name: 'Yuji Itadori', verse: 'JUJUTSU KAISEN', type: 'Striker', trait: 'Force', color: '#ff5a7a', glyph: 'Y', hp: 1.5, speed: 11.5, jump: 14, eye: 1.75, radius: .45,
+defHero('yuji', { name: 'Yuji Itadorable', verse: 'JUJUTSU KAISEN', type: 'Striker', trait: 'Force', color: '#ff5a7a', glyph: 'Y', hp: 1.5, speed: 11.5, jump: 14, eye: 1.75, radius: .45,
   passive: 'DIVERGENT FIST — every punch lands twice. Hold RMB and release in the red zone for a BLACK FLASH.', vm: { sleeve: 0x1c2240, hand: 0xd8a888, scale: 1 } },
   { m1: ['Divergent Fist', .3], m2: ['Black Flash', 2.2], q: ['Manji Kick', 6], e: ['Wall Run', 10], r: ['Malevolent Shrine', 50] }, {
   m1() {
@@ -8039,7 +8039,7 @@ defHero('yuji', { name: 'Yuji Itadori', verse: 'JUJUTSU KAISEN', type: 'Striker'
   },
 });
 
-defHero('maki', { name: 'Maki Zenin', verse: 'JUJUTSU KAISEN', type: 'Striker', trait: 'Intellect', color: '#6aa86a', glyph: 'M', hp: 1.4, speed: 12.5, jump: 14, eye: 1.72, radius: .44,
+defHero('maki', { name: 'Maki Zenning', verse: 'JUJUTSU KAISEN', type: 'Striker', trait: 'Intellect', color: '#6aa86a', glyph: 'M', hp: 1.4, speed: 12.5, jump: 14, eye: 1.72, radius: .44,
   passive: 'HEAVENLY RESTRICTION — no cursed energy, just weapons. LMB cycles staff → katana → spear.', vm: { sleeve: 0x1c2240, hand: 0xd8a888, scale: 1, blade: { len: 1.5, w: .03, col: 0x2a2a30, glow: [2, 2.4, 2.6], pole: true } } },
   { m1: ['Cursed Tool Rotation', .36], m2: ['Returning Spear', 3], q: ['Playful Cloud', 7], e: ['Heavenly Sprint', 11], r: ['Split Soul Katana', 45] }, {
   m1() {
@@ -8077,9 +8077,9 @@ defHero('maki', { name: 'Maki Zenin', verse: 'JUJUTSU KAISEN', type: 'Striker', 
   },
 });
 
-defHero('mechamaru', { name: 'Mechamaru', verse: 'JUJUTSU KAISEN', type: 'Mechabot', trait: 'Intellect', color: '#9aa4b0', glyph: 'M', hp: 1.5, speed: 9.5, jump: 12, eye: 1.95, radius: .5, hover: true,
+defHero('mechamaru', { name: 'Mechamaroo', verse: 'JUJUTSU KAISEN', type: 'Mechabot', trait: 'Intellect', color: '#9aa4b0', glyph: 'M', hp: 1.5, speed: 9.5, jump: 12, eye: 1.95, radius: .5, hover: true,
   passive: 'PUPPET BODY — a blade arm and a detachable fist. Deals +30% damage while hovering.', vm: { sleeve: 0x7a828e, hand: 0x5a626e, scale: 1.2, metal: true, armBlade: true } },
-  { m1: ['Blade Arm', .28], m2: ['Rocket Punch', 3], q: ['Mini Mechamaru', 9], e: ['Hover Pack', 11], r: ['Ultra Cannon', 45] }, {
+  { m1: ['Blade Arm', .28], m2: ['Rocket Punch', 3], q: ['Mini Mechamaroo', 9], e: ['Hover Pack', 11], r: ['Ultra Cannon', 45] }, {
   m1() { vmSwing(1, 'thrust', .2); later(.08, () => { const o = eyePos(), f = lookDir(), list = lineEnemies(o, f, 4.2, .8).slice(0, 3); for (const e of list) hitEnemy(e, 17, { dir: flatLook(), kb: 5, up: 1.5, fx: C3(1.2, 3, 4) }); list.length ? SFX.slash() : SFX.swing(); }); },
   m2() {
     VM.hideL = 1.4; const from = handPos(-1);
@@ -8100,7 +8100,7 @@ defHero('mechamaru', { name: 'Mechamaru', verse: 'JUJUTSU KAISEN', type: 'Mechab
   },
 });
 
-defHero('megumi', { name: 'Megumi Fushiguro', verse: 'JUJUTSU KAISEN', type: 'Ninja', trait: 'Force', color: '#6a5aff', glyph: 'M', hp: 1.3, speed: 11, jump: 13, eye: 1.74, radius: .44,
+defHero('megumi', { name: 'Megumi Fishiguro', verse: 'JUJUTSU KAISEN', type: 'Ninja', trait: 'Force', color: '#6a5aff', glyph: 'M', hp: 1.3, speed: 11, jump: 13, eye: 1.74, radius: .44,
   passive: 'TEN SHADOWS — fights through shikigami summoned from his shadow.', vm: { sleeve: 0x14182a, hand: 0xd8a888, scale: 1 } },
   { m1: ['Shadow Spikes', .5], m2: ['Nue', 2.5], q: ['Shadow Swim', 6], e: ['Great Serpent', 9], r: ['Divine Dog: Totality', 48] }, {
   m1() { vmPunch(0, .2); const tg = findTarget(24, 20), p = tg ? tg.pos.clone() : aimPoint(24); p.y = groundAt(p.x, p.z); inkPool(p, 2.4, .9); shadowSpikes(p); },
@@ -8133,7 +8133,7 @@ defHero('megumi', { name: 'Megumi Fushiguro', verse: 'JUJUTSU KAISEN', type: 'Ni
   },
 });
 
-defHero('gojo', { name: 'Satoru Gojo', verse: 'JUJUTSU KAISEN', type: 'Wizard', trait: 'Intellect', color: '#6ad0ff', glyph: 'G', hp: 1.3, speed: 10.5, jump: 12.5, eye: 1.85, radius: .45,
+defHero('gojo', { name: 'Satoru Go-Joe', verse: 'JUJUTSU KAISEN', type: 'Wizard', trait: 'Intellect', color: '#6ad0ff', glyph: 'G', hp: 1.3, speed: 10.5, jump: 12.5, eye: 1.85, radius: .45,
   passive: 'LIMITLESS — Blue pulls, Red repels, and together they make Purple.', vm: { sleeve: 0x14182a, hand: 0xe8c8b0, scale: 1 } },
   { m1: ['Blue', .55], m2: ['Red', 3], q: ['Infinity', 12], e: ['Limitless Teleport', 5], r: ['Hollow Purple', 50] }, {
   m1() {
@@ -8216,7 +8216,7 @@ function buildShrine() {
 }
 
 // ---------------------------------------------------------------- BLEACH
-defHero('ichigo', { name: 'Ichigo Kurosaki', verse: 'BLEACH', type: 'Striker', trait: 'Intellect', color: '#ff8a2a', glyph: 'I', hp: 1.6, speed: 11.5, jump: 14, eye: 1.8, radius: .46, hover: true,
+defHero('ichigo', { name: 'Ichigo Kurosake', verse: 'BLEACH', type: 'Striker', trait: 'Intellect', color: '#ff8a2a', glyph: 'I', hp: 1.6, speed: 11.5, jump: 14, eye: 1.8, radius: .46, hover: true,
   passive: 'SHINIGAMI — hold RMB to charge Getsuga Tensho; the longer, the bigger. Q flash steps have 3 charges.', vm: { sleeve: 0x111114, hand: 0xd8a888, scale: 1, blade: { len: 1.3, w: .11, col: 0x2a2a30, glow: [1.6, 2.4, 4] } } },
   { m1: ['Zangetsu Cleave', .45], m2: ['Getsuga Tensho', 1], q: ['Flash Step', .3], e: ['Air Step', 12], r: ['Bankai', 48] }, {
   m1() {
@@ -8265,7 +8265,7 @@ defHero('ichigo', { name: 'Ichigo Kurosaki', verse: 'BLEACH', type: 'Striker', t
 });
 const getsugaCol = () => P.buff && P.buff.bankai ? [3, .15, .25] : [1.6, 2.6, 4];
 
-defHero('kenpachi', { name: 'Kenpachi Zaraki', verse: 'BLEACH', type: 'Striker', trait: 'Force', color: '#ffd23a', glyph: 'K', hp: 1.9, speed: 10.5, jump: 13, eye: 2.0, radius: .52, rage: true,
+defHero('kenpachi', { name: 'Kenpatchy Zaraki', verse: 'BLEACH', type: 'Striker', trait: 'Force', color: '#ffd23a', glyph: 'K', hp: 1.9, speed: 10.5, jump: 13, eye: 2.0, radius: .52, rage: true,
   passive: 'BATTLE LUST — every hit stacks bloodlust (+6% damage each, up to 20). Lower HP means harder cuts.', vm: { sleeve: 0xe8e8e8, hand: 0xd0a080, scale: 1.12, blade: { len: 1.25, w: .06, col: 0x6a6a70, jagged: true } } },
   { m1: ['Wild Chop', .5], m2: ['Reiatsu Roar', 6], q: ['Ground Splitter', 7], e: ['Unstoppable', 12], r: ['Eyepatch Off', 48] }, {
   m1() {
@@ -8306,7 +8306,7 @@ defHero('kenpachi', { name: 'Kenpachi Zaraki', verse: 'BLEACH', type: 'Striker',
   },
 });
 
-defHero('byakuya', { name: 'Byakuya Kuchiki', verse: 'BLEACH', type: 'Ninja', trait: 'Intellect', color: '#ff8ac8', glyph: 'B', hp: 1.35, speed: 11, jump: 13, eye: 1.8, radius: .44,
+defHero('byakuya', { name: 'Byakuya Kookiki', verse: 'BLEACH', type: 'Ninja', trait: 'Intellect', color: '#ff8ac8', glyph: 'B', hp: 1.35, speed: 11, jump: 13, eye: 1.8, radius: .44,
   passive: 'SENBONZAKURA — the blade scatters into a thousand cutting petals.', vm: { sleeve: 0xeeeeee, hand: 0xe8c8b0, scale: 1, blade: { len: 1.05, w: .035, col: 0xcfd3dc, glow: [3, 1.4, 2.4] } } },
   { m1: ['Petal Whip', .45], m2: ['Petal Storm', 2.5], q: ['Danku', 10], e: ['Petal Lift', 10], r: ['Senkei', 50] }, {
   m1() {
@@ -8367,7 +8367,7 @@ defHero('byakuya', { name: 'Byakuya Kuchiki', verse: 'BLEACH', type: 'Ninja', tr
   },
 });
 
-defHero('lillebarro', { name: 'Lille Barro', verse: 'BLEACH', type: 'Cosmic', trait: 'Force', color: '#9ad8ff', glyph: 'L', hp: 1.3, speed: 10, jump: 12.5, eye: 1.85, radius: .45,
+defHero('lillebarro', { name: 'Lil Barro', verse: 'BLEACH', type: 'Cosmic', trait: 'Force', color: '#9ad8ff', glyph: 'L', hp: 1.3, speed: 10, jump: 12.5, eye: 1.85, radius: .45,
   passive: "QUINCY SNIPER — shots hit harder the farther they travel. Hold RMB to scope in (+80% damage).", vm: { sleeve: 0xf0f0f8, hand: 0xe8e8f0, scale: 1, gun: true } },
   { m1: ['Diagram Shot', .8], m2: ['Scope', 0], q: ['Heilig Bogen: X', 7], e: ["Sniper's Perch", 9], r: ['The X-Axis', 48] }, {
   m1() {
@@ -8408,7 +8408,7 @@ defHero('lillebarro', { name: 'Lille Barro', verse: 'BLEACH', type: 'Cosmic', tr
   },
 });
 
-defHero('aizen', { name: 'Sosuke Aizen', verse: 'BLEACH', type: 'Timeholder', trait: 'Intellect', color: '#8a5aff', glyph: 'A', hp: 1.4, speed: 10.5, jump: 13, eye: 1.82, radius: .45,
+defHero('aizen', { name: 'Sosuke Ice-Zen', verse: 'BLEACH', type: 'Timeholder', trait: 'Intellect', color: '#8a5aff', glyph: 'I', hp: 1.4, speed: 10.5, jump: 13, eye: 1.82, radius: .45,
   passive: 'KYOKA SUIGETSU — nothing they see is real. Q swaps places with an enemy.', vm: { sleeve: 0x111114, hand: 0xe8c8b0, scale: 1, blade: { len: 1.05, w: .035, col: 0xcfd3dc, glow: [1.6, 1, 3.4] } } },
   { m1: ['Hado #4: Byakurai', .45], m2: ['Hado #90: Kurohitsugi', 7], q: ['Kyoka Swap', 7], e: ['Reishi Walk', 12], r: ['Complete Hypnosis', 50] }, {
   m1() {
@@ -8478,7 +8478,7 @@ const EVO_REQ = { level: 10, rank: 2, coins: 2500 };
 const GAMMA = [1.6, 4, .6], HELL = [4, 1.4, .3], VOID = [1.4, 1, 4], BLUE = [1.6, 2.6, 4], HOLLOW = [3, .2, .25];
 const CURSED = new Set(['curse', 'spitter', 'grade1', 'cursedwomb', 'hollow', 'menos', 'arrancar', 'espada', 'rifttitan']);
 
-defHero('worldbreaker', { name: 'Worldbreaker Hulk', verse: 'MARVEL', rage: true, type: 'Mutant', trait: 'Force', color: '#b8ff3a', glyph: 'W', hp: 2.6, speed: 10, jump: 16, eye: 2.8, radius: .8, evo: 'hulk', dmgMul: 1.2,
+defHero('worldbreaker', { name: 'Worldbreaker Bulk', verse: 'MARVEL', rage: true, type: 'Mutant', trait: 'Force', color: '#b8ff3a', glyph: 'W', hp: 2.6, speed: 10, jump: 16, eye: 2.8, radius: .8, evo: 'hulk', dmgMul: 1.2,
   passive: 'WORLDBREAKER — every step shakes the street, and you regenerate while below half HP. Hits harder the lower your HP.', vm: { sleeve: 0x2f6a28, hand: 0x3f8a33, scale: 2 } },
   { m1: ['Worldbreaker Smash', .55], m2: ['Tectonic Stomp', 4], q: ['Gamma Stampede', 7], e: ['Continental Leap', 8], r: ['World Breaker', 50] }, {
   m1() {
@@ -8530,9 +8530,9 @@ defHero('worldbreaker', { name: 'Worldbreaker Hulk', verse: 'MARVEL', rage: true
   },
 });
 
-defHero('hellbat', { name: 'Hellbat', verse: 'DC', type: 'Mechabot', trait: 'Intellect', color: '#ff5a2a', glyph: 'H', hp: 1.65, speed: 10.5, jump: 13, eye: 1.85, radius: .5, evo: 'batman', dmgMul: 1.2, hover: true,
+defHero('hellbat', { name: 'Hellbad', verse: 'DC', type: 'Mechabot', trait: 'Intellect', color: '#ff5a2a', glyph: 'H', hp: 1.65, speed: 10.5, jump: 13, eye: 1.85, radius: .5, evo: 'batman', dmgMul: 1.2, hover: true,
   passive: 'HELLBAT ARMOR — built with the whole Justice League. Hold SPACE in the air to hover on jets; every strike vents fire.', vm: { sleeve: 0x1a1c22, hand: 0x0c0c0e, scale: 1.2, metal: true, fins: true } },
-  { m1: ['Hellbat Combo', .32], m2: ['Wrist Rockets', 2.4], q: ['Jet Tackle', 6], e: ['Afterburners', 12], r: ['Hellbat Protocol', 46] }, {
+  { m1: ['Hellbad Combo', .32], m2: ['Wrist Rockets', 2.4], q: ['Jet Tackle', 6], e: ['Afterburners', 12], r: ['Hellbad Protocol', 46] }, {
   m1() {
     if (G.time - P.comboT > .8) P.combo = 0; P.comboT = G.time; const c = P.combo++ % 3;
     if (c < 2) { vmPunch(c, .18); later(.06, () => { if (melee(3.2, 75, 18, { kb: 6, up: 2, fx: col3(HELL) })) flameJet(eyePos().addScaledVector(lookDir(), 2).addScaledVector(UP, -.3), lookDir(), { n: 5, speed: 6 }); }); }
@@ -8566,7 +8566,7 @@ defHero('hellbat', { name: 'Hellbat', verse: 'DC', type: 'Mechabot', trait: 'Int
   },
 });
 
-defHero('kinginblack', { name: 'King in Black', verse: 'MARVEL', type: 'Webber', trait: 'Force', color: '#9a8aff', glyph: 'K', hp: 1.95, speed: 11.5, jump: 15, eye: 2.2, radius: .6, evo: 'venom', dmgMul: 1.2,
+defHero('kinginblack', { name: 'King in Slack', verse: 'MARVEL', type: 'Webber', trait: 'Force', color: '#9a8aff', glyph: 'K', hp: 1.95, speed: 11.5, jump: 15, eye: 2.2, radius: .6, evo: 'venom', dmgMul: 1.2,
   passive: 'GOD OF THE VOID — wield the All-Black necrosword. Every kill feeds you a little health.', vm: { sleeve: 0x050508, hand: 0x050508, scale: 1.3, gloss: true, claws: true, blade: { len: 1.5, w: .12, col: 0x0a0a10, glow: VOID, jagged: true } } },
   { m1: ['Necrosword', .42], m2: ['Symbiote Dragon', 3], q: ['Codex Pull', 7], e: ['Void Wings', 12], r: ['Void Eclipse', 50] }, {
   m1() {
@@ -8611,8 +8611,8 @@ defHero('kinginblack', { name: 'King in Black', verse: 'MARVEL', type: 'Webber',
   onKill() { healPlayer(P.maxHp * .04); },
 });
 
-defHero('bluesuit', { name: 'Invincible (Blue Suit)', verse: 'INVINCIBLE', type: 'Striker', trait: 'Resilient', color: '#3a8aff', glyph: 'I', hp: 2.2, speed: 12, jump: 16, eye: 1.8, radius: .48, hover: true, evo: 'invincible', dmgMul: 1.2,
-  passive: 'VILTRUMITE WARRIOR — every 5th punch is a sonic haymaker. Hold SPACE in the air to hover.', vm: { sleeve: 0x14161c, hand: 0x2a5ad0, scale: 1.08 } },
+defHero('bluesuit', { name: 'Invincibull (Blue Suit)', verse: 'INVINCIBLE', type: 'Striker', trait: 'Resilient', color: '#3a8aff', glyph: 'I', hp: 2.2, speed: 12, jump: 16, eye: 1.8, radius: .48, hover: true, evo: 'invincible', dmgMul: 1.2,
+  passive: 'WILTRUMITE WARRIOR — every 5th punch is a sonic haymaker. Hold SPACE in the air to hover.', vm: { sleeve: 0x14161c, hand: 0x2a5ad0, scale: 1.08 } },
   { m1: ['Sonic Haymakers', .12], m2: ['Thunderclap Palms', 4], q: ['Orbital Drop', 7], e: ['Mach Flight', 12], r: ['Never Stop Fighting', 46] }, {
   m1() {
     P.flurry = (P.flurry || 0) + 1; const fin = P.flurry % 5 === 0; vmPunch(P.flurry % 2, fin ? .2 : .11);
@@ -8640,7 +8640,7 @@ defHero('bluesuit', { name: 'Invincible (Blue Suit)', verse: 'INVINCIBLE', type:
   },
 });
 
-defHero('mahoraga', { name: 'Mahoraga', verse: 'JUJUTSU KAISEN', type: 'Ninja', trait: 'Resilient', color: '#e8e0c8', glyph: 'M', hp: 2.4, speed: 9.5, jump: 15, eye: 3.6, radius: .95, evo: 'megumi', dmgMul: 1.2, noKb: true,
+defHero('mahoraga', { name: 'Mahogany', verse: 'JUJUTSU KAISEN', type: 'Ninja', trait: 'Resilient', color: '#e8e0c8', glyph: 'M', hp: 2.4, speed: 9.5, jump: 15, eye: 3.6, radius: .95, evo: 'megumi', dmgMul: 1.2, noKb: true,
   passive: 'ADAPTATION — the Dharma wheel above you turns every few hits you take; each turn cuts incoming damage by 12% (up to 4). Immune to knockback. Your sword does double damage to curses and Hollows.', vm: { sleeve: 0xb8b4a8, hand: 0xa8a498, scale: 1.65, blade: { len: 1.6, w: .13, col: 0xf0f0ff, glow: [3, 3.2, 2.4] } } },
   { m1: ['Sword of Extermination', .6], m2: ['Wheel Turn', 8], q: ['Divine Cleave', 7], e: ['Giant Leap', 9], r: ['Adaptation Complete', 50] }, {
   wheel: null,
@@ -8689,7 +8689,7 @@ defHero('mahoraga', { name: 'Mahoraga', verse: 'JUJUTSU KAISEN', type: 'Ninja', 
   hud() { return `<div class="pot" style="--c:#e8e0c8">WHEEL ${P.adapt || 0}/4 · −${(P.adapt || 0) * 12}% DMG</div>`; },
 });
 
-defHero('vastolorde', { name: 'Vasto Lorde Ichigo', verse: 'BLEACH', type: 'Striker', trait: 'Intellect', color: '#ff2a3a', glyph: 'V', hp: 1.9, speed: 13, jump: 15, eye: 1.95, radius: .5, hover: true, evo: 'ichigo', dmgMul: 1.2,
+defHero('vastolorde', { name: 'Pasta Lorde Ichigo', verse: 'BLEACH', type: 'Striker', trait: 'Intellect', color: '#ff2a3a', glyph: 'P', hp: 1.9, speed: 13, jump: 15, eye: 1.95, radius: .5, hover: true, evo: 'ichigo', dmgMul: 1.2,
   passive: 'HOLLOWFICATION — Sonido has 4 charges. Every kill refunds one and heals you a little.', vm: { sleeve: 0xf0f0f0, hand: 0xe8e8e8, scale: 1.15, claws: true, cuff: 0x8a1a10 } },
   { m1: ['Hollow Claws', .3], m2: ['Horn Cero', 3.5], q: ['Sonido Rend', .35], e: ['Getsuga Jujisho', 6], r: ['Cero Oscuras', 50] }, {
   m1() { const s = P.hand ^= 1; vmSwing(s, 'swipe', .26); slashFx(HOLLOW); later(.1, () => melee(3.8, 120, 20, { kb: 6, up: 2, max: 3, sfx: SFX.slash, fx: col3(HOLLOW) })); },
@@ -8740,8 +8740,8 @@ function evolveHero(id) {
 // ---------------------------------------------------------------- QUEST HEROES
 // The Flash (Barry Allen's questline in Smallville) and Aoi Todo (Shibuya) never drop from the Hero Claw.
 const SPARK = [4, 3, .6], SPARK2 = [4, .6, .2];
-defHero('flash', { name: 'The Flash', verse: 'DC', type: 'Striker', trait: 'Intellect', color: '#ff3030', glyph: 'F', hp: 1.3, speed: 13, jump: 13, eye: 1.8, radius: .45, quest: 'Barry Allen · Smallville',
-  passive: 'SPEED FORCE — hold SHIFT to super-sprint at over 60 m/s. Barry can pass the mantle to Wally West (evolution). Run straight up walls, trample anything in your way, and leave lightning in your wake.', vm: { sleeve: 0xb01010, hand: 0xb01010, scale: 1, cuff: 0xffc020 } },
+defHero('flash', { name: 'The Dash', verse: 'DC', type: 'Striker', trait: 'Intellect', color: '#ff3030', glyph: 'D', hp: 1.3, speed: 13, jump: 13, eye: 1.8, radius: .45, quest: 'Barry Allergen · Smallville',
+  passive: 'SPEED FORCE — hold SHIFT to super-sprint at over 60 m/s. Barry can pass the mantle to Wally Best (evolution). Run straight up walls, trample anything in your way, and leave lightning in your wake.', vm: { sleeve: 0xb01010, hand: 0xb01010, scale: 1, cuff: 0xffc020 } },
   { m1: ['Lightning Jabs', .12], m2: ['Lightning Throw', 2.2], q: ['Speed Force Tornado', 8], e: ['Time Remnant', 14], r: ['Infinite Mass Punch', 45] }, {
   m1() {
     // blur to the enemy you're facing and jab it
@@ -8807,7 +8807,7 @@ defHero('flash', { name: 'The Flash', verse: 'DC', type: 'Striker', trait: 'Inte
   },
 });
 
-defHero('todo', { name: 'Aoi Todo', verse: 'JUJUTSU KAISEN', type: 'Striker', trait: 'Force', color: '#e8a050', glyph: 'T', hp: 1.8, speed: 10.5, jump: 14, eye: 1.95, radius: .52, quest: 'Aoi Todo · Shibuya',
+defHero('todo', { name: 'Aoi To-Do', verse: 'JUJUTSU KAISEN', type: 'Striker', trait: 'Force', color: '#e8a050', glyph: 'T', hp: 1.8, speed: 10.5, jump: 14, eye: 1.95, radius: .52, quest: 'Aoi To-Do · Shibuya',
   passive: 'BOOGIE WOOGIE — clap to swap places with whatever you aim at. Swapped enemies are left open to a guaranteed critical hit.', vm: { sleeve: 0xe8e4d8, hand: 0x8a5a3a, scale: 1.3 } },
   { m1: ['Brawler Combo', .38], m2: ['Boogie Woogie', 1], q: ['Swap Feint', 6], e: ['Brother\'s Leap', 8], r: ['Black Flash Brothers', 46] }, {
   m1() {
@@ -8893,8 +8893,8 @@ function clapFx(delay = 0) { later(delay, () => {
 // Barry passes the mantle to Wally West, the Flash who became one with the Speed Force. Even faster super-sprint,
 // and running stores kinetic energy.
 const GOLD = [1.9, 2.2, 3], WHITEGOLD = [1.7, 1.8, 2.1];   // Wally's lightning is white with a cold blue edge
-defHero('speedforce', { name: 'Wally West', verse: 'DC', type: 'Striker', trait: 'Intellect', color: '#dfe8ff', glyph: 'W', hp: 1.55, speed: 14, jump: 14, eye: 1.8, radius: .45, evo: 'flash', dmgMul: 1.2, speedster: 4.2,
-  passive: 'THE FASTEST FLASH — Wally is one with the Speed Force: super-sprint at over 80 m/s and run up walls. Running charges KINETIC energy that Q unleashes.', vm: { sleeve: 0xa81010, hand: 0xa81010, scale: 1, cuff: 0xffc020 } },
+defHero('speedforce', { name: 'Wally Best', verse: 'DC', type: 'Striker', trait: 'Intellect', color: '#dfe8ff', glyph: 'W', hp: 1.55, speed: 14, jump: 14, eye: 1.8, radius: .45, evo: 'flash', dmgMul: 1.2, speedster: 4.2,
+  passive: 'THE FASTEST DASH — Wally is one with the Speed Force: super-sprint at over 80 m/s and run up walls. Running charges KINETIC energy that Q unleashes.', vm: { sleeve: 0xa81010, hand: 0xa81010, scale: 1, cuff: 0xffc020 } },
   { m1: ['Afterimage Barrage', .14], m2: ['Speed Force Lance', 2.6], q: ['Kinetic Release', 4], e: ['Tachyon Surge', 16], r: ['Speed Force Storm', 48] }, {
   m1() {
     // you're fast enough to hit three people at once: afterimages flicker next to each target
@@ -9115,7 +9115,7 @@ function updateFlies(dt) {
 const kickArc = (style, col, size = 1) => { VM.trailCol = col; VM.slashSize = size; spawnSlash(style === 'high' ? 'rising' : 'slash', 1, .14); };
 
 // --- Monkey D. Luffy ---
-defHero('luffy', { name: 'Monkey D. Luffy', verse: 'ONE PIECE', type: 'Striker', trait: 'Resilient', color: '#e8302a', glyph: 'L', hp: 1.75, speed: 11.5, jump: 15, eye: 1.72, radius: .44,
+defHero('luffy', { name: 'Monkey D. Fluffy', verse: 'ONE PIECE', type: 'Striker', trait: 'Resilient', color: '#e8302a', glyph: 'F', hp: 1.75, speed: 11.5, jump: 15, eye: 1.72, radius: .44,
   passive: 'RUBBER BODY — bullets bounce straight back off you, and every punch stretches to reach.', vm: { sleeve: OP_SKIN, hand: OP_SKIN, scale: 1 } },
   { m1: ['Gum-Gum Pistol', .42], m2: ['Gum-Gum Gatling', 5], q: ['Gum-Gum Rocket', 6], e: ['Gear Second', 16], r: ['Gear Fourth: King Kong Gun', 48] }, {
   pistol(dmg, dur, quiet) {
@@ -9163,7 +9163,7 @@ defHero('luffy', { name: 'Monkey D. Luffy', verse: 'ONE PIECE', type: 'Striker',
 });
 
 // --- Luffy, Gear 5 (evolution) ---
-defHero('gear5', { name: 'Luffy (Gear 5)', verse: 'ONE PIECE', type: 'Striker', trait: 'Resilient', color: '#f4f2ea', glyph: 'L', hp: 2.1, speed: 12.5, jump: 17, eye: 1.85, radius: .46, evo: 'luffy', dmgMul: 1.2, hover: true,
+defHero('gear5', { name: 'Fluffy (Gear 5)', verse: 'ONE PIECE', type: 'Striker', trait: 'Resilient', color: '#f4f2ea', glyph: 'F', hp: 2.1, speed: 12.5, jump: 17, eye: 1.85, radius: .46, evo: 'luffy', dmgMul: 1.2, hover: true,
   passive: 'NIKA — the world turns to rubber around you. Hold SPACE to drift down on a cloud of steam.', vm: { sleeve: 0xe0aa80, hand: 0xe0aa80, scale: 1.05, cuff: 0xf4f2ea } },
   { m1: ['Rubber Slap', .5], m2: ['Lightning Grab', 4], q: ['Dawn Bounce', 6], e: ['Rubber World', 12], r: ['Bajrang Gun', 50] }, {
   m1() {
@@ -9304,7 +9304,7 @@ defHero('gear5', { name: 'Luffy (Gear 5)', verse: 'ONE PIECE', type: 'Striker', 
 EVOS.luffy = 'gear5'; HEROES.luffy.hp = +(HEROES.luffy.hp * .9).toFixed(2); HEROES.luffy.dmgMul = .9; HEROES.luffy.evolvesTo = 'gear5';
 
 // --- Roronoa Zoro ---
-defHero('zoro', { name: 'Roronoa Zoro', verse: 'ONE PIECE', type: 'Striker', trait: 'Force', color: '#3ab060', glyph: 'Z', hp: 1.6, speed: 11, jump: 13.5, eye: 1.82, radius: .46,
+defHero('zoro', { name: 'Roronoa Snoro', verse: 'ONE PIECE', type: 'Striker', trait: 'Force', color: '#3ab060', glyph: 'S', hp: 1.6, speed: 11, jump: 13.5, eye: 1.82, radius: .46,
   passive: 'SANTORYU — a sword in each hand and one in your teeth. Every swing cuts with all three.', vm: { sleeve: 0xc89068, hand: 0xc89068, scale: 1.04, cuff: 0x2a6a3a, blade: { len: 1.15, w: .032, col: 0xd8dce4 }, blade2: { len: 1.1, w: .03, col: 0xe2e2ea }, mouthBlade: true } },
   { m1: ['Santoryu', .46], m2: ['Oni Giri', 5], q: ['108 Pound Cannon', 6], e: ['Tatsumaki', 9], r: ['Asura', 46] }, {
   m1() {
@@ -9347,7 +9347,7 @@ defHero('zoro', { name: 'Roronoa Zoro', verse: 'ONE PIECE', type: 'Striker', tra
 });
 
 // --- Sanji ---
-defHero('sanji', { name: 'Sanji', verse: 'ONE PIECE', type: 'Striker', trait: 'Intellect', color: '#f0c840', glyph: 'S', hp: 1.45, speed: 12.5, jump: 15.5, eye: 1.78, radius: .44,
+defHero('sanji', { name: 'Sanjay', verse: 'ONE PIECE', type: 'Striker', trait: 'Intellect', color: '#f0c840', glyph: 'S', hp: 1.45, speed: 12.5, jump: 15.5, eye: 1.78, radius: .44,
   passive: 'BLACK LEG — your hands are for cooking. Everything you hit, you kick.', vm: { sleeve: 0x18181e, hand: 0xe8c8a8, scale: 1, cuff: 0xe8e8ee, pockets: true, shoe: 0x0c0c10 } },
   { m1: ['Collier Shoot', .4], m2: ['Diable Jambe', 12], q: ['Mouton Shot', 6], e: ["Chef's Special", 16], r: ['Ifrit Jambe', 46] }, {
   m1() {
@@ -9394,7 +9394,7 @@ defHero('sanji', { name: 'Sanji', verse: 'ONE PIECE', type: 'Striker', trait: 'I
 });
 
 // --- Trafalgar Law ---
-defHero('law', { name: 'Trafalgar Law', verse: 'ONE PIECE', type: 'Timeholder', trait: 'Intellect', color: '#f0d23a', glyph: 'T', hp: 1.35, speed: 11, jump: 13, eye: 1.86, radius: .45,
+defHero('law', { name: 'Trafalgar Lawn', verse: 'ONE PIECE', type: 'Timeholder', trait: 'Intellect', color: '#f0d23a', glyph: 'T', hp: 1.35, speed: 11, jump: 13, eye: 1.86, radius: .45,
   passive: 'OPE OPE — inside your ROOM, cooldowns run faster and every cut reaches anyone in it.', vm: { sleeve: 0x1c1c26, hand: 0xd8b090, scale: 1, cuff: 0xf0d23a, blade: { len: 1.75, w: .03, col: 0xd0d4dc } } },
   { m1: ['Kikoku', .5], m2: ['ROOM', 3], q: ['Amputate', 7], e: ['Tact', 8], r: ['Gamma Knife', 46] }, {
   m1() {
@@ -9440,7 +9440,7 @@ defHero('law', { name: 'Trafalgar Law', verse: 'ONE PIECE', type: 'Timeholder', 
 });
 
 // --- Portgas D. Ace ---
-defHero('ace', { name: 'Portgas D. Ace', verse: 'ONE PIECE', type: 'Cosmic', trait: 'Force', color: '#ff7a1a', glyph: 'A', hp: 1.5, speed: 11.5, jump: 14, eye: 1.8, radius: .45,
+defHero('ace', { name: 'Portgas D. Spice', verse: 'ONE PIECE', type: 'Cosmic', trait: 'Force', color: '#ff7a1a', glyph: 'S', hp: 1.5, speed: 11.5, jump: 14, eye: 1.8, radius: .45,
   passive: 'MERA MERA — your body is fire: most bullets pass straight through you.', vm: { sleeve: 0xd0905a, hand: 0xd0905a, scale: 1, cuff: 0xc85a1a } },
   { m1: ['Fire Gun', .16], m2: ['Fire Fist', 4], q: ['Kagero', 6], e: ['Hotarubi', 12], r: ['Great Flame Commandment', 48] }, {
   m1() {
@@ -9600,7 +9600,7 @@ const HZG_GEO = new THREE.IcosahedronGeometry(.22, 0), HZG_MAT = new THREE.MeshB
 const DRAGON_SEG = new THREE.IcosahedronGeometry(.5, 0).scale(1, .8, 1.4), DRAGON_HEAD = mergeGeometries([new THREE.ConeGeometry(.6, 1.8, 5).rotateX(Math.PI / 2), new THREE.ConeGeometry(.12, .9, 4).rotateX(-.9).translate(-.32, .5, -.4), new THREE.ConeGeometry(.12, .9, 4).rotateX(-.9).translate(.32, .5, -.4), new THREE.IcosahedronGeometry(.62, 0).scale(1, .8, 1.1).translate(0, 0, -.6)].map(g => g.index ? g.toNonIndexed() : g));
 
 // --- Son Goku ---
-defHero('goku', { name: 'Son Goku', verse: 'DRAGON BALL', type: 'Striker', trait: 'Resilient', color: '#ff8a1a', glyph: 'G', hp: 1.75, speed: 12, jump: 15, eye: 1.76, radius: .45, hover: true,
+defHero('goku', { name: 'Son Gokoo', verse: 'DRAGON BALL', type: 'Striker', trait: 'Resilient', color: '#ff8a1a', glyph: 'G', hp: 1.75, speed: 12, jump: 15, eye: 1.76, radius: .45, hover: true,
   passive: 'SAIYAN — hold SPACE to fly. Every fourth blow in a combo lets go a burst of ki.', vm: { sleeve: DB_SKIN, hand: DB_SKIN, scale: 1.02, cuff: 0x1f3fa8 } },
   { m1: ['Martial Arts', .3], m2: ['Kamehameha', 6], q: ['Instant Transmission', 7], e: ['Kaioken', 15], r: ['Spirit Bomb', 50] }, {
   m1() { return dbCombo(15, C3(1.6, 2.4, 3.4)); },
@@ -9646,7 +9646,7 @@ defHero('goku', { name: 'Son Goku', verse: 'DRAGON BALL', type: 'Striker', trait
 });
 
 // --- Goku, Super Saiyan (evolution) ---
-defHero('ssjgoku', { name: 'Goku (Super Saiyan)', verse: 'DRAGON BALL', type: 'Striker', trait: 'Force', color: '#ffd23a', glyph: 'G', hp: 2.0, speed: 13, jump: 16, eye: 1.78, radius: .46, evo: 'goku', dmgMul: 1.2, hover: true,
+defHero('ssjgoku', { name: 'Gokoo (Super Sayin)', verse: 'DRAGON BALL', type: 'Striker', trait: 'Force', color: '#ffd23a', glyph: 'G', hp: 2.0, speed: 13, jump: 16, eye: 1.78, radius: .46, evo: 'goku', dmgMul: 1.2, hover: true,
   passive: 'SUPER SAIYAN — hold SPACE to fly. A golden aura burns round you, and every third blow is a flash-step strike.', vm: { sleeve: 0xe0a676, hand: 0xe0a676, scale: 1.04, cuff: 0x1f3fa8 } },
   { m1: ['Rush', .24], m2: ['Super Kamehameha', 6], q: ['Instant Kamehameha', 9], e: ['Golden Surge', 14], r: ['Dragon Fist', 50] }, {
   m1() {
@@ -9714,7 +9714,7 @@ defHero('ssjgoku', { name: 'Goku (Super Saiyan)', verse: 'DRAGON BALL', type: 'S
 EVOS.goku = 'ssjgoku'; HEROES.goku.hp = +(HEROES.goku.hp * .9).toFixed(2); HEROES.goku.dmgMul = .9; HEROES.goku.evolvesTo = 'ssjgoku';
 
 // --- Vegeta ---
-defHero('vegeta', { name: 'Vegeta', verse: 'DRAGON BALL', type: 'Cosmic', trait: 'Force', color: '#3a5aff', glyph: 'V', hp: 1.7, speed: 11.5, jump: 15, eye: 1.7, radius: .45, hover: true, rage: true,
+defHero('vegeta', { name: 'Vegetable', verse: 'DRAGON BALL', type: 'Cosmic', trait: 'Force', color: '#3a5aff', glyph: 'V', hp: 1.7, speed: 11.5, jump: 15, eye: 1.7, radius: .45, hover: true, rage: true,
   passive: 'SAIYAN PRIDE — hold SPACE to fly. The more hurt you are, the harder you hit.', vm: { sleeve: 0x1c2a6a, hand: 0xf2f2ee, scale: 1.02, cuff: 0xf2f2ee } },
   { m1: ['Ki Barrage', .2], m2: ['Galick Gun', 6], q: ['Big Bang Attack', 7], e: ['Explosive Wave', 10], r: ['Final Flash', 50] }, {
   m1() { const s = P.hand ^= 1; kiBlast(s ? 1 : -1, 12, C3(3.2, 2.8, 1.2), { size: .15, aoe: 1.6 }); tn({ f: 500, f2: 200, dur: .06, type: 'square', vol: .03 }); },
@@ -9750,7 +9750,7 @@ defHero('vegeta', { name: 'Vegeta', verse: 'DRAGON BALL', type: 'Cosmic', trait:
 });
 
 // --- Piccolo ---
-defHero('piccolo', { name: 'Piccolo', verse: 'DRAGON BALL', type: 'Wizard', trait: 'Intellect', color: '#4ac040', glyph: 'P', hp: 1.6, speed: 11, jump: 14.5, eye: 1.92, radius: .46, hover: true,
+defHero('piccolo', { name: 'Pickle-o', verse: 'DRAGON BALL', type: 'Wizard', trait: 'Intellect', color: '#4ac040', glyph: 'P', hp: 1.6, speed: 11, jump: 14.5, eye: 1.92, radius: .46, hover: true,
   passive: 'NAMEKIAN — hold SPACE to fly. A few seconds out of a fight and you start to regenerate.', vm: { sleeve: 0x58a844, hand: 0x58a844, scale: 1.08, cuff: 0xb02a2a } },
   { m1: ['Eye Laser', .22], m2: ['Special Beam Cannon', 8], q: ['Hellzone Grenade', 9], e: ['Stretch Grab', 6], r: ['Multi-Form', 50] }, {
   m1() {
@@ -9813,7 +9813,7 @@ function gohanSSJ2() {
   const c = P.pos.clone().setY(P.pos.y + 1); kiWall(P.pos, 11, C3(3, 2.6, .8), .45); ring(P.pos.clone().setY(P.pos.y + .3), C3(3, 2.6, .8), 11, .5); crater(P.pos, 3);
   aoe(P.pos, 7, 40, 18, 8, { fx: C3(3, 2.6, .8) }); SFX.transform(); shake(.35);
 }
-defHero('gohan', { name: 'Son Gohan', verse: 'DRAGON BALL', type: 'Striker', trait: 'Force', color: '#7a3ac8', glyph: 'GH', hp: 1.6, speed: 12, jump: 15, eye: 1.72, radius: .44, hover: true,
+defHero('gohan', { name: 'Son Goham', verse: 'DRAGON BALL', type: 'Striker', trait: 'Force', color: '#7a3ac8', glyph: 'GH', hp: 1.6, speed: 12, jump: 15, eye: 1.72, radius: .44, hover: true,
   passive: 'HIDDEN POTENTIAL — hold SPACE to fly. Getting hurt builds RAGE; when it fills you snap into Super Saiyan 2.', vm: { sleeve: DB_SKIN, hand: DB_SKIN, scale: 1, cuff: 0x2a3a8a } },
   { m1: ['Martial Combo', .32], m2: ['Masenko', 6], q: ['Rage Rush', 6], e: ['Ki Volley', 8], r: ['Father-Son Kamehameha', 50] }, {
   m1() {
@@ -9868,7 +9868,7 @@ defHero('gohan', { name: 'Son Gohan', verse: 'DRAGON BALL', type: 'Striker', tra
 
 // --- Future Trunks ---
 const vsMachine = e => (e.def.robot || e.def.vehicle || e.def.scale >= 1.5 || e.def.vest) ? 1.5 : 1;
-defHero('trunks', { name: 'Future Trunks', verse: 'DRAGON BALL', type: 'Striker', trait: 'Intellect', color: '#b8a0ff', glyph: 'T', hp: 1.55, speed: 12, jump: 15, eye: 1.78, radius: .44, hover: true,
+defHero('trunks', { name: 'Future Shorts', verse: 'DRAGON BALL', type: 'Striker', trait: 'Intellect', color: '#b8a0ff', glyph: 'S', hp: 1.55, speed: 12, jump: 15, eye: 1.78, radius: .44, hover: true,
   passive: 'FROM THE FUTURE — hold SPACE to fly. Your sword cuts machines and armour like paper (+50% against them).', vm: { sleeve: 0x2a3a5a, hand: DB_SKIN, scale: 1.02, cuff: 0x1a1a22, blade: { len: 1.15, w: .04, col: 0xd8dce4 } } },
   { m1: ['Sword Combo', .38], m2: ['Burning Attack', 6], q: ['Shining Sword Attack', 9], e: ['Buster Dash', 5], r: ['Heat Dome Attack', 50] }, {
   m1() {
@@ -10148,7 +10148,7 @@ function updatePlayer(dt) {
   if (P.slamCustom && P.hitWall > 20 && !P.onGround) P.vel.y = -Math.max(70, P.hitWall);
   if (!wasGround && P.onGround) onLand(vy);
   if (P.smash > 0) {
-    // Viltrumite knockback: getting slammed into a wall hurts extra
+    // Wiltrumite knockback: getting slammed into a wall hurts extra
     P.smash -= dt;
     if (P.hitWall > 10) { P.smash = 0; hurtPlayer(P.maxHp * .08, P.pos, 0, 0); chunks(eyePos(), 12, 8); shake(.8); SFX.crash(.7); toast('SMASHED INTO A WALL!', '#ff5a6e'); }
   }
@@ -10307,7 +10307,7 @@ function updateNums(dt) {
     n.el.style.opacity = n.t > .6 ? (0.9 - n.t) / .3 : 1;
   }
 }
-const SHORT = { ssjgoku: 'SSJ Goku', goku: 'Goku', vegeta: 'Vegeta', piccolo: 'Piccolo', gohan: 'Gohan', trunks: 'Trunks', gear5: 'Gear 5', luffy: 'Luffy', zoro: 'Zoro', sanji: 'Sanji', law: 'Law', ace: 'Ace', worldbreaker: 'W. Hulk', hellbat: 'Hellbat', kinginblack: 'King Black', bluesuit: 'Blue Suit', mahoraga: 'Mahoraga', vastolorde: 'V. Lorde', flash: 'Flash', speedforce: 'Wally', todo: 'Todo', strange: 'Strange', ironman: 'Iron-Man', greenlantern: 'Lantern', beastboy: 'Beast Boy', omniman: 'Omni-Man', rexsplode: 'Rex', monstergirl: 'Monster', allen: 'Allen', yuji: 'Yuji', maki: 'Maki', megumi: 'Megumi', gojo: 'Gojo', ichigo: 'Ichigo', kenpachi: 'Kenpachi', byakuya: 'Byakuya', lillebarro: 'Lille', aizen: 'Aizen' };
+const SHORT = { ssjgoku: 'SSJ Gokoo', goku: 'Gokoo', vegeta: 'Vegetable', piccolo: 'Pickle-o', gohan: 'Goham', trunks: 'Shorts', gear5: 'Gear 5', luffy: 'Fluffy', zoro: 'Snoro', sanji: 'Sanjay', law: 'Lawn', ace: 'Spice', worldbreaker: 'W. Bulk', hellbat: 'Hellbad', kinginblack: 'King Slack', bluesuit: 'Blue Suit', mahoraga: 'Mahogany', vastolorde: 'P. Lorde', flash: 'Dash', speedforce: 'Wally', todo: 'To-Do', strange: 'Stranger', ironman: 'Irony Man', greenlantern: 'Flashlight', beastboy: 'Beast Bro', omniman: 'Omni-Dad', rexsplode: 'Rex', monstergirl: 'Monster', allen: 'Alvin', yuji: 'Yuji', maki: 'Maki', megumi: 'Megumi', gojo: 'Go-Joe', ichigo: 'Ichigo', kenpachi: 'Kenpatchy', byakuya: 'Byakuya', lillebarro: 'Lil', aizen: 'Ice-Zen', hulk: 'Bulk', batman: 'Badman', loki: 'Lokey', venom: 'Venum', superman: 'Superb Man', cyborg: 'Psyborg', invincible: 'Invincibull', mechamaru: 'Mechamaroo' };
 const FX_LABELS = [['speedBoost', 'SUPER SPEED', '#3f7bff'], ['hawk', 'HAWK FORM', '#5ad05a'], ['lowGrav', 'LOW GRAVITY', '#3ab8d0'], ['detGlide', 'GLIDE', '#ff7a1a'], ['hoverPack', 'HOVER PACK', '#9aa4b0'], ['airStep', 'AIR STEP', '#ff8a2a'], ['wallRun', 'WALL RUN', '#ff5a7a'], ['sprint', 'HEAVENLY SPRINT', '#6aa86a'], ['unstop', 'UNSTOPPABLE', '#ffd23a'], ['infinity', 'INFINITY', '#6ad0ff'], ['airWalk', 'REISHI WALK', '#8a5aff'], ['menace', 'MENACE', '#e8e8f0'], ['tachyon', 'TACHYON SURGE', '#dfe8ff']];
 const ABIL_GLYPH = { m1: 'LMB', m2: 'RMB', q: 'Q', e: 'E', r: 'R' };
 let hudKey = '';
@@ -10705,9 +10705,9 @@ function updateClaw(dt) {
 const NPCS = {
   cole: { name: 'Agent Cole', title: 'S.H.I.E.L.D. FIELD HANDLER', at: [HELI.x + 5, HELI.z + 18], face: Math.PI, color: '#6cf0ff', look: { top: [0x1c2230], pants: 0x14161c, skin: 0xc68a64, hair: 0x1a1410, eyes: [.02, .02, .02], scale: 1.05, weapon: 'none' },
     chatter: ['The rift doesn\'t sleep, and neither do I.', 'Check the Hero Claw when you have coins. Every file helps.', 'Gear Claw is new. Accessories stack up fast if you fuse the duplicates.'] },
-  montoya: { name: 'Det. Montoya', title: 'GCPD · MOST WANTED', at: [PLAZA.x + 13, PLAZA.z - 12], face: .6, color: '#4a7dff', look: { top: [0x1a2a5a], pants: 0x14182a, skin: 0xc68a64, hair: 0x1a1410, hat: 'cap', hatCol: 0x14182a, eyes: [.02, .02, .02], scale: 1, weapon: 'none' },
+  montoya: { name: 'Det. Monterey', title: 'GCPD · MOST WANTED', at: [PLAZA.x + 13, PLAZA.z - 12], face: .6, color: '#4a7dff', look: { top: [0x1a2a5a], pants: 0x14182a, skin: 0xc68a64, hair: 0x1a1410, hat: 'cap', hatCol: 0x14182a, eyes: [.02, .02, .02], scale: 1, weapon: 'none' },
     chatter: ['Gotham PD is stretched thin. Bounties keep the worst of them off the street.'] },
-  barry: { name: 'Barry Allen', title: 'SMALLVILLE DINER · LOST HIS SPEED', at: [-437.5, 398], face: -Math.PI / 2, color: '#ff3030', look: { top: [0x6a3a2a], pants: 0x2a3a5a, skin: 0xf1c8a8, hair: 0xa88a4a, eyes: [.02, .02, .02], scale: 1, weapon: 'none' },
+  barry: { name: 'Barry Allergen', title: 'SMALLVILLE DINER · LOST HIS SPEED', at: [-437.5, 398], face: -Math.PI / 2, color: '#ff3030', look: { top: [0x6a3a2a], pants: 0x2a3a5a, skin: 0xf1c8a8, hair: 0xa88a4a, eyes: [.02, .02, .02], scale: 1, weapon: 'none' },
     chatter: ['Coffee\'s good here. Not "Central City" good, but good.', 'I keep reaching for speed that isn\'t there.'] },
   joe: { name: 'Farmer Joe', title: 'HARVEST VALLEY FARM', at: [404, -486], face: Math.PI, color: '#e8b84a', look: { top: [0x2a4a8a], pants: 0x2a3a6a, skin: 0xe0ac88, hair: 0xb8b8c0, hat: 'straw', eyes: [.02, .02, .02], scale: 1.04, weapon: 'none' },
     chatter: ['Them bugs came right out of the sky. Ate half my corn.', 'Cows don\'t like the rift one bit.'] },
@@ -10715,14 +10715,14 @@ const NPCS = {
     chatter: ['Forty years I kept this light burning. Rift or no rift.'] },
   dusty: { name: 'Dusty', title: 'IRONRIDGE FOREMAN', at: [-350, -380], face: Math.PI, color: '#e8b020', look: { top: [0xe87a1a], pants: 0x2a3a5a, skin: 0x9a6a48, hair: 0x1a1410, hat: 'cap', hatCol: 0xe8c020, eyes: [.02, .02, .02], scale: 1.08, weapon: 'none' },
     chatter: ['Raiders moved into my quarry. Blasting caps and all.'] },
-  betty: { name: 'Betty Brant', title: 'DAILY BUGLE', at: [-22, -408], face: Math.PI, color: '#ff4a3a', look: { top: [0x6a3a8a], pants: 0x1a1a22, skin: 0xf1c8a8, hair: 0x6a4a2a, hairLong: true, eyes: [.02, .02, .02], scale: .96, weapon: 'none' },
+  betty: { name: 'Betty Brunt', title: 'DAILY BUGLE', at: [-22, -408], face: Math.PI, color: '#ff4a3a', look: { top: [0x6a3a8a], pants: 0x1a1a22, skin: 0xf1c8a8, hair: 0x6a4a2a, hairLong: true, eyes: [.02, .02, .02], scale: .96, weapon: 'none' },
     chatter: ['Jonah wants the evening edition on every newsstand. Yesterday.'] },
-  todo: { name: 'Aoi Todo', title: 'KYOTO JUJUTSU HIGH', at: [397, 11], face: 2.4, color: '#e8a050', look: { top: [0xe8e4d8], pants: 0x1a1a22, skin: 0xc68a64, hair: 0x1a1410, eyes: [.02, .02, .02], scale: 1.22, weapon: 'none' },
+  todo: { name: 'Aoi To-Do', title: 'KYOTO JUJUTSU HIGH', at: [397, 11], face: 2.4, color: '#e8a050', look: { top: [0xe8e4d8], pants: 0x1a1a22, skin: 0xc68a64, hair: 0x1a1410, eyes: [.02, .02, .02], scale: 1.22, weapon: 'none' },
     chatter: ['My best friend is out there somewhere. I can FEEL it.'] },
   // LOGUE TOWN
-  smoker: { name: 'Captain Smoker', title: 'MARINE HQ · LOGUE TOWN', at: [880, 71], face: Math.PI, color: '#dfe8ff', look: { top: [0xe8e8ee], pants: 0x34343e, skin: 0xc68a64, hair: 0xe4e4e4, coat: true, cigars: true, eyes: [.02, .02, .02], scale: 1.14, weapon: 'none' },
+  smoker: { name: 'Captain Smokey', title: 'MARINE HQ · LOGUE TOWN', at: [880, 71], face: Math.PI, color: '#dfe8ff', look: { top: [0xe8e8ee], pants: 0x34343e, skin: 0xc68a64, hair: 0xe4e4e4, coat: true, cigars: true, eyes: [.02, .02, .02], scale: 1.14, weapon: 'none' },
     chatter: ['Pirates flock to this town like moths. The rift just made the lamp brighter.', 'I don\'t care whose side you\'re on. Make trouble in my town and I\'ll smoke you out.'] },
-  tashigi: { name: 'Tashigi', title: 'MARINE SERGEANT', at: [846, -21], face: .83, color: '#8aa8ff', look: { top: [0xd88a9a], pants: 0x2a3a6a, skin: 0xf1c8a8, hair: 0x1a1e3a, glasses: true, eyes: [.02, .02, .02], scale: .95, weapon: 'katana' },
+  tashigi: { name: 'Tashiggy', title: 'MARINE SERGEANT', at: [846, -21], face: .83, color: '#8aa8ff', look: { top: [0xd88a9a], pants: 0x2a3a6a, skin: 0xf1c8a8, hair: 0x1a1e3a, glasses: true, eyes: [.02, .02, .02], scale: .95, weapon: 'katana' },
     chatter: ['Every famous blade belongs in the hands of someone who deserves it.', 'I\'m not clumsy. The cobblestones here are uneven.'] },
   gray: { name: 'Harbormaster Gray', title: 'LOGUE TOWN DOCKS', at: [989, -31], face: -Math.PI / 2, color: '#8ad0ff', look: { top: [0x2a4a6a], pants: 0x2a2a30, skin: 0xa0704c, hair: 0x8a8a8a, hat: 'cap', hatCol: 0x1a2a3a, eyes: [.02, .02, .02], scale: 1.05, weapon: 'none' },
     chatter: ['Forty ships in a week, and half of them flying the Jolly Roger.', 'The sea round here used to be quiet. Then the sky split.'] },
@@ -10743,7 +10743,7 @@ const QDEF = {
     reward: { coins: 400, xp: 350, gear: 1 } },
   main4: { giver: 'cole', main: true, ch: 4, title: 'Lightning Strikes Twice', lvl: 3, req: ['main3'],
     offer: ['Strange one. A man at the Smallville diner claims he used to outrun lightning.', 'The rift knocked something loose in him. Head out to the countryside, southwest of Gotham, and talk to him.'],
-    steps: [{ type: 'goto', at: [-430, 420], r: 40, text: 'Travel to Smallville' }, { type: 'talk', npc: 'barry', text: 'Talk to Barry Allen at the diner', lines: ['You\'re with S.H.I.E.L.D.? Great. I\'m Barry. Barry Allen.', 'Two days ago I was the Flash, the fastest man alive. Then the rift opened and my speed just... drained out.', 'If you\'re willing, I think we can get it back. Talk to me when you\'re ready.'] }],
+    steps: [{ type: 'goto', at: [-430, 420], r: 40, text: 'Travel to Smallville' }, { type: 'talk', npc: 'barry', text: 'Talk to Barry Allergen at the diner', lines: ['You\'re with S.H.I.E.L.D.? Great. I\'m Barry. Barry Allergen.', 'Two days ago I was the Dash, the fastest man alive. Then the rift opened and my speed just... drained out.', 'If you\'re willing, I think we can get it back. Talk to me when you\'re ready.'] }],
     reward: { coins: 300, xp: 400 } },
   main5: { giver: 'cole', main: true, ch: 5, title: 'Harvest Moon', lvl: 4, req: ['main4'],
     offer: ['Distress call from Harvest Valley, the farmland northeast of Gotham. Rift bugs are swarming out of the corn.', 'Get to the farm and hold the line at the barn.'],
@@ -10755,16 +10755,16 @@ const QDEF = {
     reward: { coins: 600, xp: 800, clawTickets: 1 } },
   main7: { giver: 'cole', main: true, ch: 7, title: 'Cursed Crossing', lvl: 6, req: ['main6'],
     offer: ['Shibuya, east of Gotham. Something big is feeding on the crowd at the scramble crossing.', 'The locals call it a Cursed Womb. Exorcise it.'],
-    steps: [{ type: 'goto', at: [386, 0], r: 50, text: 'Reach the Shibuya scramble crossing' }, { type: 'boss', boss: 'cursedwomb', at: [372, -18], text: 'Exorcise the Cursed Womb' }, { type: 'talk', npc: 'todo', text: 'Talk to the big guy watching you', lines: ['HAH! Not bad at all! I watched the whole thing.', 'I\'m Aoi Todo. And you... you have the eyes of someone worth knowing.', 'Come talk to me. I have ONE question for you.'] }],
+    steps: [{ type: 'goto', at: [386, 0], r: 50, text: 'Reach the Shibuya scramble crossing' }, { type: 'boss', boss: 'cursedwomb', at: [372, -18], text: 'Exorcise the Cursed Womb' }, { type: 'talk', npc: 'todo', text: 'Talk to the big guy watching you', lines: ['HAH! Not bad at all! I watched the whole thing.', 'I\'m Aoi To-Do. And you... you have the eyes of someone worth knowing.', 'Come talk to me. I have ONE question for you.'] }],
     reward: { coins: 700, xp: 1000 } },
   main8: { giver: 'cole', main: true, ch: 8, title: 'Ironridge Standoff', lvl: 9, req: ['main7'],
     offer: ['Raiders took over the Ironridge quarry northwest of Gotham. They\'re stockpiling explosives.', 'The foreman, Dusty, is holed up at the site office. Start with him.'],
     steps: [{ type: 'talk', npc: 'dusty', text: 'Find Dusty at the quarry office', lines: ['About time! Those raiders took my blasting stock. Five crates of it, in their camp to the southeast.', 'Blow the crates before they use them, and take out their king while you\'re at it.'] },
       { type: 'destroy', at: [[-340, -566], [-322, -552], [-316, -570], [-344, -548], [-330, -574]], text: 'Destroy the explosive crates' }, { type: 'boss', boss: 'raiderking', at: [-330, -560], text: 'Defeat the Raider King' }, { type: 'talk', npc: 'dusty', text: 'Report to Dusty', lines: ['Ha! I felt that one from here. The quarry\'s ours again, thanks to you.'] }],
     reward: { coins: 900, xp: 1400, gear: 2 } },
-  main9: { giver: 'cole', main: true, ch: 9, title: 'Viltrumite Incursion', lvl: 11, req: ['main8'],
-    offer: ['The Viltrumite warzone west of Gotham is launching drop pods. An elite is leading the assault.', 'Survive the drop, then put the elite in the ground.'],
-    steps: [{ type: 'goto', at: [-432, 0], r: 50, text: 'Enter the Viltrumite warzone' }, { type: 'defend', at: [-432, 0], r: 60, pods: true, waves: [['flaxan', 'flaxan', 'reanimen'], ['flaxan', 'viltrumite', 'flaxan'], ['viltrumite', 'reanimen', 'flaxan', 'flaxan']], text: 'Survive the drop-pod assault' }, { type: 'boss', boss: 'viltelite', at: [-432, 20], text: 'Defeat the Viltrumite Elite' }, { type: 'talk', npc: 'cole', text: 'Report back to Cole', lines: ['A Viltrumite. You beat a Viltrumite. I\'m putting that in the report in capital letters.'] }],
+  main9: { giver: 'cole', main: true, ch: 9, title: 'Wiltrumite Incursion', lvl: 11, req: ['main8'],
+    offer: ['The Wiltrumite warzone west of Gotham is launching drop pods. An elite is leading the assault.', 'Survive the drop, then put the elite in the ground.'],
+    steps: [{ type: 'goto', at: [-432, 0], r: 50, text: 'Enter the Wiltrumite warzone' }, { type: 'defend', at: [-432, 0], r: 60, pods: true, waves: [['flaxan', 'flaxan', 'reanimen'], ['flaxan', 'viltrumite', 'flaxan'], ['viltrumite', 'reanimen', 'flaxan', 'flaxan']], text: 'Survive the drop-pod assault' }, { type: 'boss', boss: 'viltelite', at: [-432, 20], text: 'Defeat the Wiltrumite Elite' }, { type: 'talk', npc: 'cole', text: 'Report back to Cole', lines: ['A Wiltrumite. You beat a Wiltrumite. I\'m putting that in the report in capital letters.'] }],
     reward: { coins: 1100, xp: 1800, gear: 3, gearTokens: 2 } },
   main10: { giver: 'cole', main: true, ch: 10, title: 'Gates of the Seireitei', lvl: 13, req: ['main9'],
     offer: ['An Espada has taken the Senzaikyu tower in the Seireitei, south of Gotham.', 'Its cero can level city blocks. Don\'t let it.'],
@@ -10794,11 +10794,11 @@ const QDEF = {
     offer: ['Before anything else, I need to know one thing.', 'WHAT KIND OF WOMAN IS YOUR TYPE?!'],
     choices: [['Tall, with a big butt.', 'That answer... BROTHER! We went to the same middle school! We\'re BEST FRIENDS!'], ['Someone kind and smart.', '...BORING. But your fists might not be. Let\'s find out.'], ['I don\'t really have a type.', '...BORING. But your fists might not be. Let\'s find out.']],
     after: ['Prove your strength first. Exorcise twelve cursed spirits in Shibuya, then face me.'],
-    steps: [{ type: 'kill', match: ['curse', 'spitter', 'grade1'], n: 12, text: 'Exorcise {n} cursed spirits in Shibuya' }, { type: 'talk', npc: 'todo', text: 'Face Todo at the crossing', lines: ['Good. GOOD! Now show me what you\'ve got, brother!'] }],
+    steps: [{ type: 'kill', match: ['curse', 'spitter', 'grade1'], n: 12, text: 'Exorcise {n} cursed spirits in Shibuya' }, { type: 'talk', npc: 'todo', text: 'Face To-Do at the crossing', lines: ['Good. GOOD! Now show me what you\'ve got, brother!'] }],
     reward: { coins: 500, xp: 700 } },
   todo2: { giver: 'todo', title: 'Brotherly Duel', lvl: 7, req: ['todo1'],
     offer: ['A duel, one on one. Watch out for my Boogie Woogie. When I clap, we trade places!'],
-    steps: [{ type: 'duel', boss: 'todoboss', at: [392, 16], text: 'Beat Aoi Todo in a duel' }, { type: 'talk', npc: 'todo', text: 'Talk to Todo', lines: ['Hah... HAH! My brother really IS the strongest!', 'Take my Hero File. With Boogie Woogie, no one can ever corner you. Clap, and the battlefield is yours!'] }],
+    steps: [{ type: 'duel', boss: 'todoboss', at: [392, 16], text: 'Beat Aoi To-Do in a duel' }, { type: 'talk', npc: 'todo', text: 'Talk to To-Do', lines: ['Hah... HAH! My brother really IS the strongest!', 'Take my Hero File. With Boogie Woogie, no one can ever corner you. Clap, and the battlefield is yours!'] }],
     reward: { coins: 700, xp: 900, hero: 'todo' } },
   // Farmer Joe
   joe1: { giver: 'joe', title: 'Pest Control', lvl: 4, req: ['main5'],
@@ -10825,31 +10825,31 @@ const QDEF = {
     reward: { coins: 700, xp: 900, gear: 2 } },
   // LOGUE TOWN — the island east of Shibuya
   logue1: { giver: 'cole', title: 'The Town of Beginnings', lvl: 10, req: ['main8'],
-    offer: ['Something rose out of the sea east of Shibuya when the rift flared. A whole island, with a town on it.', 'Logue Town, the locals call it. A Marine captain named Smoker is holding it together. Cross the bridge and find him.'],
-    steps: [{ type: 'goto', at: [760, 0], r: 26, text: 'Cross the bridge to Logue Town' }, { type: 'talk', npc: 'smoker', text: 'Find Captain Smoker at the Marine base', lines: ['S.H.I.E.L.D., huh. Never heard of it. Doesn\'t matter.', 'Pirates have been pouring into my town since that crack opened in the sky. I could use a hand that hits hard.', 'Talk to me when you\'re ready to work. My sergeant, Tashigi, could use help too.'] }],
+    offer: ['Something rose out of the sea east of Shibuya when the rift flared. A whole island, with a town on it.', 'Logue Town, the locals call it. A Marine captain named Smokey is holding it together. Cross the bridge and find him.'],
+    steps: [{ type: 'goto', at: [760, 0], r: 26, text: 'Cross the bridge to Logue Town' }, { type: 'talk', npc: 'smoker', text: 'Find Captain Smokey at the Marine base', lines: ['S.H.I.E.L.D., huh. Never heard of it. Doesn\'t matter.', 'Pirates have been pouring into my town since that crack opened in the sky. I could use a hand that hits hard.', 'Talk to me when you\'re ready to work. My sergeant, Tashiggy, could use help too.'] }],
     reward: { coins: 600, xp: 900 } },
   smoker1: { giver: 'smoker', title: 'Smoke Them Out', lvl: 10, req: ['logue1'],
     offer: ['Pirates are running loose in the streets, picking fights and picking pockets.', 'Knock ten of them flat. I\'ll handle the paperwork.'],
-    steps: [{ type: 'kill', match: ['pirate'], zone: 'onepiece', n: 10, text: 'Defeat {n} pirates in Logue Town' }, { type: 'talk', npc: 'smoker', text: 'Report to Smoker', lines: ['Hmph. Not bad. The ones in the cells won\'t shut up about you.'] }],
+    steps: [{ type: 'kill', match: ['pirate'], zone: 'onepiece', n: 10, text: 'Defeat {n} pirates in Logue Town' }, { type: 'talk', npc: 'smoker', text: 'Report to Smokey', lines: ['Hmph. Not bad. The ones in the cells won\'t shut up about you.'] }],
     reward: { coins: 700, xp: 1000 } },
   smoker2: { giver: 'smoker', title: 'Raid on the Docks', lvl: 11, req: ['smoker1'],
     offer: ['A whole crew is rowing in for the warehouses tonight. Longboats, at least three waves of them.', 'Hold the dockside. Nobody gets past the warehouses.'],
     steps: [{ type: 'goto', at: [950, 0], r: 40, text: 'Get to the dockside warehouses' }, { type: 'defend', at: [950, 0], r: 55, waves: [['pirate', 'pirate', 'pirate'], ['pirate', 'pirate', 'pirate', 'pirate'], ['pirate', 'pirate', 'pirate', 'pirate', 'pirate']], text: 'Hold the docks' },
-      { type: 'talk', npc: 'smoker', text: 'Report to Smoker', lines: ['The docks held. Good.', 'Now for the real problem. A clown calling himself a captain has climbed the execution platform in the plaza.'] }],
+      { type: 'talk', npc: 'smoker', text: 'Report to Smokey', lines: ['The docks held. Good.', 'Now for the real problem. A clown calling himself a captain has climbed the execution platform in the plaza.'] }],
     reward: { coins: 800, xp: 1200 } },
   smoker3: { giver: 'smoker', title: 'The Clown on the Scaffold', lvl: 12, req: ['smoker2'],
-    offer: ['Buggy the Clown. He thinks standing where the Pirate King died makes him the next one.', 'He eats blades for breakfast. Literally: cut him and he just comes apart. Hit him anyway.'],
-    steps: [{ type: 'goto', at: [868, 0], r: 30, text: 'Reach the execution platform' }, { type: 'boss', boss: 'buggy', at: [868, 0], text: 'Defeat Buggy the Clown' },
-      { type: 'talk', npc: 'smoker', text: 'Report to Smoker', lines: ['The clown\'s in a cell. Most of him, anyway. We\'re still looking for a hand.', 'You\'ve done this town a service. Don\'t let it go to your head.'] }],
+    offer: ['Boogie the Clown. He thinks standing where the Pirate King died makes him the next one.', 'He eats blades for breakfast. Literally: cut him and he just comes apart. Hit him anyway.'],
+    steps: [{ type: 'goto', at: [868, 0], r: 30, text: 'Reach the execution platform' }, { type: 'boss', boss: 'buggy', at: [868, 0], text: 'Defeat Boogie the Clown' },
+      { type: 'talk', npc: 'smoker', text: 'Report to Smokey', lines: ['The clown\'s in a cell. Most of him, anyway. We\'re still looking for a hand.', 'You\'ve done this town a service. Don\'t let it go to your head.'] }],
     reward: { coins: 900, xp: 1500 } },
   tashigi1: { giver: 'tashigi', title: 'Meito Hunt', lvl: 10, req: ['logue1'],
     offer: ['Five famous blades were scattered across town when the island surfaced. Graded swords, all of them.', 'One is on the scaffold, one out on the piers, one on the Marine base roof. The rest are somewhere in the streets. Please find them before the pirates do.'],
     steps: [{ type: 'collect', item: 'sword', at: [[868, 5.6, 0], [1010, 1.7, -96], [840, 14.4, 100], [928, 1.4, -66], [790, 1.4, -127]], text: 'Recover the famous swords' },
-      { type: 'talk', npc: 'tashigi', text: 'Bring the swords to Tashigi', lines: ['All five! And not a scratch on them. You have no idea how rare that is.', 'They\'ll go to the armory. Every one of them deserves a worthy hand.'] }],
+      { type: 'talk', npc: 'tashigi', text: 'Bring the swords to Tashiggy', lines: ['All five! And not a scratch on them. You have no idea how rare that is.', 'They\'ll go to the armory. Every one of them deserves a worthy hand.'] }],
     reward: { coins: 600, xp: 900 } },
   tashigi2: { giver: 'tashigi', title: 'Weapons of War', lvl: 11, req: ['tashigi1'],
-    offer: ['Some of our Pacifistas went haywire when the rift opened. They\'re attacking anyone in sight, Marines included.', 'They\'re walking weapons. Take down two of them.'],
-    steps: [{ type: 'kill', match: ['pacifista'], zone: 'onepiece', n: 2, text: 'Destroy {n} rogue Pacifistas' }, { type: 'talk', npc: 'tashigi', text: 'Report to Tashigi', lines: ['Two down. Someone in headquarters is going to have a very bad day.', 'Thank you. Truly.'] }],
+    offer: ['Some of our Pacifistos went haywire when the rift opened. They\'re attacking anyone in sight, Marines included.', 'They\'re walking weapons. Take down two of them.'],
+    steps: [{ type: 'kill', match: ['pacifista'], zone: 'onepiece', n: 2, text: 'Destroy {n} rogue Pacifistos' }, { type: 'talk', npc: 'tashigi', text: 'Report to Tashiggy', lines: ['Two down. Someone in headquarters is going to have a very bad day.', 'Thank you. Truly.'] }],
     reward: { coins: 700, xp: 1100 } },
   gray1: { giver: 'gray', title: 'Special Delivery', lvl: 10, req: ['logue1'],
     offer: ['A crate of medicine just came in, and it\'s needed somewhere in town right now. I\'ll mark where.', 'You\'ve got 35 seconds. Go!'],
@@ -11391,7 +11391,7 @@ function renderTablet() {
     h += `<div class="muted" style="margin-top:6px">Press <b>T</b> to cycle the tracked quest. Completed: ${Object.keys(S.q.done).length}.</div>`;
     h += `<h4>Street bounties · Rank ${S.rank}</h4><div class="muted">Every 3 completed quests raises your Rank. ${S.questsDone} completed so far.</div>`;
     h += quests.length ? quests.map(q => `<div class="setrow"><div>${q.text}<small>${q.have}/${q.n} · reward ${q.coins}◈ + ${q.xp} XP</small></div></div>`).join('') : '<div class="muted">Finish training first.</div>';
-    h += `<h4>Progression</h4><div class="muted">Level ${S.level} / ${MAX_LEVEL}. Charge unlocks at Lv ${UNLOCK.q}, Mobility at Lv ${UNLOCK.e}, Ultimate at Lv ${UNLOCK.r}. Every sector is open from the start; New York and Shibuya are recommended from Lv ${ZONES_DEF.marvel.min}, Seireitei and the Viltrumite Warzone from Lv ${ZONES_DEF.bleach.min}. The Garage Basement opens at Lv 50 in a future update.</div>`;
+    h += `<h4>Progression</h4><div class="muted">Level ${S.level} / ${MAX_LEVEL}. Charge unlocks at Lv ${UNLOCK.q}, Mobility at Lv ${UNLOCK.e}, Ultimate at Lv ${UNLOCK.r}. Every sector is open from the start; New York and Shibuya are recommended from Lv ${ZONES_DEF.marvel.min}, Seireitei and the Wiltrumite Warzone from Lv ${ZONES_DEF.bleach.min}. The Garage Basement opens at Lv 50 in a future update.</div>`;
   } else if (tabTab === 'sectors') {
     h += `<div class="muted" style="margin-bottom:12px">One sector per verse plus the countryside outskirts. Everything is open: walk, fly or drop in, but mind the recommended levels. ${tabDocked ? '<b style="color:#6cf0ff">DOCKED</b> — drop straight into any open sector.' : 'Dock at the Helicarrier tablet to drop into a sector.'}</div><div class="sgrid">`;
     for (const k of ZONE_KEYS) {
