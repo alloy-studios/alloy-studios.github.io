@@ -68,8 +68,10 @@ body {
   font: 15px/1.35 var(--body);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  user-select: none;
   -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   touch-action: manipulation;
 }
 [hidden] { display: none !important; }
@@ -89,7 +91,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   left: 0; right: 0; top: 13%;
   text-align: center;
   pointer-events: none;
-  transition: opacity 1.6s ease;
+  transition: opacity 0.5s ease;
   padding-inline: 20px;
 }
 .title.gone { opacity: 0; }
@@ -112,6 +114,50 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   animation: breathe 2.5s ease-in-out infinite;
 }
 @keyframes breathe { 50% { opacity: 0.45; } }
+.title kbd {
+  display: inline-block;
+  margin: 0 3px;
+  padding: 1px 9px 2px;
+  border: 1px solid var(--brass);
+  border-bottom-width: 3px;
+  border-radius: 4px;
+  font: 500 14px var(--body);
+  letter-spacing: 0.04em;
+  color: var(--parchment);
+  background: rgba(216, 183, 120, 0.1);
+}
+
+/* The sound switch: always on screen, and never more than one click away */
+.sound-btn {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: 14;
+  width: 38px;
+  height: 38px;
+  padding: 7px;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 11, 28, 0.72);
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--brass);
+  cursor: pointer;
+}
+.sound-btn svg { width: 100%; height: 100%; display: block; }
+.sound-btn.docked { position: absolute; top: 4px; right: 6px; width: 32px; height: 32px; padding: 6px; z-index: 2; }
+.panel-right .tabs { padding-right: 44px; }
+.sound-btn:hover { color: var(--parchment); border-color: var(--brass); }
+.sound-btn .cross { display: none; }
+.sound-btn.off { color: var(--mist); }
+.sound-btn.off .wave { display: none; }
+.sound-btn.off .cross { display: inline; }
+
+/* A gentle pulse on the thing a new player should do next */
+@keyframes hint { 50% { box-shadow: inset 0 0 0 1px rgba(255, 214, 140, 0.95), 0 0 18px rgba(255, 200, 110, 0.35); } }
+.planet-card.hint { animation: hint 1.4s ease-in-out infinite; box-shadow: inset 0 0 0 1px rgba(255, 214, 140, 0.45); }
+.act.hint { animation: call 1.3s ease-in-out infinite; }
+@keyframes rise-in { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* Top readout */
 .hud-top {
@@ -120,9 +166,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   left: 50%;
   transform: translateX(-50%);
   width: min(560px, calc(100vw - 2 * var(--panel-w) - 40px));
-  min-width: min(340px, calc(100vw - 24px));
+  min-width: min(240px, calc(100vw - 24px));
   text-align: center;
   pointer-events: none;
+  animation: rise-in 0.6s 0.35s ease both;
 }
 .light-row { display: flex; justify-content: center; align-items: baseline; gap: 9px; }
 .light-value {
@@ -178,15 +225,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
 .panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 @keyframes plate-in { from { opacity: 0; } }
-.panel-left { left: max(var(--gap), env(safe-area-inset-left, 0px)); }
+.panel-left { left: max(var(--gap), env(safe-area-inset-left, 0px)); bottom: auto; max-height: calc(100% - 2 * var(--gap)); }
 .panel-right { right: max(var(--gap), env(safe-area-inset-right, 0px)); }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px 8px; border-bottom: 1px solid var(--line); }
 .panel-head h2 { font: 400 19px var(--display); letter-spacing: 0.06em; color: var(--brass); }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 
 .head-tools { display: flex; align-items: center; gap: 7px; }
-.mute { width: 28px; height: 28px; padding: 0; background: none; border: 1px solid var(--line); color: var(--brass); cursor: pointer; font-size: 16px; line-height: 1; }
-.mute.off { color: var(--faint); text-decoration: line-through; }
+
 .buy-modes { display: flex; border: 1px solid var(--line); }
 .buy-modes button {
   background: none;
@@ -403,7 +449,7 @@ textarea.save-box {
   bottom: max(16px, env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   width: min(440px, calc(100vw - 2 * var(--panel-w) - 40px));
-  min-width: min(300px, calc(100vw - 24px));
+  min-width: min(240px, calc(100vw - 24px));
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -451,7 +497,7 @@ textarea.save-box {
   bottom: 118px;
   transform: translateX(-50%);
   width: min(520px, calc(100vw - 2 * var(--panel-w) - 40px));
-  min-width: min(300px, calc(100vw - 32px));
+  min-width: min(240px, calc(100vw - 32px));
   text-align: center;
   color: var(--parchment);
   font: italic 400 17.5px var(--body);
@@ -462,7 +508,7 @@ textarea.save-box {
   text-wrap: balance;
 }
 .line.show { opacity: 1; }
-.toasts { position: fixed; top: 14px; right: calc(var(--panel-w) + 26px); display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none; }
+.toasts { position: fixed; top: var(--toast-top, 120px); left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100vw - 2 * var(--panel-w) - 40px); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; z-index: 6; }
 .toast {
   background: var(--plate);
   border: 1px solid var(--line-strong);
@@ -584,8 +630,20 @@ textarea.save-box {
 /* Medium screens: narrower plates */
 @media (max-width: 1180px) { :root { --panel-w: 288px; } }
 
-/* Phones and small tablets: plates become drawers above a nav bar */
-@media (max-width: 860px) {
+/* Small desktop windows, such as a game portal's frame: slimmer plates and rows */
+@media (max-width: 1000px) {
+  :root { --panel-w: 264px; --gap: 10px; }
+  .planet-card { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; padding: 7px 10px 7px 7px; }
+  .pc-thumb, .pc-thumb canvas { width: 40px; height: 40px; }
+  .pc-name { font-size: 15px; }
+  .pc-buy { min-width: 54px; }
+  .panel-head { padding: 8px 10px 6px; }
+  .light-value { font-size: 36px; }
+}
+
+/* Phones and portrait screens: plates become drawers above a nav bar. Keep in step
+   with MOBILE_QUERY in js/ui.js. */
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1000px) {
   body { font-size: 15px; }
   .hud-top { width: calc(100vw - 24px); min-width: 0; }
   .light-value { font-size: 34px; }
@@ -598,6 +656,7 @@ textarea.save-box {
     bottom: calc(50px + env(safe-area-inset-bottom, 0px));
     width: auto;
     height: 47vh;
+    max-height: none;
     z-index: 12;
     display: none;
     border-left: 0;
@@ -626,7 +685,7 @@ textarea.save-box {
   body[data-drawer='planets'] .hud-bottom, body[data-drawer='side'] .hud-bottom { bottom: calc(47vh + 58px + env(safe-area-inset-bottom, 0px)); }
   .line { bottom: calc(136px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 32px); font-size: 16px; }
   body[data-drawer='planets'] .line, body[data-drawer='side'] .line { display: none; }
-  .toasts { top: 104px; right: 12px; left: 12px; align-items: center; }
+  .toasts { top: 104px; left: 12px; right: 12px; transform: none; width: auto; max-width: none; }
   .chart { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
   .chart-side { border-left: 0; border-top: 1px solid var(--line); max-height: 44vh; padding-block: 12px; gap: 8px; }
   .chart-side h2 { font-size: 20px; }
@@ -648,8 +707,12 @@ textarea.save-box {
 <div id="title" class="title">
   <h1>Starsong</h1>
   <p id="title-line">The universe has gone silent. One ember is left.</p>
-  <p class="title-hint">Tap the ember, in time with its pulse</p>
+  <p class="title-hint">Tap or press <kbd>Space</kbd> in time with the pulse</p>
 </div>
+
+<button id="btn-mute" class="sound-btn" type="button" title="Mute sound (S)" aria-label="Sound" aria-pressed="false">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.2h3.6L12.5 5v14l-4.9-4.2H4z" fill="currentColor"/><path class="wave" d="M15.6 8.6a4.8 4.8 0 0 1 0 6.8M18.2 6a8.4 8.4 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="cross" d="M16 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+</button>
 
 <header id="hud-top" class="hud-top" hidden>
   <div class="light-row">
@@ -668,7 +731,6 @@ textarea.save-box {
   <div class="panel-head">
     <h2>Orrery</h2>
     <div class="head-tools">
-      <button id="btn-mute" class="mute" type="button" title="Mute sound (S)" aria-label="Mute sound" aria-pressed="false">&#9834;</button>
       <div id="buy-modes" class="buy-modes" role="group" aria-label="Amount to buy"></div>
     </div>
   </div>
@@ -813,6 +875,53 @@ function fmtTime(sec) {
   if (sec < 86400) return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
   return Math.floor(sec / 86400) + 'd ' + Math.floor((sec % 86400) / 3600) + 'h';
 }
+
+/* Starsong: the page around the game. These defaults suit the Alloy site and a plain
+ * file, where nothing needs to hear from the game. The CrazyGames build loads
+ * platform/crazygames.js straight after this file, which swaps in SDK calls. Game code
+ * only ever talks to Platform, never to a portal SDK. */
+
+const Platform = {
+  id: 'web',
+  /** The game boots once this settles, so an SDK can start first. */
+  ready: Promise.resolve(),
+
+  /** Where saves live. Same shape as localStorage, so a portal can swap in its own. */
+  store: {
+    get(key) { try { return localStorage.getItem(key); } catch (err) { return null; } },
+    set(key, value) { try { localStorage.setItem(key, value); return true; } catch (err) { return false; } },
+    remove(key) { try { localStorage.removeItem(key); } catch (err) { /* storage blocked */ } },
+  },
+
+  /** Reasons the host wants silence, such as its own mute setting or an ad playing.
+   *  Any reason wins over the in-game sound setting. */
+  silencers: new Set(),
+  get silenced() { return this.silencers.size > 0; },
+  onSilence: null,
+  silence(reason, on) {
+    const before = this.silenced;
+    if (on) this.silencers.add(reason); else this.silencers.delete(reason);
+    if (before !== this.silenced && this.onSilence) this.onSilence();
+  },
+
+  /** Loading began (true) or finished (false). */
+  loading(on) {},
+  /** 'play' while the player can play, 'menu' while a dialog or the star chart is open. */
+  state(name) {},
+  /** A big moment worth celebrating outside the game. Use sparingly. */
+  happy() {},
+  /** How far through the game the player is, from 0 to 100. */
+  progress(percent) {},
+
+  /** Ad hooks. Nothing shows an ad unless ads.available() says so, which it never does here. */
+  ads: {
+    available: () => false,
+    /** A natural break, such as after a Supernova. done() always runs, ad or not. */
+    midgame(done) { if (done) done(); },
+    /** The player chose to watch one: reward() after a finished ad, otherwise fail(). */
+    rewarded(reward, fail) { if (fail) fail(); },
+  },
+};
 
 /* Starsong: game content. Everything a designer would want to tweak lives here. */
 
@@ -1158,7 +1267,7 @@ const Game = (() => {
         time: 0, taps: 0, perfects: 0, goods: 0, bestStreak: 0, crescendos: 0, grands: 0, grand8: 0,
         comets: 0, bestRun: ZERO, fastestNova: Infinity, classesPlayed: {}, created: Date.now(),
       },
-      settings: { muted: false, music: 0.7, sfx: 0.8, notation: 'short', quality: 'auto', autoLevel: '', flashes: true, floaters: true, latency: 0, mode: 1 },
+      settings: { muted: false, music: 0.7, sfx: 0.8, notation: 'short', quality: 'auto', autoLevel: '', flashes: true, floaters: true, latency: 0, autoTiming: true, mode: 1 },
       lastSeen: Date.now(),
     };
   }
@@ -1401,7 +1510,31 @@ const Game = (() => {
     let q = dist <= w.perfect ? 2 : dist <= w.good * (early ? 1.7 : 1) ? 1 : 0;
     if (nearest === s.lastTapBeat) q = 0;
     if (q > 0) s.lastTapBeat = nearest;
+    learnTiming(bps);
     return applyTap(q);
+  }
+
+  /* Sound reaches each player late by a different amount: a Chromebook speaker, a TV,
+   * Bluetooth headphones. Players tap to what they hear, so a steady lean early or late
+   * is the device, not the player. Taps near a beat teach the offset, which then moves
+   * the beat windows to match. Random tapping averages out and leaves it alone. */
+  const tapErrors = [];
+  function learnTiming(bps) {
+    if (!s.settings.autoTiming) return;
+    const frac = s.beat - Math.floor(s.beat);
+    const err = (frac < 0.5 ? frac : frac - 1) / bps * 1000;   // ms after the nearest beat
+    if (Math.abs(err) > 320) return;
+    tapErrors.push(err);
+    if (tapErrors.length > 24) tapErrors.shift();
+    if (tapErrors.length < 10 || tapErrors.length % 4) return;
+    const sorted = tapErrors.slice().sort((a, b) => a - b);
+    const lean = sorted[sorted.length >> 1];
+    const spread = sorted[Math.floor(sorted.length * 0.75)] - sorted[Math.floor(sorted.length * 0.25)];
+    if (spread > 160) return;                                  // not tapping to a beat at all
+    const now = s.settings.latency || 0;
+    if (Math.abs(lean - now) < 20) return;
+    const next = now + (lean - now) * 0.6;
+    s.settings.latency = Math.max(-150, Math.min(300, Math.round(next / 5) * 5));
   }
 
   function applyTap(q) {
@@ -2039,6 +2172,15 @@ const Game = (() => {
     return { away, secs, gain, eff: f.offlineEff, capped: away > f.offlineCap };
   }
 
+  /* Pays an offline report's Light a second time, for a rewarded ad. */
+  function grantOffline(report) {
+    if (!report || report.doubled || !(report.gain > ZERO / 2)) return false;
+    report.doubled = true;
+    addLight(report.gain);
+    checkStage();
+    return true;
+  }
+
   /* Sets a settings value and applies any side effects. */
   function setSetting(key, value) {
     s.settings[key] = value;
@@ -2046,7 +2188,7 @@ const Game = (() => {
   }
 
   return {
-    on, emit, tick, tap, applyTap, load, newState, serialize, deserialize, toCloud, fromCloud, applyOffline, setSetting,
+    on, emit, tick, tap, applyTap, load, newState, serialize, deserialize, toCloud, fromCloud, applyOffline, grantOffline, setSetting,
     buyPlanet, levelCost, maxAffordable, buyQuantity, nextMilestoneGap, planetLocked, growth,
     tuningVisible, tuningCost, buyTuning, autoTarget, autoWait,
     crescendoReady, startCrescendo, harmonyMult, dynLog, tapWindows, currentBps,
@@ -2178,7 +2320,8 @@ const Sound = (() => {
     padBus.connect(verbSend);
 
     running = true;
-    setVolumes(settings.muted ? 0 : settings.music, settings.muted ? 0 : settings.sfx);
+    const off = settings.muted || Platform.silenced;   // the host page can ask for silence too
+    setVolumes(off ? 0 : settings.music, off ? 0 : settings.sfx);
     playChord(0, 12);
   }
 
@@ -2210,8 +2353,10 @@ const Sound = (() => {
     const modGain = ctx.createGain();
     const env = ctx.createGain();
     car.type = voice.wave;
-    car.frequency.value = frequency;
-    mod.frequency.value = frequency * voice.ratio;
+    // High notes times a big ratio can pass what audio can carry. Above about 18 kHz
+    // nothing is audible anyway, and the browser would only warn about it.
+    car.frequency.value = Math.min(frequency, 16000);
+    mod.frequency.value = Math.min(frequency * voice.ratio, 18000);
     modGain.gain.setValueAtTime(frequency * voice.index * velocity, t);
     modGain.gain.exponentialRampToValueAtTime(Math.max(0.01, frequency * 0.02), t + voice.decay * 0.6);
     env.gain.setValueAtTime(0.0001, t);
@@ -2824,7 +2969,9 @@ const Render = (() => {
   const floats = [];
   function addFloat(x, y, text, color, size, life, vy) {
     if (floats.length > 44) floats.shift();
-    floats.push({ x, y, text, color, size: size || 14, life: life || 1.4, max: life || 1.4, vy: vy === undefined ? -28 : vy });
+    const f = { x, y, text, color, size: size || 14, life: life || 1.4, max: life || 1.4, vy: vy === undefined ? -28 : vy };
+    floats.push(f);
+    return f;
   }
 
   const rings = [];
@@ -2976,11 +3123,18 @@ const Render = (() => {
     look.pulse = Math.min(1.4, look.pulse + 0.1);
   }
 
+  let tapLabel = null, tapGain = null;
   function onTap(e) {
     const r = starPixelRadius();
     const labels = ['Off beat', 'Good', 'Perfect'];
     const colors = ['#8e8fa8', '#bfeaff', '#ffe2a6'];
-    addFloat(view.cx + (Math.random() - 0.5) * 30, view.cy - r * 1.9 - 12, labels[e.q], colors[e.q], e.q === 2 ? 19 : 15, 0.8, -36);
+    // One timing label at a time, or quick taps pile up into an unreadable stack
+    const lx = view.cx + (Math.random() - 0.5) * 30, ly = view.cy - r * 1.9 - 12;
+    if (tapLabel && tapLabel.life > 0 && floats.includes(tapLabel)) {
+      Object.assign(tapLabel, { x: lx, y: ly, text: labels[e.q], color: colors[e.q], size: e.q === 2 ? 19 : 15, life: tapLabel.max });
+    } else {
+      tapLabel = addFloat(lx, ly, labels[e.q], colors[e.q], e.q === 2 ? 19 : 15, 0.8, -36);
+    }
     if (e.q > 0) {
       addRing(view.cx, view.cy, r, r * 2.8 + 26, 0.5, e.q === 2 ? 'gold' : 'cyan', e.q === 2 ? 2.4 : 1.6);
       look.pulse = Math.min(1.5, look.pulse + (e.q === 2 ? 0.5 : 0.28));
@@ -2992,7 +3146,17 @@ const Render = (() => {
         }
       }
     }
-    if (Game.s.settings.floaters) addFloat(view.cx + 26 + Math.random() * 30, view.cy - r - 10, '+' + fmt(e.gain), '#f0e6d2', 13, 1, -30);
+    if (Game.s.settings.floaters) {
+      // Quick taps add into one rising number instead of stacking on top of each other
+      if (tapGain && floats.includes(tapGain) && tapGain.max - tapGain.life < 0.4) {
+        tapGain.sum = ladd(tapGain.sum, e.gain);
+        tapGain.text = '+' + fmt(tapGain.sum);
+        tapGain.life = tapGain.max;
+      } else {
+        tapGain = addFloat(view.cx + 26 + Math.random() * 30, view.cy - r - 10, '+' + fmt(e.gain), '#f0e6d2', 13, 1, -30);
+        tapGain.sum = e.gain;
+      }
+    }
   }
 
   function onBuy(e) {
@@ -3267,12 +3431,11 @@ const Render = (() => {
         ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = g;
         ctx.fillRect(view.cx - w / 2, y0, w, y1 - y0);
-        // The wider glow is built from faint layers, so it has no hard edges
-        ctx.globalAlpha = 0.16;
-        for (let k = 1; k <= 6; k++) {
-          const half = w * (0.5 + k * 0.45);
-          ctx.fillRect(view.cx - half, y0, half * 2, y1 - y0);
-        }
+        // The wider glow is the round glow sprite stretched along the line, so it is soft
+        // on every side rather than a lit box
+        const half = w * 3.2, len = y1 - y0;
+        ctx.globalAlpha = look.beamA * 0.5;
+        ctx.drawImage(GLOWS.gold, view.cx - half, y0 - len * 0.12, half * 2, len * 1.05);
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
       }
@@ -3417,7 +3580,7 @@ const Render = (() => {
       const e = 1 - (1 - k) * (1 - k);
       const c = GLOW_COLORS[r.color] || GLOW_COLORS.white;
       ctx.beginPath();
-      ctx.arc(r.x, r.y, r.r0 + (r.r1 - r.r0) * e, 0, TAU);
+      ctx.arc(r.x, r.y, Math.max(0, r.r0 + (r.r1 - r.r0) * e), 0, TAU);
       ctx.strokeStyle = `rgba(${c[0]},${c[1]},${c[2]},${(1 - k) * 0.8})`;
       ctx.lineWidth = r.width * (1 - k * 0.6);
       ctx.stroke();
@@ -3638,6 +3801,7 @@ const UI = (() => {
     m.appendChild(c);
     m.hidden = false;
     modalClose = opts.dismiss === false ? null : closeModal;
+    syncPlay();
     const first = row.querySelector('.primary') || row.querySelector('button');
     if (first) first.focus();
   }
@@ -3645,6 +3809,24 @@ const UI = (() => {
     $('modal').hidden = true;
     $('modal').innerHTML = '';
     modalClose = null;
+    syncPlay();
+  }
+
+  /* Tells the host page whether the player is playing or in a dialog. */
+  function syncPlay() {
+    const away = !$('modal').hidden || !!chartKind || !$('ending').hidden;
+    Platform.state(away ? 'menu' : 'play');
+  }
+
+  /* How far through the game the player is, from 0 to 100, for the host page. */
+  function progressPercent() {
+    const s = Game.s;
+    if (s.ended) return 100;
+    let p = s.supernovas > 0 ? 10 : 0;
+    p += Object.keys(s.trialsDone).length * 5;
+    if (s.collapses > 0) p += 10;
+    p += Object.keys(s.sky).length * 3;
+    return Math.min(99, p);
   }
   function textBlock(lines) {
     const d = el('div', 'pad');
@@ -3713,6 +3895,8 @@ const UI = (() => {
       c.auto.setAttribute('aria-pressed', String(picked));
       c.auto.title = (picked ? 'Auto-buy is on for ' : 'Auto-buy is off for ') + PLANETS[i].name;
       c.b.classList.toggle('saving', !!target && target.i === i && !target.ready);
+      // In the first run, a new planet you can afford glows until you buy it
+      c.b.classList.toggle('hint', s.supernovas === 0 && lv === 0 && !Game.planetLocked(i) && gte(s.light, Game.levelCost(i, 0, 1)));
       const locked = Game.planetLocked(i);
       const n = Game.buyQuantity(i, mode);
       const cost = Game.levelCost(i, lv, n);
@@ -4074,11 +4258,16 @@ const UI = (() => {
     p.appendChild(el('div', 'section-title', 'Sound'));
     slider('set-music', 'Music', s.settings.music, 0, 1, 0.05, (v) => { s.settings.music = v; applyVolumes(); });
     slider('set-sfx', 'Effects', s.settings.sfx, 0, 1, 0.05, (v) => { s.settings.sfx = v; applyVolumes(); });
-    slider('set-lat', 'Tap timing offset (' + s.settings.latency + ' ms)', s.settings.latency, -150, 150, 10, (v) => {
+    check('set-autotime', 'Match the beat to my taps', s.settings.autoTiming, (v) => { s.settings.autoTiming = v; });
+    slider('set-lat', 'Tap timing offset (' + s.settings.latency + ' ms)', s.settings.latency, -150, 300, 5, (v) => {
       s.settings.latency = v;
+      s.settings.autoTiming = false;
+      $('set-autotime').checked = false;
       $('set-lat').previousSibling.textContent = 'Tap timing offset (' + v + ' ms)';
     });
-    p.appendChild(el('p', 'note', 'If your taps feel on time but score Off beat, move the offset. Bluetooth headphones usually need a positive value.'));
+    p.appendChild(el('p', 'note', 'Sound can reach you late, especially on Bluetooth headphones. The game learns your timing as you tap. Moving the slider sets it by hand instead.'));
+    p.appendChild(el('div', 'section-title', 'Controls'));
+    p.appendChild(el('p', 'note', 'Space or click: tap on the beat. C: Crescendo. 1 to 8: buy planets. M: how many to buy. A: auto-buy on or off. S: sound on or off.'));
 
     p.appendChild(el('div', 'section-title', 'Display'));
     select('set-num', 'Numbers', s.settings.notation, [['short', '1.23 M'], ['sci', '1.23e6'], ['eng', '1.23e6 (steps of 3)']], (v) => { Game.setSetting('notation', v); refresh(); });
@@ -4207,6 +4396,7 @@ const UI = (() => {
     const root = $('chart');
     root.innerHTML = '';
     root.hidden = false;
+    syncPlay();
     const map = el('div', 'chart-map');
     const side = el('div', 'chart-side');
     const svg = svgEl('svg', kind === 'stars' ? { viewBox: '-610 -560 1220 1120', role: 'img', 'aria-label': 'Star chart' } : { viewBox: '0 0 1000 1000', role: 'img', 'aria-label': 'The twelve dead stars' });
@@ -4374,6 +4564,7 @@ const UI = (() => {
     $('chart').innerHTML = '';
     chartKind = null;
     chartRefs = null;
+    syncPlay();
   }
 
   /* ---------- Prestige flows ---------- */
@@ -4422,6 +4613,7 @@ const UI = (() => {
       Store.save();
       novaBusy = false;
       refreshTabs();
+      Platform.ads.midgame();
       if (first) {
         selectTab('chart');
         showLine('Spend your Stardust on the star chart. Open it from the Chart tab.');
@@ -4471,8 +4663,9 @@ const UI = (() => {
     box.append(el('h1', '', 'The silence is over.'), el('p', '', 'Every star you lit is singing now, and they will go on without you. It took ' + fmtTime(s.stats.time) + ', ' + fmtInt(s.supernovas) + ' Supernovas and ' + fmtInt(s.collapses) + ' Collapses.'));
     const b = el('button', 'btn primary', 'Stay and listen');
     b.type = 'button';
-    b.onclick = () => { box.hidden = true; };
+    b.onclick = () => { box.hidden = true; syncPlay(); };
     box.appendChild(b);
+    syncPlay();
   }
 
   /* ---------- Chips and HUD ---------- */
@@ -4510,7 +4703,10 @@ const UI = (() => {
     if (d.lps > -50 && ratio < 1) {
       const need = lsub(g.target, g.have);
       const secs = ex(need - d.lps);
-      if (secs < 5400) text += ', about ' + fmtTime(secs);
+      // A planet comes far sooner than income alone suggests, because buying the cheaper
+      // ones speeds it up. A long estimate would only put a new player off.
+      const limit = g.text.startsWith('Next planet') ? 90 : 5400;
+      if (secs < limit) text += ', about ' + fmtTime(secs);
     }
     put($('goal-text'), text);
     $('goal-fill').style.width = (Math.pow(ratio, 0.33) * 100) + '%';
@@ -4521,6 +4717,7 @@ const UI = (() => {
     show($('btn-crescendo'), Game.crescendoReady() && !(f.autoCresc && s.auto.cresc));
     const nova = Game.canSupernova();
     show($('btn-supernova'), nova);
+    $('btn-supernova').classList.toggle('hint', nova && s.supernovas === 0);
     if (nova) put($('btn-supernova'), 'Supernova: +' + fmt(Game.stardustGain()) + ' Stardust');
     const col = Game.canCollapse();
     show($('btn-collapse'), col);
@@ -4532,20 +4729,22 @@ const UI = (() => {
   function revealCheck() {
     const s = Game.s;
     const returning = s.supernovas > 0 || s.collapses > 0;
+    const hudWasHidden = $('hud-top').hidden;
     if (s.stats.taps > 0 || returning || s.runLight >= 0.5) { show($('hud-top'), true); hideTitle(); }
-    const wasHidden = $('panel-planets').hidden;
+    if (hudWasHidden && !$('hud-top').hidden) layout(); // so the first toast lands below the counter
+    const wasHidden = $('panel-planets').hidden || $('panel-side').hidden;
     if (s.runLight >= 0.7 || returning) show($('panel-planets'), true);
     if (s.runLight >= 1.5 || s.planets[1] > 0 || returning) show($('panel-side'), true);
     if (s.stats.goods + s.stats.perfects >= 3 || returning) show($('harmony'), true);
     show($('mobile-nav'), !$('panel-planets').hidden);
-    if (wasHidden && !$('panel-planets').hidden) layout();
+    if (wasHidden && (!$('panel-planets').hidden || !$('panel-side').hidden)) layout();
   }
 
   function hideTitle() {
     const t = $('title');
     if (t.hidden || t.classList.contains('gone')) return;
     t.classList.add('gone');
-    setTimeout(() => { t.hidden = true; }, 1800);
+    setTimeout(() => { t.hidden = true; }, 600);
   }
 
   function tipsCheck() {
@@ -4561,13 +4760,23 @@ const UI = (() => {
   }
 
   /* ---------- Layout ---------- */
+  // Keep in step with the drawer media query in css/style.css
+  const MOBILE_QUERY = '(max-width: 700px), (orientation: portrait) and (max-width: 1000px)';
   function isMobile() {
-    return window.innerWidth <= 860;
+    return window.matchMedia(MOBILE_QUERY).matches;
   }
 
   function layout() {
     const top = $('hud-top').hidden ? 20 : $('hud-top').getBoundingClientRect().bottom + 6;
     const left = $('panel-planets'), right = $('panel-side');
+    document.documentElement.style.setProperty('--toast-top', Math.round(top + 4) + 'px');
+    // The sound switch lives at the top right: in the corner of the upgrades plate once
+    // that is open, so it never crowds the Light counter, and in the window's corner before
+    const sound = $('btn-mute');
+    const dock = !isMobile() && !right.hidden;
+    if (dock && sound.parentElement !== right) right.appendChild(sound);
+    if (!dock && sound.parentElement !== document.body) document.body.insertBefore(sound, $('hud-top'));
+    sound.classList.toggle('docked', dock);
     if (isMobile()) {
       const drawer = document.body.dataset.drawer;
       const vh = window.innerHeight;
@@ -4598,11 +4807,13 @@ const UI = (() => {
   /* ---------- Sound controls ---------- */
   function applyVolumes() {
     const st = Game.s.settings;
-    Sound.setVolumes(st.muted ? 0 : st.music, st.muted ? 0 : st.sfx);
+    const off = st.muted || Platform.silenced;
+    Sound.setVolumes(off ? 0 : st.music, off ? 0 : st.sfx);
     const b = $('btn-mute');
-    b.classList.toggle('off', st.muted);
-    b.setAttribute('aria-pressed', String(st.muted));
-    b.title = st.muted ? 'Turn sound on (S)' : 'Mute sound (S)';
+    b.classList.toggle('off', off);
+    b.setAttribute('aria-pressed', String(off));
+    b.setAttribute('aria-label', off ? 'Sound is off' : 'Sound is on');
+    b.title = Platform.silenced ? 'Sound is off on this site' : st.muted ? 'Turn sound on (S)' : 'Mute sound (S)';
   }
   function toggleMute() {
     Game.s.settings.muted = !Game.s.settings.muted;
@@ -4655,9 +4866,23 @@ const UI = (() => {
     Game.tap();
   }
 
+  /* Tab moves between the game's own buttons and wraps around, so focus never escapes
+   * to the page around the game. */
+  function keepFocusInside(e) {
+    const all = [...document.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+      .filter((n) => !n.disabled && n.offsetParent !== null);
+    if (!all.length) { e.preventDefault(); return; }
+    const i = all.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); all[all.length - 1].focus(); }
+    else if (!e.shiftKey && (i === -1 || i === all.length - 1)) { e.preventDefault(); all[0].focus(); }
+  }
+
   function onKey(e) {
+    if (e.key === 'Tab') { keepFocusInside(e); return; }
     const tag = e.target && e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // Inside a portal's frame these would scroll the page around the game
+    if (e.key.startsWith('Arrow') || e.key === 'PageUp' || e.key === 'PageDown') e.preventDefault();
     if (e.key === 'Escape') {
       if (!$('modal').hidden) { if (modalClose) modalClose(); } else if (chartKind) closeChart();
       return;
@@ -4681,9 +4906,11 @@ const UI = (() => {
       refresh();
       return;
     }
-    if (k >= '1' && k <= '8') {
+    // The physical number keys, so AZERTY keyboards work without Shift
+    const digit = /^(Digit|Numpad)([1-8])$/.exec(e.code || '');
+    if (digit) {
       Sound.start(Game.s.settings);
-      Game.buyPlanet(Number(k) - 1, Game.s.settings.mode);
+      Game.buyPlanet(Number(digit[2]) - 1, Game.s.settings.mode);
       refresh();
     }
   }
@@ -4702,6 +4929,11 @@ const UI = (() => {
     Game.on('story', (e) => showLine(e.text));
     Game.on('tapBlocked', () => tip('tipSilence', 'Silence holds. You cannot tap in this Trial.'));
     Game.on('autoSupernova', () => runSupernova(Game.s.nextClass));
+    // Celebrations for the host page, kept to the three biggest moments
+    Game.on('supernova', () => { if (Game.s.supernovas === 1) Platform.happy(); });
+    Game.on('collapse', () => { if (Game.s.collapses === 1) Platform.happy(); });
+    Game.on('ending', () => Platform.happy());
+    ['supernova', 'trialDone', 'collapse', 'sky', 'ending'].forEach((name) => Game.on(name, () => Platform.progress(progressPercent())));
     Game.on('trialDone', (t) => {
       toast('Trial complete: ' + t.name, t.reward);
       Sound.chime([0, 2, 4, 7, 9], 0.1, 0.9);
@@ -4739,7 +4971,8 @@ const UI = (() => {
     $('fx').addEventListener('pointerdown', onPointer);
     window.addEventListener('keydown', onKey);
     window.addEventListener('resize', layout);
-    $('btn-mute').onclick = toggleMute;
+    $('btn-mute').onclick = (e) => { toggleMute(); if (e.detail) $('btn-mute').blur(); };
+    Platform.onSilence = applyVolumes;
     $('btn-crescendo').onclick = () => Game.startCrescendo();
     $('btn-supernova').onclick = confirmSupernova;
     $('btn-collapse').onclick = confirmCollapse;
@@ -4751,16 +4984,22 @@ const UI = (() => {
   function offlineReport(r) {
     if (!r) return;
     const lines = ['You were away for ' + fmtTime(r.away) + '.'];
+    const actions = [{ label: 'Back to the song', primary: true }];
     if (r.gain > ZERO / 2) {
       lines.unshift(el('div', 'big', '+' + fmt(r.gain) + ' Light'));
       lines.push('Your planets kept singing at ' + Math.round(r.eff * 100) + '% strength' + (r.capped ? ' for the first ' + fmtTime(r.secs) + '.' : '.'));
+      if (Platform.ads.available()) {
+        actions.push({ label: 'Watch an ad to double it', run: () => Platform.ads.rewarded(() => {
+          if (Game.grantOffline(r)) toast('Doubled', '+' + fmt(r.gain) + ' more Light.');
+        }) });
+      }
     } else {
       lines.push('Nothing was orbiting, so nothing changed.');
     }
-    openModal({ title: 'While you were gone', body: textBlock(lines), actions: [{ label: 'Back to the song', primary: true }] });
+    openModal({ title: 'While you were gone', body: textBlock(lines), actions });
   }
 
-  return { init, frame, refresh, rebuildAll, layout, offlineReport, showLine, toast, selectTab, openChart, closeChart, confirmSupernova, confirmCollapse };
+  return { init, frame, refresh, rebuildAll, layout, offlineReport, showLine, toast, selectTab, openChart, closeChart, confirmSupernova, confirmCollapse, syncPlay, progressPercent };
 })();
 
 /* Starsong: Alloy account sync. The Alloy Studios site owns sign-in and gives the game
@@ -4923,10 +5162,10 @@ const Store = (() => {
   let lastBackup = 0;
 
   function read(key) {
-    try { return localStorage.getItem(key); } catch (err) { return null; }
+    return Platform.store.get(key);
   }
   function write(key, value) {
-    try { localStorage.setItem(key, value); return true; } catch (err) { return false; }
+    return Platform.store.set(key, value);
   }
 
   function save() {
@@ -4958,7 +5197,8 @@ const Store = (() => {
 
   function wipe() {
     Cloud.pause();
-    try { localStorage.removeItem(KEY); localStorage.removeItem(BACKUP); } catch (err) { /* storage blocked */ }
+    Platform.store.remove(KEY);
+    Platform.store.remove(BACKUP);
     adopt(Game.newState());
   }
 
@@ -4982,8 +5222,17 @@ function startGame(hotData) {
   Game.s.lastSeen = Date.now();
 
   let last = performance.now(), undrawn = 0, frames = 0;
+  let firstFrame = true;
   function loop(now) {
-    const seconds = (now - last) / 1000;
+    // Queue the next frame first, so one bad frame can never stop the game
+    requestAnimationFrame(loop);
+    if (firstFrame) {
+      firstFrame = false;
+      Platform.loading(false);
+      UI.syncPlay();
+    }
+    // A frame's timestamp can come slightly before the moment the game started
+    const seconds = Math.max(0, (now - last) / 1000);
     const dt = Math.min(seconds, 0.25);
     last = now;
     Game.tick(dt);
@@ -4992,11 +5241,11 @@ function startGame(hotData) {
     undrawn += dt;
     if (!Render.lowPower() || frames++ % 2 === 0) { Render.frame(undrawn); undrawn = 0; }
     UI.frame(dt);
-    requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 
-  setInterval(() => { Store.save(); Cloud.push(); }, 15000);
+  setInterval(() => { Store.save(); Cloud.push(); Platform.progress(UI.progressPercent()); }, 15000);
+  Platform.progress(UI.progressPercent());
   Cloud.init();
 
   // Browsers stop animation frames in hidden tabs, so keep time moving at a slower rate.
@@ -5024,8 +5273,9 @@ function startGame(hotData) {
 (() => {
   const hot = window.claude && window.claude.hot;
   try { if (hot && hot.snapshot) hot.snapshot(() => ({ save: Game.serialize() })); } catch (err) { /* optional */ }
-  if (hot && hot.ready) hot.ready(startGame);
-  else startGame((hot && hot.data) || {});
+  const boot = (data) => Platform.ready.then(() => startGame(data || {}), () => startGame(data || {}));
+  if (hot && hot.ready) hot.ready(boot);
+  else boot(hot && hot.data);
 })();
 
 </script>

@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-11-11",
+      "title": "Starsong: a better first few minutes",
+      "body": "Starsong got a polish pass. New planets you can afford now glow so you know what to buy, the screen is tidier on smaller laptops, and there is a speaker button on screen at all times. Starsong now learns your timing from your own taps, so the beat still feels right if your sound runs a little late, like on Bluetooth headphones or some Chromebooks. You can still set the offset yourself in Settings. We also fixed a rare freeze on the first frame.",
+      "game": "starsong"
+    },
+    {
       "date": "2026-11-08",
       "title": "Two new islands in Project Hero",
       "body": "Project Hero has two new islands to fly out to. Off the east coast is a harbour town with five new heroes and an evolution for one of them, plus pirates, Marines, new quests and a boss to take down. Off the west coast is a tropical island with five more heroes and another evolution, where soldiers and androids roam and attack pods drop in. The helicarrier hub has a new look too, and every hero now goes by a new name of their own.",
