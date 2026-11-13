@@ -1,6 +1,12 @@
 {
   "posts": [
     {
+      "date": "2026-11-13",
+      "title": "Starsong: the song goes on",
+      "body": "The Final Song is no longer the end of Starsong. After it come three new layers: Encore, where you earn Echoes to spend on the Score; the Choir, where you gather Voices for the Hymnal and pick a new Chord each time; and Rebirth, where Resonance rewrites the Laws of Nature. The true ending, the First Note, waits at 1e10,000 Light, and it is a long way off. One balance change: a star now has to burn for 60 seconds before it can go Supernova, and the Binary class and comets have been toned down, so the early game can no longer be rushed.",
+      "game": "starsong"
+    },
+    {
       "date": "2026-11-11",
       "title": "Starsong: a better first few minutes",
       "body": "Starsong got a polish pass. New planets you can afford now glow so you know what to buy, the screen is tidier on smaller laptops, and there is a speaker button on screen at all times. Starsong now learns your timing from your own taps, so the beat still feels right if your sound runs a little late, like on Bluetooth headphones or some Chromebooks. You can still set the offset yourself in Settings. We also fixed a rare freeze on the first frame.",

@@ -51,6 +51,9 @@
   --harmony: #7fdcff;
   --dust: #d0b6ff;
   --void: #a596ff;
+  --echo: #ffc98a;
+  --voice: #8fe6c4;
+  --res: #f5a9dc;
   --good: #9be8a4;
   --display: 'Marcellus', Georgia, 'Times New Roman', serif;
   --body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
@@ -196,6 +199,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .chip.trial { color: #ffb9a6; border-color: rgba(255, 150, 120, 0.6); }
 .chip.dust { color: var(--dust); border-color: rgba(208, 182, 255, 0.5); }
 .chip.void { color: var(--void); border-color: rgba(165, 150, 255, 0.5); }
+.chip.echo { color: var(--echo); border-color: rgba(255, 201, 138, 0.5); }
+.chip.voice { color: var(--voice); border-color: rgba(143, 230, 196, 0.5); }
+.chip.res { color: var(--res); border-color: rgba(245, 169, 220, 0.5); }
 
 .goal { display: inline-flex; flex-direction: column; gap: 3px; margin-top: 7px; color: var(--mist); font-size: 13.5px; text-shadow: 0 1px 6px #000; }
 .goal-bar { display: block; width: 210px; max-width: 70vw; height: 3px; margin-inline: auto; background: rgba(216, 183, 120, 0.17); }
@@ -382,6 +388,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .row.can:hover { background: var(--plate-raise); }
 .row.can .row-cost { color: var(--parchment); }
 .row.can .row-name { color: #ffe9bf; }
+.row.owned { cursor: default; opacity: 0.62; }
+.row.owned .row-cost { color: var(--good); }
+.row:disabled { color: inherit; }
 .row.saving .row-name::after { content: ' · saving up'; color: var(--harmony); font: 400 13px var(--body); }
 
 /* Controls */
@@ -473,6 +482,8 @@ textarea.save-box {
 .harmony-track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4fb8e8, var(--harmony)); box-shadow: 0 0 10px rgba(127, 220, 255, 0.6); }
 .harmony.full .harmony-track i { background: linear-gradient(90deg, #ffc56b, #fff0c8); box-shadow: 0 0 14px rgba(255, 210, 122, 0.8); }
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.actions.many { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.actions.many .act { font-size: 14px; padding: 6px 10px; min-height: 40px; line-height: 1.2; }
 .act {
   pointer-events: auto;
   background: rgba(10, 11, 28, 0.82);
@@ -487,14 +498,18 @@ textarea.save-box {
 .act-nova { color: #fff; border-color: #8fc2ff; box-shadow: 0 0 22px rgba(120, 170, 255, 0.55); }
 .act-void { color: #dcd5ff; border-color: var(--void); box-shadow: 0 0 22px rgba(150, 130, 255, 0.5); }
 .act-song { color: #17120a; background: var(--brass); border-color: var(--brass); animation: call 1.6s ease-in-out infinite; }
+.act-echo { color: #ffe6c2; border-color: var(--echo); box-shadow: 0 0 22px rgba(255, 190, 120, 0.5); }
+.act-choir { color: #d8fff0; border-color: var(--voice); box-shadow: 0 0 22px rgba(120, 230, 190, 0.5); }
+.act-rebirth { color: #ffe0f4; border-color: var(--res); box-shadow: 0 0 22px rgba(245, 160, 215, 0.5); }
 .act:hover { filter: brightness(1.25); }
+.act:disabled { cursor: default; opacity: 0.6; box-shadow: none; filter: none; }
 @keyframes call { 50% { box-shadow: 0 0 30px rgba(255, 210, 122, 0.85); } }
 
 /* Messages */
 .line {
   position: fixed;
   left: 50%;
-  bottom: 118px;
+  bottom: var(--line-bottom, 118px);
   transform: translateX(-50%);
   width: min(520px, calc(100vw - 2 * var(--panel-w) - 40px));
   min-width: min(240px, calc(100vw - 32px));
@@ -584,6 +599,9 @@ textarea.save-box {
 .chart-balance { font: 400 22px var(--display); font-variant-numeric: lining-nums; }
 .chart-balance.dust { color: var(--dust); }
 .chart-balance.void { color: var(--void); }
+.chart-balance.echo { color: var(--echo); }
+.chart-balance.voice { color: var(--voice); }
+.chart-balance.res { color: var(--res); }
 .chart-detail { flex: 1; display: flex; flex-direction: column; gap: 6px; min-height: 130px; }
 .chart-detail h3 { font: 400 19px var(--display); }
 .chart-detail .arm { font-size: 13px; color: var(--faint); }
@@ -603,9 +621,17 @@ textarea.save-box {
 .cn.sel circle.ring { opacity: 1; }
 .cn circle.halo { fill: var(--col); opacity: 0; filter: blur(9px); }
 .cn circle.ring { fill: none; stroke: #fff; stroke-width: 1.2; opacity: 0; stroke-dasharray: 3 4; }
+.cn circle.hit { fill: transparent; }
 .ce { stroke: rgba(216, 183, 120, 0.2); stroke-width: 1.2; }
 .ce.lit { stroke: var(--col); stroke-opacity: 0.85; stroke-width: 1.8; }
 .arm-label { fill: var(--col); font: 400 21px var(--display); letter-spacing: 0.05em; text-anchor: middle; opacity: 0.85; }
+/* The Score */
+.staff-line { stroke: rgba(242, 233, 216, 0.32); stroke-width: 1.4; }
+.staff-bar { stroke: rgba(242, 233, 216, 0.45); stroke-width: 1.6; }
+.staff-bar.thick { stroke-width: 5; }
+.staff-dot { fill: rgba(242, 233, 216, 0.6); }
+.staff-stem { stroke: var(--col); stroke-width: 2.4; stroke-opacity: 0.22; }
+.staff-stem.lit { stroke-opacity: 0.95; }
 
 /* Ending */
 .ending {
@@ -624,6 +650,7 @@ textarea.save-box {
 }
 .ending h1 { font: 400 clamp(40px, 8vw, 78px)/1.1 var(--display); text-shadow: 0 0 40px rgba(255, 220, 160, 0.6); }
 .ending p { font-size: 19px; color: var(--parchment); max-width: 560px; font-style: italic; text-shadow: 0 1px 8px #000; }
+.ending p.ending-more { font-size: 16px; color: var(--brass); font-style: normal; }
 
 .mobile-nav { display: none; }
 
@@ -683,7 +710,7 @@ textarea.save-box {
   .mobile-nav button.on { color: var(--brass); box-shadow: inset 0 2px 0 var(--brass); }
   .hud-bottom { width: calc(100vw - 32px); bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
   body[data-drawer='planets'] .hud-bottom, body[data-drawer='side'] .hud-bottom { bottom: calc(47vh + 58px + env(safe-area-inset-bottom, 0px)); }
-  .line { bottom: calc(136px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 32px); font-size: 16px; }
+  .line { bottom: var(--line-bottom, calc(136px + env(safe-area-inset-bottom, 0px))); width: calc(100vw - 32px); font-size: 16px; }
   body[data-drawer='planets'] .line, body[data-drawer='side'] .line { display: none; }
   .toasts { top: 104px; left: 12px; right: 12px; transform: none; width: auto; max-width: none; }
   .chart { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
@@ -756,6 +783,10 @@ textarea.save-box {
     <button id="btn-supernova" class="act act-nova" type="button" hidden></button>
     <button id="btn-collapse" class="act act-void" type="button" hidden></button>
     <button id="btn-song" class="act act-song" type="button" hidden>Sing the Final Song</button>
+    <button id="btn-encore" class="act act-echo" type="button" hidden></button>
+    <button id="btn-choir" class="act act-choir" type="button" hidden></button>
+    <button id="btn-rebirth" class="act act-rebirth" type="button" hidden></button>
+    <button id="btn-first" class="act act-song" type="button" hidden>Sing the First Note</button>
   </div>
 </footer>
 
@@ -808,9 +839,9 @@ function lfloor(a) {
   return lg(Math.floor(ex(a) + 1e-7));
 }
 
-const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc',
-  'UDc', 'DDc', 'TDc', 'QaDc', 'QiDc', 'SxDc', 'SpDc', 'OcDc', 'NoDc', 'Vg',
-  'UVg', 'DVg', 'TVg', 'QaVg', 'QiVg', 'SxVg', 'SpVg', 'OcVg', 'NoVg', 'Tg'];
+const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'Nn', 'Dc',
+  'UDc', 'DDc', 'TDc', 'QaDc', 'QiDc', 'SxDc', 'SpDc', 'OcDc', 'NnDc', 'Vg',
+  'UVg', 'DVg', 'TVg', 'QaVg', 'QiVg', 'SxVg', 'SpVg', 'OcVg', 'NnVg', 'Tg'];
 
 const NumFormat = { mode: 'short' };
 
@@ -893,6 +924,11 @@ const Platform = {
     remove(key) { try { localStorage.removeItem(key); } catch (err) { /* storage blocked */ } },
   },
 
+  /** Wording that depends on where saves live: the Settings line about saving, and the
+   *  Erase warning. Null keeps the game's own wording, which describes this browser. */
+  saveNote: () => null,
+  eraseNote: () => null,
+
   /** Reasons the host wants silence, such as its own mute setting or an ad playing.
    *  Any reason wins over the in-game sound setting. */
   silencers: new Set(),
@@ -929,6 +965,7 @@ const BASE_BPM = 72;
 const BPM_CAP = 150;        // music never goes faster than this; extra tempo turns into yield
 const BEAT_CYCLE = 48;      // every orbit divides 48, so all planets realign every 48 beats
 const SN_REQ = 12;          // log10 Light needed for the first Supernova
+const SN_MIN_AGE = 60;      // seconds a star must burn before it can go Supernova
 const COLLAPSE_REQ = 100;   // log10 Light needed to Collapse
 const SONG_REQ = 1400;      // log10 Light needed for the Final Song
 const MIN_GROWTH = 1.12;    // planet price growth can never be reduced below this
@@ -1085,7 +1122,7 @@ const NODES = [
   { id: 'comet3', arm: 'comet', r: 2, o: 0.45, req: ['comet1'], cost: 15, name: 'Golden Comets', desc: '1 comet in 8 is golden and worth ×5.', fx: (f) => { f.goldChance = Math.max(f.goldChance, 0.125); } },
   { id: 'comet4', arm: 'comet', r: 3, o: 0, req: ['comet2', 'comet3'], cost: 1e3, name: 'Comet Net', desc: 'Comets you miss are caught for you at half value.', fx: (f) => { f.autoComet = true; } },
   { id: 'comet5', arm: 'comet', r: 4, o: -0.5, req: ['comet4'], cost: 2e5, name: 'Stardust Trails', desc: 'Comets can drop Stardust.', fx: (f) => { f.cometStardust = true; } },
-  { id: 'comet6', arm: 'comet', r: 4, o: 0.5, req: ['comet4'], cost: 2e5, name: 'Brighter Auroras', desc: 'Aurora effects are ×3 stronger.', fx: (f) => { f.cometPower *= 3; } },
+  { id: 'comet6', arm: 'comet', r: 4, o: 0.5, req: ['comet4'], cost: 2e5, name: 'Brighter Auroras', desc: 'Aurora effects are ×2 stronger.', fx: (f) => { f.cometPower *= 2; } },
   { id: 'comet7', arm: 'comet', r: 5, o: 0, req: ['comet5', 'comet6'], cost: 3e8, name: 'Meteor Showers', desc: 'Comets sometimes come in showers of six.', fx: (f) => { f.showers = true; } },
 
   /* The Hourglass */
@@ -1114,8 +1151,8 @@ const CLASSES = [
     scale: 'dorian', tint: [0.7, 0.86, 1.1], fx: (f) => { f.harmPer *= 3; f.harmDecay *= 2; } },
   { id: 'pulsar', name: 'Pulsar', style: 'For precise timing', desc: 'Conjunction bonus ×4 and Grand Conjunctions ×5. Tempo ×0.85.',
     scale: 'lydian', tint: [0.85, 0.75, 1.1], fx: (f) => { f.conjBonus *= 4; f.grandMult *= 5; f.bpmMul *= 0.85; } },
-  { id: 'binary', name: 'Binary Pair', style: 'For comet hunting', desc: 'Comets arrive ×4 as often and are worth ×3.',
-    scale: 'hirajoshi', tint: [1.05, 0.92, 0.75], fx: (f) => { f.cometRate *= 4; f.cometPower *= 3; f.cometLump *= 3; } },
+  { id: 'binary', name: 'Binary Pair', style: 'For comet hunting', desc: 'Comets arrive ×3 as often and are worth ×2.',
+    scale: 'hirajoshi', tint: [1.05, 0.92, 0.75], fx: (f) => { f.cometRate *= 3; f.cometPower *= 2; f.cometLump *= 2; } },
 ];
 const CLASS_BY_ID = Object.fromEntries(CLASSES.map((c) => [c.id, c]));
 
@@ -1159,6 +1196,93 @@ const SKY_BY_ID = Object.fromEntries(SKY.map((t) => [t.id, t]));
 const SKY_LINKS = [['vega', 'sirius'], ['sirius', 'altair'], ['altair', 'rigel'], ['rigel', 'deneb'], ['deneb', 'antares'], ['antares', 'capella'],
   ['capella', 'polaris'], ['polaris', 'spica'], ['spica', 'aldebaran'], ['aldebaran', 'vega'], ['aldebaran', 'betelgeuse'], ['betelgeuse', 'procyon'], ['procyon', 'rigel']];
 
+/* ---------- After the Final Song ----------
+ *
+ * Three more layers, each resetting everything below it:
+ *   Encore  (Echoes)     sing the song again for a bigger audience. The brighter the run,
+ *                         the more Echoes it brings. Echoes write notes on the Score.
+ *   Choir   (Voices)     other stars join in. Pick a Chord for the Choir to sing. Voices
+ *                         buy hymns in the Hymnal, and every Voice is a star in your sky.
+ *   Rebirth (Resonance)  let the universe breathe out and in. Resonance changes the Laws
+ *                         of Nature, and one of them leads to the true ending. */
+
+/* Balance for the layers after the Final Song. Each layer's currency grows tenfold for a
+ * fixed climb in the Light exponent, and each layer's reward adds to the Light exponent
+ * rather than raising it to a power, so no layer can run away with the economy. */
+const BAL = {
+  echoScale: 300,     // Echoes ×10 for every 300 more powers of ten of Light past the song
+  echoBonus: 15,      // Light ×(1 + Echoes earned this Choir) ^ this
+  voiceReq: 5e5,      // Voices = square root of (Echoes earned this Choir / this)
+  voiceBonus: 40,     // Light ×(1 + Voices earned since Rebirth) ^ this
+  resLog: 2,          // Resonance = (digits of Voices earned since Rebirth - this) squared
+  resBonus: 150,      // Light ×(1 + all Resonance ever) ^ this
+  refrainCost: 1e9,   // the first Refrain, in Echoes
+  refrainGrowth: 10,  // each Refrain costs this many times the last
+  refrainLight: 25,   // each Refrain multiplies Light by 10 ^ this
+};
+
+/* The Score: Echo upgrades written as notes on a staff. `m` is the measure (0 to 3) and
+ * `line` the note's height on the staff, 0 for the bottom line and 8 for the top. A
+ * measure opens once the one before it is complete. */
+const SCORE = [
+  { id: 'dacapo', m: 0, line: 2, cost: 1, name: 'Da Capo', desc: 'The whole star chart survives Collapse and Encore.', fx: (f) => { f.keepChart = true; } },
+  { id: 'memory', m: 0, line: 4, cost: 3, name: 'Stardust Memory', desc: 'Stardust gain ×1e50.', fx: (f) => { f.sdMult += 50; } },
+  { id: 'gravity', m: 0, line: 3, cost: 5, name: 'Pull of Gravity', desc: 'Collapse automatically once the Void gain reaches a target you set.', fx: (f) => { f.autoCollapse = true; } },
+  { id: 'ghosts', m: 0, line: 5, cost: 10, name: 'Choir of Ghosts', desc: 'All Light ×1e30.', fx: (f) => { f.yieldAll += 30; } },
+  { id: 'bright', m: 1, line: 4, cost: 25, name: 'Bright Echo', desc: 'All Light ^1.05.', fx: (f) => { f.lightPow *= 1.05; } },
+  { id: 'reverb', m: 1, line: 6, cost: 100, name: 'Long Reverb', desc: 'Void gain ×5.', fx: (f) => { f.voidMult *= 5; } },
+  { id: 'overtone', m: 1, line: 5, cost: 400, name: 'Overtones', desc: 'Stardust gain ×1e100.', fx: (f) => { f.sdMult += 100; } },
+  { id: 'orbits', m: 1, line: 7, cost: 2000, name: 'Wider Orbits', desc: 'All Light ×1e40.', fx: (f) => { f.yieldAll += 40; } },
+  { id: 'keychange', m: 2, line: 6, cost: 1e4, name: 'Key Change', desc: 'All Light ×1e50.', fx: (f) => { f.yieldAll += 50; } },
+  { id: 'fermata', m: 2, line: 8, cost: 3e4, name: 'Fermata', desc: 'Crescendos last twice as long, and Light ×1e25 while one plays.', fx: (f) => { f.crescLen *= 2; f.crescForce *= 1e25; } },
+  { id: 'echoes2', m: 2, line: 7, cost: 1e5, name: 'Echo of Echoes', desc: 'Echo gain ×3.', fx: (f) => { f.echoMult *= 3; } },
+  { id: 'orbits2', m: 2, line: 5, cost: 3e5, name: 'Wider Orbits II', desc: 'All Light ×1e80.', fx: (f) => { f.yieldAll += 80; } },
+  { id: 'grandecho', m: 3, line: 4, cost: 5e5, name: 'Grand Echo', desc: 'All Light ×1e60.', fx: (f) => { f.yieldAll += 60; } },
+  { id: 'perpetual', m: 3, line: 3, cost: 1e6, name: 'Perpetual Night', desc: 'All Light ×1e10 for every star lit in the sky.', fx: (f, s) => { f.yieldAll += 10 * Object.keys(s.sky).length; } },
+  { id: 'path', m: 3, line: 2, cost: 3e6, name: 'Starlit Path', desc: 'The Light each Collapse asks for rises 40% more slowly.', fx: (f) => { f.collapseEase = Math.min(f.collapseEase, 0.6); } },
+  { id: 'assembly', m: 3, line: 0, cost: 5e6, name: 'The Choir Assembles', desc: 'Other stars begin to listen. Unlocks the Choir.', fx: (f) => { f.choir = true; } },
+];
+const SCORE_BY_ID = Object.fromEntries(SCORE.map((n) => [n.id, n]));
+/* After the last bar line: a repeatable note to spend spare Echoes on. */
+const REFRAIN = { name: 'Refrain', desc: 'All Light ×1e' + BAL.refrainLight + ' per level. Repeatable.' };
+
+/* Chords: picked each time you join the Choir, like a star class. */
+const CHORDS = [
+  { id: 'major', name: 'Major', style: 'Bright', desc: 'All Light ×1e80.', scale: 'pentMajor', fx: (f) => { f.yieldAll += 80; } },
+  { id: 'minor', name: 'Minor', style: 'Haunting', desc: 'Echo gain ×10.', scale: 'pentMinor', fx: (f) => { f.echoMult *= 10; } },
+  { id: 'sus', name: 'Suspended', style: 'Restless', desc: 'Void gain ×10 and Stardust gain ×1e100.', scale: 'dorian', fx: (f) => { f.voidMult *= 10; f.sdMult += 100; } },
+  { id: 'seventh', name: 'Seventh', style: 'Unresolved', desc: 'Voice gain ×3.', scale: 'lydian', fx: (f) => { f.voiceMult *= 3; } },
+];
+const CHORD_BY_ID = Object.fromEntries(CHORDS.map((c) => [c.id, c]));
+
+/* The Hymnal: Voice upgrades, bought in any order. */
+const HYMNAL = [
+  { id: 'prelude', cost: 1, name: 'Remember the Prelude', desc: 'The first measure of the Score stays written when you join the Choir.', fx: (f) => { f.keepScore = Math.max(f.keepScore, 1); } },
+  { id: 'choral', cost: 2, name: 'Choral Light', desc: 'All Light ^1.05.', fx: (f) => { f.lightPow *= 1.05; } },
+  { id: 'antiphon', cost: 5, name: 'Antiphon', desc: 'Echo gain ×5.', fx: (f) => { f.echoMult *= 5; } },
+  { id: 'cantus', cost: 10, name: 'Cantus Firmus', desc: 'Your Void stays when you join the Choir.', fx: (f) => { f.keepVoid = true; } },
+  { id: 'spheres', cost: 20, name: 'Music of the Spheres', desc: 'All Light ×1e150.', fx: (f) => { f.yieldAll += 150; } },
+  { id: 'descant', cost: 50, name: 'Descant', desc: 'All Light ×1e100.', fx: (f) => { f.yieldAll += 100; } },
+  { id: 'plainsong', cost: 100, name: 'Plainsong', desc: 'Encore automatically once the Echo gain reaches a target you set.', fx: (f) => { f.autoEncore = true; } },
+  { id: 'theme', cost: 200, name: 'Remember the Theme', desc: 'The first two measures of the Score stay written when you join the Choir.', fx: (f) => { f.keepScore = Math.max(f.keepScore, 2); } },
+  { id: 'polyphony', cost: 500, name: 'Polyphony', desc: 'Voice gain ×3.', fx: (f) => { f.voiceMult *= 3; } },
+  { id: 'grandchoir', cost: 1000, name: 'Grand Choir', desc: 'All Light ×1e200.', fx: (f) => { f.yieldAll += 200; } },
+  { id: 'allthings', cost: 2000, name: 'Hymn of All Things', desc: 'The whole universe could breathe again. Unlocks Rebirth.', fx: (f) => { f.rebirth = true; } },
+];
+const HYMN_BY_ID = Object.fromEntries(HYMNAL.map((h) => [h.id, h]));
+
+/* The Laws of Nature: Resonance upgrades. They survive everything. */
+const TRUE_REQ = 10000;       // log10 Light needed for the First Note, the true ending
+const LAWS = [
+  { id: 'constant', cost: 1, name: 'Constant of Light', desc: 'All Light ^1.05.', fx: (f) => { f.lightPow *= 1.05; } },
+  { id: 'inertia', cost: 1, name: 'Inertia', desc: 'Every run has all the automation from the star chart, chart or not.', fx: (f) => { f.autoPlanets = 8; f.autoTunings = true; f.autoCresc = true; f.autoSupernova = true; f.keeper = Math.max(f.keeper, 0.85); } },
+  { id: 'conservation', cost: 3, name: 'Conservation of Song', desc: 'The first two measures of the Score and the first four hymns stay through Rebirth.', fx: (f) => { f.lawScore = Math.max(f.lawScore, 2); f.lawHymns = Math.max(f.lawHymns, 4); } },
+  { id: 'sympathy', cost: 5, name: 'Sympathetic Resonance', desc: 'Echo and Voice gains ×3.', fx: (f) => { f.echoMult *= 3; f.voiceMult *= 3; } },
+  { id: 'expansion', cost: 10, name: 'Expansion', desc: 'The universe grows. All Light ×1e300.', fx: (f) => { f.yieldAll += 300; } },
+  { id: 'firstnote', cost: 20, name: 'The First Note', desc: 'Remember what came before the first star. Reach 1e' + TRUE_REQ.toLocaleString('en-US') + ' Light to sing it.', fx: (f) => { f.firstNote = true; } },
+];
+const LAW_BY_ID = Object.fromEntries(LAWS.map((l) => [l.id, l]));
+
 /* Deeds: achievements. Each one adds 2% Light, multiplicatively. */
 const DEEDS = [
   { id: 'spark', name: 'Spark', desc: 'Tap the ember.', check: (s) => s.stats.taps >= 1 },
@@ -1176,7 +1300,7 @@ const DEEDS = [
   { id: 'billion', name: 'Noon', desc: 'Earn 1 billion Light in one run.', check: (s) => s.runLight >= 9 },
   { id: 'dawnbreak', name: 'Blue Hour', desc: 'Grow your star into a Blue Giant.', check: (s) => s.stage >= 5 },
   { id: 'crescendo', name: 'Crescendo', desc: 'Play your first Crescendo.', check: (s) => s.stats.crescendos >= 1 },
-  { id: 'crescendo25', name: 'Encore', desc: 'Play 25 Crescendos.', check: (s) => s.stats.crescendos >= 25 },
+  { id: 'crescendo25', name: 'Swelling Song', desc: 'Play 25 Crescendos.', check: (s) => s.stats.crescendos >= 25 },
   { id: 'grand', name: 'Grand Conjunction', desc: 'Line up every planet you own, with at least four.', check: (s) => s.stats.grands >= 1 },
   { id: 'grand8', name: 'Syzygy', desc: 'Line up all eight planets at once.', check: (s) => s.stats.grand8 >= 1 },
   { id: 'catch', name: 'Stargazer', desc: 'Catch a comet.', check: (s) => s.stats.comets >= 1 },
@@ -1198,6 +1322,18 @@ const DEEDS = [
   { id: 'sky12', name: 'Whole Sky', desc: 'Relight all twelve stars.', check: (s) => Object.keys(s.sky).length >= 12 },
   { id: 'e500', name: 'Absurd Light', desc: 'Earn 1e500 Light in one run.', check: (s) => s.runLight >= 500 },
   { id: 'song', name: 'The Final Song', desc: 'Sing the universe back.', check: (s) => s.ended },
+  { id: 'encore1', name: 'Encore!', desc: 'Sing the song again.', check: (s) => s.encores >= 1 },
+  { id: 'encore10', name: 'Standing Ovation', desc: 'Give 10 Encores.', check: (s) => s.encores >= 10 },
+  { id: 'score8', name: 'Halfway Through the Score', desc: 'Write 8 notes on the Score.', check: (s) => Object.keys(s.score).length >= 8 },
+  { id: 'scoreall', name: 'Full Score', desc: 'Write every note on the Score.', check: (s) => SCORE.every((n) => s.score[n.id]) },
+  { id: 'e3000', name: 'Unthinkable Light', desc: 'Earn 1e3000 Light in one run.', check: (s) => s.runLight >= 3000 },
+  { id: 'choir1', name: 'Voices in the Dark', desc: 'Join the Choir.', check: (s) => s.choirs >= 1 },
+  { id: 'chordall', name: 'Every Chord', desc: 'Join the Choir singing every Chord.', check: (s) => CHORDS.every((c) => s.stats.chordsSung[c.id]) },
+  { id: 'hymnall', name: 'Hymnal', desc: 'Learn every hymn.', check: (s) => HYMNAL.every((h) => s.hymnal[h.id]) },
+  { id: 'rebirth1', name: 'Breath', desc: 'Let the universe breathe.', check: (s) => s.rebirths >= 1 },
+  { id: 'rebirth3', name: 'Tides', desc: 'Let the universe breathe three times.', check: (s) => s.rebirths >= 3 },
+  { id: 'e7000', name: 'Beyond Number', desc: 'Earn 1e7000 Light in one run.', check: (s) => s.runLight >= 7000 },
+  { id: 'firstnote', name: 'The First Note', desc: 'Hear what came before the first star.', check: (s) => s.trueEnd },
 ];
 
 /* Story beats, shown once as they are reached. */
@@ -1218,6 +1354,14 @@ const STORY = {
   skyHalf: 'Six stars now. They are starting to answer each other.',
   skyAll: 'Twelve voices. One note is missing.',
   ending: 'The silence is over.',
+  firstEncore: 'They heard it. Further out than you knew, the dark is full of listeners.',
+  encore3: 'Each time you sing it, the song is bigger than the last.',
+  choirOpen: 'Other stars have learned the tune. They are waiting for you to begin.',
+  firstChoir: 'You are not one voice any more. The sky sings back in harmony.',
+  rebirthOpen: 'Everything that sings must also breathe.',
+  firstRebirth: 'The universe breathed out, and in. Something of the song stayed in the space between.',
+  firstNoteOpen: 'Before the first star, before the dark, there was one note. You can almost hear it.',
+  trueEnd: 'It was never silence. It was the rest between two notes.',
 };
 
 /* Starsong: game rules. No DOM access here, so the balance bot can run this file
@@ -1256,16 +1400,23 @@ const Game = (() => {
       stardust: ZERO, stardustTotal: ZERO, nodes: {},
       supernovas: 0, starClass: 'main', nextClass: 'main',
       trial: null, trialsDone: {},
-      voidCur: 0, voidTotal: 0, collapses: 0, sky: {},
+      voidCur: 0, voidTotal: 0, collapses: 0, collapseBase: 0, sky: {},
       ended: false, deeds: {}, story: {},
+      // After the Final Song. `...Here` counts since the layer above last reset,
+      // `...Earned` is what the bonus is worked out from.
+      encores: 0, encoresHere: 0, echoes: 0, echoesEarned: 0, score: {}, refrain: 0,
+      choirs: 0, voices: 0, voicesEarned: 0, hymnal: {}, chord: null,
+      rebirths: 0, resonance: 0, resonanceTotal: 0, laws: {}, trueEnd: false,
       auto: {
         planets: true, planetOn: [true, true, true, true, true, true, true, true],
         every: 0, share: 1, savePlanet: true, saveTuning: true, open: false,
         tunings: true, cresc: true, supernova: false, snTarget: 2, keeper: true,
+        collapse: false, voidTarget: 1, encore: false, echoTarget: 1,
       },
       stats: {
         time: 0, taps: 0, perfects: 0, goods: 0, bestStreak: 0, crescendos: 0, grands: 0, grand8: 0,
         comets: 0, bestRun: ZERO, fastestNova: Infinity, classesPlayed: {}, created: Date.now(),
+        echoes: 0, voices: 0, chordsSung: {},
       },
       settings: { muted: false, music: 0.7, sfx: 0.8, notation: 'short', quality: 'auto', autoLevel: '', flashes: true, floaters: true, latency: 0, autoTiming: true, mode: 1 },
       lastSeen: Date.now(),
@@ -1292,6 +1443,10 @@ const Game = (() => {
       classes: false, trials: false,
       keepHand: false, keepLyreCrown: false, finalSong: false,
       lightPow: 1, voidMult: 1,
+      // After the Final Song
+      keepChart: false, keepVoid: false, autoCollapse: false, collapseEase: 1,
+      echoMult: 1, encoreEase: 1, choir: false, keepScore: 0,
+      voiceMult: 1, autoEncore: false, rebirth: false, lawScore: 0, lawHymns: 0, firstNote: false,
     };
   }
 
@@ -1304,6 +1459,11 @@ const Game = (() => {
     for (const n of NODES) { const lv = s.nodes[n.id]; if (lv) n.fx(f, lv, s); }
     for (const t of TRIALS) if (s.trialsDone[t.id]) t.fx(f);
     for (const t of SKY) if (s.sky[t.id]) t.fx(f);
+    for (const n of SCORE) if (s.score[n.id]) n.fx(f, s);
+    if (s.refrain > 0) f.yieldAll += BAL.refrainLight * s.refrain;
+    if (s.chord && CHORD_BY_ID[s.chord]) CHORD_BY_ID[s.chord].fx(f);
+    for (const h of HYMNAL) if (s.hymnal[h.id]) h.fx(f);
+    for (const l of LAWS) if (s.laws[l.id]) l.fx(f);
     CLASS_BY_ID[s.starClass].fx(f);
     if (s.trial) TRIAL_BY_ID[s.trial].rules(f);
 
@@ -1313,6 +1473,8 @@ const Game = (() => {
     f.yieldAll += stardustBonusLog();
     f.yieldAll += voidBonusLog();
     f.yieldAll += s.stage * lg(f.stageMult);
+    // ...and from the layers after the Final Song
+    f.yieldAll += echoBonusLog() + voiceBonusLog() + resonanceBonusLog();
 
     // Tempo
     const rawBpm = f.bpmLock || (BASE_BPM + f.bpmAdd + s.stage * 4) * f.bpmMul;
@@ -1342,6 +1504,18 @@ const Game = (() => {
 
   function voidBonusLog() {
     return s.voidTotal > 0 ? 2 * Math.sqrt(s.voidTotal) : 0;
+  }
+
+  /* Echoes earned since you last joined the Choir, Voices since the last Rebirth and all
+   * Resonance ever each multiply Light by (1 + amount) to a fixed power. */
+  function echoBonusLog() {
+    return s.echoesEarned > 0 ? BAL.echoBonus * Math.log10(1 + s.echoesEarned) : 0;
+  }
+  function voiceBonusLog() {
+    return s.voicesEarned > 0 ? BAL.voiceBonus * Math.log10(1 + s.voicesEarned) : 0;
+  }
+  function resonanceBonusLog() {
+    return s.resonanceTotal > 0 ? BAL.resBonus * Math.log10(1 + s.resonanceTotal) : 0;
   }
 
   function planetYieldLog(i, lv) {
@@ -1607,7 +1781,9 @@ const Game = (() => {
     const out = { x: c.x, y: c.y, gold: c.gold };
     const light = Math.max(s.light, d.baseLps + lg(60));
     if (roll < 0.45) {
-      const g = ladd(d.baseLps + lg(90 + Math.random() * 120), s.light + lg(0.08)) + lg(power * f.cometLump);
+      // Comet strength multiplies the income part only. Multiplying a share of all the
+      // Light you hold made frequent comets compound without limit.
+      const g = ladd(d.baseLps + lg((90 + Math.random() * 120) * power * f.cometLump), s.light + lg(0.03));
       addLight(g);
       out.kind = 'lump'; out.gain = g;
     } else if (roll < 0.8 || s.harmony >= f.harmMax) {
@@ -1646,7 +1822,8 @@ const Game = (() => {
   /* Log price of one level. Above SUPER_LEVEL prices climb faster and faster, which
    * stops very late growth from feeding on itself. */
   function levelPrice(i, lv) {
-    const over = lv > SUPER_LEVEL ? lv - SUPER_LEVEL : 0;
+    const from = SUPER_LEVEL;
+    const over = lv > from ? lv - from : 0;
     return lg(PLANETS[i].cost) + f.costMul + lv * Math.log10(growth(i)) + over * over * SUPER_RATE;
   }
 
@@ -1875,6 +2052,10 @@ const Game = (() => {
       const gain = stardustGain();
       if (gain >= s.stardustTotal + lg(s.auto.snTarget)) emit('autoSupernova');
     }
+    // Pull of Gravity and Plainsong: the target is a share of what this layer has
+    // already earned, like the Supernova target
+    if (f.autoCollapse && s.auto.collapse && canCollapse() && !s.trial && voidGain() >= Math.max(1, s.voidTotal * s.auto.voidTarget)) emit('autoCollapse');
+    if (f.autoEncore && s.auto.encore && canEncore() && echoGain() >= Math.max(1, s.echoesEarned * s.auto.echoTarget)) emit('autoEncore');
   }
 
   /* Slow checks: stage changes, deeds, story and trials */
@@ -1883,6 +2064,9 @@ const Game = (() => {
     if (s.trial && s.runLight >= TRIAL_BY_ID[s.trial].goal) completeTrial();
     checkDeeds();
     if (canCollapse()) tell('collapseReady');
+    if (f.choir) tell('choirOpen');
+    if (f.rebirth) tell('rebirthOpen');
+    if (f.firstNote) tell('firstNoteOpen');
   }
 
   function checkStage() {
@@ -1912,8 +2096,15 @@ const Game = (() => {
   }
 
   /* Supernova */
+  /* A star must reach Blue Giant and burn for a minute. The minute stops a run of
+   * instant resets from outpacing the game: it once let a fast player finish in 1h45. */
   function canSupernova() {
-    return s.runLight >= SN_REQ;
+    return s.runLight >= SN_REQ && s.runTime >= SN_MIN_AGE;
+  }
+
+  /* Seconds until a Blue Giant is old enough to go Supernova. */
+  function novaWait() {
+    return s.runLight >= SN_REQ ? Math.max(0, SN_MIN_AGE - s.runTime) : Infinity;
   }
 
   function stardustGain() {
@@ -2023,7 +2214,8 @@ const Game = (() => {
 
   /* Collapse */
   function collapseReq() {
-    return COLLAPSE_REQ * (1 + 0.3 * s.collapses);
+    // Counted from the last Encore, which starts the first movement over
+    return COLLAPSE_REQ * (1 + 0.3 * (s.collapses - s.collapseBase) * f.collapseEase);
   }
 
   function canCollapse() {
@@ -2043,7 +2235,7 @@ const Game = (() => {
     s.collapses++;
     const kept = {};
     for (const n of NODES) {
-      const keep = (f.keepHand && n.arm === 'hand') || (f.keepLyreCrown && (n.arm === 'lyre' || n.arm === 'crown'));
+      const keep = f.keepChart || (f.keepHand && n.arm === 'hand') || (f.keepLyreCrown && (n.arm === 'lyre' || n.arm === 'crown'));
       if (keep && s.nodes[n.id]) kept[n.id] = s.nodes[n.id];
     }
     if (Object.keys(kept).length) kept.root = 1;
@@ -2089,6 +2281,220 @@ const Game = (() => {
     return true;
   }
 
+  /* ---------- After the Final Song ---------- */
+
+  /* An Encore starts the star over, as a Collapse does: the run, Stardust and the chart
+   * go, while the Void and the sky stay. */
+  function encoreReset(wipeChart) {
+    s.stardust = ZERO;
+    s.stardustTotal = ZERO;
+    if (wipeChart || !f.keepChart) s.nodes = {};
+    s.tunings = {};
+    s.starClass = 'main';
+    s.trial = null;
+    dirty = true;
+    rebuild();
+    resetRun();
+  }
+
+  /* Joining the Choir, or Rebirth, starts the whole first movement over: the chart and the
+   * Void as well. The stars relit in the sky stay lit for good, and so do Deeds, Trials
+   * and the layers above. */
+  function firstMovementReset() {
+    rebuild();                                   // what is kept depends on what was just reset
+    if (!f.keepVoid) {
+      s.voidCur = 0;
+      s.voidTotal = 0;
+      s.collapseBase = s.collapses;
+    }
+    s.nextClass = 'main';
+    encoreReset(true);
+  }
+
+  /* Encore: Echoes. Any run past the Final Song's Light can Encore, and every
+   * BAL.echoScale powers of ten of Light beyond it give ten times the Echoes. */
+  function encoreReq() {
+    return SONG_REQ;
+  }
+
+  function canEncore() {
+    return s.ended && f.finalSong && s.runLight >= encoreReq();
+  }
+
+  function echoGain() {
+    if (!canEncore()) return 0;
+    return Math.min(1e300, Math.floor(f.echoMult * Math.pow(10, (s.runLight - encoreReq()) / BAL.echoScale) + EPS));
+  }
+
+  function encore() {
+    if (!canEncore()) return false;
+    const gain = echoGain();
+    s.echoes += gain;
+    s.echoesEarned += gain;
+    s.stats.echoes += gain;
+    s.encores++;
+    s.encoresHere++;
+    encoreReset();
+    tell(s.encores === 1 ? 'firstEncore' : s.encores === 3 ? 'encore3' : '');
+    checkDeeds();
+    emit('encore', { gain });
+    return true;
+  }
+
+  function scoreAvailable(n) {
+    return n.m === 0 || SCORE.every((x) => x.m !== n.m - 1 || s.score[x.id]);
+  }
+
+  function buyScore(id) {
+    const n = SCORE_BY_ID[id];
+    if (!n || s.score[id] || !scoreAvailable(n) || s.echoes < n.cost) return false;
+    s.echoes -= n.cost;
+    s.score[id] = true;
+    dirty = true;
+    rebuild();
+    checkDeeds();
+    emit('score', n);
+    return true;
+  }
+
+  function refrainCost() {
+    return BAL.refrainCost * Math.pow(BAL.refrainGrowth, s.refrain);
+  }
+
+  function refrainOpen() {
+    return SCORE.every((n) => s.score[n.id]);
+  }
+
+  function buyRefrain() {
+    if (!refrainOpen() || s.echoes < refrainCost()) return false;
+    s.echoes -= refrainCost();
+    s.refrain++;
+    dirty = true;
+    rebuild();
+    emit('score', REFRAIN);
+    return true;
+  }
+
+  /* Choir: Voices, from the Echoes earned since you last joined. The Choir stays open
+   * once it has been joined, Score or not. */
+  function choirOpen() {
+    return f.choir || s.choirs > 0;
+  }
+
+  function voiceGain() {
+    if (!choirOpen()) return 0;
+    return Math.min(1e300, Math.floor(Math.sqrt(s.echoesEarned / BAL.voiceReq) * f.voiceMult + EPS));
+  }
+
+  function canChoir() {
+    return voiceGain() >= 1;
+  }
+
+  /* Keeps the Score's first `measures` measures and clears the rest. */
+  function keepMeasures(measures) {
+    const kept = {};
+    for (const n of SCORE) if (s.score[n.id] && n.m < measures) kept[n.id] = true;
+    s.score = kept;
+    s.refrain = 0;
+  }
+
+  function joinChoir(chord) {
+    if (!canChoir()) return false;
+    const gain = voiceGain();
+    s.voices += gain;
+    s.voicesEarned += gain;
+    s.stats.voices += gain;
+    s.choirs++;
+    s.chord = CHORD_BY_ID[chord] ? chord : s.chord || 'major';
+    s.stats.chordsSung[s.chord] = true;
+    keepMeasures(f.keepScore);
+    s.echoes = 0;
+    s.echoesEarned = 0;
+    s.encoresHere = 0;
+    firstMovementReset();
+    tell('firstChoir');
+    checkDeeds();
+    emit('choir', { gain });
+    return true;
+  }
+
+  function buyHymn(id) {
+    const h = HYMN_BY_ID[id];
+    if (!h || s.hymnal[id] || s.voices < h.cost) return false;
+    s.voices -= h.cost;
+    s.hymnal[id] = true;
+    dirty = true;
+    rebuild();
+    checkDeeds();
+    emit('hymn', h);
+    return true;
+  }
+
+  /* Rebirth: Resonance, from the Voices earned since the last Rebirth. */
+  function rebirthOpen() {
+    return f.rebirth || s.rebirths > 0;
+  }
+
+  function resonanceGain() {
+    if (!rebirthOpen() || s.voicesEarned < 1) return 0;
+    // Grows with the number of digits, so Resonance never runs away with the Light it feeds
+    const x = Math.log10(s.voicesEarned) - BAL.resLog;
+    return x > 0 ? Math.floor(x * x + EPS) : 0;
+  }
+
+  function canRebirth() {
+    return resonanceGain() >= 1;
+  }
+
+  function rebirth() {
+    if (!canRebirth()) return false;
+    const gain = resonanceGain();
+    s.resonance += gain;
+    s.resonanceTotal += gain;
+    s.rebirths++;
+    // The Laws decide what of the Hymnal and the Score survives
+    const hymns = {};
+    for (const h of HYMNAL.slice(0, f.lawHymns)) if (s.hymnal[h.id]) hymns[h.id] = true;
+    s.hymnal = hymns;
+    s.voices = 0;
+    s.voicesEarned = 0;
+    s.chord = null;
+    keepMeasures(f.lawScore);
+    s.echoes = 0;
+    s.echoesEarned = 0;
+    s.encoresHere = 0;
+    firstMovementReset();
+    tell('firstRebirth');
+    checkDeeds();
+    emit('rebirth', { gain });
+    return true;
+  }
+
+  function buyLaw(id) {
+    const l = LAW_BY_ID[id];
+    if (!l || s.laws[id] || s.resonance < l.cost) return false;
+    s.resonance -= l.cost;
+    s.laws[id] = true;
+    dirty = true;
+    rebuild();
+    emit('law', l);
+    return true;
+  }
+
+  /* The true ending. */
+  function canFirstNote() {
+    return !s.trueEnd && f.firstNote && s.runLight >= TRUE_REQ;
+  }
+
+  function singFirstNote() {
+    if (!canFirstNote()) return false;
+    s.trueEnd = true;
+    tell('trueEnd');
+    checkDeeds();
+    emit('trueEnd');
+    return true;
+  }
+
   /* Next goal text for the HUD */
   function nextGoal() {
     if (s.trial) {
@@ -2107,7 +2513,9 @@ const Game = (() => {
       const st = STAGES[s.stage + 1];
       return { text: 'Next star: ' + st.name, target: st.req, have: s.runLight };
     }
-    if (!canCollapse() && s.supernovas >= 5) return { text: 'Collapse the star', target: collapseReq(), have: s.runLight };
+    if (f.firstNote && !s.trueEnd && !canFirstNote()) return { text: 'The First Note: reach ' + fmt(TRUE_REQ) + ' Light', target: TRUE_REQ, have: s.runLight };
+    if (s.ended && f.finalSong && !canEncore()) return { text: 'Encore: reach ' + fmt(encoreReq()) + ' Light', target: encoreReq(), have: s.runLight };
+    if (!canCollapse() && s.supernovas >= 5 && !(s.ended && f.finalSong)) return { text: 'Collapse the star', target: collapseReq(), have: s.runLight };
     return null;
   }
 
@@ -2192,14 +2600,16 @@ const Game = (() => {
     buyPlanet, levelCost, maxAffordable, buyQuantity, nextMilestoneGap, planetLocked, growth,
     tuningVisible, tuningCost, buyTuning, autoTarget, autoWait,
     crescendoReady, startCrescendo, harmonyMult, dynLog, tapWindows, currentBps,
-    catchComet, canSupernova, stardustGain, supernova,
+    catchComet, canSupernova, novaWait, stardustGain, supernova,
     nodeAvailable, nodeMaxed, buyNode, enterTrial, leaveTrial,
     canCollapse, collapseReq, voidGain, collapse, buySky, canSing, sing, nextGoal,
+    encoreReq, canEncore, echoGain, encore, scoreAvailable, buyScore, refrainCost, refrainOpen, buyRefrain,
+    voiceGain, canChoir, joinChoir, buyHymn, resonanceGain, canRebirth, rebirth, buyLaw, canFirstNote, singFirstNote,
     get s() { return s; },
     get f() { return f; },
     get d() { return d; },
     get comet() { return comet; },
-    stardustBonusLog, voidBonusLog,
+    stardustBonusLog, voidBonusLog, echoBonusLog, voiceBonusLog, resonanceBonusLog, choirOpen, rebirthOpen,
     markDirty() { dirty = true; },
     rebuild,
     tell,
@@ -3185,8 +3595,16 @@ const Render = (() => {
       const a = Math.random() * TAU, sp = 70 + Math.random() * 260;
       spawn(view.cx + Math.cos(a) * r, view.cy + Math.sin(a) * r * 0.9, Math.cos(a) * sp, Math.sin(a) * sp, 1 + Math.random() * 0.9, 5 + Math.random() * 6, Math.random() < 0.5 ? 'gold' : 'ember', { drag: 1.2 });
     }
-    addFloat(view.cx, view.cy - r * 2.2 - 34, STAGES[Game.s.stage].name, '#fff1d0', 26, 2.6, -10);
+    // A fast run can pass several stages in a second. One name updates in place rather
+    // than a stack of names piling up over the star.
+    const name = STAGES[Game.s.stage].name, ly = view.cy - r * 2.2 - 34;
+    if (stageLabel && stageLabel.life > 0 && floats.includes(stageLabel)) {
+      Object.assign(stageLabel, { x: view.cx, y: ly, text: name, life: stageLabel.max });
+    } else {
+      stageLabel = addFloat(view.cx, ly, name, '#fff1d0', 26, 2.6, -10);
+    }
   }
+  let stageLabel = null;
 
   function onCometCaught(o) {
     const x = o.x !== undefined ? o.x : view.cx, y = o.y !== undefined ? o.y : view.cy;
@@ -3227,6 +3645,72 @@ const Render = (() => {
     ending = 0.0001;
   }
 
+  /* An Encore: the star rings like a bell and the audience answers in gold. */
+  function playEncore() {
+    const r = starPixelRadius();
+    const calm = !Game.s.settings.flashes || reducedMotion;
+    look.flash = Math.max(look.flash, calm ? 0.12 : 0.4);
+    for (let k = 0; k < 4; k++) addRing(view.cx, view.cy, r, r + 240 + k * 150, 1.4 + k * 0.45, k % 2 ? 'rose' : 'gold', 3.2 - k * 0.6);
+    for (let k = 0; k < 170; k++) {
+      const a = Math.random() * TAU, sp = 60 + Math.random() * 420;
+      spawn(view.cx, view.cy, Math.cos(a) * sp, Math.sin(a) * sp, 1.3 + Math.random() * 2, 5 + Math.random() * 9, k % 3 ? 'gold' : 'white', { drag: 1.1 });
+    }
+  }
+
+  /* The Choir: new voices fly out from the star to take their places in the sky. */
+  function playChoir() {
+    const r = starPixelRadius();
+    look.flash = Math.max(look.flash, Game.s.settings.flashes && !reducedMotion ? 0.35 : 0.1);
+    for (let k = 0; k < 3; k++) addRing(view.cx, view.cy, r, r + 320 + k * 200, 1.8 + k * 0.5, k === 1 ? 'cyan' : 'green', 3 - k * 0.6);
+    for (let k = 0; k < 120; k++) {
+      const a = Math.random() * TAU, sp = 160 + Math.random() * 520;
+      spawn(view.cx, view.cy, Math.cos(a) * sp, Math.sin(a) * sp, 2 + Math.random() * 1.8, 6 + Math.random() * 8, k % 2 ? 'green' : 'cyan', { drag: 0.5 });
+    }
+  }
+
+  /* Rebirth: everything is drawn in, then the universe breathes out again. */
+  let rebirthFx = null;
+  function playRebirth() {
+    rebirthFx = { t: 0, bloomed: false };
+  }
+  function bloomRebirth() {
+    const r = starPixelRadius() + 20;
+    const loud = Game.s.settings.flashes && !reducedMotion;
+    look.flash = loud ? 0.9 : 0.25;
+    look.shockR = r; look.shockA = 1.2;
+    for (let k = 0; k < 5; k++) addRing(view.cx, view.cy, r, r + 300 + k * 220, 2 + k * 0.5, ['violet', 'rose', 'cyan', 'white', 'violet'][k], 3);
+    for (let k = 0; k < 260; k++) {
+      const a = Math.random() * TAU, sp = 80 + Math.random() * 640;
+      spawn(view.cx, view.cy, Math.cos(a) * sp, Math.sin(a) * sp, 1.6 + Math.random() * 2.6, 6 + Math.random() * 12, ['violet', 'rose', 'cyan', 'white'][k % 4], { drag: 0.7 });
+    }
+  }
+
+  /* Everyone who has heard the song: a gold twinkle for each Encore, and a green star for
+   * every step up in the Voices the Choir has gathered. */
+  function rnd(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function drawAudience() {
+    const s = Game.s;
+    const fans = Math.min(150, s.encores * 3);
+    const voices = s.voicesEarned > 0 ? Math.min(90, Math.round(Math.log10(1 + s.voicesEarned) * 7)) : 0;
+    if (!fans && !voices) return;
+    const minR = Math.min(W, H) * 0.3;
+    ctx.globalCompositeOperation = 'lighter';
+    for (let k = 0; k < fans + voices; k++) {
+      const voice = k >= fans;
+      const seed = voice ? 5000 + (k - fans) : k;
+      let x = rnd(seed * 3 + 1) * W, y = rnd(seed * 3 + 2) * H;
+      // Keep the middle clear for the star system
+      const dx = x - view.cx, dy = y - view.cy, d = Math.hypot(dx, dy);
+      if (d < minR) { const m = minR / Math.max(d, 1); x = view.cx + dx * m; y = view.cy + dy * m; }
+      const tw = 0.55 + 0.45 * Math.sin(time * (0.5 + rnd(seed * 3 + 3) * 1.6) + seed);
+      ctx.globalAlpha = (voice ? 0.8 : 0.5) * tw;
+      const sz = voice ? 18 : 10;
+      ctx.drawImage(voice ? GLOWS.green : GLOWS.gold, x - sz / 2, y - sz / 2, sz, sz);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
   function burstNova() {
     const r = starPixelRadius() + 20;
     look.flash = Game.s.settings.flashes && !reducedMotion ? 1 : 0.28;
@@ -3258,8 +3742,15 @@ const Render = (() => {
       look.bh = t < 2 ? t / 2 : t < 6 ? 1 : Math.max(0, 1 - (t - 6) / 2.5);
       if (t > 8.5) { collapseFx = null; look.bh = 0; }
     }
+    if (rebirthFx) {
+      rebirthFx.t += dt;
+      const t = rebirthFx.t;
+      if (t >= 2.4 && !rebirthFx.bloomed) { rebirthFx.bloomed = true; bloomRebirth(); }
+      look.bh = t < 2.4 ? t / 2.4 : Math.max(0, 1 - (t - 2.4) / 1.2);
+      if (t > 4) { rebirthFx = null; look.bh = 0; }
+    }
     const k = 1 - Math.exp(-dt * 3);
-    const nr = nova && nova.t < 3.2 ? (nova.t < 0.75 ? st.radius + 34 * (nova.t / 0.75) : 0.5) : collapseFx ? 22 : targetR;
+    const nr = nova && nova.t < 3.2 ? (nova.t < 0.75 ? st.radius + 34 * (nova.t / 0.75) : 0.5) : collapseFx || (rebirthFx && !rebirthFx.bloomed) ? 22 : targetR;
     look.starR += (nr - look.starR) * (nova && nova.t > 0.75 ? 1 - Math.exp(-dt * 16) : k);
     for (let i = 0; i < 3; i++) {
       look.starCore[i] += (st.core[i] * tint[i] - look.starCore[i]) * k;
@@ -3611,7 +4102,7 @@ const Render = (() => {
     for (let i = ghosts.length - 1; i >= 0; i--) {
       const g = ghosts[i];
       g.t += dt;
-      const inward = !!collapseFx;
+      const inward = !!collapseFx || !!rebirthFx;
       if (inward) {
         const dx = view.cx - g.x, dy = view.cy - g.y;
         const d = Math.hypot(dx, dy) || 1;
@@ -3640,17 +4131,19 @@ const Render = (() => {
     if (look.shake > 0.3) ctx.translate((Math.random() - 0.5) * look.shake, (Math.random() - 0.5) * look.shake);
 
     drawSkyStars();
-    if (!nova && !collapseFx) drawOrbits();
+    const hush = nova || collapseFx || (rebirthFx && !rebirthFx.bloomed);
+    if (!hush) drawAudience();
+    if (!hush) drawOrbits();
 
     const s = Game.s;
     const list = [];
-    if (!nova && !collapseFx) {
+    if (!hush) {
       for (let i = 0; i < 8; i++) if (s.planets[i] > 0) list.push({ i, pos: planetPos(i, s.beat) });
       list.sort((a, b) => a.pos.depth - b.pos.depth);
       for (const e of list) if (e.pos.depth < 0) drawPlanet(e.i, e.pos, s.planets[e.i], dt);
     }
     drawBeatGuide();
-    if (!nova && !collapseFx) for (const e of list) if (e.pos.depth >= 0) drawPlanet(e.i, e.pos, s.planets[e.i], dt);
+    if (!hush) for (const e of list) if (e.pos.depth >= 0) drawPlanet(e.i, e.pos, s.planets[e.i], dt);
     drawGhosts(dt);
     drawRings(dt);
     drawParticles(dt);
@@ -3703,9 +4196,9 @@ const Render = (() => {
   }
 
   return {
-    init, reset, resize, frame, setInsets, fitView, planetThumb, captureGhosts, playSupernova, playCollapse, playEnding, hitComet, watchFrames, lowPower,
+    init, reset, resize, frame, setInsets, fitView, planetThumb, captureGhosts, playSupernova, playCollapse, playEnding, playEncore, playChoir, playRebirth, hitComet, watchFrames, lowPower,
     get hasGL() { return !!gl; },
-    get busy() { return !!nova || !!collapseFx; },
+    get busy() { return !!nova || !!collapseFx || !!rebirthFx; },
   };
 })();
 
@@ -3821,12 +4314,17 @@ const UI = (() => {
   /* How far through the game the player is, from 0 to 100, for the host page. */
   function progressPercent() {
     const s = Game.s;
-    if (s.ended) return 100;
-    let p = s.supernovas > 0 ? 10 : 0;
-    p += Object.keys(s.trialsDone).length * 5;
-    if (s.collapses > 0) p += 10;
-    p += Object.keys(s.sky).length * 3;
-    return Math.min(99, p);
+    if (s.trueEnd) return 100;
+    if (s.ended) {
+      // After the Final Song: the Score, the Hymnal and the Laws
+      const most = (o) => Object.keys(o).length;
+      return Math.min(99, 50 + most(s.score) + (s.choirs > 0 ? 4 : 0) + most(s.hymnal) * 2 + (s.rebirths > 0 ? 4 : 0) + most(s.laws) * 3);
+    }
+    let p = s.supernovas > 0 ? 5 : 0;
+    p += Object.keys(s.trialsDone).length * 2.5;
+    if (s.collapses > 0) p += 5;
+    p += Object.keys(s.sky).length * 1.5;
+    return Math.min(49, p);
   }
   function textBlock(lines) {
     const d = el('div', 'pad');
@@ -4007,7 +4505,9 @@ const UI = (() => {
     { id: 'chart', label: 'Chart', when: (s) => s.supernovas > 0, build: buildChartTab, tick: refreshChartTab },
     { id: 'trials', label: 'Trials', when: () => Game.f.trials, build: buildTrials },
     { id: 'sky', label: 'Sky', when: (s) => s.collapses > 0 || Game.canCollapse(), build: buildSkyTab, tick: refreshSkyTab },
-    { id: 'deeds', label: 'Deeds', when: () => true, build: buildDeeds },
+    { id: 'score', label: 'Score', when: (s) => s.ended, build: buildScoreTab, tick: refreshScoreTab },
+    { id: 'choir', label: 'Choir', when: () => Game.choirOpen(), build: buildChoirTab, tick: refreshChoirTab },
+    { id: 'laws', label: 'Laws', when: () => Game.rebirthOpen(), build: buildLawsTab, tick: refreshLawsTab },
     { id: 'journal', label: 'Journal', when: () => true, build: buildJournal },
     { id: 'settings', label: 'Settings', when: () => true, build: buildSettings, tick: refreshCloudLine },
   ];
@@ -4031,10 +4531,14 @@ const UI = (() => {
     }
     const canNode = NODES.some((n) => Game.nodeAvailable(n) && !Game.nodeMaxed(n) && gte(s.stardust, nodeCost(n, s.nodes[n.id] || 0)));
     const canStar = SKY.some((t) => !s.sky[t.id] && s.voidCur >= t.cost);
+    const canNote = s.ended && (SCORE.some((n) => !s.score[n.id] && Game.scoreAvailable(n) && s.echoes >= n.cost) || (Game.refrainOpen() && s.echoes >= Game.refrainCost()));
+    const canHymn = HYMNAL.some((h) => !s.hymnal[h.id] && s.voices >= h.cost);
+    const canLaw = LAWS.some((l) => !s.laws[l.id] && s.resonance >= l.cost);
     for (const b of bar.children) {
       const id = b.dataset.tab;
       b.classList.toggle('on', id === currentTab);
-      b.classList.toggle('new', !!newTabs[id] || (id === 'chart' && canNode) || (id === 'sky' && canStar));
+      b.classList.toggle('new', !!newTabs[id] || (id === 'chart' && canNode) || (id === 'sky' && canStar) ||
+        (id === 'score' && canNote) || (id === 'choir' && canHymn) || (id === 'laws' && canLaw));
     }
   }
 
@@ -4129,6 +4633,110 @@ const UI = (() => {
     put(skyTabRefs.note, Object.keys(s.sky).length + ' of 12 stars relit. Lifetime Void gives Light ×' + fmt(Game.voidBonusLog()) + '. Next Collapse needs ' + fmt(Game.collapseReq()) + ' Light.');
   }
 
+  /* Score tab: Echoes, and the way into the Score */
+  let scoreTabRefs = null;
+  function buildScoreTab(body) {
+    const p = el('div', 'pad');
+    const bal = el('div', 'chart-balance echo');
+    const bonus = el('p', 'note');
+    const next = el('p', 'note');
+    const open = el('button', 'btn primary', 'Open the Score');
+    open.type = 'button';
+    open.onclick = () => openChart('score');
+    p.append(bal, bonus, next, open, el('p', 'note', 'An Encore sings the song again for a bigger audience. Your star, Stardust and chart start over, while the Void and the sky stay. The brighter the run, the more Echoes it brings: ten times as many for every ' + BAL.echoScale + ' more powers of ten of Light. Echoes write notes on the Score, and every Echo you earn makes Light brighter.'));
+    body.appendChild(p);
+    scoreTabRefs = { bal, bonus, next };
+    refreshScoreTab();
+  }
+  function refreshScoreTab() {
+    if (!scoreTabRefs) return;
+    const s = Game.s;
+    put(scoreTabRefs.bal, fmtInt(s.echoes) + ' Echoes');
+    put(scoreTabRefs.bonus, Object.keys(s.score).length + ' of ' + SCORE.length + ' notes written' + (s.refrain ? ', Refrain ×' + s.refrain : '') + '. Echoes earned' + (s.choirs ? ' since you last joined the Choir' : '') + ' give Light ×' + fmt(Game.echoBonusLog()) + '.');
+    put(scoreTabRefs.next, Game.canEncore() ? 'An Encore now would bring ' + fmtInt(Game.echoGain()) + ' Echoes.' : 'An Encore needs ' + fmt(Game.encoreReq()) + ' Light in one run.');
+  }
+
+  /* Choir tab: Voices, the Chord and the Hymnal */
+  let choirRefs = null;
+  function buildChoirTab(body) {
+    const p = el('div', 'pad');
+    const bal = el('div', 'chart-balance voice');
+    const chord = el('p', 'note');
+    const bonus = el('p', 'note');
+    const next = el('p', 'note');
+    p.append(bal, chord, bonus, next, el('div', 'section-title', 'The Hymnal'));
+    body.appendChild(p);
+    const rows = [];
+    HYMNAL.forEach((h) => {
+      const r = el('button', 'row');
+      r.type = 'button';
+      const cost = el('span', 'row-cost');
+      r.append(el('span', 'row-name', h.name), cost, el('span', 'row-desc', h.desc));
+      r.onclick = () => { if (Game.buyHymn(h.id)) { Sound.chime([0, 4, 7, 12], 0.09, 0.8); refresh(); } };
+      body.appendChild(r);
+      rows.push({ r, h, cost });
+    });
+    body.appendChild(el('p', 'note pad', 'Joining the Choir starts the Score and everything below it over: Echoes, the star, the chart and the Void. The Hymnal, Deeds, Trials and the relit sky stay. Voices grow with the square root of the Echoes you earned since you last joined.'));
+    choirRefs = { bal, chord, bonus, next, rows };
+    refreshChoirTab();
+  }
+  function refreshChoirTab() {
+    if (!choirRefs) return;
+    const s = Game.s;
+    const r = choirRefs;
+    put(r.bal, fmtInt(s.voices) + ' Voices');
+    put(r.chord, s.chord ? 'The Choir sings ' + CHORD_BY_ID[s.chord].name + ': ' + CHORD_BY_ID[s.chord].desc : 'Pick a Chord when you join the Choir.');
+    put(r.bonus, 'Voices earned' + (s.rebirths ? ' since your last Rebirth' : '') + ' give Light ×' + fmt(Game.voiceBonusLog()) + '.');
+    const need = Math.ceil(BAL.voiceReq / (Game.f.voiceMult * Game.f.voiceMult));
+    put(r.next, Game.canChoir() ? 'Joining now would bring ' + fmtInt(Game.voiceGain()) + ' Voices.' : 'Joining needs ' + fmtInt(need) + ' Echoes earned' + (s.choirs ? ' since you last joined' : '') + '. You have ' + fmtInt(s.echoesEarned) + '.');
+    for (const x of r.rows) {
+      const owned = !!s.hymnal[x.h.id];
+      put(x.cost, owned ? 'Learned' : fmtInt(x.h.cost) + ' Voices');
+      x.r.classList.toggle('owned', owned);
+      x.r.classList.toggle('can', !owned && s.voices >= x.h.cost);
+      x.r.disabled = owned;
+    }
+  }
+
+  /* Laws tab: Resonance and the Laws of Nature */
+  let lawRefs = null;
+  function buildLawsTab(body) {
+    const p = el('div', 'pad');
+    const bal = el('div', 'chart-balance res');
+    const bonus = el('p', 'note');
+    const next = el('p', 'note');
+    p.append(bal, bonus, next, el('div', 'section-title', 'The Laws of Nature'));
+    body.appendChild(p);
+    const rows = [];
+    LAWS.forEach((l) => {
+      const r = el('button', 'row');
+      r.type = 'button';
+      const cost = el('span', 'row-cost');
+      r.append(el('span', 'row-name', l.name), cost, el('span', 'row-desc', l.desc));
+      r.onclick = () => { if (Game.buyLaw(l.id)) { Sound.chime([0, 7, 12, 16, 19], 0.12, 0.9); refresh(); } };
+      body.appendChild(r);
+      rows.push({ r, l, cost });
+    });
+    body.appendChild(el('p', 'note pad', 'A Rebirth lets the universe breathe out and in. Everything from the Hymnal down starts over, unless a Law keeps it. Laws and Resonance last forever. Resonance grows with the number of digits in the Voices you earned since the last Rebirth.'));
+    lawRefs = { bal, bonus, next, rows };
+    refreshLawsTab();
+  }
+  function refreshLawsTab() {
+    if (!lawRefs) return;
+    const s = Game.s;
+    const r = lawRefs;
+    put(r.bal, fmtInt(s.resonance) + ' Resonance');
+    put(r.bonus, 'All the Resonance you have ever found gives Light ×' + fmt(Game.resonanceBonusLog()) + '.');
+    put(r.next, Game.canRebirth() ? 'A Rebirth now would bring ' + fmtInt(Game.resonanceGain()) + ' Resonance.' : (s.rebirths ? 'The next Rebirth needs ' : 'Your first Resonance needs ') + fmtInt(Math.pow(10, BAL.resLog + 1)) + ' Voices earned' + (s.rebirths ? ' since the last one' : '') + '. You have ' + fmtInt(s.voicesEarned) + '.');
+    for (const x of r.rows) {
+      const owned = !!s.laws[x.l.id];
+      put(x.cost, owned ? 'In force' : fmtInt(x.l.cost) + ' Resonance');
+      x.r.classList.toggle('owned', owned);
+      x.r.classList.toggle('can', !owned && s.resonance >= x.l.cost);
+      x.r.disabled = owned;
+    }
+  }
+
   /* Trials */
   function buildTrials(body) {
     const s = Game.s;
@@ -4162,23 +4770,7 @@ const UI = (() => {
     });
   }
 
-  /* Deeds */
-  function buildDeeds(body) {
-    const s = Game.s;
-    const got = Object.keys(s.deeds).length;
-    const p = el('div', 'pad');
-    p.appendChild(el('p', 'note', got + ' of ' + DEEDS.length + ' done. Each one adds 2% Light, for ×' + fmt(got * lg(1.02)) + ' so far.'));
-    const g = el('div', 'deed-grid');
-    DEEDS.forEach((a) => {
-      const c = el('div', 'deed' + (s.deeds[a.id] ? ' got' : ''));
-      c.append(el('b', '', a.name), el('span', '', a.desc));
-      g.appendChild(c);
-    });
-    p.appendChild(g);
-    body.appendChild(p);
-  }
-
-  /* Journal */
+  /* Journal: what you have done, your deeds, and the story so far */
   function stat(parent, label, value) {
     const r = el('div', 'stat');
     r.append(el('span', '', label), el('b', '', value));
@@ -4194,12 +4786,24 @@ const UI = (() => {
     stat(st, 'Best run', fmt(s.stats.bestRun));
     stat(st, 'Supernovas', fmtInt(s.supernovas));
     if (s.collapses) stat(st, 'Collapses', fmtInt(s.collapses));
+    if (s.encores) stat(st, 'Encores', fmtInt(s.encores));
+    if (s.choirs) stat(st, 'Times you joined the Choir', fmtInt(s.choirs));
+    if (s.rebirths) stat(st, 'Rebirths', fmtInt(s.rebirths));
     stat(st, 'Perfect taps', fmtInt(s.stats.perfects));
     stat(st, 'Best streak', fmtInt(s.stats.bestStreak));
     stat(st, 'Crescendos', fmtInt(s.stats.crescendos));
     stat(st, 'Comets caught', fmtInt(s.stats.comets));
     stat(st, 'Grand Conjunctions', fmtInt(s.stats.grands));
-    p.append(el('div', 'section-title', 'So far'), st, el('div', 'section-title', 'What happened'));
+    p.append(el('div', 'section-title', 'So far'), st);
+    const got = Object.keys(s.deeds).length;
+    p.append(el('div', 'section-title', 'Deeds'), el('p', 'note', got + ' of ' + DEEDS.length + ' done. Each one adds 2% Light, for ×' + fmt(got * lg(1.02)) + ' so far.'));
+    const g = el('div', 'deed-grid');
+    DEEDS.forEach((a) => {
+      const c = el('div', 'deed' + (s.deeds[a.id] ? ' got' : ''));
+      c.append(el('b', '', a.name), el('span', '', a.desc));
+      g.appendChild(c);
+    });
+    p.append(g, el('div', 'section-title', 'What happened'));
     Object.keys(s.story).filter((k) => STORY[k] && s.story[k] > 0).sort((a, b) => s.story[a] - s.story[b]).forEach((k) => {
       p.appendChild(el('p', 'story-line', STORY[k]));
     });
@@ -4275,26 +4879,37 @@ const UI = (() => {
     check('set-fl', 'Bright flashes and screen shake', s.settings.flashes, (v) => { s.settings.flashes = v; });
     check('set-num-fl', 'Floating numbers', s.settings.floaters, (v) => { s.settings.floaters = v; });
 
-    if (f.autoPlanets || f.autoTunings || f.autoCresc || f.keeper || f.autoSupernova) {
+    if (f.autoPlanets || f.autoTunings || f.autoCresc || f.keeper || f.autoSupernova || f.autoCollapse || f.autoEncore) {
       p.appendChild(el('div', 'section-title', 'Automation'));
       if (f.autoPlanets) p.appendChild(el('p', 'note', 'Planet and Tuning buying is set from the Auto-buy bar in the Orrery.'));
       if (f.keeper) check('auto-k', 'Metronome taps', s.auto.keeper, (v) => { s.auto.keeper = v; });
       if (f.autoCresc) check('auto-c', 'Start Crescendo', s.auto.cresc, (v) => { s.auto.cresc = v; });
-      if (f.autoSupernova) {
-        check('auto-s', 'Go Supernova automatically', s.auto.supernova, (v) => { s.auto.supernova = v; });
+      const target = (id, label, value, set) => {
         const row = el('label', 'setting');
-        row.htmlFor = 'auto-sn';
-        row.appendChild(el('span', '', 'Wait until the gain is this many times your lifetime Stardust'));
+        row.htmlFor = id;
+        row.appendChild(el('span', '', label));
         const i = el('input');
-        i.type = 'number'; i.id = 'auto-sn'; i.min = '0.1'; i.step = '0.1'; i.value = s.auto.snTarget;
-        i.onchange = () => { const v = Number(i.value); if (v > 0) s.auto.snTarget = v; };
+        i.type = 'number'; i.id = id; i.min = '0.1'; i.step = '0.1'; i.value = value;
+        i.onchange = () => { const v = Number(i.value); if (v > 0) set(v); };
         row.appendChild(i);
         p.appendChild(row);
+      };
+      if (f.autoSupernova) {
+        check('auto-s', 'Go Supernova automatically', s.auto.supernova, (v) => { s.auto.supernova = v; });
+        target('auto-sn', 'Wait until the gain is this many times your lifetime Stardust', s.auto.snTarget, (v) => { s.auto.snTarget = v; });
+      }
+      if (f.autoCollapse) {
+        check('auto-col', 'Collapse automatically', s.auto.collapse, (v) => { s.auto.collapse = v; });
+        target('auto-vt', 'Wait until the Void gain is this many times your Void so far', s.auto.voidTarget, (v) => { s.auto.voidTarget = v; });
+      }
+      if (f.autoEncore) {
+        check('auto-enc', 'Give an Encore automatically', s.auto.encore, (v) => { s.auto.encore = v; });
+        target('auto-et', 'Wait until the Echo gain is this many times your Echoes so far', s.auto.echoTarget, (v) => { s.auto.echoTarget = v; });
       }
     }
 
     p.appendChild(el('div', 'section-title', 'Your save'));
-    p.appendChild(el('p', 'note', 'The game saves in this browser every 15 seconds. Export a copy to move it to another device or keep it safe.'));
+    p.appendChild(el('p', 'note', Platform.saveNote() || 'The game saves in this browser every 15 seconds. Export a copy to move it to another device or keep it safe.'));
     if (Cloud.available) {
       cloudLine = el('p', 'note');
       cloudButton = el('button', 'btn primary', 'Sign in');
@@ -4317,9 +4932,9 @@ const UI = (() => {
     wipe.type = 'button';
     wipe.onclick = () => openModal({
       title: 'Erase everything?',
-      body: textBlock([Cloud.signedIn
+      body: textBlock([Platform.eraseNote() || (Cloud.signedIn
         ? 'This deletes your save from this browser and starts over from a single ember. Your Alloy account keeps its copy, and it comes back the next time you load the game signed in.'
-        : 'This deletes your save from this browser and starts over from a single ember. It cannot be undone.']),
+        : 'This deletes your save from this browser and starts over from a single ember. It cannot be undone.')]),
       actions: [{ label: 'Keep my save', primary: true }, { label: 'Erase everything', danger: true, run: () => Store.wipe() }],
     });
     row.append(saveNow, exp, imp, wipe);
@@ -4397,19 +5012,24 @@ const UI = (() => {
     root.innerHTML = '';
     root.hidden = false;
     syncPlay();
-    const map = el('div', 'chart-map');
+    const map = el('div', 'chart-map' + (kind === 'score' ? ' score-map' : ''));
     const side = el('div', 'chart-side');
-    const svg = svgEl('svg', kind === 'stars' ? { viewBox: '-610 -560 1220 1120', role: 'img', 'aria-label': 'Star chart' } : { viewBox: '0 0 1000 1000', role: 'img', 'aria-label': 'The twelve dead stars' });
+    const KIND = {
+      stars: { box: '-610 -560 1220 1120', label: 'Star chart', title: 'Star chart', bal: 'dust', hint: 'Pick a point to see what it does. Tap it again to buy it.', buy: 'Light this point' },
+      sky: { box: '0 0 1000 1000', label: 'The twelve dead stars', title: 'The sky', bal: 'void', hint: 'Pick a star to see what relighting it does. Tap it again to relight it.', buy: 'Relight this star' },
+      score: { box: '0 10 880 640', label: 'The Score', title: 'The Score', bal: 'echo', hint: 'Pick a note to see what it does. Tap it again to write it. Each measure opens once the one before it is complete.', buy: 'Write this note' },
+    }[kind];
+    const svg = svgEl('svg', { viewBox: KIND.box, role: 'img', 'aria-label': KIND.label });
     map.appendChild(svg);
 
-    const title = el('h2', '', kind === 'stars' ? 'Star chart' : 'The sky');
-    const bal = el('div', 'chart-balance ' + (kind === 'stars' ? 'dust' : 'void'));
+    const title = el('h2', '', KIND.title);
+    const bal = el('div', 'chart-balance ' + KIND.bal);
     const detail = el('div', 'chart-detail');
     const dName = el('h3', '', '');
     const dArm = el('div', 'arm', '');
-    const dDesc = el('p', '', kind === 'stars' ? 'Pick a point to see what it does. Tap it again to buy it.' : 'Pick a star to see what relighting it does. Tap it again to relight it.');
+    const dDesc = el('p', '', KIND.hint);
     const dCost = el('div', 'cost', '');
-    const buy = el('button', 'btn primary', kind === 'stars' ? 'Light this point' : 'Relight this star');
+    const buy = el('button', 'btn primary', KIND.buy);
     buy.type = 'button';
     buy.hidden = true;
     buy.onclick = () => buySelected();
@@ -4446,6 +5066,8 @@ const UI = (() => {
         const g = addNode(svg, n.id, x, y, n.arm ? ARMS[n.arm].hue : '#fff4dc', n.arm ? (n.scale ? 19 : 16) : 24);
         nodeEls[n.id] = g;
       }
+    } else if (kind === 'score') {
+      drawStaff(svg, nodeEls, edgeEls);
     } else {
       for (const [a, b] of SKY_LINKS) {
         const A = SKY_BY_ID[a], B = SKY_BY_ID[b];
@@ -4465,6 +5087,59 @@ const UI = (() => {
     }
     chartRefs = { nodeEls, edgeEls, bal, dName, dArm, dDesc, dCost, buy };
     refreshChart();
+  }
+
+  /* The Score: two lines of music on a five-line staff, two measures to a line, then the
+   * Refrain between repeat signs. A note's `line` counts half-steps up the staff from
+   * the bottom line. */
+  const MEASURES = ['Prelude', 'Theme', 'Development', 'Finale'];
+  const MEASURE_HUES = ['#ffd98a', '#ffb3c9', '#9fdcff', '#cdb6ff'];
+  const STAFF = { left: 30, x0: 70, w: 300, gap: 40, bottoms: [250, 580], ends: [670, 850], refrainX: 760 };
+  function staffY(line, row) { return STAFF.bottoms[row] - line * (STAFF.gap / 2); }
+
+  function drawStaff(svg, nodeEls) {
+    const line = (x1, y1, x2, y2, cls) => svg.appendChild(svgEl('line', { x1, y1, x2, y2, class: cls }));
+    const label = (x, y, text, col) => {
+      const t = svgEl('text', { x, y, class: 'arm-label' });
+      t.style.setProperty('--col', col);
+      t.textContent = text;
+      svg.appendChild(t);
+    };
+    for (let row = 0; row < 2; row++) {
+      const top = staffY(8, row), bottom = staffY(0, row);
+      for (let k = 0; k < 5; k++) line(STAFF.left, staffY(k * 2, row), STAFF.ends[row], staffY(k * 2, row), 'staff-line');
+      line(STAFF.left, top, STAFF.left, bottom, 'staff-bar thick');
+      line(STAFF.left + 9, top, STAFF.left + 9, bottom, 'staff-bar');
+      line(STAFF.x0 + STAFF.w, top, STAFF.x0 + STAFF.w, bottom, 'staff-bar');
+      for (let col = 0; col < 2; col++) label(STAFF.x0 + col * STAFF.w + STAFF.w / 2, top - 46, MEASURES[row * 2 + col], MEASURE_HUES[row * 2 + col]);
+    }
+    line(STAFF.ends[0], staffY(8, 0), STAFF.ends[0], staffY(0, 0), 'staff-bar');
+    // Repeat signs around the Refrain
+    const top = staffY(8, 1), bottom = staffY(0, 1);
+    const a = STAFF.x0 + 2 * STAFF.w, b = STAFF.ends[1];
+    line(a, top, a, bottom, 'staff-bar thick');
+    line(a + 9, top, a + 9, bottom, 'staff-bar');
+    line(b - 9, top, b - 9, bottom, 'staff-bar');
+    line(b, top, b, bottom, 'staff-bar thick');
+    for (const x of [a + 22, b - 22]) for (const ln of [3, 5]) svg.appendChild(svgEl('circle', { cx: x, cy: staffY(ln, 1), r: 5, class: 'staff-dot' }));
+    label(STAFF.refrainX, top - 46, REFRAIN.name, '#fff4dc');
+
+    const note = (id, x, ln, row, col) => {
+      const y = staffY(ln, row);
+      const up = ln < 4;
+      const stem = svgEl('line', { x1: up ? x + 15 : x - 15, y1: y, x2: up ? x + 15 : x - 15, y2: up ? y - 100 : y + 100, class: 'staff-stem' });
+      stem.style.setProperty('--col', col);
+      svg.appendChild(stem);
+      const g = addNode(svg, id, x, y, col, 17);
+      // A wider, invisible target, so a note is easy to tap on a phone
+      g.insertBefore(svgEl('circle', { cx: x, cy: y, r: 31, class: 'hit' }), g.firstChild);
+      g.__stem = stem;
+      nodeEls[id] = g;
+    };
+    for (let m = 0; m < 4; m++) {
+      SCORE.filter((n) => n.m === m).forEach((n, k) => note(n.id, STAFF.x0 + (m % 2) * STAFF.w + 55 + k * 64, n.line, m < 2 ? 0 : 1, MEASURE_HUES[m]));
+    }
+    note('refrain', STAFF.refrainX, 5, 1, '#fff4dc');
   }
 
   function addNode(svg, id, x, y, col, r) {
@@ -4497,9 +5172,17 @@ const UI = (() => {
 
   function buySelected() {
     if (!chartSel) return;
-    const ok = chartKind === 'stars' ? Game.buyNode(chartSel) : Game.buySky(chartSel);
+    let ok;
+    if (chartKind === 'stars') ok = Game.buyNode(chartSel);
+    else if (chartKind === 'sky') ok = Game.buySky(chartSel);
+    else ok = chartSel === 'refrain' ? Game.buyRefrain() : Game.buyScore(chartSel);
     if (ok) {
-      Sound.chime(chartKind === 'stars' ? [0, 2, 4] : [0, 2, 4, 7], 0.09, 0.8);
+      if (chartKind === 'score') {
+        // The note sounds at its own height on the staff
+        const n = SCORE_BY_ID[chartSel];
+        const step = [0, 2, 4, 5, 7, 9, 11, 12, 14][n ? n.line : 5];
+        Sound.chime([step, step + 12], 0.12, 0.9);
+      } else Sound.chime(chartKind === 'stars' ? [0, 2, 4] : [0, 2, 4, 7], 0.09, 0.8);
       refreshChart();
       refresh();
     }
@@ -4535,7 +5218,7 @@ const UI = (() => {
         show(r.buy, !maxed && avail);
         r.buy.disabled = !gte(s.stardust, cost);
       }
-    } else {
+    } else if (chartKind === 'sky') {
       put(r.bal, fmtInt(s.voidCur) + ' Void');
       for (const t of SKY) {
         const g = r.nodeEls[t.id];
@@ -4555,6 +5238,42 @@ const UI = (() => {
         put(r.dCost, lit ? '' : 'Costs ' + fmtInt(t.cost) + ' Void');
         show(r.buy, !lit);
         r.buy.disabled = s.voidCur < t.cost;
+      }
+    } else {
+      put(r.bal, fmtInt(s.echoes) + ' Echoes');
+      const allWritten = Game.refrainOpen();
+      for (const n of SCORE) {
+        const g = r.nodeEls[n.id];
+        const owned = !!s.score[n.id];
+        const avail = Game.scoreAvailable(n);
+        const can = !owned && avail && s.echoes >= n.cost;
+        g.setAttribute('class', 'cn' + (owned ? ' lit' : '') + (avail ? ' open' : '') + (can ? ' can' : '') + (chartSel === n.id ? ' sel' : ''));
+        g.setAttribute('aria-label', n.name + (owned ? ', written' : ''));
+        g.__stem.setAttribute('class', 'staff-stem' + (owned ? ' lit' : ''));
+        put(g.__label, '');
+      }
+      const rg = r.nodeEls.refrain;
+      const canR = allWritten && s.echoes >= Game.refrainCost();
+      rg.setAttribute('class', 'cn' + (s.refrain > 0 ? ' lit' : '') + (allWritten ? ' open' : '') + (canR ? ' can' : '') + (chartSel === 'refrain' ? ' sel' : ''));
+      rg.setAttribute('aria-label', REFRAIN.name + (s.refrain > 0 ? ', played ' + s.refrain + ' times' : ''));
+      rg.__stem.setAttribute('class', 'staff-stem' + (s.refrain > 0 ? ' lit' : ''));
+      put(rg.__label, s.refrain > 0 ? String(s.refrain) : '');
+      if (chartSel === 'refrain') {
+        put(r.dName, REFRAIN.name + (s.refrain ? ' (played ' + s.refrain + (s.refrain === 1 ? ' time)' : ' times)') : ''));
+        put(r.dArm, 'After the final bar line');
+        put(r.dDesc, REFRAIN.desc);
+        put(r.dCost, allWritten ? 'Costs ' + fmtInt(Game.refrainCost()) + ' Echoes' : 'Write every note on the Score first');
+        show(r.buy, allWritten);
+        r.buy.disabled = !canR;
+      } else if (chartSel) {
+        const n = SCORE_BY_ID[chartSel];
+        const owned = !!s.score[n.id];
+        put(r.dName, n.name);
+        put(r.dArm, 'Measure ' + (n.m + 1) + ': ' + MEASURES[n.m]);
+        put(r.dDesc, n.desc);
+        put(r.dCost, owned ? 'Written' : !Game.scoreAvailable(n) ? 'Finish the ' + MEASURES[n.m - 1] + ' first' : 'Costs ' + fmtInt(n.cost) + ' Echoes');
+        show(r.buy, !owned && Game.scoreAvailable(n));
+        r.buy.disabled = s.echoes < n.cost;
       }
     }
   }
@@ -4607,7 +5326,7 @@ const UI = (() => {
       Render.captureGhosts(Game.s);
       const first = Game.s.supernovas === 0;
       Game.supernova(cls);
-      Sound.setScale(CLASS_BY_ID[Game.s.starClass].scale);
+      Sound.setScale(songScale());
       Sound.setStage(Game.s.stage);
       Render.fitView(false);
       Store.save();
@@ -4633,22 +5352,146 @@ const UI = (() => {
     });
   }
 
-  function runCollapse() {
+  /* Pull of Gravity collapses on its own, without taking the player to the sky. */
+  function runCollapse(auto) {
+    if (!Game.canCollapse()) return;
     Render.captureGhosts(Game.s);
     Render.playCollapse();
     Game.collapse();
     Sound.boom();
-    Sound.setScale('pentMinor');
+    Sound.setScale(songScale());
     Sound.setStage(0);
     Render.fitView(false);
     Store.save();
     refreshTabs();
-    selectTab('sky');
+    if (auto !== true) {
+      selectTab('sky');
+      openChartSoon();
+    } else if (currentTab === 'sky') selectTab('sky');
     refresh();
-    openChartSoon();
   }
   function openChartSoon() {
     setTimeout(() => { if (Game.s.voidCur > 0 && $('modal').hidden) openChart('sky'); }, 6500);
+  }
+
+  /* The scale the song is played in: a star class has its own, and otherwise the Chord
+   * the Choir is singing decides. */
+  function songScale() {
+    const s = Game.s;
+    if (s.starClass !== 'main') return CLASS_BY_ID[s.starClass].scale;
+    return s.chord && CHORD_BY_ID[s.chord] ? CHORD_BY_ID[s.chord].scale : CLASS_BY_ID.main.scale;
+  }
+
+  /* After the Final Song: Encore, the Choir and Rebirth */
+  function resetBody(gain, lines) {
+    return textBlock([el('div', 'big', gain)].concat(lines));
+  }
+
+  function confirmEncore() {
+    const f = Game.f;
+    openModal({
+      title: 'Give an Encore',
+      body: resetBody('+' + fmtInt(Game.echoGain()) + ' Echoes', [
+        'Sing it again, for a bigger audience. Your star, Stardust and ' + (f.keepChart ? 'run start over, and the chart stays.' : 'star chart start over.') + ' The Void, the relit sky, the Score, Deeds and Trials all stay.',
+        'Echoes write notes on the Score, and every Echo you earn makes Light brighter.',
+      ]),
+      actions: [{ label: 'Encore', primary: true, run: () => runEncore() }, { label: 'Not yet' }],
+    });
+  }
+
+  function runEncore() {
+    if (!Game.canEncore()) return;
+    const first = Game.s.encores === 0;
+    Render.captureGhosts(Game.s);
+    Game.encore();
+    Render.playEncore();
+    Sound.chime([0, 4, 7, 12, 16, 19], 0.1, 1);
+    Sound.setScale(songScale());
+    Sound.setStage(Game.s.stage);
+    Render.fitView(false);
+    Store.save();
+    refreshTabs();
+    if (first) {
+      selectTab('score');
+      showLine('Spend your Echoes on the Score. Open it from the Score tab.');
+    } else if (currentTab === 'score') selectTab('score');
+    refresh();
+  }
+
+  function confirmChoir() {
+    const s = Game.s, f = Game.f;
+    let choice = s.chord || 'major';
+    const body = resetBody('+' + fmtInt(Game.voiceGain()) + ' Voices', [
+      'Other stars join in. Your Echoes and the Score start over' + (f.keepScore ? ', except the first ' + (f.keepScore === 1 ? 'measure' : f.keepScore + ' measures') : '') +
+        ', and so do the star, the chart' + (f.keepVoid ? '' : ' and the Void') + '. The Hymnal, the relit sky, Deeds and Trials stay.',
+    ]);
+    body.appendChild(el('div', 'section-title', 'Which Chord should the Choir sing?'));
+    const grid = el('div', 'class-grid');
+    const paint = () => { for (const b of grid.children) b.classList.toggle('on', b.dataset.id === choice); };
+    CHORDS.forEach((c) => {
+      const b = el('button', 'class-opt');
+      b.type = 'button';
+      b.dataset.id = c.id;
+      b.append(el('b', '', c.name), el('i', '', c.style), el('span', '', c.desc));
+      b.onclick = () => { choice = c.id; paint(); };
+      grid.appendChild(b);
+    });
+    body.appendChild(grid);
+    paint();
+    openModal({
+      title: 'Join the Choir',
+      body,
+      actions: [{ label: 'Join the Choir', primary: true, run: () => runChoir(choice) }, { label: 'Not yet' }],
+    });
+  }
+
+  function runChoir(chord) {
+    if (!Game.canChoir()) return;
+    const first = Game.s.choirs === 0;
+    Render.captureGhosts(Game.s);
+    Game.joinChoir(chord);
+    Render.playChoir();
+    Sound.setScale(songScale());
+    Sound.setStage(Game.s.stage);
+    Sound.chime([0, 4, 7, 11, 14, 19], 0.14, 1);
+    Render.fitView(false);
+    Store.save();
+    refreshTabs();
+    if (first || currentTab === 'choir') selectTab('choir');
+    refresh();
+  }
+
+  function confirmRebirth() {
+    const f = Game.f;
+    const kept = [];
+    if (f.lawScore) kept.push('the first ' + f.lawScore + ' measures of the Score');
+    if (f.lawHymns) kept.push('the first ' + f.lawHymns + ' hymns');
+    openModal({
+      title: 'Let the universe breathe',
+      body: resetBody('+' + fmtInt(Game.resonanceGain()) + ' Resonance', [
+        'Everything breathes out, and in again. The Hymnal, Voices and the Chord start over, and so does everything below them: the Score, Echoes, the star, the chart and the Void.' +
+          (kept.length ? ' The Laws keep ' + kept.join(' and ') + '.' : ''),
+        'The relit sky, Deeds, Trials, Resonance and the Laws of Nature stay forever.',
+      ]),
+      actions: [{ label: 'Breathe', primary: true, run: runRebirth }, { label: 'Not yet' }],
+    });
+  }
+
+  function runRebirth() {
+    if (!Game.canRebirth()) return;
+    const first = Game.s.rebirths === 0;
+    Render.captureGhosts(Game.s);
+    Game.rebirth();
+    Render.playRebirth();
+    Sound.whoosh(2.2, 2600, 120, 0.4);
+    setTimeout(() => Sound.chime([0, 7, 12, 16, 19, 24], 0.18, 1), 2400);
+    Sound.setScale(songScale());
+    Sound.setStage(Game.s.stage);
+    Render.fitView(false);
+    Store.save();
+    refreshTabs();
+    if (first || currentTab === 'laws') selectTab('laws');
+    refresh();
   }
 
   function runEnding() {
@@ -4660,8 +5503,30 @@ const UI = (() => {
     const box = $('ending');
     box.innerHTML = '';
     box.hidden = false;
-    box.append(el('h1', '', 'The silence is over.'), el('p', '', 'Every star you lit is singing now, and they will go on without you. It took ' + fmtTime(s.stats.time) + ', ' + fmtInt(s.supernovas) + ' Supernovas and ' + fmtInt(s.collapses) + ' Collapses.'));
-    const b = el('button', 'btn primary', 'Stay and listen');
+    box.append(el('h1', '', 'The silence is over.'),
+      el('p', '', 'Every star you lit is singing now, and they will go on without you. It took ' + fmtTime(s.stats.time) + ', ' + fmtInt(s.supernovas) + ' Supernovas and ' + fmtInt(s.collapses) + ' Collapses.'),
+      el('p', 'ending-more', 'But listen. Far out past the last star, something is applauding. Reach ' + fmt(Game.encoreReq()) + ' Light in one run to give an Encore.'));
+    const b = el('button', 'btn primary', 'Keep singing');
+    b.type = 'button';
+    b.onclick = () => { box.hidden = true; syncPlay(); refreshTabs(); selectTab('score'); };
+    box.appendChild(b);
+    syncPlay();
+  }
+
+  function runTrueEnding() {
+    if (!Game.singFirstNote()) return;
+    Render.playEnding();
+    Sound.chime([0, 7, 12, 16, 19, 24, 28, 31], 0.4, 1);
+    Store.save();
+    const s = Game.s;
+    const box = $('ending');
+    box.innerHTML = '';
+    box.hidden = false;
+    box.append(el('h1', '', 'The First Note.'),
+      el('p', '', 'It was never silence. It was the rest between two notes, and you have played the next one.'),
+      el('p', '', 'It took ' + fmtTime(s.stats.time) + ', ' + fmtInt(s.encores) + ' Encores, ' + fmtInt(s.choirs) + ' Choirs and ' + fmtInt(s.rebirths) + (s.rebirths === 1 ? ' Rebirth.' : ' Rebirths.')),
+      el('p', 'ending-more', 'Thank you for playing Starsong.'));
+    const b = el('button', 'btn primary', 'Listen');
     b.type = 'button';
     b.onclick = () => { box.hidden = true; syncPlay(); };
     box.appendChild(b);
@@ -4678,8 +5543,12 @@ const UI = (() => {
     if (s.cresc > 0) list.push(['Crescendo ' + Math.ceil(s.cresc) + 's', 'hot']);
     if (s.aurora > 0) list.push(['Aurora ×' + fmt(s.auroraMult) + ' ' + Math.ceil(s.aurora) + 's', 'cool']);
     if (f.patience > 1 && s.sinceTap >= 30 && s.planets[0] > 0) list.push(['Drift ×' + f.patience, 'cool']);
+    if (s.chord && CHORD_BY_ID[s.chord]) list.push([CHORD_BY_ID[s.chord].name + ' chord', 'voice']);
     if (s.stardust > 0 - EPS) list.push([fmt(s.stardust) + ' Stardust', 'dust']);
     if (s.voidCur > 0) list.push([fmtInt(s.voidCur) + ' Void', 'void']);
+    if (s.echoes > 0) list.push([fmtInt(s.echoes) + ' Echoes', 'echo']);
+    if (s.voices > 0) list.push([fmtInt(s.voices) + ' Voices', 'voice']);
+    if (s.resonance > 0) list.push([fmtInt(s.resonance) + ' Resonance', 'res']);
     return list;
   }
 
@@ -4715,14 +5584,44 @@ const UI = (() => {
   function refreshActions() {
     const s = Game.s, f = Game.f;
     show($('btn-crescendo'), Game.crescendoReady() && !(f.autoCresc && s.auto.cresc));
+    // A star must burn for a minute before it can go Supernova, so count that down
+    const wait = Game.novaWait();
     const nova = Game.canSupernova();
-    show($('btn-supernova'), nova);
-    $('btn-supernova').classList.toggle('hint', nova && s.supernovas === 0);
-    if (nova) put($('btn-supernova'), 'Supernova: +' + fmt(Game.stardustGain()) + ' Stardust');
+    const btn = $('btn-supernova');
+    // Like the Crescendo, a reset that runs itself keeps its button out of the way
+    const autoNova = f.autoSupernova && s.auto.supernova && !s.trial;
+    show(btn, !autoNova && (nova || (wait > 0 && wait < Infinity && !s.trial)));
+    btn.disabled = !nova;
+    btn.classList.toggle('hint', nova && s.supernovas === 0);
+    if (nova) put(btn, 'Supernova: +' + fmt(Game.stardustGain()) + ' Stardust');
+    else if (wait < Infinity) put(btn, 'Supernova in ' + Math.ceil(wait) + 's');
     const col = Game.canCollapse();
-    show($('btn-collapse'), col);
+    show($('btn-collapse'), col && !(f.autoCollapse && s.auto.collapse && !s.trial));
     if (col) put($('btn-collapse'), 'Collapse: +' + fmtInt(Game.voidGain()) + ' Void');
     show($('btn-song'), Game.canSing());
+    const enc = Game.canEncore();
+    show($('btn-encore'), enc && !(f.autoEncore && s.auto.encore));
+    if (enc) put($('btn-encore'), 'Encore: +' + fmtInt(Game.echoGain()) + ' Echoes');
+    const choir = Game.canChoir();
+    show($('btn-choir'), choir);
+    if (choir) put($('btn-choir'), 'Join the Choir: +' + fmtInt(Game.voiceGain()) + ' Voices');
+    const reb = Game.canRebirth();
+    show($('btn-rebirth'), reb);
+    if (reb) put($('btn-rebirth'), 'Breathe: +' + fmtInt(Game.resonanceGain()) + ' Resonance');
+    show($('btn-first'), Game.canFirstNote());
+    // Three or more buttons share two columns, and the message line stays clear of them
+    const buttons = [...$('hud-bottom').querySelectorAll('button')];
+    const key = buttons.map((b) => (b.hidden ? 0 : 1)).join('') + $('harmony').hidden;
+    if (key !== actionKey) {
+      actionKey = key;
+      $('hud-bottom').querySelector('.actions').classList.toggle('many', buttons.filter((b) => !b.hidden).length >= 3);
+      placeLine();
+    }
+  }
+  let actionKey = '';
+  function placeLine() {
+    const top = $('hud-bottom').getBoundingClientRect().top;
+    if (top > 0) document.documentElement.style.setProperty('--line-bottom', Math.round(window.innerHeight - top + 12) + 'px');
   }
 
   /* Reveal each piece of the interface when it first matters. */
@@ -4757,6 +5656,9 @@ const UI = (() => {
     if (s.planets[3] > 0) tip('tipConj', 'Planets that cross on the same beat form a Conjunction and pay more. Every 48 beats, they all line up.');
     if (Game.canSupernova()) tip('tipNova', 'The star can go Supernova. The longer you wait, the more Stardust you get.');
     if (f.autoPlanets > 0) tip('tipAuto', 'Your planets now buy themselves. The Auto-buy bar in the Orrery sets which ones, how often and how much.');
+    if (Game.canEncore() && s.encores === 0) tip('tipEncore', 'You can give an Encore. Waiting for a brighter run brings far more Echoes.');
+    if (Game.canChoir() && s.choirs === 0) tip('tipChoir', 'The Choir is ready to sing. More Echoes earned first means more Voices.');
+    if (Game.canRebirth() && s.rebirths === 0) tip('tipRebirth', 'The universe can breathe. More Voices earned first means more Resonance.');
   }
 
   /* ---------- Layout ---------- */
@@ -4786,6 +5688,7 @@ const UI = (() => {
       const r = right.hidden ? 0 : window.innerWidth - right.getBoundingClientRect().left + 8;
       Render.setInsets(l, r, top, 96);
     }
+    placeLine();
   }
 
   function buildMobileNav() {
@@ -4929,11 +5832,16 @@ const UI = (() => {
     Game.on('story', (e) => showLine(e.text));
     Game.on('tapBlocked', () => tip('tipSilence', 'Silence holds. You cannot tap in this Trial.'));
     Game.on('autoSupernova', () => runSupernova(Game.s.nextClass));
-    // Celebrations for the host page, kept to the three biggest moments
+    Game.on('autoCollapse', () => runCollapse(true));
+    Game.on('autoEncore', () => runEncore());
+    // Celebrations for the host page, kept to the biggest moments
     Game.on('supernova', () => { if (Game.s.supernovas === 1) Platform.happy(); });
     Game.on('collapse', () => { if (Game.s.collapses === 1) Platform.happy(); });
     Game.on('ending', () => Platform.happy());
-    ['supernova', 'trialDone', 'collapse', 'sky', 'ending'].forEach((name) => Game.on(name, () => Platform.progress(progressPercent())));
+    Game.on('choir', () => { if (Game.s.choirs === 1) Platform.happy(); });
+    Game.on('rebirth', () => { if (Game.s.rebirths === 1) Platform.happy(); });
+    Game.on('trueEnd', () => Platform.happy());
+    ['supernova', 'trialDone', 'collapse', 'sky', 'ending', 'score', 'choir', 'hymn', 'rebirth', 'law', 'trueEnd'].forEach((name) => Game.on(name, () => Platform.progress(progressPercent())));
     Game.on('trialDone', (t) => {
       toast('Trial complete: ' + t.name, t.reward);
       Sound.chime([0, 2, 4, 7, 9], 0.1, 0.9);
@@ -4977,6 +5885,10 @@ const UI = (() => {
     $('btn-supernova').onclick = confirmSupernova;
     $('btn-collapse').onclick = confirmCollapse;
     $('btn-song').onclick = runEnding;
+    $('btn-encore').onclick = confirmEncore;
+    $('btn-choir').onclick = confirmChoir;
+    $('btn-rebirth').onclick = confirmRebirth;
+    $('btn-first').onclick = runTrueEnding;
     $('modal').addEventListener('pointerdown', (e) => { if (e.target === $('modal') && modalClose) modalClose(); });
     rebuildAll();
   }
@@ -4999,7 +5911,7 @@ const UI = (() => {
     openModal({ title: 'While you were gone', body: textBlock(lines), actions });
   }
 
-  return { init, frame, refresh, rebuildAll, layout, offlineReport, showLine, toast, selectTab, openChart, closeChart, confirmSupernova, confirmCollapse, syncPlay, progressPercent };
+  return { init, frame, refresh, rebuildAll, layout, offlineReport, showLine, toast, selectTab, openChart, closeChart, confirmSupernova, confirmCollapse, syncPlay, progressPercent, songScale };
 })();
 
 /* Starsong: Alloy account sync. The Alloy Studios site owns sign-in and gives the game
@@ -5189,7 +6101,7 @@ const Store = (() => {
   /* Replaces the running game, used by Import. */
   function adopt(state) {
     Game.load(state);
-    Sound.setScale(CLASS_BY_ID[Game.s.starClass].scale);
+    Sound.setScale(UI.songScale());
     Render.reset();
     UI.rebuildAll();
     save();
@@ -5216,7 +6128,7 @@ function startGame(hotData) {
   Render.init();
   UI.init();
   Render.reset();
-  Sound.setScale(CLASS_BY_ID[Game.s.starClass].scale);
+  Sound.setScale(UI.songScale());
   Sound.setStage(Game.s.stage);
   UI.offlineReport(Game.applyOffline(Date.now()));
   Game.s.lastSeen = Date.now();

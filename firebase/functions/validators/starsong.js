@@ -23,22 +23,49 @@
  * Supernova or Collapse resets a run. Lifetime Light is the exception: a save with less
  * of it than the stored one came from a device that is behind, so the stored save stays.
  *
- * Checked by tools/validator-worker.js: active, casual and idle bots played the whole
- * game plus 6 hours past the ending, and not one field of one save was changed.
+ * Checked by tools/validator-worker.js: active, casual, idle and speedrunner bots played
+ * the whole game, through the Encore, the Choir and Rebirth to the true ending and 3
+ * hours past it, and not one field of one save was changed.
  * The ID tables below must match js/data.js. That same check fails if they drift.
  */
 const { Reject, int, num, bool, oneOf, gain } = require("./lib");
 
 const ZERO = -1e300;
 
-// Absolute caps. Measured after 6 hours past the ending: Light 1e1558, Void 1,733,
-// planet level 5,386, Stardust 1e987. Light creeps up with the square root of Void from
-// there, so 20,000 orders of magnitude is out of honest reach.
-const LIGHT_CAP = 20000;
-const VOID_CAP = 1e9;
-const LEVEL_CAP = 100000;
+// Absolute caps. After the true ending Light keeps climbing for as long as someone plays,
+// so its cap is far past honest reach rather than measured. The rate limit on bestRun is
+// what actually holds Light back. Echoes and Voices are plain numbers that grow ten times
+// over for a fixed climb in Light, so they are capped at the edge of what JSON can carry.
+const LIGHT_CAP = 1e6;
+const VOID_CAP = 1e12;
+const LEVEL_CAP = 1e6;
 const COUNT_CAP = 1e9;
-const SONG_REQ = 1400;   // data.js: Light needed for the ending
+const BIG_CAP = 1e300;
+const SONG_REQ = 1400;   // data.js: Light needed for the ending, and for every Encore
+const TRUE_REQ = 10000;  // data.js: Light needed for the First Note, the true ending
+
+/*
+ * After the Final Song (data.js BAL). Each layer's currency has an exact ceiling, from
+ * best-ever Light, because each is a formula of the layer below:
+ *   Echoes from one Encore   echoMult * 10 ^ ((run - 1400) / 300), echoMult at most 450
+ *                            (Echo of Echoes x3, Antiphon x5, Minor x10, Sympathy x3)
+ *   Voices from one Choir    sqrt(Echoes earned / 500,000) * voiceMult, at most 27
+ *                            (Seventh x3, Polyphony x3, Sympathy x3)
+ *   Resonance from Rebirth   (log10(Voices earned) - 2) ^ 2
+ * Each is multiplied by how many times it could have been earned.
+ */
+const ECHO_SCALE = 300, ECHO_MULT = 450, VOICE_REQ = 5e5, VOICE_MULT = 27, RES_LOG = 2;
+function echoCeiling(best, encores) {
+  const one = Math.log10(ECHO_MULT) + Math.max(best - SONG_REQ, 0) / ECHO_SCALE;
+  return Math.pow(10, Math.min(300, one + Math.log10(encores + 1)));
+}
+function voiceCeiling(echoes, choirs) {
+  return Math.min(BIG_CAP, Math.sqrt(echoes / VOICE_REQ) * VOICE_MULT * (choirs + 1));
+}
+function resonanceCeiling(voices, rebirths) {
+  const x = Math.max(Math.log10(Math.max(voices, 1)) - RES_LOG, 0);
+  return Math.ceil(x * x * (rebirths + 1));
+}
 
 /*
  * RATES - derived from js/game.js and js/ui.js, and measured with the bots.
@@ -65,10 +92,18 @@ const SONG_REQ = 1400;   // data.js: Light needed for the ending
 const RATE = {
   bestRun: 15, time: 1, supernovas: 1 / 0.75, collapses: 2,
   crescendos: 1 / 10, grands: 1 / 15, comets: 2, taps: 30,
+  // Encore, the Choir and Rebirth each need a run past 1e1400 Light, or a dialog and two
+  // clicks, so they are no faster than a Collapse
+  encores: 2, choirs: 2, rebirths: 2,
+  // Once the Final Song is sung, a new Law or a big Rebirth can lift a run by over a
+  // thousand orders of magnitude in seconds. The fastest honest rise measured was 301 a
+  // second across a 5 s save gap (1,507). 300 a second plus 3,000 allows 4,500 there.
+  bestRunAfterSong: 300,
 };
 const BURST = {
   bestRun: 300, time: 60, supernovas: 3, collapses: 3,
   crescendos: 2, grands: 2, comets: 10, taps: 120,
+  encores: 3, choirs: 3, rebirths: 3, bestRunAfterSong: 3000,
 };
 
 // js/data.js NODES: id -> highest level
@@ -98,7 +133,17 @@ const DEEDS = [
   "centurion", "fivehundred", "million", "billion", "dawnbreak", "crescendo", "crescendo25", "grand",
   "grand8", "catch", "catch50", "nova1", "nova10", "nova50", "fastnova", "chart5", "chart25", "chartall",
   "class", "allclass", "trial1", "trialall", "e50", "collapse1", "sky3", "sky12", "e500", "song",
+  "encore1", "encore10", "score8", "scoreall", "e3000", "choir1", "chordall", "hymnall", "rebirth1", "rebirth3",
+  "e7000", "firstnote",
 ];
+// js/data.js SCORE, CHORDS, HYMNAL and LAWS
+const SCORE = [
+  "dacapo", "memory", "gravity", "ghosts", "bright", "reverb", "overtone", "orbits",
+  "keychange", "fermata", "echoes2", "orbits2", "grandecho", "perpetual", "path", "assembly",
+];
+const CHORDS = ["major", "minor", "sus", "seventh"];
+const HYMNAL = ["prelude", "choral", "antiphon", "cantus", "spheres", "descant", "plainsong", "theme", "polyphony", "grandchoir", "allthings"];
+const LAWS = ["constant", "inertia", "conservation", "sympathy", "expansion", "firstnote"];
 const TRIALS = ["silence", "three", "molasses", "bare", "gravity", "flat", "drought", "requiem"];
 const CLASSES = ["main", "giant", "dwarf", "pulsar", "binary"];
 const STAGE_MAX = 5;
@@ -138,16 +183,18 @@ function levelCeiling(best) {
 /** Most lifetime Stardust a best-ever Light could have earned. stardustGain() is
  *  ((run - 12) * sdExp + log10(4) + sdMult) * sdPow, at the best sdExp (0.39), sdPow
  *  (1.08 twice) and sdMult (x2 node, requiem's +3, and 3x per Heavy Elements level),
- *  then log10 of how many gains there could have been. */
-function stardustCeiling(best, heavy, gains) {
+ *  then log10 of how many gains there could have been. After the Final Song, Stardust
+ *  Memory (1e50), Overtones (1e100) and the Suspended chord (1e100) add 250 more. */
+function stardustCeiling(best, heavy, gains, post) {
   const run = Math.max(best - 12, 0);
-  return (run * 0.39 + 0.61 + 0.31 + 3 + heavy * 0.4772) * 1.1664 + Math.log10(gains + 10) + 1;
+  return (run * 0.39 + 0.61 + 0.31 + 3 + heavy * 0.4772 + (post ? 250 : 0)) * 1.1664 + Math.log10(gains + 10) + 1;
 }
 
 /** Most lifetime Void a best-ever Light could have earned: voidGain() at the best
- *  voidMult (x3), for every Collapse so far. */
-function voidCeiling(best, collapses) {
-  return Math.ceil(collapses * Math.pow(Math.max(best, 0) / 100, 1.8) * 3);
+ *  voidMult (x3, then x5 from Long Reverb and x10 from the Suspended chord after the
+ *  Final Song), for every Collapse so far. */
+function voidCeiling(best, collapses, post) {
+  return Math.ceil(collapses * Math.pow(Math.max(best, 0) / 100, 1.8) * (post ? 150 : 3));
 }
 
 function cleanNodes(v) {
@@ -160,12 +207,17 @@ function cleanNodes(v) {
   return out;
 }
 
-function cleanSky(v, voidTotal) {
+/** Before the Choir, Void is never reset, so every star ever relit was paid for out of
+ *  lifetime Void. Joining the Choir and Rebirth reset the Void but never the sky, so from
+ *  then on the stars already accepted stay, and only newly relit ones need paying for. */
+function cleanSky(v, voidTotal, was, movedOn) {
   const out = {};
   let spent = 0;
   if (isObj(v)) {
     for (const id of Object.keys(SKY_COST)) {
-      if (v[id] === true && spent + SKY_COST[id] <= voidTotal) { out[id] = true; spent += SKY_COST[id]; }
+      if (v[id] !== true) continue;
+      if (movedOn && isObj(was) && was[id] === true) { out[id] = true; continue; }
+      if (spent + SKY_COST[id] <= voidTotal) { out[id] = true; spent += SKY_COST[id]; }
     }
   }
   return { sky: out, spent };
@@ -186,10 +238,12 @@ function cleanAuto(a) {
   const out = { planetOn: [] };
   for (let i = 0; i < 8; i++) out.planetOn.push(on[i] !== false);
   for (const k of ["planets", "savePlanet", "saveTuning", "tunings", "cresc", "keeper"]) out[k] = v[k] !== false;
-  for (const k of ["supernova", "open"]) out[k] = bool(v[k]);
+  for (const k of ["supernova", "open", "collapse", "encore"]) out[k] = bool(v[k]);
   out.every = oneOf(v.every, AUTO_EVERY, 0);
   out.share = oneOf(v.share, AUTO_SHARE, 1);
   out.snTarget = num(v.snTarget, 0.1, 1e6, 2);
+  out.voidTarget = num(v.voidTarget, 0.1, 1e6, 1);
+  out.echoTarget = num(v.echoTarget, 0.1, 1e6, 1);
   return out;
 }
 
@@ -216,7 +270,8 @@ module.exports = {
     // Best-ever Light first, because nearly everything else hangs off it. ZERO is -1e300,
     // and adding an allowance to that changes nothing, so the rate counts up from 1.
     const wasBest = log(ps.bestRun);
-    const best = gain(Math.max(wasBest, 0), log(st.bestRun, wasBest), RATE.bestRun, ctx, BURST.bestRun);
+    const rate = p.ended === true ? "bestRunAfterSong" : "bestRun";
+    const best = gain(Math.max(wasBest, 0), log(st.bestRun, wasBest), RATE[rate], ctx, BURST[rate]);
 
     const runLight = Math.min(log(next.runLight, p.runLight), best);
     const light = Math.min(log(next.light, p.light), runLight);
@@ -228,13 +283,27 @@ module.exports = {
     const taps = count(st.taps, "taps", ps.taps);
     const grands = count(st.grands, "grands", ps.grands);
 
+    // After the Final Song. Nothing up here exists before it.
+    const ended = bool(next.ended) && best >= SONG_REQ;
+    const big = (v, was) => num(isNum(v) ? v : was, 0, BIG_CAP, 0);
+    const encores = ended ? count(next.encores, "encores", p.encores) : 0;
+    const choirs = ended ? count(next.choirs, "choirs", p.choirs) : 0;
+    const rebirths = ended ? count(next.rebirths, "rebirths", p.rebirths) : 0;
+    const echoCap = ended ? echoCeiling(best, encores) : 0;
+    const voiceCap = voiceCeiling(echoCap, choirs);
+    const resCap = resonanceCeiling(voiceCap, rebirths);
+    const echoesEarned = Math.min(big(next.echoesEarned, p.echoesEarned), echoCap);
+    const voicesEarned = choirs ? Math.min(big(next.voicesEarned, p.voicesEarned), voiceCap) : 0;
+    const resonanceTotal = rebirths ? Math.min(whole(next.resonanceTotal, p.resonanceTotal), resCap) : 0;
+    const laws = rebirths ? owned(next.laws, LAWS) : {};
+
     const nodes = cleanNodes(next.nodes);
-    const sdCap = stardustCeiling(best, nodes.heavy || 0, supernovas + comets);
+    const sdCap = stardustCeiling(best, nodes.heavy || 0, supernovas + comets, ended);
     const stardustTotal = Math.min(log(next.stardustTotal, p.stardustTotal), sdCap);
     const stardust = Math.min(log(next.stardust, p.stardust), stardustTotal);
 
-    const voidTotal = Math.min(whole(next.voidTotal, p.voidTotal, VOID_CAP), voidCeiling(best, collapses));
-    const { sky, spent } = cleanSky(next.sky, voidTotal);
+    const voidTotal = Math.min(whole(next.voidTotal, p.voidTotal, VOID_CAP), voidCeiling(best, collapses, ended));
+    const { sky, spent } = cleanSky(next.sky, voidTotal, p.sky, choirs + rebirths > 0);
     const voidCur = Math.min(whole(next.voidCur, p.voidCur, VOID_CAP), voidTotal - spent);
 
     const levelMax = levelCeiling(best);
@@ -256,7 +325,24 @@ module.exports = {
       trial: oneOf(next.trial, TRIALS, null),
       trialsDone: owned(next.trialsDone, TRIALS),
       voidCur, voidTotal, collapses, sky,
-      ended: bool(next.ended) && best >= SONG_REQ,
+      collapseBase: Math.min(whole(next.collapseBase, p.collapseBase), collapses),
+      ended,
+      encores,
+      encoresHere: Math.min(whole(next.encoresHere, p.encoresHere), encores),
+      echoes: Math.min(big(next.echoes, p.echoes), echoesEarned),
+      echoesEarned,
+      score: ended ? owned(next.score, SCORE) : {},
+      refrain: ended ? whole(next.refrain, p.refrain, 300) : 0,
+      choirs,
+      voices: Math.min(big(next.voices, p.voices), voicesEarned),
+      voicesEarned,
+      hymnal: choirs ? owned(next.hymnal, HYMNAL) : {},
+      chord: choirs ? oneOf(next.chord, CHORDS, null) : null,
+      rebirths,
+      resonance: Math.min(whole(next.resonance, p.resonance), resonanceTotal),
+      resonanceTotal,
+      laws,
+      trueEnd: bool(next.trueEnd) && ended && best >= TRUE_REQ && laws.firstnote === true,
       deeds: owned(next.deeds, DEEDS),
       story: cleanStory(next.story),
       auto: cleanAuto(next.auto),
@@ -274,6 +360,9 @@ module.exports = {
         fastestNova: num(isNum(st.fastestNova) ? st.fastestNova : ps.fastestNova, 0, 1e308, 1e308),
         classesPlayed: owned(st.classesPlayed, CLASSES),
         created: int(isNum(st.created) ? st.created : ps.created, 0, now, now),
+        echoes: Math.min(big(st.echoes, ps.echoes), echoCap),
+        voices: choirs ? Math.min(big(st.voices, ps.voices), voiceCap) : 0,
+        chordsSung: choirs ? owned(st.chordsSung, CHORDS) : {},
       },
       lastSeen: int(isNum(next.lastSeen) ? next.lastSeen : p.lastSeen, 0, now, now),
     };
