@@ -2,6 +2,12 @@
   "posts": [
     {
       "date": "2026-11-13",
+      "title": "Sandforge is out",
+      "body": "Sandforge is our new falling-sand sandbox, and everything in it runs on real physics. Pour, burn, melt, freeze and blow up 123 materials, with heat, wind, buoyancy, chemistry, electricity, magnetism, lasers and gravity all working on every pixel. Grow trees, flood valleys, run a reactor, or open the Directory to see how anything is made and what it reacts with. Start from one of the presets or a blank world, and save your favourite creation to come back to.",
+      "game": "sandforge"
+    },
+    {
+      "date": "2026-11-13",
       "title": "Starsong: the song goes on",
       "body": "The Final Song is no longer the end of Starsong. After it come three new layers: Encore, where you earn Echoes to spend on the Score; the Choir, where you gather Voices for the Hymnal and pick a new Chord each time; and Rebirth, where Resonance rewrites the Laws of Nature. The true ending, the First Note, waits at 1e10,000 Light, and it is a long way off. One balance change: a star now has to burn for 60 seconds before it can go Supernova, and the Binary class and comets have been toned down, so the early game can no longer be rushed.",
       "game": "starsong"
